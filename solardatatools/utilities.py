@@ -1,3 +1,4 @@
+import numpy as np
 import cvxpy as cvx
 
 def total_variation_filter(signal, C=5):
