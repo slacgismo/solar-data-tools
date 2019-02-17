@@ -22,6 +22,7 @@ def clear_day_filter_full(data, th=0.1):
     :param th: A parameter that tunes the filter between relying of daily smoothness and daily energy
     :return: A 1D boolean array, with `True` values corresponding to clear days in the data set
     '''
+    D = data
     # Take the norm of the second different of each day's signal. This gives a rough estimate of the smoothness of
     # day in the data set
     tc = np.linalg.norm(D[:-2] - 2 * D[1:-1] + D[2:], ord=1, axis=0)
