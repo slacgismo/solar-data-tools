@@ -61,7 +61,7 @@ def make_2d(df, key='dc_power'):
     else:
         return
 
-def fix_time_shifts(data):
+def fix_time_shifts(data, verbose=False, return_ixs=False):
     D = data
     #################################################################################################################
     # Part 1: Detecting the days on which shifts occurs. If no shifts are detected, the algorithm exits, returning
@@ -97,12 +97,16 @@ def fix_time_shifts(data):
     index_set = []
     for c in combined:
         if np.abs(c[1]) >= 0.5:
-            index_set.append([0])
+            index_set.append(c[0])
     if len(index_set) == 0:
+        if verbose:
+            print('No time shifts found')
         return D
     #################################################################################################################
     # Part 2: Fixing the time shifts.
     #################################################################################################################
+    if verbose:
+        print('Time shifts found at: ', index_set)
     ixs = np.r_[[None], index_set, [None]]
     # Take averages of solar noon estimates over the segments of the data set defined by the shift points
     A = []
@@ -117,4 +121,7 @@ def fix_time_shifts(data):
     for ind, roll in enumerate(rolls):
         D_rolled = np.roll(D, int(roll), axis=0)
         Dout[:, ixs[ind + 1]:] = D_rolled[:, ixs[ind + 1]:]
-    return Dout
+    if return_ixs:
+        return Dout, index_set
+    else:
+        return Dout
