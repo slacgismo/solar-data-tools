@@ -101,7 +101,10 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
     if len(index_set) == 0:
         if verbose:
             print('No time shifts found')
-        return D
+        if return_ixs:
+            return D, []
+        else:
+            return D
     #################################################################################################################
     # Part 2: Fixing the time shifts.
     #################################################################################################################
