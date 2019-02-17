@@ -103,4 +103,15 @@ def fix_time_shifts(data):
     #################################################################################################################
     # Part 2: Fixing the time shifts.
     #################################################################################################################
-    return
+    ixs = np.r_[[None], index_set, [None]]
+    A = []
+    for i in range(len(ixs) - 1):
+        avg = np.average(np.ma.masked_invalid(s1_f[ixs[i]:ixs[i + 1]]))
+        A.append(np.round(avg * D.shape[0] / 24))
+    A = np.array(A)
+    rolls = A[0] - A[1:]
+    Dout = np.copy(D)
+    for ind, roll in enumerate(rolls):
+        D_rolled = np.roll(D, int(roll), axis=0)
+        Dout[:, ixs[ind + 1]:] = D_rolled[:, ixs[ind + 1]:]
+    return Dout
