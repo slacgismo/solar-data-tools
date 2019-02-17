@@ -9,6 +9,9 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 
+from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.utilities import total_variation_filter
+
 def standardize_time_axis(df, datetimekey='Date-Time'):
     '''
     This function takes in a pandas data frame containing tabular time series data, likely generated with a call to
@@ -59,4 +62,45 @@ def make_2d(df, key='dc_power'):
         return
 
 def fix_time_shifts(data):
-    pass
+    D = data
+    #################################################################################################################
+    # Part 1: Detecting the days on which shifts occurs. If no shifts are detected, the algorithm exits, returning
+    # the original data array. Otherwise, the algorithm proceeds to Part 2.
+    #################################################################################################################
+    # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
+    div1 = np.dot(np.linspace(0, 24, D.shape[0]), D)
+    div2 = np.sum(D, axis=0)
+    s1 = np.empty_like(div1)
+    s1[:] = np.nan
+    msk = div2 != 0
+    s1[msk] = np.divide(div1[msk], div2[msk])
+    # Apply a clear day filter
+    m = find_clear_days(D)
+    s1_f = np.empty_like(s1)
+    s1_f[:] = np.nan
+    s1_f[m] = s1[m]
+    # Apply total variation filter
+    s2 = total_variation_filter(s1_f, C=5)
+    # Collect and merge candidate time shifts that are close to each other
+    diff1 = s2[:-1] - s2[1:]
+    m = np.abs(diff1) >= 1e-1
+    candidates = list(zip(np.arange(len(diff1))[m], diff1[m]))
+    combined = []
+    while len(candidates) > 0:
+        item = candidates.pop(0)
+        for ind, c in enumerate(candidates):
+            if np.abs(item[0] - c[0]) <= 10:
+                new_item = candidates.pop(ind)
+                item = (item[0], item[1] + new_item[1])
+        combined.append(item)
+    # Identify indices corresponding to days when time shifts occurred
+    index_set = []
+    for c in combined:
+        if np.abs(c[1]) >= 0.5:
+            index_set.append([0])
+    if len(index_set) == 0:
+        return D
+    #################################################################################################################
+    # Part 2: Fixing the time shifts.
+    #################################################################################################################
+    return

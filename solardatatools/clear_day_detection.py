@@ -7,11 +7,11 @@ This module contains functions for detecting clear days in historical PV solar d
 import numpy as np
 import cvxpy as cvx
 
-def clear_day_filter_full(data, th=0.1):
+def find_clear_days(data, th=0.1):
     '''
     This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
     standardized time series power data. This will typically be the output from
-    `solar-data-tools.data_transforms.make_2d`. The filter relies on two estimates of daily "clearness": the smoothness
+    `solardatatools.data_transforms.make_2d`. The filter relies on two estimates of daily "clearness": the smoothness
     of each daily signal as measured by the l2-norm of the 2nd order difference, and seasonally-adjusted daily
     energy. Seasonal adjustment of the daily energy if obtained by solving a local quantile regression problem, which
     is a convex optimization problem and is solvable with cvxpy. The parameter `th` controls the relative weighting of
