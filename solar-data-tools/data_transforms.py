@@ -57,3 +57,6 @@ def make_2d(df, key='dc_power'):
         return D
     else:
         return
+
+def fix_time_shifts(data):
+    pass
