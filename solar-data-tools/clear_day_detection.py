@@ -12,11 +12,11 @@ def clear_day_filter_full(data, th=0.1):
     This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
     standardized time series power data. This will typically be the output from
     `solar-data-tools.data_transforms.make_2d`. The filter relies on two estimates of daily "clearness": the smoothness
-     of each daily signal as measured by the l2-norm of the 2nd order difference, and seasonally-adjusted daily
-     energy. Seasonal adjustment of the daily energy if obtained by solving a local quantile regression problem, which
-     is a convex optimization problem and is solvable with cvxpy. The parameter `th` controls the relative weighting of
-     the daily smoothness and daily energy in the final filter in a geometric mean. A value of 0 will rely entirely on
-     the daily energy and a value of 1 will rely entirely on daily smoothness.
+    of each daily signal as measured by the l2-norm of the 2nd order difference, and seasonally-adjusted daily
+    energy. Seasonal adjustment of the daily energy if obtained by solving a local quantile regression problem, which
+    is a convex optimization problem and is solvable with cvxpy. The parameter `th` controls the relative weighting of
+    the daily smoothness and daily energy in the final filter in a geometric mean. A value of 0 will rely entirely on
+    the daily energy and a value of 1 will rely entirely on daily smoothness.
 
     :param D: A 2D numpy array containing a solar power time series signal.
     :param th: A parameter that tunes the filter between relying of daily smoothness and daily energy
