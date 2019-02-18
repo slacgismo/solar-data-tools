@@ -26,6 +26,17 @@ def total_variation_filter(signal, C=5):
     return s_hat.value
 
 def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
+    '''
+    This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
+    signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
+    multi-year solar PV power data sets, and therefore does an improved job of estimating the discretely changing
+    signal.
+
+    :param signal: A 1d numpy array (must support boolean indexing) containing the signal of interest
+    :param c1: The regularization parameter to control the total variation in the final output signal
+    :param c2: The regularization parameter to control the smoothness of the seasonal signal
+    :return: A 1d numpy array containing the filtered signal
+    '''
     s_hat = cvx.Variable(len(signal))
     s_seas = cvx.Variable(len(signal))
     s_error = cvx.Variable(len(signal))
@@ -47,3 +58,22 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve()
     return s_hat.value, s_seas.value
+
+
+def progress(count, total, status=''):
+    """
+    Python command line progress bar in less than 10 lines of code. · GitHub
+    https://gist.github.com/vladignatyev/06860ec2040cb497f0f3
+    :param count: the current count, int
+    :param total: to total count, int
+    :param status: a message to display
+    :return:
+    """
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+sys.stdout.flush()
