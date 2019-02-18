@@ -1,6 +1,9 @@
 # solardatatools
 
-Tools for handling solar PV data signals. 
+Tools for performing common tasks on solar PV data signals. These including finding clear days in a
+data set, common data transforms, and fixing time stamp issues. These tools are designed to be
+automatic and require little if any input from the user. Librarys are included to help with data IO
+and plotting as well.  
 
 See notebooks folder for examples.
 
