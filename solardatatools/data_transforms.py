@@ -64,6 +64,28 @@ def make_2d(df, key='dc_power'):
         return
 
 def fix_time_shifts(data, verbose=False, return_ixs=False):
+    '''
+    This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
+    that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
+    storing the data in the database. The algorithm performs as follows:
+    Part 1:
+        a) Estimate solar noon for each day relative to the provided time axis. This is estimated as the "center of
+           mass" in time of the energy production each day.
+        b) Filter this signal for clear days
+        c) Fit a total variation filter with seasonal baseline to the output of (b)
+        d) Perform KDE-based clustering on the output of (c)
+        e) Extract the days on which the transitions between clusters occur
+    Part 2:
+        a) Find the average solar noon value for each cluster
+        b) Taking the first cluster as a reference point, find the offsets in average values between the first cluster
+           and all others
+        c) Adjust the time axis for all clusters after the first by the amount calculated in (b)
+
+    :param data: A 2D numpy array containing a solar power time series signal (see `data_transforms.make_2d`)
+    :param verbose: An option to print information about what clusters are found
+    :param return_ixs: An option to return the indices of the boundary days for the clusters
+    :return:
+    '''
     D = data
     #################################################################################################################
     # Part 1: Detecting the days on which shifts occurs. If no shifts are detected, the algorithm exits, returning
