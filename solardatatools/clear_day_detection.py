@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''Clear Day Detection Module
 
 This module contains functions for detecting clear days in historical PV solar data sets.

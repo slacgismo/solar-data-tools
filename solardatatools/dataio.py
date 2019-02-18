@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
+''' Data IO Module
+
+This module contains functions for obtaining data from various sources.
+
+'''
 from solardatatools.data_transforms import standardize_time_axis
 from solardatatools.utilities import progress
 
 from time import time
 from io import StringIO
-from datetime import timedelta
 
 import requests
 import pandas as pd
-import numpy as np
 
 
 def get_pvdaq_data(sysid=2, api_key = 'DEMO_KEY', year=2011, delim=','):

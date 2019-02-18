@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+''' Utilities Module
+
+This module contains utility function used by other modules.
+
+'''
 import numpy as np
 import cvxpy as cvx
 

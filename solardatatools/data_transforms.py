@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ''' Data Transforms Module
 
 This module contains functions for transforming PV power data, including time-axis standardization and
