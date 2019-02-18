@@ -31,13 +31,13 @@ def standardize_time_axis(df, datetimekey='Date-Time'):
     '''
     # convert index to timeseries
     try:
-        df['Date-Time'] = pd.to_datetime(df['Date-Time'])
+        df[datetimekey] = pd.to_datetime(df[datetimekey])
         df.set_index('Date-Time', inplace=True)
     except KeyError:
         time_cols = [col for col in df.columns if np.logical_or('Time' in col, 'time' in col)]
         key = time_cols[0]
-        df[key] = pd.to_datetime(df[key])
-        df.set_index(key, inplace=True)
+        df[datetimekey] = pd.to_datetime(df[key])
+        df.set_index(datetimekey, inplace=True)
     # standardize the timeseries axis to a regular frequency over a full set of days
     diff = (df.index[1:] - df.index[:-1]).seconds
     freq = int(np.median(diff))  # the number of seconds between each measurement
