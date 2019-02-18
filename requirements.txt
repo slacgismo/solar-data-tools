@@ -5,6 +5,7 @@ scipy
 sklearn
 jupyter
 matplotlib
+seaborn
 requests
 cvxpy
 # I suggest using the MOSEK convex solver with cvxpy, if possible. For additional information about setting up MOSEK,
