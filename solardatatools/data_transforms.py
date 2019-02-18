@@ -103,8 +103,11 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
     s1_f = np.empty_like(s1)
     s1_f[:] = np.nan
     s1_f[m] = s1[m]
-    # Apply total variation filter with seasonal baseline
-    s2, s_seas = total_variation_plus_seasonal_filter(s1_f, c1=10, c2=500)
+    # Apply total variation filter (with seasonal baseline if >1yr of data)
+    if len(s1) > 365:
+        s2, s_seas = total_variation_plus_seasonal_filter(s1_f, c1=10, c2=500)
+    else:
+        s2 = total_variation_filter(s1_f, C=5)
     # Perform clustering with KDE
     kde = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(s2[:, np.newaxis])
     X_plot = np.linspace(0.95 * np.min(s2), 1.05 * np.max(s2))[:, np.newaxis]
