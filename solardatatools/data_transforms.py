@@ -139,6 +139,7 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
             clusters[m] = it + 1
     # Identify indices corresponding to days when time shifts occurred
     index_set = np.arange(D.shape[1]-1)[clusters[1:] != clusters[:-1]] + 1
+    # Exit if no time shifts detected
     if len(index_set) == 0:
         if verbose:
             print('No time shifts found')
