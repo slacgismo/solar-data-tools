@@ -8,9 +8,11 @@ This module contains functions for transforming PV power data, including time-ax
 from datetime import timedelta
 import numpy as np
 import pandas as pd
+from scipy.signal import argrelextrema
+from sklearn.neighbors.kde import KernelDensity
 
 from solardatatools.clear_day_detection import find_clear_days
-from solardatatools.utilities import total_variation_filter
+from solardatatools.utilities import total_variation_filter, total_variation_plus_seasonal_filter
 
 def standardize_time_axis(df, datetimekey='Date-Time'):
     '''
@@ -79,25 +81,40 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
     s1_f = np.empty_like(s1)
     s1_f[:] = np.nan
     s1_f[m] = s1[m]
-    # Apply total variation filter
-    s2 = total_variation_filter(s1_f, C=5)
-    # Collect and merge candidate time shifts that are close to each other
-    diff1 = s2[:-1] - s2[1:]
-    m = np.abs(diff1) >= 1e-1
-    candidates = list(zip(np.arange(len(diff1))[m], diff1[m]))
-    combined = []
-    while len(candidates) > 0:
-        item = candidates.pop(0)
-        for ind, c in enumerate(candidates):
-            if np.abs(item[0] - c[0]) <= 10:
-                new_item = candidates.pop(ind)
-                item = (item[0], item[1] + new_item[1])
-        combined.append(item)
+    # Apply total variation filter with seasonal baseline
+    s2, s_seas = total_variation_plus_seasonal_filter(s1_f, c1=10, c2=500)
+    # Perform clustering with KDE
+    kde = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(s2[:, np.newaxis])
+    X_plot = np.linspace(0.95 * np.min(s2), 1.05 * np.max(s2))[:, np.newaxis]
+    log_dens = kde.score_samples(X_plot)
+    mins = argrelextrema(log_dens, np.less)[0]
+    maxs = argrelextrema(log_dens, np.greater)[0]
+    # Drop clusters with too few members
+    keep = np.ones_like(maxs, dtype=np.bool)
+    for ix, mx in enumerate(maxs):
+        if np.exp(log_dens)[mx] < 1e-1:
+            keep[ix] = 0
+    mx_keep = maxs[keep]
+    mx_drop = maxs[~keep]
+    mn_drop = []
+    for md in mx_drop:
+        dists = np.abs(X_plot[:, 0][md] - X_plot[:, 0][mx_keep])
+        max_merge = mx_keep[np.argmin(dists)]
+        for mn in mins:
+            cond1 = np.logical_and(mn < max_merge, mn > md)
+            cond2 = np.logical_and(mn > max_merge, mn < md)
+            if np.logical_or(cond1, cond2):
+                print('merge', md, 'with', max_merge, 'by dropping', mn)
+                mn_drop.append(mn)
+    mins_new = np.array([i for i in mins if i not in mn_drop])
+    # Assign cluster labels to days in data set
+    clusters = np.zeros_like(s1)
+    if len(mins_new) > 0:
+        for it, ex in enumerate(X_plot[:, 0][mins_new]):
+            m = s2 >= ex
+            clusters[m] = it + 1
     # Identify indices corresponding to days when time shifts occurred
-    index_set = []
-    for c in combined:
-        if np.abs(c[1]) >= 0.5:
-            index_set.append(c[0])
+    index_set = np.arange(D.shape[1]-1)[clusters[1:] != clusters[:-1]] + 1
     if len(index_set) == 0:
         if verbose:
             print('No time shifts found')
