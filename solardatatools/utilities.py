@@ -24,3 +24,26 @@ def total_variation_filter(signal, C=5):
         print('Trying ECOS solver')
         problem.solve(solver='ECOS')
     return s_hat.value
+
+def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
+    s_hat = cvx.Variable(len(signal))
+    s_seas = cvx.Variable(len(signal))
+    s_error = cvx.Variable(len(signal))
+    c1 = cvx.Constant(value=c1)
+    c2 = cvx.Constant(value=c2)
+    index_set = ~np.isnan(signal)
+    w = len(signal) / np.sum(index_set)
+    objective = cvx.Minimize(
+        (365 * 3 / len(signal)) * w * cvx.sum(cvx.huber(s_error))
+        + c1 * cvx.norm1(cvx.diff(s_hat, k=1))
+        + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+        + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
+    )
+    constraints = [
+        signal[index_set] == s_hat[index_set] + s_seas[index_set] + s_error[index_set],
+        s_seas[365:] - s_seas[:-365] == 0,
+        cvx.sum(s_seas) == 0
+    ]
+    problem = cvx.Problem(objective=objective, constraints=constraints)
+    problem.solve()
+    return s_hat.value, s_seas.value
