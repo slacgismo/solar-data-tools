@@ -87,8 +87,8 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
     kde = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(s2[:, np.newaxis])
     X_plot = np.linspace(0.95 * np.min(s2), 1.05 * np.max(s2))[:, np.newaxis]
     log_dens = kde.score_samples(X_plot)
-    mins = argrelextrema(log_dens, np.less)[0]
-    maxs = argrelextrema(log_dens, np.greater)[0]
+    mins = argrelextrema(log_dens, np.less)[0]      # potential cut points to make clusters
+    maxs = argrelextrema(log_dens, np.greater)[0]   # locations of the max point in each cluster
     # Drop clusters with too few members
     keep = np.ones_like(maxs, dtype=np.bool)
     for ix, mx in enumerate(maxs):
@@ -97,9 +97,11 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
     mx_keep = maxs[keep]
     mx_drop = maxs[~keep]
     mn_drop = []
+    # Determine closest clusters in keep set to each cluster that should be dropped
     for md in mx_drop:
         dists = np.abs(X_plot[:, 0][md] - X_plot[:, 0][mx_keep])
         max_merge = mx_keep[np.argmin(dists)]
+        # Determine which minimum index to remove to correctly merge clusters
         for mn in mins:
             cond1 = np.logical_and(mn < max_merge, mn > md)
             cond2 = np.logical_and(mn > max_merge, mn < md)
