@@ -4,6 +4,7 @@
 This module contains utility function used by other modules.
 
 '''
+import sys
 import numpy as np
 import cvxpy as cvx
 
