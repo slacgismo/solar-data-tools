@@ -60,7 +60,7 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
     constraints = [
         signal[index_set] == s_hat[index_set] + s_seas[index_set] + s_error[index_set],
         s_seas[365:] - s_seas[:-365] == 0,
-        cvx.sum(s_seas) == 0
+        cvx.sum(s_seas[:365]) == 0
     ]
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve()
