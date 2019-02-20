@@ -58,8 +58,11 @@ def make_2d(df, key='dc_power'):
     :return: A 2D numpy array with shape (measurements per day, days in data set)
     '''
     if df is not None:
-        n_steps = int(24 * 60 * 60 / df.index.freq.n)
-        D = df[key].values.reshape(n_steps, -1, order='F')
+        days = df.resample('D').max().index[1:-1]
+        start = days[0]
+        end = days[-1]
+        n_steps = int(24 * 60 * 60 / df.index.freq.delta.secondss)
+        D = df[key].loc[start:end].iloc[:-1].values.reshape(n_steps, -1, order='F')
         return D
     else:
         return
