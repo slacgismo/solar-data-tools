@@ -61,7 +61,7 @@ def make_2d(df, key='dc_power'):
         days = df.resample('D').max().index[1:-1]
         start = days[0]
         end = days[-1]
-        n_steps = int(24 * 60 * 60 / df.index.freq.delta.secondss)
+        n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
         D = df[key].loc[start:end].iloc[:-1].values.reshape(n_steps, -1, order='F')
         return D
     else:
