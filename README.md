@@ -1,8 +1,5 @@
 # solardatatools
 
-[![Build Status](https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development)](https://travis-ci.com/tadatoshi/solar-data-tools)
-[![codecov](https://codecov.io/gh/tadatoshi/solar-data-tools/branch/development/graph/badge.svg)](https://codecov.io/gh/tadatoshi/solar-data-tools)
-
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in
 a data set, common data transforms, and fixing time stamp issues. These tools are designed to be
 automatic and require little if any input from the user. Libraries are included to help with data IO
