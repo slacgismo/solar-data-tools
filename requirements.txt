@@ -1,7 +1,6 @@
 scipy
 numpy>=1.16
 pandas
-scipy
 sklearn
 jupyter
 matplotlib
