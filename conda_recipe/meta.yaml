@@ -1,5 +1,5 @@
 {% set name = "solar-data-tools" %}
-{% set version = "0.1.0" %}
+{% set version = "0.1.1" %}
 
 package:
   name: "{{ name|lower }}"
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 13228d21065ee2067df5d21e0f5a2a1e52abb01e93cb7a4fe9650ea9d1c134fe
+  sha256: 857b0680552ddf70474d4ee61084dfe017f4c7127d2c28182f780086c5a17e73
 
 build:
   number: 0
@@ -20,24 +20,14 @@ requirements:
     - scipy
     - numpy >=1.16
     - pandas
-    - sklearn
     - seaborn
     - requests
-    - cvxpy >=1.0
   run:
     - scipy
     - numpy >=1.16
     - pandas
-    - sklearn
     - seaborn
     - requests
-    - cvxpy >=1.0
-
-test:
-  imports:
-    - solardatatools
-  commands:
-    - python -m unittest
 
 about:
   home: https://github.com/bmeyers/solar-data-tools
