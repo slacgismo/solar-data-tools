@@ -26,6 +26,18 @@ $ pip install 'numpy>=1.16'
 $ pip install statistical-clear-sky
 ```
 
+#### Solvers
+
+By default, ECOS solver is used, which is supported by cvxpy because it is Open Source.
+
+However, it is found that Mosek solver is more stable. Thus, we encourage you to install it separately as below and obtain the license on your own.
+
+* [mosek](https://www.mosek.com/resources/getting-started/) - For using MOSEK solver.
+
+    ```sh
+    $ pip install -f https://download.mosek.com/stable/wheel/index.html Mosek
+    ```
+
 ### Installing this project as Anaconda package
 
 ```sh
@@ -43,7 +55,7 @@ However, it is found that Mosek solver is more stable. Thus, we encourage you to
 * [mosek](https://www.mosek.com/resources/getting-started/) - For using MOSEK solver.
 
     ```sh
-    $ pip install -f https://download.mosek.com/stable/wheel/index.html Mosek
+    $ conda install -c mosek mosek
     ```
 
 ### Using this project by cloning this GIT repository
