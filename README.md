@@ -26,6 +26,14 @@ $ pip install 'numpy>=1.16'
 $ pip install statistical-clear-sky
 ```
 
+### Installing this project as Anaconda package
+
+```sh
+$ conda install -c slacgismo solar-data-tools
+```
+
+If you are using Anaconda, the problem described in the section for PIP package above doesn't occur since numpy is already installed. And during solar-data-tools installation, numpy is upgraded above 1.16.
+
 #### Solvers
 
 By default, ECOS solver is used, which is supported by cvxpy because it is Open Source.
@@ -108,8 +116,6 @@ We use [Semantic Versioning](http://semver.org/) for versioning. For the version
 ## Authors
 
 * **Bennet Meyers** - *Initial work and Main research work* - [Bennet Meyers GitHub](https://github.com/bmeyers)
-
-* **Tadatoshi Takahashi** - *Refactoring and Packaging work and Research support work* - [Tadatoshi Takahashi GitHub](https://github.com/tadatoshi)
 
 See also the list of [contributors](https://github.com/bmeyers/solar-data-tools/contributors) who participated in this project.
 
