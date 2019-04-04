@@ -1,4 +1,6 @@
-# solardatatools
+# solar-data-tools
+
+[![PyPI release](https://img.shields.io/pypi/v/solar-data-tools.svg)](https://pypi.org/project/solar-data-tools/)
 
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in
 a data set, common data transforms, and fixing time stamp issues. These tools are designed to be
