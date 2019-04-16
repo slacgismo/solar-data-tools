@@ -23,10 +23,9 @@ def find_clear_days(data, th=0.1):
     :param th: A parameter that tunes the filter between relying of daily smoothness and daily energy
     :return: A 1D boolean array, with `True` values corresponding to clear days in the data set
     '''
-    D = data
     # Take the norm of the second different of each day's signal. This gives a rough estimate of the smoothness of
     # day in the data set
-    tc = np.linalg.norm(D[:-2] - 2 * D[1:-1] + D[2:], ord=1, axis=0)
+    tc = np.linalg.norm(data[:-2] - 2 * data[1:-1] + data[2:], ord=1, axis=0)
     # Shift this metric so the median is at zero
     tc = np.percentile(tc, 50) - tc
     # Normalize such that the maximum value is equal to one
@@ -34,7 +33,7 @@ def find_clear_days(data, th=0.1):
     # Take the positive part function, i.e. set the negative values to zero. This is the first metric
     tc = np.clip(tc, 0, None)
     # Calculate the daily energy
-    de = np.sum(D, axis=0)
+    de = np.sum(data, axis=0)
     # Solve a convex minimization problem to roughly fit the local 90th percentile of the data (quantile regression)
     x = cvx.Variable(len(tc))
     obj = cvx.Minimize(
