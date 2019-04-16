@@ -3,7 +3,7 @@
 # Edit at https://www.gitignore.io/?templates=data,macos,python,pycharm,database,sublimetext,jupyternotebook
 
 ### Data ###
-*.csv
+#*.csv  # Commented out in order to commit fixture files for unit tests.
 *.dat
 *.efx
 *.gbr
