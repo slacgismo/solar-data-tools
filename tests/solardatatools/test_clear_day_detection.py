@@ -6,12 +6,17 @@ from solardatatools.clear_day_detection import find_clear_days
 class TestClearDayDetection(unittest.TestCase):
 
     def test_find_clear_days(self):
-        directory = os.getcwd()
-        print(directory)
-        data = np.loadtxt('../fixtures/one_year_power_signals_1.csv',
-                          delimiter=',')
-        expected_output = np.loadtxt('../fixtures/one_year_weights_1.csv',
-                                     delimiter=',')
+
+        data_file_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+            "../fixtures/one_year_power_signals_1.csv"))
+        with open(data_file_path) as file:
+            data = np.loadtxt(file, delimiter=',')
+        expected_data_file_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+            "../fixtures/one_year_weights_1.csv"))
+        with open(expected_data_file_path) as file:
+            expected_output = np.loadtxt(file, delimiter=',')
         expected_output = expected_output >= 1e-3
         actual_output = find_clear_days(data)
         np.testing.assert_array_equal(expected_output,
