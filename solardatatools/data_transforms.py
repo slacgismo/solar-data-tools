@@ -67,7 +67,8 @@ def make_2d(df, key='dc_power'):
     else:
         return
 
-def fix_time_shifts(data, verbose=False, return_ixs=False):
+def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True,
+                    c1=10., c2=500., c3=5.):
     '''
     This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
     that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
@@ -103,15 +104,18 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
     msk = div2 != 0
     s1[msk] = np.divide(div1[msk], div2[msk])
     # Apply a clear day filter
-    m = find_clear_days(D)
-    s1_f = np.empty_like(s1)
-    s1_f[:] = np.nan
-    s1_f[m] = s1[m]
+    if clear_day_filter:
+        m = find_clear_days(D)
+        s1_f = np.empty_like(s1)
+        s1_f[:] = np.nan
+        s1_f[m] = s1[m]
+    else:
+        s1_f = s1
     # Apply total variation filter (with seasonal baseline if >1yr of data)
     if len(s1) > 365:
-        s2, s_seas = total_variation_plus_seasonal_filter(s1_f, c1=10, c2=500)
+        s2, s_seas = total_variation_plus_seasonal_filter(s1_f, c1=c1, c2=c2)
     else:
-        s2 = total_variation_filter(s1_f, C=5)
+        s2 = total_variation_filter(s1_f, C=c3)
     # Perform clustering with KDE
     kde = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(s2[:, np.newaxis])
     X_plot = np.linspace(0.95 * np.min(s2), 1.05 * np.max(s2))[:, np.newaxis]
@@ -135,7 +139,8 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
             cond1 = np.logical_and(mn < max_merge, mn > md)
             cond2 = np.logical_and(mn > max_merge, mn < md)
             if np.logical_or(cond1, cond2):
-                print('merge', md, 'with', max_merge, 'by dropping', mn)
+                if verbose:
+                    print('merge', md, 'with', max_merge, 'by dropping', mn)
                 mn_drop.append(mn)
     mins_new = np.array([i for i in mins if i not in mn_drop])
     # Assign cluster labels to days in data set
@@ -173,6 +178,9 @@ def fix_time_shifts(data, verbose=False, return_ixs=False):
     for ind, roll in enumerate(rolls):
         D_rolled = np.roll(D, int(roll), axis=0)
         Dout[:, ixs[ind + 1]:] = D_rolled[:, ixs[ind + 1]:]
+    # We find that a second pass with halved weights catches some transition points
+    # that might have been missed for data with many small transitions
+    Dout = fix_time_shifts(Dout, return_ixs=False, c1=c1/2, c2=c2/2, c3=c3/2)
     if return_ixs:
         return Dout, index_set
     else:
