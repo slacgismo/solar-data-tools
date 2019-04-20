@@ -8,7 +8,7 @@ This module contains functions for detecting clear days in historical PV solar d
 import numpy as np
 import cvxpy as cvx
 
-def find_clear_days(data, th=0.1):
+def find_clear_days(data, th=0.1, boolean_out=True):
     '''
     This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
     standardized time series power data. This will typically be the output from
@@ -52,4 +52,7 @@ def find_clear_days(data, th=0.1):
     weights = np.multiply(np.power(tc, th), np.power(de, 1.-th))
     # Finally, set values less than 0.6 to be equal to zero
     weights[weights < 0.6] = 0.
-    return weights >= 1e-3
+    if boolean_out:
+        return weights >= 1e-3
+    else:
+        return
