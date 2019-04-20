@@ -55,4 +55,4 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     if boolean_out:
         return weights >= 1e-3
     else:
-        return
+        return weights

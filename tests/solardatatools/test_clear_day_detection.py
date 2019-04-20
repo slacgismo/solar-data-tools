@@ -33,7 +33,6 @@ class TestClearDayDetection(unittest.TestCase):
             "../fixtures/one_year_weights_1.csv"))
         with open(expected_data_file_path) as file:
             expected_output = np.loadtxt(file, delimiter=',')
-        expected_output = expected_output >= 1e-3
-        actual_output = find_clear_days(data)
+        actual_output = find_clear_days(data, boolean_out=False)
         np.testing.assert_array_equal(expected_output,
                                       actual_output)
