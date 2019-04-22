@@ -56,3 +56,6 @@ def find_clear_days(data, th=0.1, boolean_out=True):
         return weights >= 1e-3
     else:
         return weights
+
+def filter_for_sparsity():
+    pass

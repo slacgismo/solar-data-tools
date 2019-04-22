@@ -66,6 +66,27 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
     problem.solve()
     return s_hat.value, s_seas.value
 
+def local_median_regression_with_seasonal(signal, c1=1e3, solver='ECOS'):
+    '''
+    for a list of available solvers, see:
+        https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+
+    :param signal: 1d numpy array
+    :param c1: float
+    :param solver: string
+    :return: median fit with seasonal baseline removed
+    '''
+    x = cvx.Variable(len(signal))
+    objective = cvx.Minimize(
+        cvx.norm1(signal - x) + c1 * cvx.norm(cvx.diff(x, k=2))
+    )
+    constraints = [
+        x[365:] == x[:-365]
+    ]
+    prob = cvx.Problem(objective, constraints=constraints)
+    prob.solve(solver=solver)
+    return x.value
+
 
 def progress(count, total, status=''):
     """
