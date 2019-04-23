@@ -7,6 +7,15 @@ This module contains functions for detecting clear days in historical PV solar d
 
 import numpy as np
 import cvxpy as cvx
+from solardatatools.utilities import \
+    local_median_regression_with_seasonal,\
+    basic_outlier_filter
+
+def filter_for_sparsity(data, c1=1e3, solver='ECOS'):
+    daily_sparsity = np.sum(data > 0.005 * np.max(data), axis=0)
+    filtered_signal = local_median_regression_with_seasonal(daily_sparsity, c1=c1, solver=solver)
+    mask = basic_outlier_filter(daily_sparsity - filtered_signal, outlier_constant=5.)
+    return mask
 
 def find_clear_days(data, th=0.1, boolean_out=True):
     '''
@@ -50,12 +59,18 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     de = np.clip(np.divide(de, x.value), 0, 1)
     # Take geometric mean
     weights = np.multiply(np.power(tc, th), np.power(de, 1.-th))
-    # Finally, set values less than 0.6 to be equal to zero
+    # Set values less than 0.6 to be equal to zero
     weights[weights < 0.6] = 0.
+    # Apply filter for sparsity to catch data errors related to non-zero nighttime data
+    try:
+        msk = filter_for_sparsity(data, solver='MOSEK')
+    except Exception as e:
+        print(e)
+        print('Trying ECOS solver')
+        msk = filter_for_sparsity(data, solver='ECOS')
+    weights = weights * msk.astype(int)
     if boolean_out:
         return weights >= 1e-3
     else:
         return weights
 
-def filter_for_sparsity():
-    pass
