@@ -87,6 +87,29 @@ def local_median_regression_with_seasonal(signal, c1=1e3, solver='ECOS'):
     prob.solve(solver=solver)
     return x.value
 
+def basic_outlier_filter(x, outlier_constant=1.5):
+    '''
+    Applies an outlier filter based on the interquartile range definition:
+        any data point more than 1.5 interquartile ranges (IQRs) below the
+        first quartile or above the third quartile
+
+    Function returns a boolean mask for entries in the input array that are
+    not outliers.
+
+    :param x: ndarray
+    :param outlier_constant: float, multiplier constant on IQR
+    :return: boolean mask
+    '''
+    a = np.array(x)
+    upper_quartile = np.percentile(a, 75)
+    lower_quartile = np.percentile(a, 25)
+    iqr = (upper_quartile - lower_quartile) * outlier_constant
+    quartile_set = (lower_quartile - iqr, upper_quartile + iqr)
+    mask = np.logical_and(
+        a >= quartile_set[0],
+        a <= quartile_set[1]
+    )
+    return mask
 
 def progress(count, total, status=''):
     """
