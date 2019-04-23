@@ -114,7 +114,7 @@ def basic_outlier_filter(x, outlier_constant=1.5):
     )
     return mask
 
-def progress(count, total, status=''):
+def progress(count, total, status='', bar_length=60):
     """
     Python command line progress bar in less than 10 lines of code. · GitHub
     https://gist.github.com/vladignatyev/06860ec2040cb497f0f3
@@ -123,7 +123,7 @@ def progress(count, total, status=''):
     :param status: a message to display
     :return:
     """
-    bar_len = 60
+    bar_len = bar_length
     filled_len = int(round(bar_len * count / float(total)))
 
     percents = round(100.0 * count / float(total), 1)
