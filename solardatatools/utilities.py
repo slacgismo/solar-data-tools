@@ -80,9 +80,12 @@ def local_median_regression_with_seasonal(signal, c1=1e3, solver='ECOS'):
     objective = cvx.Minimize(
         cvx.norm1(signal - x) + c1 * cvx.norm(cvx.diff(x, k=2))
     )
-    constraints = [
-        x[365:] == x[:-365]
-    ]
+    if len(signal) > 365:
+        constraints = [
+            x[365:] == x[:-365]
+        ]
+    else:
+        constraints = []
     prob = cvx.Problem(objective, constraints=constraints)
     prob.solve(solver=solver)
     return x.value
