@@ -66,8 +66,55 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
     problem.solve()
     return s_hat.value, s_seas.value
 
+def local_median_regression_with_seasonal(signal, c1=1e3, solver='ECOS'):
+    '''
+    for a list of available solvers, see:
+        https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
 
-def progress(count, total, status=''):
+    :param signal: 1d numpy array
+    :param c1: float
+    :param solver: string
+    :return: median fit with seasonal baseline removed
+    '''
+    x = cvx.Variable(len(signal))
+    objective = cvx.Minimize(
+        cvx.norm1(signal - x) + c1 * cvx.norm(cvx.diff(x, k=2))
+    )
+    if len(signal) > 365:
+        constraints = [
+            x[365:] == x[:-365]
+        ]
+    else:
+        constraints = []
+    prob = cvx.Problem(objective, constraints=constraints)
+    prob.solve(solver=solver)
+    return x.value
+
+def basic_outlier_filter(x, outlier_constant=1.5):
+    '''
+    Applies an outlier filter based on the interquartile range definition:
+        any data point more than 1.5 interquartile ranges (IQRs) below the
+        first quartile or above the third quartile
+
+    Function returns a boolean mask for entries in the input array that are
+    not outliers.
+
+    :param x: ndarray
+    :param outlier_constant: float, multiplier constant on IQR
+    :return: boolean mask
+    '''
+    a = np.array(x)
+    upper_quartile = np.percentile(a, 75)
+    lower_quartile = np.percentile(a, 25)
+    iqr = (upper_quartile - lower_quartile) * outlier_constant
+    quartile_set = (lower_quartile - iqr, upper_quartile + iqr)
+    mask = np.logical_and(
+        a >= quartile_set[0],
+        a <= quartile_set[1]
+    )
+    return mask
+
+def progress(count, total, status='', bar_length=60):
     """
     Python command line progress bar in less than 10 lines of code. · GitHub
     https://gist.github.com/vladignatyev/06860ec2040cb497f0f3
@@ -76,7 +123,7 @@ def progress(count, total, status=''):
     :param status: a message to display
     :return:
     """
-    bar_len = 60
+    bar_len = bar_length
     filled_len = int(round(bar_len * count / float(total)))
 
     percents = round(100.0 * count / float(total), 1)

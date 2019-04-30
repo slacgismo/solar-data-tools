@@ -7,8 +7,17 @@ This module contains functions for detecting clear days in historical PV solar d
 
 import numpy as np
 import cvxpy as cvx
+from solardatatools.utilities import \
+    local_median_regression_with_seasonal,\
+    basic_outlier_filter
 
-def find_clear_days(data, th=0.1):
+def filter_for_sparsity(data, c1=1e3, solver='ECOS'):
+    daily_sparsity = np.sum(data > 0.005 * np.max(data), axis=0)
+    filtered_signal = local_median_regression_with_seasonal(daily_sparsity, c1=c1, solver=solver)
+    mask = basic_outlier_filter(daily_sparsity - filtered_signal, outlier_constant=5.)
+    return mask
+
+def find_clear_days(data, th=0.1, boolean_out=True):
     '''
     This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
     standardized time series power data. This will typically be the output from
@@ -23,10 +32,9 @@ def find_clear_days(data, th=0.1):
     :param th: A parameter that tunes the filter between relying of daily smoothness and daily energy
     :return: A 1D boolean array, with `True` values corresponding to clear days in the data set
     '''
-    D = data
     # Take the norm of the second different of each day's signal. This gives a rough estimate of the smoothness of
     # day in the data set
-    tc = np.linalg.norm(D[:-2] - 2 * D[1:-1] + D[2:], ord=1, axis=0)
+    tc = np.linalg.norm(data[:-2] - 2 * data[1:-1] + data[2:], ord=1, axis=0)
     # Shift this metric so the median is at zero
     tc = np.percentile(tc, 50) - tc
     # Normalize such that the maximum value is equal to one
@@ -34,7 +42,7 @@ def find_clear_days(data, th=0.1):
     # Take the positive part function, i.e. set the negative values to zero. This is the first metric
     tc = np.clip(tc, 0, None)
     # Calculate the daily energy
-    de = np.sum(D, axis=0)
+    de = np.sum(data, axis=0)
     # Solve a convex minimization problem to roughly fit the local 90th percentile of the data (quantile regression)
     x = cvx.Variable(len(tc))
     obj = cvx.Minimize(
@@ -51,6 +59,18 @@ def find_clear_days(data, th=0.1):
     de = np.clip(np.divide(de, x.value), 0, 1)
     # Take geometric mean
     weights = np.multiply(np.power(tc, th), np.power(de, 1.-th))
-    # Finally, set values less than 0.6 to be equal to zero
+    # Set values less than 0.6 to be equal to zero
     weights[weights < 0.6] = 0.
-    return weights >= 1e-3
+    # Apply filter for sparsity to catch data errors related to non-zero nighttime data
+    try:
+        msk = filter_for_sparsity(data, solver='MOSEK')
+    except Exception as e:
+        print(e)
+        print('Trying ECOS solver')
+        msk = filter_for_sparsity(data, solver='ECOS')
+    weights = weights * msk.astype(int)
+    if boolean_out:
+        return weights >= 1e-3
+    else:
+        return weights
+
