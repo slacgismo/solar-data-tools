@@ -22,7 +22,7 @@ deploy:
   password:
     secure: pTV4J4fw6i131jCodg/lNODG8psA4BXIkEAvbBWidIGcZyri0YZtipU574lXrBeifotYeearQHDjAkJzEP7ic6Hs8XFJ0CBWBenskX0UdaORbq7/Kr3SkFvOA6fv6vi/a0QJ21Ew21d7082ZUV+dGYe94OqGQoYRSxFppwcuGDO7w631tFIwu8dDu3GhMvzrt3rO/0gfv4mpDMJZw/7SsEIWOQUOGp0WzK5FDy2iYyOfCr2FJJaaolcmG5pC3clqLSHB4PyGeQzgKJ6v6tb6RPYDkL7MgtTrgSxlzznfoIKkaTkn+VEb+aHaUd46JoTMGFvcCe33eWs/SDFJAry27kKGpYfgmA5M+IhvOebEoXMSmJAx/7AzTgPM03UXtD7JzKS/fwj+fftWxomC91Pzh8zes7CWTSGwMLMxuZuKaJWpO2GeeMY63vDKV/5Eunk4/8GyRNFnzBI91G3GZyBzY0a0N0JcDimlTNAytnkw9IitRoEpPbAYi5nRlS3US+C2nkFGvyvTh2vJw009+Zbyk25KTxUn35WMpXEsmAj0GIpdOmG82oAcJFHngO7mDsjS4Nlsls/8zCjWOGg1lEwi+VDu+rnnTgZdI3IPNrbGKVONkJ870Ii4z3SYOgJ/M7onsfCowmu5X8s0etcxHZBIvdqIE/eUGJKHd/Pua2hwBHc=
   on:
-    all_branches: true
+    branch: master
     tags: true
   skip_cleanup: true
   twine_version: 1.13.0
