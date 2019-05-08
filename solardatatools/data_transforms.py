@@ -15,7 +15,7 @@ from sklearn.neighbors.kde import KernelDensity
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.utilities import total_variation_filter, total_variation_plus_seasonal_filter
 
-def standardize_time_axis(df, datetimekey='Date-Time'):
+def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     '''
     This function takes in a pandas data frame containing tabular time series data, likely generated with a call to
     pandas.read_csv(). It is assumed that each row of the data frame corresponds to a unique date-time, though not
@@ -31,24 +31,31 @@ def standardize_time_axis(df, datetimekey='Date-Time'):
     :return: A new data frame with a standardized time axis
     '''
     # convert index to timeseries
-    try:
-        df[datetimekey] = pd.to_datetime(df[datetimekey])
-        df.set_index('Date-Time', inplace=True)
-    except KeyError:
-        time_cols = [col for col in df.columns if np.logical_or('Time' in col, 'time' in col)]
-        key = time_cols[0]
-        df[datetimekey] = pd.to_datetime(df[key])
-        df.set_index(datetimekey, inplace=True)
+    if not timeindex:
+        try:
+            df[datetimekey] = pd.to_datetime(df[datetimekey])
+            df.set_index(datetimekey, inplace=True)
+        except KeyError:
+            time_cols = [col for col in df.columns if np.logical_or('Time' in col, 'time' in col)]
+            key = time_cols[0]
+            df[datetimekey] = pd.to_datetime(df[key])
+            df.set_index(datetimekey, inplace=True)
     # standardize the timeseries axis to a regular frequency over a full set of days
-    diff = (df.index[1:] - df.index[:-1]).seconds
-    freq = int(np.median(diff))  # the number of seconds between each measurement
+    try:
+        diff = (df.index[1:] - df.index[:-1]).seconds
+        freq = int(np.median(diff))  # the number of seconds between each measurement
+    except AttributeError:
+        diff = df.index[1:] - df.index[:-1]
+        freq = np.median(diff) / np.timedelta64(1, 's')
     start = df.index[0]
     end = df.index[-1]
     time_index = pd.date_range(start=start.date(), end=end.date() + timedelta(days=1), freq='{}s'.format(freq))[:-1]
-    df = df.reindex(index=time_index, method='nearest')
-    return df.fillna(value=0)
+    # This forces the existing data into the closest new timestamp to the
+    # old timestamp.
+    df = df.reindex(index=time_index, method='nearest', limit=1)
+    return df
 
-def make_2d(df, key='dc_power'):
+def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True):
     '''
     This function constructs a 2D array (or matrix) from a time series signal with a standardized time axis. The data is
     chunked into days, and each consecutive day becomes a column of the matrix.
@@ -61,8 +68,34 @@ def make_2d(df, key='dc_power'):
         days = df.resample('D').max().index[1:-1]
         start = days[0]
         end = days[-1]
-        n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
-        D = df[key].loc[start:end].iloc[:-1].values.reshape(n_steps, -1, order='F')
+        try:
+            n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
+        except AttributeError:
+            # No frequency defined for index. Attempt to infer
+            freq_ns = np.median(df.index[1:] - df.index[:-1])
+            n_steps = int(freq_ns / np.timedelta64(1, 's'))
+        D = np.copy(df[key].loc[start:end].iloc[:-1].values.reshape(n_steps, -1, order='F'))
+        if zero_nighttime:
+            try:
+                with np.errstate(invalid='ignore'):
+                    night_msk = D < 0.005 * np.max(D[~np.isnan(D)])
+            except ValueError:
+                night_msk = D < 0.005 * np.max(D)
+            D[night_msk] = np.nan
+            good_vals = (~np.isnan(D)).astype(int)
+            sunrise_idxs = np.argmax(good_vals, axis=0)
+            sunset_idxs = D.shape[0] - np.argmax(np.flip(good_vals, 0), axis=0)
+            D_msk = np.zeros_like(D, dtype=np.bool)
+            for ix in range(D.shape[1]):
+                if sunrise_idxs[ix] > 0:
+                    D_msk[:sunrise_idxs[ix] - 1, ix] = True
+                    D_msk[sunset_idxs[ix] + 1:, ix] = True
+                else:
+                    D_msk[:, ix] = True
+            D[D_msk] = 0
+        if interp_missing:
+            D_df = pd.DataFrame(data=D)
+            D = D_df.interpolate().values
         return D
     else:
         return
