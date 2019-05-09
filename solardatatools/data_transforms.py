@@ -13,7 +13,9 @@ from scipy.signal import argrelextrema
 from sklearn.neighbors.kde import KernelDensity
 
 from solardatatools.clear_day_detection import find_clear_days
-from solardatatools.utilities import total_variation_filter, total_variation_plus_seasonal_filter
+from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
+from solardatatools.utilities import total_variation_filter,\
+    total_variation_plus_seasonal_filter, basic_outlier_filter
 
 def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     '''
@@ -101,7 +103,7 @@ def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True):
         return
 
 def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True,
-                    c1=10., c2=500., c3=5.):
+                    c1=10., c2=500., c3=5., solar_noon_estimator='com'):
     '''
     This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
     that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
@@ -129,16 +131,21 @@ def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True
     # Part 1: Detecting the days on which shifts occurs. If no shifts are detected, the algorithm exits, returning
     # the original data array. Otherwise, the algorithm proceeds to Part 2.
     #################################################################################################################
-    # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
-    div1 = np.dot(np.linspace(0, 24, D.shape[0]), D)
-    div2 = np.sum(D, axis=0)
-    s1 = np.empty_like(div1)
-    s1[:] = np.nan
-    msk = div2 != 0
-    s1[msk] = np.divide(div1[msk], div2[msk])
+    if solar_noon_estimator == 'com':
+        # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
+        s1 = energy_com(D)
+    elif solar_noon_estimator = 'srsn':
+        # estimate solar noon as the average of sunrise time and sunset time
+        s1 = avg_sunrise_sunset(D)
     # Apply a clear day filter
     if clear_day_filter:
         m = find_clear_days(D)
+        # Filter our obvious outliers in the solar noon / center of mass signal
+        msk = basic_outlier_filter(s1[m])
+        idxs = np.arange(D.shape[1])
+        m[idxs[m][~msk]] = False
+        # only keep the entries of the solar noon signal that correspond to clear
+        # days that are not outliers
         s1_f = np.empty_like(s1)
         s1_f[:] = np.nan
         s1_f[m] = s1[m]
