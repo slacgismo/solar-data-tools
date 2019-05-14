@@ -134,7 +134,7 @@ def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True
     if solar_noon_estimator == 'com':
         # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
         s1 = energy_com(D)
-    elif solar_noon_estimator = 'srsn':
+    elif solar_noon_estimator == 'srsn':
         # estimate solar noon as the average of sunrise time and sunset time
         s1 = avg_sunrise_sunset(D)
     # Apply a clear day filter
