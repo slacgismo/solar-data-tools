@@ -17,6 +17,66 @@ from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 from solardatatools.utilities import total_variation_filter,\
     total_variation_plus_seasonal_filter, basic_outlier_filter
 
+
+def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
+                     value_key='meas_val_f', name_key='meas_name',
+                     groupby_keys=['site', 'sensor'],
+                     filter_length=200):
+    '''
+    Accepts a Pandas data frame extracted from a relational or Cassandra database.
+    These queries often result in data with repeated timestamps, as you might
+    have multiple columns stacked into rows in the database. Defaults are
+    intended to work with GISMo's VADER Cassandra database implementation.
+
+    Returns a data frame with a single timestamp
+    index and the data from different systems split into columns.
+
+    :param df: A Pandas data from generated from a query the VADER Cassandra database
+    :param return_keys: If true, return the mapping from data column names to site and system ID
+    :param localize_time: If non-zero, localize the time stamps. Default is PST or UTC-8
+    :param filter_length: The number of non-null data values a single system must have to be included in the output
+    :return: A time-series data frame
+    '''
+    # Make sure that the timestamps are monotonically increasing. There may be
+    # missing or repeated time stamps
+    df.sort_values(timestamp_key, inplace=True)
+    # Determine the start and end times
+    start = df.iloc[0][timestamp_key]
+    end = df.iloc[-1][timestamp_key]
+    time_index = pd.to_datetime(df['ts'].sort_values())
+    time_index = time_index[~time_index.duplicated(keep='first')]
+    output = pd.DataFrame(index=time_index)
+    site_keys = []
+    site_keys_a = site_keys.append
+    grouped = df.groupby(groupby_keys)
+    keys = grouped.groups.keys()
+    counter = 1
+    for key in keys:
+        df_view = df.loc[grouped.groups[key]]
+        ############## data cleaning ####################################
+        #df_view = df_view[pd.notnull(df_view[value_key])]               # Drop records with nulls
+        df_view.set_index(timestamp_key, inplace=True)                  # Make the timestamp column the index
+        df_view.index = pd.to_datetime(df_view.index)
+        df_view.sort_index(inplace=True)                                # Sort on time
+        df_view = df_view[~df_view.index.duplicated(keep='first')]      # Drop duplicate times
+        df_view.reindex(index=time_index, method=None)                  # Match the master index, interp missing
+        #################################################################
+        meas_name = str(df_view[name_key][0])
+        col_name = meas_name + '_{:02}'.format(counter)
+        output[col_name] = df_view[value_key]
+        if output[col_name].count() > filter_length:  # final filter on low data count relative to time index
+            site_keys_a((key, col_name))
+            counter += 1
+        else:
+            del output[col_name]
+    if localize_time:
+        output.index = output.index + pd.Timedelta(hours=localize_time)  # Localize time
+
+    if return_keys:
+        return output, site_keys
+    else:
+        return output
+
 def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     '''
     This function takes in a pandas data frame containing tabular time series data, likely generated with a call to
