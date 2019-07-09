@@ -117,7 +117,8 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     df = df.reindex(index=time_index, method='nearest', limit=1)
     return df
 
-def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True):
+def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True,
+            trim=True):
     '''
     This function constructs a 2D array (or matrix) from a time series signal with a standardized time axis. The data is
     chunked into days, and each consecutive day becomes a column of the matrix.
@@ -135,7 +136,8 @@ def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True):
         except AttributeError:
             # No frequency defined for index. Attempt to infer
             freq_ns = np.median(df.index[1:] - df.index[:-1])
-            n_steps = int(freq_ns / np.timedelta64(1, 's'))
+            freq_delta_seconds = int(freq_ns / np.timedelta64(1, 's'))
+            n_steps = int(24 * 60 * 60 / freq_delta_seconds)
         D = np.copy(df[key].loc[start:end].iloc[:-1].values.reshape(n_steps, -1, order='F'))
         if zero_nighttime:
             try:
