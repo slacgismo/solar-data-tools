@@ -10,6 +10,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None):
+    """
+    A function for plotting the power heat map for solar power data
+    
+    :param D: PV power data arranged as a matrix, typically the output of
+        `data_transforms.make_2d()`
+    :param figsize: the size of the desired figure (passed to `matplotlib`)
+    :param units: the units of the power data
+    :param clear_days: a boolean array marking the location of clear days in
+        the data set, typically the output of `clear_day_detection.find_clear_days()`
+    :return: `matplotlib` figure
+    """
     if D is not None:
         with sns.axes_style("white"):
             fig, ax = plt.subplots(nrows=1, figsize=figsize)
