@@ -1,13 +1,14 @@
 {% set name = "solar-data-tools" %}
 {% set version = "0.1.3" %}
 
+
 package:
   name: "{{ name|lower }}"
   version: "{{ version }}"
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: d860db8535eb1e5aac91d42534c4255a597edc8346297695517c364d01be251e
+  sha256: 2992bf86342ade9a82c730efdf28e94aca7163239d9d561d31318cdcb1844001
 
 build:
   number: 0
