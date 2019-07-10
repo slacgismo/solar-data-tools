@@ -118,7 +118,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     return df
 
 def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True,
-            trim=True):
+            trim_start=True, trim_end=True):
     '''
     This function constructs a 2D array (or matrix) from a time series signal with a standardized time axis. The data is
     chunked into days, and each consecutive day becomes a column of the matrix.
@@ -128,9 +128,7 @@ def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True,
     :return: A 2D numpy array with shape (measurements per day, days in data set)
     '''
     if df is not None:
-        days = df.resample('D').max().index[1:-1]
-        start = days[0]
-        end = days[-1]
+        days = df.resample('D').max().index
         try:
             n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
         except AttributeError:
@@ -138,7 +136,15 @@ def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True,
             freq_ns = np.median(df.index[1:] - df.index[:-1])
             freq_delta_seconds = int(freq_ns / np.timedelta64(1, 's'))
             n_steps = int(24 * 60 * 60 / freq_delta_seconds)
-        D = np.copy(df[key].loc[start:end].iloc[:-1].values.reshape(n_steps, -1, order='F'))
+        if not trim_start:
+            start = days[0].strftime('%Y-%m-%d')
+        else:
+            start = days[1].strftime('%Y-%m-%d')
+        if not trim_end:
+            end = days[-1].strftime('%Y-%m-%d')
+        else:
+            end = days[-2].strftime('%Y-%m-%d')
+        D = np.copy(df[key].loc[start:end].values.reshape(n_steps, -1, order='F'))
         if zero_nighttime:
             try:
                 with np.errstate(invalid='ignore'):
