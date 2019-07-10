@@ -1,14 +1,23 @@
 dist: xenial
 language: python
+
 python:
   - "3.6"
   - "3.7"
+
 install:
   - pip install numpy>=1.16
   - pip install -r requirements.txt
+  - pip install awscli
+  - pip install -f https://download.mosek.com/stable/wheel/index.html Mosek
+
+before_script:
+  - .travis/setup_mosek.sh
+
 script:
   - pip install coverage
   - coverage run -m unittest
+
 after_success:
   - pip install codecov
   - codecov
