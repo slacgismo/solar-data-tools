@@ -13,9 +13,71 @@ from scipy.signal import argrelextrema
 from sklearn.neighbors.kde import KernelDensity
 
 from solardatatools.clear_day_detection import find_clear_days
-from solardatatools.utilities import total_variation_filter, total_variation_plus_seasonal_filter
+from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
+from solardatatools.utilities import total_variation_filter,\
+    total_variation_plus_seasonal_filter, basic_outlier_filter
 
-def standardize_time_axis(df, datetimekey='Date-Time'):
+
+def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
+                     value_key='meas_val_f', name_key='meas_name',
+                     groupby_keys=['site', 'sensor'],
+                     filter_length=200):
+    '''
+    Accepts a Pandas data frame extracted from a relational or Cassandra database.
+    These queries often result in data with repeated timestamps, as you might
+    have multiple columns stacked into rows in the database. Defaults are
+    intended to work with GISMo's VADER Cassandra database implementation.
+
+    Returns a data frame with a single timestamp
+    index and the data from different systems split into columns.
+
+    :param df: A Pandas data from generated from a query the VADER Cassandra database
+    :param return_keys: If true, return the mapping from data column names to site and system ID
+    :param localize_time: If non-zero, localize the time stamps. Default is PST or UTC-8
+    :param filter_length: The number of non-null data values a single system must have to be included in the output
+    :return: A time-series data frame
+    '''
+    # Make sure that the timestamps are monotonically increasing. There may be
+    # missing or repeated time stamps
+    df.sort_values(timestamp_key, inplace=True)
+    # Determine the start and end times
+    start = df.iloc[0][timestamp_key]
+    end = df.iloc[-1][timestamp_key]
+    time_index = pd.to_datetime(df['ts'].sort_values())
+    time_index = time_index[~time_index.duplicated(keep='first')]
+    output = pd.DataFrame(index=time_index)
+    site_keys = []
+    site_keys_a = site_keys.append
+    grouped = df.groupby(groupby_keys)
+    keys = grouped.groups.keys()
+    counter = 1
+    for key in keys:
+        df_view = df.loc[grouped.groups[key]]
+        ############## data cleaning ####################################
+        #df_view = df_view[pd.notnull(df_view[value_key])]               # Drop records with nulls
+        df_view.set_index(timestamp_key, inplace=True)                  # Make the timestamp column the index
+        df_view.index = pd.to_datetime(df_view.index)
+        df_view.sort_index(inplace=True)                                # Sort on time
+        df_view = df_view[~df_view.index.duplicated(keep='first')]      # Drop duplicate times
+        df_view.reindex(index=time_index, method=None)                  # Match the master index, interp missing
+        #################################################################
+        meas_name = str(df_view[name_key][0])
+        col_name = meas_name + '_{:02}'.format(counter)
+        output[col_name] = df_view[value_key]
+        if output[col_name].count() > filter_length:  # final filter on low data count relative to time index
+            site_keys_a((key, col_name))
+            counter += 1
+        else:
+            del output[col_name]
+    if localize_time:
+        output.index = output.index + pd.Timedelta(hours=localize_time)  # Localize time
+
+    if return_keys:
+        return output, site_keys
+    else:
+        return output
+
+def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     '''
     This function takes in a pandas data frame containing tabular time series data, likely generated with a call to
     pandas.read_csv(). It is assumed that each row of the data frame corresponds to a unique date-time, though not
@@ -31,24 +93,32 @@ def standardize_time_axis(df, datetimekey='Date-Time'):
     :return: A new data frame with a standardized time axis
     '''
     # convert index to timeseries
-    try:
-        df[datetimekey] = pd.to_datetime(df[datetimekey])
-        df.set_index('Date-Time', inplace=True)
-    except KeyError:
-        time_cols = [col for col in df.columns if np.logical_or('Time' in col, 'time' in col)]
-        key = time_cols[0]
-        df[datetimekey] = pd.to_datetime(df[key])
-        df.set_index(datetimekey, inplace=True)
+    if not timeindex:
+        try:
+            df[datetimekey] = pd.to_datetime(df[datetimekey])
+            df.set_index(datetimekey, inplace=True)
+        except KeyError:
+            time_cols = [col for col in df.columns if np.logical_or('Time' in col, 'time' in col)]
+            key = time_cols[0]
+            df[datetimekey] = pd.to_datetime(df[key])
+            df.set_index(datetimekey, inplace=True)
     # standardize the timeseries axis to a regular frequency over a full set of days
-    diff = (df.index[1:] - df.index[:-1]).seconds
-    freq = int(np.median(diff))  # the number of seconds between each measurement
+    try:
+        diff = (df.index[1:] - df.index[:-1]).seconds
+        freq = int(np.median(diff))  # the number of seconds between each measurement
+    except AttributeError:
+        diff = df.index[1:] - df.index[:-1]
+        freq = np.median(diff) / np.timedelta64(1, 's')
     start = df.index[0]
     end = df.index[-1]
     time_index = pd.date_range(start=start.date(), end=end.date() + timedelta(days=1), freq='{}s'.format(freq))[:-1]
-    df = df.reindex(index=time_index, method='nearest')
-    return df.fillna(value=0)
+    # This forces the existing data into the closest new timestamp to the
+    # old timestamp.
+    df = df.reindex(index=time_index, method='nearest', limit=1)
+    return df
 
-def make_2d(df, key='dc_power'):
+def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True,
+            trim_start=True, trim_end=True):
     '''
     This function constructs a 2D array (or matrix) from a time series signal with a standardized time axis. The data is
     chunked into days, and each consecutive day becomes a column of the matrix.
@@ -58,17 +128,50 @@ def make_2d(df, key='dc_power'):
     :return: A 2D numpy array with shape (measurements per day, days in data set)
     '''
     if df is not None:
-        days = df.resample('D').max().index[1:-1]
-        start = days[0]
-        end = days[-1]
-        n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
-        D = df[key].loc[start:end].iloc[:-1].values.reshape(n_steps, -1, order='F')
+        days = df.resample('D').max().index
+        try:
+            n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
+        except AttributeError:
+            # No frequency defined for index. Attempt to infer
+            freq_ns = np.median(df.index[1:] - df.index[:-1])
+            freq_delta_seconds = int(freq_ns / np.timedelta64(1, 's'))
+            n_steps = int(24 * 60 * 60 / freq_delta_seconds)
+        if not trim_start:
+            start = days[0].strftime('%Y-%m-%d')
+        else:
+            start = days[1].strftime('%Y-%m-%d')
+        if not trim_end:
+            end = days[-1].strftime('%Y-%m-%d')
+        else:
+            end = days[-2].strftime('%Y-%m-%d')
+        D = np.copy(df[key].loc[start:end].values.reshape(n_steps, -1, order='F'))
+        if zero_nighttime:
+            try:
+                with np.errstate(invalid='ignore'):
+                    night_msk = D < 0.005 * np.max(D[~np.isnan(D)])
+            except ValueError:
+                night_msk = D < 0.005 * np.max(D)
+            D[night_msk] = np.nan
+            good_vals = (~np.isnan(D)).astype(int)
+            sunrise_idxs = np.argmax(good_vals, axis=0)
+            sunset_idxs = D.shape[0] - np.argmax(np.flip(good_vals, 0), axis=0)
+            D_msk = np.zeros_like(D, dtype=np.bool)
+            for ix in range(D.shape[1]):
+                if sunrise_idxs[ix] > 0:
+                    D_msk[:sunrise_idxs[ix] - 1, ix] = True
+                    D_msk[sunset_idxs[ix] + 1:, ix] = True
+                else:
+                    D_msk[:, ix] = True
+            D[D_msk] = 0
+        if interp_missing:
+            D_df = pd.DataFrame(data=D)
+            D = D_df.interpolate().values
         return D
     else:
         return
 
 def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True,
-                    c1=10., c2=500., c3=5.):
+                    c1=10., c2=500., c3=5., solar_noon_estimator='com'):
     '''
     This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
     that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
@@ -96,16 +199,21 @@ def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True
     # Part 1: Detecting the days on which shifts occurs. If no shifts are detected, the algorithm exits, returning
     # the original data array. Otherwise, the algorithm proceeds to Part 2.
     #################################################################################################################
-    # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
-    div1 = np.dot(np.linspace(0, 24, D.shape[0]), D)
-    div2 = np.sum(D, axis=0)
-    s1 = np.empty_like(div1)
-    s1[:] = np.nan
-    msk = div2 != 0
-    s1[msk] = np.divide(div1[msk], div2[msk])
+    if solar_noon_estimator == 'com':
+        # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
+        s1 = energy_com(D)
+    elif solar_noon_estimator == 'srsn':
+        # estimate solar noon as the average of sunrise time and sunset time
+        s1 = avg_sunrise_sunset(D)
     # Apply a clear day filter
     if clear_day_filter:
         m = find_clear_days(D)
+        # Filter our obvious outliers in the solar noon / center of mass signal
+        msk = basic_outlier_filter(s1[m])
+        idxs = np.arange(D.shape[1])
+        m[idxs[m][~msk]] = False
+        # only keep the entries of the solar noon signal that correspond to clear
+        # days that are not outliers
         s1_f = np.empty_like(s1)
         s1_f[:] = np.nan
         s1_f[m] = s1[m]

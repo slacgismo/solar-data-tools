@@ -32,3 +32,6 @@ class TestOutlierFilter(unittest.TestCase):
         msk = basic_outlier_filter(x)
         self.assertEqual(np.sum(~msk), 1)
         self.assertAlmostEqual(x[~msk][0], 2.4835707650561636)
+
+if __name__ == '__main__':
+    unittest.main()
