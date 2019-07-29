@@ -17,6 +17,16 @@ from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 from solardatatools.utilities import total_variation_filter,\
     total_variation_plus_seasonal_filter, basic_outlier_filter
 
+TZ_LOOKUP = {
+    'America/Anchorage': 9,
+    'America/Chicago': 6,
+    'America/Denver': 7,
+    'America/Los_Angeles': 8,
+    'America/New_York': 5,
+    'America/Phoenix': 7,
+    'Pacific/Honolulu': 10
+}
+
 
 def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
                      value_key='meas_val_f', name_key='meas_name',
@@ -116,6 +126,18 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     # old timestamp.
     df = df.reindex(index=time_index, method='nearest', limit=1)
     return df
+
+def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=False):
+    index = df.index.tz_localize(tz)\
+                .tz_convert('Etc/GMT+{}'.format(TZ_LOOKUP[tz]))\
+                .tz_localize(None)
+    if inplace:
+        df.index = index
+        return
+    else:
+        df_out = df.copy()
+        df_out.index = index
+        return df_out
 
 def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True,
                     c1=10., c2=500., c3=5., solar_noon_estimator='com'):

@@ -4,7 +4,7 @@
 This module contains functions for obtaining data from various sources.
 
 '''
-from solardatatools.data_transforms import standardize_time_axis
+from solardatatools.time_axis_manipulation import standardize_time_axis
 from solardatatools.utilities import progress
 
 from time import time
