@@ -1,5 +1,5 @@
 from solardatatools.data_transforms import standardize_time_axis
-from solardatatools.data_transforms import make_2d
+from solardatatools.matrix_embedding import make_2d
 from solardatatools.data_transforms import fix_time_shifts
 from solardatatools.data_transforms import make_time_series
 from solardatatools.clear_day_detection import find_clear_days

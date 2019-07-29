@@ -2,7 +2,7 @@ import unittest
 import os
 import numpy as np
 import pandas as pd
-from solardatatools.data_transforms import standardize_time_axis, make_2d
+from solardatatools import standardize_time_axis, make_2d
 
 class TestStandardizeTimeAxis(unittest.TestCase):
 
