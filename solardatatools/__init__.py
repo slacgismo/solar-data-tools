@@ -5,4 +5,5 @@ from solardatatools.time_axis_manipulation import fix_time_shifts
 from solardatatools.time_axis_manipulation import make_time_series
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.dataio import get_pvdaq_data
+from solardatatools.dataio import load_pvo_data
 from solardatatools.plotting import plot_2d

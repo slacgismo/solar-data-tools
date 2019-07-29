@@ -4,7 +4,8 @@
 This module contains functions for obtaining data from various sources.
 
 '''
-from solardatatools.time_axis_manipulation import standardize_time_axis
+from solardatatools.time_axis_manipulation import standardize_time_axis,\
+    fix_daylight_savings_with_known_tz
 from solardatatools.utilities import progress
 
 from time import time
@@ -54,4 +55,29 @@ def get_pvdaq_data(sysid=2, api_key = 'DEMO_KEY', year=2011, delim=',',
     df = pd.concat(df_list, axis=0, sort=True)
     if standardize:
         df = standardize_time_axis(df, datetimekey='Date-Time', timeindex=False)
+    return df
+
+
+def load_pvo_data(n=None, id_num=None, location='s3://pv.insight.nrel/PVO/',
+                  verbose=True):
+    """
+    Wrapper function for loading data from NREL partnership. This data is in a
+    secure, private S3 bucket for use by the GISMo team only.
+
+    :param n:
+    :param id_num:
+    :param location:
+    :return:
+    """
+    meta = pd.read_csv(location + 'sys_meta.csv')
+    if id_num is None:
+        id_num = meta['ID'][n]
+    else:
+        n = meta[meta['ID'] == id_num].index[0]
+    tz = meta['TimeZone'][n]
+    df = pd.read_csv(location + 'PVOutput/{}.csv'.format(id_num), index_col=0,
+                     parse_dates=[0], usecols=[1, 3])
+    fix_daylight_savings_with_known_tz(df, tz=tz, inplace=True)
+    if verbose:
+        print('index: {}; system ID: {}'.format(n, id_num))
     return df
