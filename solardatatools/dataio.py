@@ -58,26 +58,49 @@ def get_pvdaq_data(sysid=2, api_key = 'DEMO_KEY', year=2011, delim=',',
     return df
 
 
-def load_pvo_data(n=None, id_num=None, location='s3://pv.insight.nrel/PVO/',
+def load_pvo_data(file_index=None, id_num=None, location='s3://pv.insight.nrel/PVO/',
+                  metadata_fn='sys_meta.csv', data_fn_pattern='PVOutput/{}.csv',
+                  index_col=0, parse_dates=[0], usecols=[1, 3], fix_dst=True,
+                  tz_column='TimeZone', id_column='ID',
                   verbose=True):
     """
     Wrapper function for loading data from NREL partnership. This data is in a
-    secure, private S3 bucket for use by the GISMo team only.
+    secure, private S3 bucket for use by the GISMo team only. However, the
+    function can be used to load any data that is a collection of CSV files
+    with a single metadata file. The metadata file contains a sequential file
+    index as well as a unique system ID number for each site. Either of these
+    may be set by the user to retreive data, but the ID number will take
+    precedent if both are provided. The data files are assumed to be uniquely
+    identified by the system ID number. In addition, the metadata file contains
+    a column with time zone information for fixing daylight savings time.
 
-    :param n:
-    :param id_num:
-    :param location:
-    :return:
+    :param file_index: the sequential index number of the system
+    :param id_num: the system ID number (non-sequential)
+    :param location: string identifying the directory containing the data
+    :param metadata_fn: the location of the metadata file
+    :param data_fn_pattern: the pattern of data file identification
+    :param index_col: the column containing the index (see: pandas.read_csv)
+    :param parse_dates: list of columns to parse dates (see: pandas.read_csv)
+    :param usecols: columns to load from file (see: pandas.read_csv)
+    :param fix_dst: boolean, if true, use provided timezone information to
+        correct for daylight savings time in data
+    :param tz_column: the column name in the metadata file that contains the
+        timezone information
+    :param id_column: the column name in the metadata file that contains the
+        unique system ID information
+    :param verbose: boolean, print information about retreived file
+    :return: pandas dataframe containing system power data
     """
-    meta = pd.read_csv(location + 'sys_meta.csv')
+    meta = pd.read_csv(location + metadata_fn)
     if id_num is None:
-        id_num = meta['ID'][n]
+        id_num = meta[id_column][file_index]
     else:
-        n = meta[meta['ID'] == id_num].index[0]
-    tz = meta['TimeZone'][n]
-    df = pd.read_csv(location + 'PVOutput/{}.csv'.format(id_num), index_col=0,
-                     parse_dates=[0], usecols=[1, 3])
-    fix_daylight_savings_with_known_tz(df, tz=tz, inplace=True)
+        file_index = meta[meta[id_column] == id_num].index[0]
+    df = pd.read_csv(location + data_fn_pattern.format(id_num), index_col=index_col,
+                     parse_dates=parse_dates, usecols=usecols)
+    if fix_dst:
+        tz = meta[tz_column][file_index]
+        fix_daylight_savings_with_known_tz(df, tz=tz, inplace=True)
     if verbose:
-        print('index: {}; system ID: {}'.format(n, id_num))
+        print('index: {}; system ID: {}'.format(id_num, id_num))
     return df
