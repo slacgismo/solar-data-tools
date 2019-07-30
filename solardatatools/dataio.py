@@ -102,5 +102,5 @@ def load_pvo_data(file_index=None, id_num=None, location='s3://pv.insight.nrel/P
         tz = meta[tz_column][file_index]
         fix_daylight_savings_with_known_tz(df, tz=tz, inplace=True)
     if verbose:
-        print('index: {}; system ID: {}'.format(id_num, id_num))
+        print('index: {}; system ID: {}'.format(file_index, id_num))
     return df
