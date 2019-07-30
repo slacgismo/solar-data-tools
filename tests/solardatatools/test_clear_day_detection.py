@@ -55,5 +55,6 @@ class TestClearDayDetection(unittest.TestCase):
                 + "because default ECOS solver fails with large data. "
                 + "Unless MOSEK is installed, this test fails.")
         else:
-            np.testing.assert_array_equal(expected_output,
-                                          actual_output)
+            np.testing.assert_array_almost_equal(expected_output,
+                                                 actual_output,
+                                                 4)
