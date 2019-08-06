@@ -1,0 +1,54 @@
+version: 2
+
+368_config: &368_config
+  docker:
+    - image: circleci/python:3.6.8
+
+jobs:
+  build:
+    <<: *368_config
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: |
+            sudo pip install -r requirements.txt
+            sudo pip install awscli coverage
+            sudo pip install -f https://download.mosek.com/stable/wheel/index.html Mosek==8.1.43
+      
+      - run:
+          name: Setup Mosek License File
+          command: |
+            sudo mkdir /root/mosek
+            mkdir $HOME/mosek
+            aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
+            sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
+      
+      - run:
+          name: Run Unit Tests
+          command: sudo coverage run -m unittest
+  
+  deploy:
+    <<: *368_config
+    steps:
+      - checkout
+      - run:
+          name: Perform deploy steps!
+          command: echo I need passwords and deploy steps
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build:
+          filters:  
+            tags:
+              only: /.*/
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /^v.\d+\.\d+\.\d+$/
