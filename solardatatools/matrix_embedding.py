@@ -2,7 +2,7 @@
 ''' Matrix Embedding Module
 
 This module contains functions for embedding PV power time series data into
-a mtraix
+a matrix
 
 '''
 
