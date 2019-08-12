@@ -24,7 +24,8 @@ TZ_LOOKUP = {
     'America/Los_Angeles': 8,
     'America/New_York': 5,
     'America/Phoenix': 7,
-    'Pacific/Honolulu': 10
+    'Pacific/Honolulu': 10,
+    'Canada/Central': 6
 }
 
 
@@ -115,20 +116,22 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     # standardize the timeseries axis to a regular frequency over a full set of days
     try:
         diff = (df.index[1:] - df.index[:-1]).seconds
-        freq = int(np.median(diff))  # the number of seconds between each measurement
+        freq = int(np.median(diff[~np.isnan(diff)]))  # the number of seconds between each measurement
     except AttributeError:
         diff = df.index[1:] - df.index[:-1]
         freq = np.median(diff) / np.timedelta64(1, 's')
     start = df.index[0]
     end = df.index[-1]
+
     time_index = pd.date_range(start=start.date(), end=end.date() + timedelta(days=1), freq='{}s'.format(freq))[:-1]
     # This forces the existing data into the closest new timestamp to the
     # old timestamp.
-    df = df.reindex(index=time_index, method='nearest', limit=1)
+    df = df.loc[df.index.notnull()]\
+            .reindex(index=time_index, method='nearest', limit=1)
     return df
 
 def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=False):
-    index = df.index.tz_localize(tz)\
+    index = df.index.tz_localize(tz, errors='coerce', ambiguous='NaT')\
                 .tz_convert('Etc/GMT+{}'.format(TZ_LOOKUP[tz]))\
                 .tz_localize(None)
     if inplace:
