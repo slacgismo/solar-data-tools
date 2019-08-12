@@ -7,10 +7,8 @@ a matrix
 '''
 
 import numpy as np
-import pandas as pd
 
-def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True,
-            trim_start=True, trim_end=True):
+def make_2d(df, key='dc_power', trim_start=True, trim_end=True):
     '''
     This function constructs a 2D array (or matrix) from a time series signal with a standardized time axis. The data is
     chunked into days, and each consecutive day becomes a column of the matrix.
@@ -37,27 +35,6 @@ def make_2d(df, key='dc_power', zero_nighttime=True, interp_missing=True,
         else:
             end = days[-2].strftime('%Y-%m-%d')
         D = np.copy(df[key].loc[start:end].values.reshape(n_steps, -1, order='F'))
-        if zero_nighttime:
-            try:
-                with np.errstate(invalid='ignore'):
-                    night_msk = D < 0.005 * np.max(D[~np.isnan(D)])
-            except ValueError:
-                night_msk = D < 0.005 * np.max(D)
-            D[night_msk] = np.nan
-            good_vals = (~np.isnan(D)).astype(int)
-            sunrise_idxs = np.argmax(good_vals, axis=0)
-            sunset_idxs = D.shape[0] - np.argmax(np.flip(good_vals, 0), axis=0)
-            D_msk = np.zeros_like(D, dtype=np.bool)
-            for ix in range(D.shape[1]):
-                if sunrise_idxs[ix] > 0:
-                    D_msk[:sunrise_idxs[ix] - 1, ix] = True
-                    D_msk[sunset_idxs[ix] + 1:, ix] = True
-                else:
-                    D_msk[:, ix] = True
-            D[D_msk] = 0
-        if interp_missing:
-            D_df = pd.DataFrame(data=D)
-            D = D_df.interpolate().values
         return D
     else:
         return
