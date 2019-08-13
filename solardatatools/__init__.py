@@ -7,3 +7,4 @@ from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.dataio import get_pvdaq_data
 from solardatatools.dataio import load_pvo_data
 from solardatatools.plotting import plot_2d
+from solardatatools.data_handler import DataHandler
