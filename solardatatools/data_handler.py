@@ -139,7 +139,7 @@ class DataHandler():
             plt.title('Measured power, cloudy days flagged')
             return fig
 
-    def plot_density_signal(self, flag=None, show_fit=True, figsize=(8, 6)):
+    def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
         if self.density_signal is None:
             return
         fig = plt.figure(figsize=figsize)
