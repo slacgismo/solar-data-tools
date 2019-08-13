@@ -14,6 +14,7 @@ from solardatatools.data_quality import daily_missing_data_advanced,\
     daily_missing_data_simple, dataset_quality_score
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.plotting import plot_2d
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -27,6 +28,7 @@ class DataHandler():
         self.clear_day_score = None
         self.daily_density_flag = None
         self.daily_clear_flag = None
+        self.daily_cloudy_flag = None
         self.density_signal = None
         self.daily_energy_signal = None
         if np.alltrue([data_frame is not None, convert_to_ts]):
@@ -96,6 +98,41 @@ class DataHandler():
             find_clear_days(self.filled_data_matrix),
             self.daily_density_flag
         )
+        self.daily_cloudy_flag = np.logical_and(
+            ~self.daily_clear_flag,
+            self.daily_density_flag
+        )
+        return
+
+    def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6)):
+        if matrix == 'raw':
+            mat = self.raw_data_matrix
+        elif matrix == 'filled':
+            mat = self.filled_data_matrix
+        else:
+            return
+        if flag is None:
+            return plot_2d(mat, figsize=figsize)
+        elif flag == 'good':
+            fig = plot_2d(mat, figsize=figsize,
+                           clear_days=self.daily_density_flag)
+            plt.title('Measured power, good days flagged')
+            return fig
+        elif flag == 'bad':
+            fig = plot_2d(mat, figsize=figsize,
+                          clear_days=~self.daily_density_flag)
+            plt.title('Measured power, bad days flagged')
+            return fig
+        elif flag in ['clear', 'sunny']:
+            fig = plot_2d(mat, figsize=figsize,
+                          clear_days=self.daily_clear_flag)
+            plt.title('Measured power, clear days flagged')
+            return fig
+        elif flag == 'cloudy':
+            fig = plot_2d(mat, figsize=figsize,
+                          clear_days=self.daily_cloudy_flag)
+            plt.title('Measured power, cloudy days flagged')
+            return fig
 
     def plot_density_signal(self, flag=None, figsize=(8, 6)):
         if self.density_signal is None:
@@ -103,26 +140,28 @@ class DataHandler():
         fig = plt.figure(figsize=figsize)
         plt.plot(self.density_signal)
         xs = np.arange(len(self.density_signal))
+        title = 'Daily signal density'
         if flag == 'good':
             plt.scatter(xs[self.daily_density_flag],
                         self.density_signal[self.daily_density_flag],
                         color='red')
+            title += ', good days flagged'
         elif flag == 'bad':
             plt.scatter(xs[~self.daily_density_flag],
                         self.density_signal[~self.daily_density_flag],
                         color='red')
-        elif flag == 'sunny':
+            title += ', bad days flagged'
+        elif flag in ['clear', 'sunny']:
             plt.scatter(xs[self.daily_clear_flag],
                         self.density_signal[self.daily_clear_flag],
                         color='red')
+            title += ', clear days flagged'
         elif flag == 'cloudy':
-            msk = np.logical_and(
-                ~self.daily_clear_flag,
-                self.daily_density_flag
-            )
-            plt.scatter(xs[msk],
-                        self.density_signal[msk],
+            plt.scatter(xs[self.daily_cloudy_flag],
+                        self.density_signal[self.daily_cloudy_flag],
                         color='red')
+            title += ', cloudy days flagged'
+        plt.title(title)
         return fig
 
 
@@ -133,24 +172,26 @@ class DataHandler():
         energy = self.daily_energy_signal
         plt.plot(energy)
         xs = np.arange(len(energy))
+        title = 'Daily energy production'
         if flag == 'good':
             plt.scatter(xs[self.daily_density_flag],
                         energy[self.daily_density_flag],
                         color='red')
+            title += ', good days flagged'
         elif flag == 'bad':
             plt.scatter(xs[~self.daily_density_flag],
                         energy[~self.daily_density_flag],
                         color='red')
-        elif flag == 'sunny':
+            title += ', bad days flagged'
+        elif flag in ['clear', 'sunny']:
             plt.scatter(xs[self.daily_clear_flag],
                         energy[self.daily_clear_flag],
                         color='red')
+            title += ', clear days flagged'
         elif flag == 'cloudy':
-            msk = np.logical_and(
-                ~self.daily_clear_flag,
-                self.daily_density_flag
-            )
-            plt.scatter(xs[msk],
-                        energy[msk],
+            plt.scatter(xs[self.daily_cloudy_flag],
+                        energy[self.daily_cloudy_flag],
                         color='red')
+            title += ', cloudy days flagged'
+        plt.title(title)
         return fig
