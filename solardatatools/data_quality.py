@@ -36,7 +36,8 @@ def daily_missing_data_simple(data_matrix, threshold=0.2,
         return good_days
 
 def daily_missing_data_advanced(data_matrix, threshold=0.2,
-                                return_density_signal=False):
+                                return_density_signal=False,
+                                return_fit=False):
     nans = np.isnan(data_matrix)
     capacity_est = np.quantile(data_matrix[~nans], 0.95)
     data_copy = np.copy(data_matrix)
@@ -48,13 +49,19 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
                                                        solver='MOSEK')
     normed_signal = bar / fit_signal
     good_days = np.logical_and(
-        normed_signal < 1.2,
+        normed_signal < 1.05,
         normed_signal > 0.8
     )
+    out = [good_days]
     if return_density_signal:
-        return good_days, bar
+        out.append(bar)
+    if return_fit:
+        out.append(fit_signal)
+    if len(out) == 1:
+        out = out[0]
     else:
-        return good_days
+        out = tuple(out)
+    return out
 
 def dataset_quality_score(data_matrix, threshold=0.2, good_days=None,
                           use_advanced=True):
