@@ -6,6 +6,7 @@ This module contains a class for managing a data processing pipeline
 '''
 
 import numpy as np
+import matplotlib.pyplot as plt
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis, fix_time_shifts
 from solardatatools.matrix_embedding import make_2d
@@ -26,6 +27,8 @@ class DataHandler():
         self.clear_day_score = None
         self.daily_density_flag = None
         self.daily_clear_flag = None
+        self.density_signal = None
+        self.daily_energy_signal = None
         if np.alltrue([data_frame is not None, convert_to_ts]):
             df_ts, keys = make_time_series(self.data_frame)
             self.data_frame = df_ts
@@ -52,14 +55,16 @@ class DataHandler():
             print('Generate a raw data matrix first.')
             return
         if use_advanced:
-            self.daily_density_flag = daily_missing_data_advanced(
+            self.daily_density_flag, self.density_signal = daily_missing_data_advanced(
                 self.raw_data_matrix,
-                threshold=threshold
+                threshold=threshold,
+                return_density_signal=True
             )
         else:
-            self.daily_density_flag = daily_missing_data_simple(
+            self.daily_density_flag, self.density_signal = daily_missing_data_simple(
                 self.raw_data_matrix,
-                threshold=threshold
+                threshold=threshold,
+                return_density_signal=True
             )
         self.data_score = dataset_quality_score(self.raw_data_matrix,
                                                 good_days=self.daily_density_flag)
@@ -74,6 +79,8 @@ class DataHandler():
         else:
             msk = np.isnan(self.filled_data_matrix)
             self.filled_data_matrix[msk] = 0
+        self.daily_energy_signal = np.sum(self.filled_data_matrix, axis=0) *\
+                                   24 / self.filled_data_matrix.shape[1]
         return
 
     def auto_fix_time_shifts(self, c1=5., c2=500.):
@@ -89,3 +96,60 @@ class DataHandler():
             self.daily_density_flag
         )
 
+    def plot_density_signal(self, flag=None, figsize=(8, 6)):
+        if self.density_signal is None:
+            return
+        fig = plt.figure(figsize=figsize)
+        plt.plot(self.density_signal)
+        xs = np.arange(len(self.density_signal))
+        if flag == 'good':
+            plt.scatter(xs[self.daily_density_flag],
+                        self.density_signal[self.daily_density_flag],
+                        color='red')
+        elif flag == 'bad':
+            plt.scatter(xs[~self.daily_density_flag],
+                        self.density_signal[~self.daily_density_flag],
+                        color='red')
+        elif flag == 'sunny':
+            plt.scatter(xs[self.daily_clear_flag],
+                        self.density_signal[self.daily_clear_flag],
+                        color='red')
+        elif flag == 'cloudy':
+            msk = np.logical_and(
+                ~self.daily_clear_flag,
+                self.daily_density_flag
+            )
+            plt.scatter(xs[msk],
+                        self.density_signal[msk],
+                        color='red')
+        return fig
+
+
+    def plot_daily_energy(self, flag=None, figsize=(8, 6)):
+        if self.filled_data_matrix is None:
+            return
+        fig = plt.figure(figsize=figsize)
+        energy = self.daily_energy_signal
+        plt.plot(energy)
+        xs = np.arange(len(energy))
+        if flag == 'good':
+            plt.scatter(xs[self.daily_density_flag],
+                        energy[self.daily_density_flag],
+                        color='red')
+        elif flag == 'bad':
+            plt.scatter(xs[~self.daily_density_flag],
+                        energy[~self.daily_density_flag],
+                        color='red')
+        elif flag == 'sunny':
+            plt.scatter(xs[self.daily_clear_flag],
+                        energy[self.daily_clear_flag],
+                        color='red')
+        elif flag == 'cloudy':
+            msk = np.logical_and(
+                ~self.daily_clear_flag,
+                self.daily_density_flag
+            )
+            plt.scatter(xs[msk],
+                        energy[msk],
+                        color='red')
+        return fig
