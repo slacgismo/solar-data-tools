@@ -30,6 +30,7 @@ class DataHandler():
         self.daily_clear_flag = None
         self.daily_cloudy_flag = None
         self.density_signal = None
+        self.density_fit = None
         self.daily_energy_signal = None
         if np.alltrue([data_frame is not None, convert_to_ts]):
             df_ts, keys = make_time_series(self.data_frame)
@@ -47,8 +48,10 @@ class DataHandler():
         self.detect_clear_days()
         return
 
-    def make_data_matrix(self, use_col):
+    def make_data_matrix(self, use_col=None):
         df = standardize_time_axis(self.data_frame)
+        if use_col is None:
+            use_col = df.columns[0]
         self.raw_data_matrix = make_2d(df, key=use_col)
         self.use_column = use_col
         return
@@ -58,10 +61,12 @@ class DataHandler():
             print('Generate a raw data matrix first.')
             return
         if use_advanced:
-            self.daily_density_flag, self.density_signal = daily_missing_data_advanced(
+            self.daily_density_flag, self.density_signal, self.density_fit\
+                = daily_missing_data_advanced(
                 self.raw_data_matrix,
                 threshold=threshold,
-                return_density_signal=True
+                return_density_signal=True,
+                return_fit=True
             )
         else:
             self.daily_density_flag, self.density_signal = daily_missing_data_simple(
@@ -134,11 +139,11 @@ class DataHandler():
             plt.title('Measured power, cloudy days flagged')
             return fig
 
-    def plot_density_signal(self, flag=None, figsize=(8, 6)):
+    def plot_density_signal(self, flag=None, show_fit=True, figsize=(8, 6)):
         if self.density_signal is None:
             return
         fig = plt.figure(figsize=figsize)
-        plt.plot(self.density_signal)
+        plt.plot(self.density_signal, linewidth=1)
         xs = np.arange(len(self.density_signal))
         title = 'Daily signal density'
         if flag == 'good':
@@ -161,6 +166,8 @@ class DataHandler():
                         self.density_signal[self.daily_cloudy_flag],
                         color='red')
             title += ', cloudy days flagged'
+        if np.logical_and(show_fit, self.density_fit is not None):
+            plt.plot(self.density_fit, color='orange')
         plt.title(title)
         return fig
 
@@ -170,7 +177,7 @@ class DataHandler():
             return
         fig = plt.figure(figsize=figsize)
         energy = self.daily_energy_signal
-        plt.plot(energy)
+        plt.plot(energy, linewidth=1)
         xs = np.arange(len(energy))
         title = 'Daily energy production'
         if flag == 'good':
