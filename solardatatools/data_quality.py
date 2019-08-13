@@ -6,8 +6,9 @@ This module contains functions for identifying corrupt or bad quality data.
 '''
 
 import numpy as np
+from solardatatools.utilities import local_median_regression_with_seasonal
 
-def daily_missing_data(data_matrix, threshold=0.2):
+def daily_missing_data_simple(data_matrix, threshold=0.2):
     """
     This function takes a PV power data matrix and returns a boolean array,
     identifying good days. The good days are the ones that are not missing a
@@ -27,10 +28,28 @@ def daily_missing_data(data_matrix, threshold=0.2):
     data_copy[nans] = 0.
     foo = data_copy > 0.005 * capacity_est
     bar = np.sum(foo, axis=0) / data_matrix.shape[0]
-    return bar > threshold
+    good_days = bar > threshold
+    return good_days
 
+def daily_missing_data_advanced(data_matrix, threshold=0.2):
+    nans = np.isnan(data_matrix)
+    capacity_est = np.quantile(data_matrix[~nans], 0.95)
+    data_copy = np.copy(data_matrix)
+    data_copy[nans] = 0.
+    foo = data_copy > 0.005 * capacity_est
+    bar = np.sum(foo, axis=0) / data_matrix.shape[0]
+    use_days = bar > threshold
+    fit_signal = local_median_regression_with_seasonal(bar, use_idxs=use_days,
+                                                       solver='MOSEK')
+    normed_signal = bar / fit_signal
+    good_days = np.logical_and(
+        normed_signal < 1.2,
+        normed_signal > 0.8
+    )
+    return good_days
 
-def dataset_quality_score(data_matrix, threshold=0.2):
+def dataset_quality_score(data_matrix, threshold=0.2, good_days=None,
+                          use_advanced=True):
     """
     This function scores a complete data set. The score is the fraction of days
     in the data set that pass the missing data test. A score of 1 means all the
@@ -40,6 +59,10 @@ def dataset_quality_score(data_matrix, threshold=0.2):
     :param threshold: float, the threshold to identify good days
     :return: the score, a float between 0 and 1
     """
-    good_days = daily_missing_data(data_matrix, threshold=threshold)
+    if good_days is None:
+        if use_advanced:
+            good_days = daily_missing_data_advanced(data_matrix, threshold=threshold)
+        else:
+            good_days = daily_missing_data_simple(data_matrix, threshold=threshold)
     score = np.sum(good_days) / data_matrix.shape[1]
     return score
