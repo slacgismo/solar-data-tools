@@ -34,13 +34,14 @@ class DataHandler():
             self.data_frame = df_ts
             self.keys = keys
 
-    def run_pipeline(self, use_col=None, fix_shifts=True):
+    def run_pipeline(self, use_col=None, zero_night=True, interp_day=True,
+                     fix_shifts=True, threshold=0.2, use_advanced=True):
         if self.data_frame is not None:
             self.make_data_matrix(use_col)
-        self.make_filled_data_matrix()
+        self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         if fix_shifts:
             self.auto_fix_time_shifts()
-        self.run_density_check()
+        self.run_density_check(threshold=threshold, use_advanced=use_advanced)
         self.detect_clear_days()
         return
 
