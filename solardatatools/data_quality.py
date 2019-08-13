@@ -8,7 +8,8 @@ This module contains functions for identifying corrupt or bad quality data.
 import numpy as np
 from solardatatools.utilities import local_median_regression_with_seasonal
 
-def daily_missing_data_simple(data_matrix, threshold=0.2):
+def daily_missing_data_simple(data_matrix, threshold=0.2,
+                              return_density_signal=False):
     """
     This function takes a PV power data matrix and returns a boolean array,
     identifying good days. The good days are the ones that are not missing a
@@ -29,9 +30,13 @@ def daily_missing_data_simple(data_matrix, threshold=0.2):
     foo = data_copy > 0.005 * capacity_est
     bar = np.sum(foo, axis=0) / data_matrix.shape[0]
     good_days = bar > threshold
-    return good_days
+    if return_density_signal:
+        return good_days, bar
+    else:
+        return good_days
 
-def daily_missing_data_advanced(data_matrix, threshold=0.2):
+def daily_missing_data_advanced(data_matrix, threshold=0.2,
+                                return_density_signal=False):
     nans = np.isnan(data_matrix)
     capacity_est = np.quantile(data_matrix[~nans], 0.95)
     data_copy = np.copy(data_matrix)
@@ -46,7 +51,10 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2):
         normed_signal < 1.2,
         normed_signal > 0.8
     )
-    return good_days
+    if return_density_signal:
+        return good_days, bar
+    else:
+        return good_days
 
 def dataset_quality_score(data_matrix, threshold=0.2, good_days=None,
                           use_advanced=True):
