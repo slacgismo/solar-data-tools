@@ -6,7 +6,8 @@ This module contains functions for identifying corrupt or bad quality data.
 '''
 
 import numpy as np
-from solardatatools.utilities import local_median_regression_with_seasonal
+from solardatatools.utilities import local_median_regression_with_seasonal,\
+    local_quantile_regression_with_seasonal
 
 def daily_missing_data_simple(data_matrix, threshold=0.2,
                               return_density_signal=False):
@@ -45,12 +46,12 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
     foo = data_copy > 0.005 * capacity_est
     bar = np.sum(foo, axis=0) / data_matrix.shape[0]
     use_days = bar > threshold
-    fit_signal = local_median_regression_with_seasonal(bar, use_idxs=use_days,
-                                                       solver='MOSEK')
+    fit_signal = local_quantile_regression_with_seasonal(bar, use_idxs=use_days,
+                                                         tau=0.9, solver='MOSEK')
     normed_signal = bar / fit_signal
     good_days = np.logical_and(
         normed_signal < 1.05,
-        normed_signal > 0.8
+        normed_signal > 0.6
     )
     out = [good_days]
     if return_density_signal:
