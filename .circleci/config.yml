@@ -26,7 +26,8 @@ jobs:
           name: Build the Anaconda Package
           command: |
             source /home/circleci/miniconda/etc/profile.d/conda.sh
-            conda activate base            
+            conda activate base
+            sudo anaconda login --username $ANACONDA_CLOUD_USERNAME --password $ANACONDA_CLOUD_PASSWORD
             VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . --numpy 1.16.4
             conda build . --output
 
