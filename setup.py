@@ -5,22 +5,31 @@ https://github.com/pypa/sampleproject
 """
 
 # Always prefer setuptools over distutils
+import os
+import subprocess
 from setuptools import setup, find_packages
-from os import path
+
 # io.open is needed for projects that support Python 2.7
 # It ensures open() defaults to text mode with universal newlines,
 # and accepts an argument to specify the text encoding
 # Python 3 only projects can skip this import
 from io import open
 
-here = path.abspath(path.dirname(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# Arguments marked as "Required" below must be included for upload to PyPI.
-# Fields marked as "Optional" may be commented out.
+# get all the git tags from the cmd line that follow our versioning pattern
+git_tags = subprocess.Popen(['git', 'tag', '--list', 'v*[0-9]', '--sort=version:refname'], stdout=subprocess.PIPE)
+# get the most recent tag after it's been sorted 👆
+latest_git_tag = subprocess.Popen(['tail', '-1'], stdin=git_tags.stdout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+git_tags.stdout.close()
+latest_version = latest_git_tag.communicate()[0]
+
+# PEP 440 won't accept the v in front, so here we remove it, strip the new line and decode the byte stream
+VERSION_FROM_GIT_TAG = latest_version[1:].strip().decode("utf-8") 
 
 setup(
     # This is the name of your project. The first time you publish this
@@ -42,7 +51,7 @@ setup(
     # For a discussion on single-sourcing the version across setup.py and the
     # project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.3',  # Required
+    version=VERSION_FROM_GIT_TAG,  # Required
 
 
     # This is a one-line description or tagline of what your project does. This

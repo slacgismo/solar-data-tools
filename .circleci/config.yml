@@ -28,13 +28,55 @@ jobs:
           name: Run Unit Tests
           command: sudo coverage run -m unittest
   
-  deploy:
+  deploy-pypi:
     <<: *368_config
     steps:
       - checkout
       - run:
-          name: Perform deploy steps!
-          command: echo I need passwords and deploy steps
+          name: Install twine
+          command: sudo pip install twine
+
+      - run:
+          name: Create the distribution
+          command: sudo python setup.py sdist bdist_wheel
+
+      - run:
+          name: Push to PyPI
+          command: sudo twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD dist/*
+
+  deploy-conda:
+    <<: *368_config
+    steps:
+      - checkout
+      - run:
+          name: Install the Conda Dependencies
+          command: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh -O miniconda.sh
+            bash miniconda.sh -b -p "$HOME"/miniconda
+            source /home/circleci/miniconda/etc/profile.d/conda.sh
+            conda activate base
+            conda config --set always_yes yes --set auto_update_conda false
+            conda update conda
+            conda install conda-build
+
+      - run:
+          name: Build the Anaconda Package
+          command: |
+            source /home/circleci/miniconda/etc/profile.d/conda.sh
+            conda activate base
+            conda install anaconda-client
+            conda config --set anaconda_upload no
+            anaconda login --username $ANACONDA_CLOUD_USERNAME --password $ANACONDA_CLOUD_PASSWORD
+            VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . --numpy 1.16.4
+
+      - run:
+          name: Get the output path and upload the package
+          command: |
+            source /home/circleci/miniconda/etc/profile.d/conda.sh
+            conda activate base
+            VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`
+            anaconda upload -u slacgismo  /home/circleci/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-0.tar.bz2
+
 
 workflows:
   version: 2
@@ -44,11 +86,19 @@ workflows:
           filters:  
             tags:
               only: /.*/
-      - deploy:
+      - deploy-pypi:
           requires:
             - build
           filters:
-            branches:
-              only: master
             tags:
-              only: /^v.\d+\.\d+\.\d+$/
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
+      - deploy-conda:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
