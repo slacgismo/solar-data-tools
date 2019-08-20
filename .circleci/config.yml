@@ -37,9 +37,7 @@ jobs:
           command: |
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate base
-            echo $PKG_NAME
-            echo $PKG_VERSION
-            #anaconda upload -u slacgismo 
+            anaconda upload -u slacgismo  /home/circleci/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-0.tar.bz2
 
       # - run:
       #     name: Install Dependencies
