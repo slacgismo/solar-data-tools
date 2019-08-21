@@ -168,6 +168,10 @@ class DataHandler():
             title += ', cloudy days flagged'
         if np.logical_and(show_fit, self.density_fit is not None):
             plt.plot(self.density_fit, color='orange')
+            plt.plot(0.6 * self.density_fit, color='green', linewidth=1,
+                     ls='--')
+            plt.plot(1.05 * self.density_fit, color='green', linewidth=1,
+                     ls='--')
         plt.title(title)
         return fig
 
