@@ -1,16 +1,14 @@
 {% set name = "solar-data-tools" %}
-{% set version = "0.1.3" %}
-
 
 package:
   name: "{{ name|lower }}"
-  version: "{{ version }}"
+  version: {{ environ.get('VERSION_FROM_GIT_TAG') }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 2992bf86342ade9a82c730efdf28e94aca7163239d9d561d31318cdcb1844001
+  git_url: https://github.com/slacgismo/solar-data-tools
 
 build:
+  noarch: python
   number: 0
   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
 
@@ -42,4 +40,3 @@ about:
 extra:
   recipe-maintainers:
     - bmeyers
-    - tadatoshi
