@@ -75,7 +75,7 @@ jobs:
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate base
             VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`
-            anaconda upload -u slacgismo  /home/circleci/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-0.tar.bz2
+            anaconda upload -u slacgismo  /home/circleci/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
 
 
 workflows:
