@@ -6,6 +6,7 @@ This module contains a class for managing a data processing pipeline
 '''
 
 import numpy as np
+from scipy.stats import mode
 import matplotlib.pyplot as plt
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis, fix_time_shifts
@@ -24,13 +25,16 @@ class DataHandler():
         self.filled_data_matrix = None
         self.keys = None
         self.use_column = None
-        self.data_score = None
-        self.clear_day_score = None
-        self.daily_density_flag = None
-        self.daily_clear_flag = None
-        self.daily_cloudy_flag = None
-        self.density_signal = None
-        self.density_fit = None
+        self.capacity_estimate = None
+        # Scores for the entire data set
+        self.data_quality_score = None      # Fraction of days without data acquisition errors
+        self.data_clearness_score = None    # Fraction of days that are approximately clear/sunny
+        # Daily scores (floats) and flags (booleans)
+        self.daily_scores = DailyScores()
+        self.daily_flags = DailyFlags()
+        # Useful daily signals defined by the data set
+        self.daily_density_signal = None
+        self.seasonal_density_fit = None
         self.daily_energy_signal = None
         if np.alltrue([data_frame is not None, convert_to_ts]):
             df_ts, keys = make_time_series(self.data_frame)
@@ -38,14 +42,20 @@ class DataHandler():
             self.keys = keys
 
     def run_pipeline(self, use_col=None, zero_night=True, interp_day=True,
-                     fix_shifts=True, threshold=0.2, use_advanced=True):
+                     fix_shifts=True, density_lower_threshold=0.6,
+                     density_upper_threshold=1.05, linearity_threshold=0.1):
         if self.data_frame is not None:
             self.make_data_matrix(use_col)
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
+        self.capacity_estimate = np.quantile(self.filled_data_matrix, 0.95)
         if fix_shifts:
             self.auto_fix_time_shifts()
-        self.run_density_check(threshold=threshold, use_advanced=use_advanced)
+        self.get_daily_scores(threshold=0.2)
+        self.get_daily_flags(density_lower_threshold=density_lower_threshold,
+                             density_upper_threshold=density_upper_threshold,
+                             linearity_threshold=linearity_threshold)
         self.detect_clear_days()
+        self.score_data_set()
         return
 
     def make_data_matrix(self, use_col=None):
@@ -54,28 +64,6 @@ class DataHandler():
             use_col = df.columns[0]
         self.raw_data_matrix = make_2d(df, key=use_col)
         self.use_column = use_col
-        return
-
-    def run_density_check(self, threshold=0.2, use_advanced=True):
-        if self.raw_data_matrix is None:
-            print('Generate a raw data matrix first.')
-            return
-        if use_advanced:
-            self.daily_density_flag, self.density_signal, self.density_fit\
-                = daily_missing_data_advanced(
-                self.raw_data_matrix,
-                threshold=threshold,
-                return_density_signal=True,
-                return_fit=True
-            )
-        else:
-            self.daily_density_flag, self.density_signal = daily_missing_data_simple(
-                self.raw_data_matrix,
-                threshold=threshold,
-                return_density_signal=True
-            )
-        self.data_score = dataset_quality_score(self.raw_data_matrix,
-                                                good_days=self.daily_density_flag)
         return
 
     def make_filled_data_matrix(self, zero_night=True, interp_day=True):
@@ -91,6 +79,53 @@ class DataHandler():
                                    24 / self.filled_data_matrix.shape[1]
         return
 
+    def get_daily_scores(self, threshold=0.2):
+        self.get_density_scores(threshold=threshold)
+        self.get_linearity_scores()
+        return
+
+    def get_daily_flags(self, density_lower_threshold=0.6,
+                        density_upper_threshold=1.05, linearity_threshold=0.1):
+        self.daily_flags.density = np.logical_and(
+            self.daily_scores.density > density_lower_threshold,
+            self.daily_scores.density < density_upper_threshold
+        )
+        self.daily_flags.linearity = self.daily_scores.linearity < linearity_threshold
+        self.daily_flags.flag_no_errors()
+
+    def get_density_scores(self, threshold=0.2):
+        if self.raw_data_matrix is None:
+            print('Generate a raw data matrix first.')
+            return
+        self.daily_scores.density, self.daily_density_signal, self.seasonal_density_fit\
+            = daily_missing_data_advanced(
+            self.raw_data_matrix,
+            threshold=threshold,
+            return_density_signal=True,
+            return_fit=True
+        )
+        return
+
+    def get_linearity_scores(self):
+        if self.capacity_estimate is None:
+            self.capacity_estimate = np.quantile(self.filled_data_matrix, 0.95)
+        if self.seasonal_density_fit is None:
+            print('Run the density check first')
+            return
+        temp_mat = np.copy(self.filled_data_matrix)
+        temp_mat[temp_mat < 0.005 * self.capacity_estimate] = np.nan
+        difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
+        modes, counts = mode(difference_mat, axis=0, nan_policy='omit')
+        n = self.filled_data_matrix.shape[0] - 1
+        self.daily_scores.linearity = counts.data.squeeze() / (n * self.seasonal_density_fit)
+        return
+
+    def score_data_set(self):
+        num_days = self.raw_data_matrix.shape[1]
+        self.data_quality_score = np.sum(self.daily_flags.no_errors) / num_days
+        self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
+        return
+
     def auto_fix_time_shifts(self, c1=5., c2=500.):
         self.filled_data_matrix = fix_time_shifts(self.filled_data_matrix,
                                                   c1=c1, c2=c2)
@@ -99,14 +134,8 @@ class DataHandler():
         if self.filled_data_matrix is None:
             print('Generate a filled data matrix first.')
             return
-        self.daily_clear_flag = np.logical_and(
-            find_clear_days(self.filled_data_matrix),
-            self.daily_density_flag
-        )
-        self.daily_cloudy_flag = np.logical_and(
-            ~self.daily_clear_flag,
-            self.daily_density_flag
-        )
+        clear_days = find_clear_days(self.filled_data_matrix)
+        self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6)):
@@ -120,57 +149,57 @@ class DataHandler():
             return plot_2d(mat, figsize=figsize)
         elif flag == 'good':
             fig = plot_2d(mat, figsize=figsize,
-                           clear_days=self.daily_density_flag)
+                           clear_days=self.daily_flags.no_errors)
             plt.title('Measured power, good days flagged')
             return fig
         elif flag == 'bad':
             fig = plot_2d(mat, figsize=figsize,
-                          clear_days=~self.daily_density_flag)
+                          clear_days=~self.daily_flags.no_errors)
             plt.title('Measured power, bad days flagged')
             return fig
         elif flag in ['clear', 'sunny']:
             fig = plot_2d(mat, figsize=figsize,
-                          clear_days=self.daily_clear_flag)
+                          clear_days=self.daily_flags.clear)
             plt.title('Measured power, clear days flagged')
             return fig
         elif flag == 'cloudy':
             fig = plot_2d(mat, figsize=figsize,
-                          clear_days=self.daily_cloudy_flag)
+                          clear_days=self.daily_flags.cloudy)
             plt.title('Measured power, cloudy days flagged')
             return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
-        if self.density_signal is None:
+        if self.daily_density_signal is None:
             return
         fig = plt.figure(figsize=figsize)
-        plt.plot(self.density_signal, linewidth=1)
-        xs = np.arange(len(self.density_signal))
+        plt.plot(self.daily_density_signal, linewidth=1)
+        xs = np.arange(len(self.daily_density_signal))
         title = 'Daily signal density'
         if flag == 'good':
-            plt.scatter(xs[self.daily_density_flag],
-                        self.density_signal[self.daily_density_flag],
+            plt.scatter(xs[self.daily_flags.no_errors],
+                        self.daily_density_signal[self.daily_flags.no_errors],
                         color='red')
             title += ', good days flagged'
         elif flag == 'bad':
-            plt.scatter(xs[~self.daily_density_flag],
-                        self.density_signal[~self.daily_density_flag],
+            plt.scatter(xs[~self.daily_flags.no_errors],
+                        self.daily_density_signal[~self.daily_flags.no_errors],
                         color='red')
             title += ', bad days flagged'
         elif flag in ['clear', 'sunny']:
-            plt.scatter(xs[self.daily_clear_flag],
-                        self.density_signal[self.daily_clear_flag],
+            plt.scatter(xs[self.daily_flags.clear],
+                        self.daily_density_signal[self.daily_flags.clear],
                         color='red')
             title += ', clear days flagged'
         elif flag == 'cloudy':
-            plt.scatter(xs[self.daily_cloudy_flag],
-                        self.density_signal[self.daily_cloudy_flag],
+            plt.scatter(xs[self.daily_flags.cloudy],
+                        self.daily_density_signal[self.daily_flags.cloudy],
                         color='red')
             title += ', cloudy days flagged'
-        if np.logical_and(show_fit, self.density_fit is not None):
-            plt.plot(self.density_fit, color='orange')
-            plt.plot(0.6 * self.density_fit, color='green', linewidth=1,
+        if np.logical_and(show_fit, self.seasonal_density_fit is not None):
+            plt.plot(self.seasonal_density_fit, color='orange')
+            plt.plot(0.6 * self.seasonal_density_fit, color='green', linewidth=1,
                      ls='--')
-            plt.plot(1.05 * self.density_fit, color='green', linewidth=1,
+            plt.plot(1.05 * self.seasonal_density_fit, color='green', linewidth=1,
                      ls='--')
         plt.title(title)
         return fig
@@ -185,24 +214,46 @@ class DataHandler():
         xs = np.arange(len(energy))
         title = 'Daily energy production'
         if flag == 'good':
-            plt.scatter(xs[self.daily_density_flag],
-                        energy[self.daily_density_flag],
+            plt.scatter(xs[self.daily_flags.no_errors],
+                        energy[self.daily_flags.no_errors],
                         color='red')
             title += ', good days flagged'
         elif flag == 'bad':
-            plt.scatter(xs[~self.daily_density_flag],
-                        energy[~self.daily_density_flag],
+            plt.scatter(xs[~self.daily_flags.no_errors],
+                        energy[~self.daily_flags.no_errors],
                         color='red')
             title += ', bad days flagged'
         elif flag in ['clear', 'sunny']:
-            plt.scatter(xs[self.daily_clear_flag],
-                        energy[self.daily_clear_flag],
+            plt.scatter(xs[self.daily_flags.clear],
+                        energy[self.daily_flags.clear],
                         color='red')
             title += ', clear days flagged'
         elif flag == 'cloudy':
-            plt.scatter(xs[self.daily_cloudy_flag],
-                        energy[self.daily_cloudy_flag],
+            plt.scatter(xs[self.daily_flags.clear],
+                        energy[self.daily_flags.clear],
                         color='red')
             title += ', cloudy days flagged'
         plt.title(title)
         return fig
+
+
+class DailyScores():
+    def __init__(self):
+        self.density = None
+        self.linearity = None
+
+
+class DailyFlags():
+    def __init__(self):
+        self.density = None
+        self.linearity = None
+        self.no_errors = None
+        self.clear = None
+        self.cloudy = None
+
+    def flag_no_errors(self):
+        self.no_errors = np.logical_and(self.density, self.linearity)
+
+    def flag_clear_cloudy(self, clear_days):
+        self.clear = np.logical_and(clear_days, self.no_errors)
+        self.cloudy = np.logical_and(~self.clear, self.no_errors)
