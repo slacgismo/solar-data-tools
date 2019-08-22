@@ -55,7 +55,7 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
     scores = density_signal / fit_signal
     out = [scores]
     if return_density_signal:
-        out.append(bar)
+        out.append(density_signal)
     if return_fit:
         out.append(fit_signal)
     if len(out) == 1:
