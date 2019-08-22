@@ -316,7 +316,14 @@ class DataHandler():
         ax[0].legend()
         return fig
 
-    def __analyze_distribution(self, data, plot=False):
+    def plot_daily_max_distribution(self, figsize=(8, 6)):
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
+                                          plot=True, figsize=figsize)
+        plt.title('Distribution of normalized daily maximum values')
+        plt.legend()
+        return fig
+
+    def __analyze_distribution(self, data, plot=False, figsize=(8, 6)):
         # set the bandwidth for the KDE algorithm dynamically as a logarithmic
         # function of the number of values. The function roughly follows the
         # following:
@@ -377,16 +384,24 @@ class DataHandler():
                     done = True
 
         if plot:
+            fig = plt.figure(figsize=figsize)
             plt.hist(data, bins=100)
             plt.plot(X_plot.squeeze(),
-                     0.01 * len(data) * np.exp(log_dens))
-            for mn in mins[keep_mns]:
-                plt.axvline(X_plot[:, 0][mn], linewidth=1, linestyle=':',
-                            color='green')
-            for mx in maxs[keep_mxs]:
-                plt.axvline(X_plot[:, 0][mx], linewidth=1, linestyle='--',
-                            color='red')
-            fig = plt.gcf()
+                     0.01 * len(data) * np.exp(log_dens), label='KDE fit')
+            for ix, mn in enumerate(mins[keep_mns]):
+                if ix == 0:
+                    plt.axvline(X_plot[:, 0][mn], linewidth=1, linestyle=':',
+                                color='green', label='detected minimum')
+                else:
+                    plt.axvline(X_plot[:, 0][mn], linewidth=1, linestyle=':',
+                                color='green')
+            for ix, mx in enumerate(maxs[keep_mxs]):
+                if ix == 0:
+                    plt.axvline(X_plot[:, 0][mx], linewidth=1, linestyle='--',
+                                color='red', label='detected maximum')
+                else:
+                    plt.axvline(X_plot[:, 0][mx], linewidth=1, linestyle='--',
+                                color='red')
             return fig
         else:
             peak_locs = X_plot[:, 0][maxs[keep_mxs]]
