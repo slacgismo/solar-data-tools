@@ -350,15 +350,16 @@ class DataHandler():
         log_dens = kde.score_samples(X_plot)
         mins = argrelextrema(log_dens, np.less)[0]  # potential cut points to make clusters
         maxs = argrelextrema(log_dens, np.greater)[0]  # locations of the max point in each cluster
+        # The number of max values should be one larger than the number of min
+        # values, and the min values should always be between two max values
         if len(mins) >= len(maxs):
             if mins[0] < maxs[0]:
                 mins = mins[1:]
             if mins[-1] > maxs[-1]:
                 mins = mins[:-1]
-
+        # Now drop peaks that are too small
         keep_mxs = np.ones_like(maxs, dtype=np.bool)
         keep_mns = np.ones_like(mins, dtype=np.bool)
-        index = np.arange(len(maxs))
         done = False
         if len(mins) > 0:
             while not done:
