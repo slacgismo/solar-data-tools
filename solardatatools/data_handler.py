@@ -7,8 +7,10 @@ This module contains a class for managing a data processing pipeline
 from time import time
 import numpy as np
 from scipy.stats import mode, skew
+from scipy.interpolate import interp1d
 from scipy.signal import argrelextrema
 from sklearn.neighbors.kde import KernelDensity
+import cvxpy as cvx
 import matplotlib.pyplot as plt
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis, fix_time_shifts
@@ -186,7 +188,7 @@ class DataHandler():
         # Identify which days have clipping
         clipped_days = np.logical_and(
             clip_stat_1 > 0.05,
-            clip_stat_2 > 0.1
+            clip_stat_2 > 0.05
         )
         clipped_days = np.logical_and(
             self.daily_flags.no_errors,
@@ -195,14 +197,13 @@ class DataHandler():
         # clipped days must also be near a peak in the distribution of the
         # 1st clipping statistic that shows the characteristic, strongly skewed
         # peak shape
-        peak_locs, peak_vals, clipped_clusters =\
-            self.__analyze_distribution(clip_stat_1)
-        if np.sum(clipped_clusters) == 0:
+        point_masses = self.__analyze_distribution(clip_stat_1)
+        if len(point_masses) == 0:
             clipped_days[:] = False
         else:
             clipped_days[clipped_days] = np.any(
                 np.array([np.abs(clip_stat_1[clipped_days] - x0) < .02 for x0 in
-                          peak_locs[clipped_clusters]]), axis=0
+                          point_masses]), axis=0
             )
         self.daily_scores.clipping_1 = clip_stat_1
         self.daily_scores.clipping_2 = clip_stat_2
@@ -348,14 +349,28 @@ class DataHandler():
         ax[0].legend()
         return fig
 
-    def plot_daily_max_distribution(self, figsize=(8, 6)):
+    def plot_daily_max_pdf(self, figsize=(8, 6)):
         fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot=True, figsize=figsize)
+                                          plot='pdf', figsize=figsize)
         plt.title('Distribution of normalized daily maximum values')
         plt.legend()
         return fig
 
-    def __analyze_distribution(self, data, plot=False, figsize=(8, 6)):
+    def plot_daily_max_cdf(self, figsize=(10, 6)):
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
+                                          plot='cdf', figsize=figsize)
+        plt.title('Cumulative density function of normalized daily maximum values')
+        plt.legend()
+        ax = plt.gca()
+        ax.set_aspect('equal')
+        return fig
+
+    def plot_cdf_analysis(self, figsize=(12, 6)):
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
+                                          plot='diffs', figsize=figsize)
+        return fig
+
+    def __analyze_distribution(self, data, plot=None, figsize=(8, 6)):
         # set the bandwidth for the KDE algorithm dynamically as a logarithmic
         # function of the number of values. The function roughly follows the
         # following:
@@ -366,103 +381,174 @@ class DataHandler():
         #     50       |     0.05
         #     500      |     0.025
         #     2000     |     0.01
-        data = np.copy(data[data > 0])
-        coeffs = np.array(
-            [1.28782573e+01 / 1000, 2.99960708e-07, -8.76881301e+01 / 1000])
+        # data = np.copy(data[data > 0])
+        # coeffs = np.array(
+        #     [1.28782573e+01 / 1000, 2.99960708e-07, -8.76881301e+01 / 1000])
+        #
+        # def bdw(x):
+        #     out = coeffs[0] * -np.log(coeffs[1] * x) + coeffs[2]
+        #     return np.clip(out, 0.01, 0.1)
+        #
+        # bandwidth = bdw(len(data))
+        #
+        # kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(
+        #     data[:, np.newaxis])
+        # X_plot = np.linspace(np.min(data) - 0.01,
+        #                      np.max(data) + 0.01)[:, np.newaxis]
+        # log_dens = kde.score_samples(X_plot)
+        # mins = argrelextrema(log_dens, np.less)[0]  # potential cut points to make clusters
+        # maxs = argrelextrema(log_dens, np.greater)[0]  # locations of the max point in each cluster
+        # # The number of max values should be one larger than the number of min
+        # # values, and the min values should always be between two max values
+        # if len(mins) >= len(maxs):
+        #     if mins[0] < maxs[0]:
+        #         mins = mins[1:]
+        #     if mins[-1] > maxs[-1]:
+        #         mins = mins[:-1]
+        # # Now drop peaks that are too small
+        # keep_mxs = np.ones_like(maxs, dtype=np.bool)
+        # keep_mns = np.ones_like(mins, dtype=np.bool)
+        # done = False
+        # if len(mins) > 0:
+        #     while not done:
+        #         comp_left = np.exp(log_dens[maxs[keep_mxs][:-1]]) - np.exp(
+        #             log_dens[mins[keep_mns]])
+        #         comp_right = np.exp(log_dens[maxs[keep_mxs][1:]]) - np.exp(
+        #             log_dens[mins[keep_mns]])
+        #         comp_array = np.c_[comp_left, comp_right]
+        #         min_diff = comp_array.min()
+        #         if min_diff < 0.35:
+        #             min_dif_loc = np.unravel_index(comp_array.argmin(),
+        #                                            comp_array.shape)
+        #             drop_min = min_dif_loc[0]
+        #             keep_mns[mins == mins[keep_mns][drop_min]] = 0
+        #             if np.exp(log_dens[maxs[keep_mxs][drop_min]]) > np.exp(
+        #                     log_dens[maxs[keep_mxs][drop_min + 1]]):
+        #                 keep_mxs[maxs == maxs[keep_mxs][drop_min + 1]] = 0
+        #             else:
+        #                 keep_mxs[maxs == maxs[keep_mxs][drop_min]] = 0
+        #         else:
+        #             done = True
+        #         if np.sum(keep_mns) == 0:
+        #             done = True
+        # counts, bins = np.histogram(data, bins=500)
+        # bins = 0.5 * (bins[1:] + bins[:-1])
+        # cut_points = np.concatenate([[-np.inf], X_plot[:, 0][mins[keep_mns]], [np.inf]])
+        # max_locs = np.empty(len(maxs[keep_mxs]))
+        # for ix in range(len(cut_points) - 1):
+        #     slct = np.logical_and(bins > cut_points[ix], bins < cut_points[ix + 1])
+        #     argmx = np.argmax(counts[slct])
+        #     max_locs[ix] = bins[slct][argmx]
+        # min_locs = X_plot[:, 0][mins[keep_mns]]
+        # cluster_is_clipped = np.zeros(len(max_locs), dtype=np.bool)
+        # b = 0.02
+        # for ix, loc in enumerate(max_locs):
+        #     num_l = np.sum(np.logical_and(data > loc - b, data < loc))
+        #     num_r = np.sum(np.logical_and(data > loc, data < loc + b))
+        #     r = num_r / num_l
+        #     if r < 0.8 or loc > 0.99:  # cluster passes asymmetry test or is at the far right
+        #         cluster_is_clipped[ix] = True
 
-        def bdw(x):
-            out = coeffs[0] * -np.log(coeffs[1] * x) + coeffs[2]
-            return np.clip(out, 0.01, 0.1)
+        # Calculate empirical CDF
+        x = np.sort(np.copy(data))
+        x = x[x > 0]
+        x = np.concatenate([[0.], x, [1.]])
+        y = np.linspace(0, 1, len(x))
+        # Resample the CDF to get an even spacing of points along the x-axis
+        f = interp1d(x, y)
+        x_rs = np.linspace(0, 1, 5000)
+        y_rs = f(x_rs)
+        # Fit statistical model to resampled CDF that has sparse 2nd order difference
+        y_hat = cvx.Variable(len(y_rs))
+        mu = cvx.Parameter(nonneg=True)
+        mu.value = 1e1
+        error = cvx.sum_squares(y_rs - y_hat)
+        reg = cvx.norm(cvx.diff(y_hat, k=2), p=1)
+        objective = cvx.Minimize(error + mu * reg)
+        constraints = [
+            y_rs[0] == y_hat[0],
+            y[-1] == y_hat[-1]
+        ]
+        problem = cvx.Problem(objective, constraints)
+        problem.solve(solver='MOSEK')
+        # Look for outliers in the 2nd order difference to identify point masses from clipping
+        local_curv = cvx.diff(y_hat, k=2).value
+        ref_slope = cvx.diff(y_hat, k=1).value[:-1]
+        threshold = -0.35
+        point_masses = np.concatenate(
+            [[False], local_curv / ref_slope <= threshold, # looking for drops of more than 65%
+             [False]])
+        # Catch if the PDF ends in a point mass at the high value
+        if cvx.diff(y_hat, k=1).value[-1] > 5e-4:
+            point_masses[-1] = True
+        point_mass_values = x_rs[point_masses]
 
-        bandwidth = bdw(len(data))
-
-        kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(
-            data[:, np.newaxis])
-        X_plot = np.linspace(np.min(data) - 0.01,
-                             np.max(data) + 0.01)[:, np.newaxis]
-        log_dens = kde.score_samples(X_plot)
-        mins = argrelextrema(log_dens, np.less)[0]  # potential cut points to make clusters
-        maxs = argrelextrema(log_dens, np.greater)[0]  # locations of the max point in each cluster
-        # The number of max values should be one larger than the number of min
-        # values, and the min values should always be between two max values
-        if len(mins) >= len(maxs):
-            if mins[0] < maxs[0]:
-                mins = mins[1:]
-            if mins[-1] > maxs[-1]:
-                mins = mins[:-1]
-        # Now drop peaks that are too small
-        keep_mxs = np.ones_like(maxs, dtype=np.bool)
-        keep_mns = np.ones_like(mins, dtype=np.bool)
-        done = False
-        if len(mins) > 0:
-            while not done:
-                comp_left = np.exp(log_dens[maxs[keep_mxs][:-1]]) - np.exp(
-                    log_dens[mins[keep_mns]])
-                comp_right = np.exp(log_dens[maxs[keep_mxs][1:]]) - np.exp(
-                    log_dens[mins[keep_mns]])
-                comp_array = np.c_[comp_left, comp_right]
-                min_diff = comp_array.min()
-                if min_diff < 0.35:
-                    min_dif_loc = np.unravel_index(comp_array.argmin(),
-                                                   comp_array.shape)
-                    drop_min = min_dif_loc[0]
-                    keep_mns[mins == mins[keep_mns][drop_min]] = 0
-                    if np.exp(log_dens[maxs[keep_mxs][drop_min]]) > np.exp(
-                            log_dens[maxs[keep_mxs][drop_min + 1]]):
-                        keep_mxs[maxs == maxs[keep_mxs][drop_min + 1]] = 0
-                    else:
-                        keep_mxs[maxs == maxs[keep_mxs][drop_min]] = 0
-                else:
-                    done = True
-                if np.sum(keep_mns) == 0:
-                    done = True
-        counts, bins = np.histogram(data, bins=500)
-        bins = 0.5 * (bins[1:] + bins[:-1])
-        cut_points = np.concatenate([[-np.inf], X_plot[:, 0][mins[keep_mns]], [np.inf]])
-        max_locs = np.empty(len(maxs[keep_mxs]))
-        for ix in range(len(cut_points) - 1):
-            slct = np.logical_and(bins > cut_points[ix], bins < cut_points[ix + 1])
-            argmx = np.argmax(counts[slct])
-            max_locs[ix] = bins[slct][argmx]
-        min_locs = X_plot[:, 0][mins[keep_mns]]
-        cluster_is_clipped = np.zeros(len(max_locs), dtype=np.bool)
-        b = 0.02
-        for ix, loc in enumerate(max_locs):
-            num_l = np.sum(np.logical_and(data > loc - b, data < loc))
-            num_r = np.sum(np.logical_and(data > loc, data < loc + b))
-            r = num_r / num_l
-            if r < 0.8 or loc > 0.99:  # cluster passes asymmetry test or is at the far right
-                cluster_is_clipped[ix] = True
-
-        if plot:
-            for ix, loc in enumerate(max_locs):
-                num_l = np.sum(np.logical_and(data > loc - b, data < loc))
-                num_r = np.sum(np.logical_and(data > loc, data < loc + b))
-                r = num_r / num_l
-                print(loc, r)
+        if plot is None:
+            return point_mass_values
+        elif plot == 'pdf':
+            # for ix, loc in enumerate(max_locs):
+            #     num_l = np.sum(np.logical_and(data > loc - b, data < loc))
+            #     num_r = np.sum(np.logical_and(data > loc, data < loc + b))
+            #     r = num_r / num_l
+            #     print(loc, r)
             fig = plt.figure(figsize=figsize)
-            plt.hist(data[data > 0], bins=100, alpha=0.5)
-            plt.plot(X_plot.squeeze(),
-                     0.01 * len(data) * np.exp(log_dens), label='KDE fit')
-            for ix, mn in enumerate(min_locs):
-                if ix == 0:
-                    plt.axvline(mn, linewidth=1, linestyle=':',
-                                color='green', label='detected minimum')
+            plt.hist(data[data > 0], bins=100, alpha=0.5, label='histogram')
+            # plt.plot(X_plot.squeeze(),
+            #          0.01 * len(data) * np.exp(log_dens), label='KDE fit')
+            # for ix, mn in enumerate(min_locs):
+            #     if ix == 0:
+            #         plt.axvline(mn, linewidth=1, linestyle=':',
+            #                     color='green', label='detected minimum')
+            #     else:
+            #         plt.axvline(mn, linewidth=1, linestyle=':',
+            #                     color='green')
+            # for ix, mx in enumerate(max_locs): #maxs[keep_mxs]):
+            #     if ix == 0:
+            #         plt.axvline(mx, linewidth=1, linestyle='--',
+            #                     color='red', label='detected maximum')
+            #     else:
+            #         plt.axvline(mx, linewidth=1, linestyle='--',
+            #                     color='red')
+            scale = np.histogram(
+                self.daily_scores.clipping_1[self.daily_scores.clipping_1 > 0],
+                bins=100)[0].max() / cvx.diff(y_hat, k=1).value.max()
+            plt.plot(x_rs[:-1], scale * cvx.diff(y_hat, k=1).value,
+                     color='orange', linewidth=1, label='piecewise constant PDF estimate')
+            for count, val in enumerate(point_mass_values):
+                if count == 0:
+                    plt.axvline(val, linewidth=1, linestyle=':',
+                                color='green', label='detected point mass')
                 else:
-                    plt.axvline(mn, linewidth=1, linestyle=':',
+                    plt.axvline(val, linewidth=1, linestyle=':',
                                 color='green')
-            for ix, mx in enumerate(max_locs): #maxs[keep_mxs]):
-                if ix == 0:
-                    plt.axvline(mx, linewidth=1, linestyle='--',
-                                color='red', label='detected maximum')
-                else:
-                    plt.axvline(mx, linewidth=1, linestyle='--',
-                                color='red')
             return fig
-        else:
-            peak_locs = max_locs #X_plot[:, 0][maxs[keep_mxs]]
-            peak_vals = np.exp(kde.score_samples(peak_locs[:, np.newaxis]))
-            return peak_locs, peak_vals, cluster_is_clipped
+        elif plot == 'cdf':
+            fig = plt.figure(figsize=figsize)
+            plt.plot(x_rs, y_rs, linewidth=1, label='empirical CDF')
+            plt.plot(x_rs, y_hat.value, linewidth=3, color='orange', alpha=0.57,
+                     label='estimated CDF')
+            if len(point_mass_values) > 0:
+                plt.scatter(x_rs[point_masses], y_rs[point_masses],
+                            color='red', marker='o',
+                            label='detected point mass')
+            return fig
+        elif plot == 'diffs':
+            fig, ax = plt.subplots(nrows=2, sharex=True, figsize=figsize)
+            ax[0].plot(x_rs[:-1], cvx.diff(y_hat, k=1).value)
+            ax[1].plot(x_rs[1:-1], local_curv / ref_slope)
+            ax[1].axhline(threshold, linewidth=1, color='r', ls=':',
+                          label='decision boundary')
+            if len(point_mass_values) > 0:
+                ax[1].scatter(x_rs[point_masses],
+                              (local_curv / ref_slope)[np.roll(point_masses[2:], 1)],
+                              color='red', marker='o',
+                              label='detected point mass')
+            ax[0].set_title('1st order difference of CDF fit')
+            ax[1].set_title('2nd order difference of CDF fit')
+            ax[1].legend()
+            plt.tight_layout()
+            return fig
+
 
 
 class DailyScores():
