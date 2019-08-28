@@ -4,9 +4,9 @@
 This module contains a class for managing a data processing pipeline
 
 '''
-
+from time import time
 import numpy as np
-from scipy.stats import mode
+from scipy.stats import mode, skew
 from scipy.signal import argrelextrema
 from sklearn.neighbors.kde import KernelDensity
 import matplotlib.pyplot as plt
@@ -52,20 +52,41 @@ class DataHandler():
 
     def run_pipeline(self, use_col=None, zero_night=True, interp_day=True,
                      fix_shifts=True, density_lower_threshold=0.6,
-                     density_upper_threshold=1.05, linearity_threshold=0.1):
+                     density_upper_threshold=1.05, linearity_threshold=0.1,
+                     verbose=True):
+        t0 = time()
         if self.data_frame is not None:
             self.make_data_matrix(use_col)
+        t1 = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
+        t2 = time()
         self.capacity_estimate = np.quantile(self.filled_data_matrix, 0.95)
         if fix_shifts:
             self.auto_fix_time_shifts()
+        t3 = time()
         self.get_daily_scores(threshold=0.2)
+        t4 = time()
         self.get_daily_flags(density_lower_threshold=density_lower_threshold,
                              density_upper_threshold=density_upper_threshold,
                              linearity_threshold=linearity_threshold)
+        t5 = time()
         self.detect_clear_days()
+        t6 = time()
         self.clipping_check()
+        t7 = time()
         self.score_data_set()
+        t8 = time()
+        if verbose:
+            out = 'total time: {:.2f} seconds\n'
+            out += 'form matrix: {:.2f}, '
+            out += 'fill matrix: {:.2f}, '
+            out += 'fix time shifts: {:.2f}, '
+            out += 'daily scores: {:.2f}, \n'
+            out += 'daily flags: {:.2f}, '
+            out += 'clear detect: {:.2f}, '
+            out += 'clipping check: {:.2f}, '
+            out += 'data scoring: {:.2f}'
+            print(out.format(t8-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, t7-t6, t8-t7))
         return
 
     def report(self):
@@ -157,7 +178,7 @@ class DataHandler():
         daily_max_val = np.max(self.filled_data_matrix, axis=0)
         # 1st clipping statistic: ratio of the max value on each day to overall max value
         clip_stat_1 = daily_max_val / max_value
-        # 2nd clipping statistic: fraction of time each day spent at that day's max value
+        # 2nd clipping statistic: fraction of time each day spent near that day's max value
         with np.errstate(divide='ignore', invalid='ignore'):
             temp = self.filled_data_matrix / daily_max_val
             clip_stat_2 = np.sum(temp > 0.995, axis=0) / np.sum(temp > 0.005, axis=0)
@@ -172,12 +193,17 @@ class DataHandler():
             clipped_days
         )
         # clipped days must also be near a peak in the distribution of the
-        # 1st clipping statistic
-        peak_locs, peak_vals = self.__analyze_distribution(clip_stat_1)
-        clipped_days[clipped_days] = np.any(
-            np.array([np.abs(clip_stat_1[clipped_days] - x0) < .05 for x0 in
-                      peak_locs]), axis=0
-        )
+        # 1st clipping statistic that shows the characteristic, strongly skewed
+        # peak shape
+        peak_locs, peak_vals, clipped_clusters =\
+            self.__analyze_distribution(clip_stat_1)
+        if np.sum(clipped_clusters) == 0:
+            clipped_days[:] = False
+        else:
+            clipped_days[clipped_days] = np.any(
+                np.array([np.abs(clip_stat_1[clipped_days] - x0) < .02 for x0 in
+                          peak_locs[clipped_clusters]]), axis=0
+            )
         self.daily_scores.clipping_1 = clip_stat_1
         self.daily_scores.clipping_2 = clip_stat_2
         self.daily_flags.inverter_clipped = clipped_days
@@ -190,6 +216,7 @@ class DataHandler():
 
     def auto_fix_time_shifts(self, c1=5., c2=500.):
         self.filled_data_matrix = fix_time_shifts(self.filled_data_matrix,
+                                                  solar_noon_estimator='srsn',
                                                   c1=c1, c2=c2)
 
     def detect_clear_days(self):
@@ -237,11 +264,16 @@ class DataHandler():
         plt.plot(self.daily_signals.density, linewidth=1)
         xs = np.arange(len(self.daily_signals.density))
         title = 'Daily signal density'
+        if flag == 'density':
+            plt.scatter(xs[~self.daily_flags.density],
+                        self.daily_signals.density[~self.daily_flags.density],
+                        color='red')
+            title += ', good days flagged'
         if flag == 'good':
             plt.scatter(xs[self.daily_flags.no_errors],
                         self.daily_signals.density[self.daily_flags.no_errors],
                         color='red')
-            title += ', good days flagged'
+            title += ', days that failed density test flagged'
         elif flag == 'bad':
             plt.scatter(xs[~self.daily_flags.no_errors],
                         self.daily_signals.density[~self.daily_flags.no_errors],
@@ -334,6 +366,7 @@ class DataHandler():
         #     50       |     0.05
         #     500      |     0.025
         #     2000     |     0.01
+        data = np.copy(data[data > 0])
         coeffs = np.array(
             [1.28782573e+01 / 1000, 2.99960708e-07, -8.76881301e+01 / 1000])
 
@@ -344,7 +377,7 @@ class DataHandler():
         bandwidth = bdw(len(data))
 
         kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(
-            data[data > 0][:, np.newaxis])
+            data[:, np.newaxis])
         X_plot = np.linspace(np.min(data) - 0.01,
                              np.max(data) + 0.01)[:, np.newaxis]
         log_dens = kde.score_samples(X_plot)
@@ -383,31 +416,53 @@ class DataHandler():
                     done = True
                 if np.sum(keep_mns) == 0:
                     done = True
+        counts, bins = np.histogram(data, bins=500)
+        bins = 0.5 * (bins[1:] + bins[:-1])
+        cut_points = np.concatenate([[-np.inf], X_plot[:, 0][mins[keep_mns]], [np.inf]])
+        max_locs = np.empty(len(maxs[keep_mxs]))
+        for ix in range(len(cut_points) - 1):
+            slct = np.logical_and(bins > cut_points[ix], bins < cut_points[ix + 1])
+            argmx = np.argmax(counts[slct])
+            max_locs[ix] = bins[slct][argmx]
+        min_locs = X_plot[:, 0][mins[keep_mns]]
+        cluster_is_clipped = np.zeros(len(max_locs), dtype=np.bool)
+        b = 0.02
+        for ix, loc in enumerate(max_locs):
+            num_l = np.sum(np.logical_and(data > loc - b, data < loc))
+            num_r = np.sum(np.logical_and(data > loc, data < loc + b))
+            r = num_r / num_l
+            if r < 0.8 or loc > 0.99:  # cluster passes asymmetry test or is at the far right
+                cluster_is_clipped[ix] = True
 
         if plot:
+            for ix, loc in enumerate(max_locs):
+                num_l = np.sum(np.logical_and(data > loc - b, data < loc))
+                num_r = np.sum(np.logical_and(data > loc, data < loc + b))
+                r = num_r / num_l
+                print(loc, r)
             fig = plt.figure(figsize=figsize)
-            plt.hist(data, bins=100)
+            plt.hist(data[data > 0], bins=100, alpha=0.5)
             plt.plot(X_plot.squeeze(),
                      0.01 * len(data) * np.exp(log_dens), label='KDE fit')
-            for ix, mn in enumerate(mins[keep_mns]):
+            for ix, mn in enumerate(min_locs):
                 if ix == 0:
-                    plt.axvline(X_plot[:, 0][mn], linewidth=1, linestyle=':',
+                    plt.axvline(mn, linewidth=1, linestyle=':',
                                 color='green', label='detected minimum')
                 else:
-                    plt.axvline(X_plot[:, 0][mn], linewidth=1, linestyle=':',
+                    plt.axvline(mn, linewidth=1, linestyle=':',
                                 color='green')
-            for ix, mx in enumerate(maxs[keep_mxs]):
+            for ix, mx in enumerate(max_locs): #maxs[keep_mxs]):
                 if ix == 0:
-                    plt.axvline(X_plot[:, 0][mx], linewidth=1, linestyle='--',
+                    plt.axvline(mx, linewidth=1, linestyle='--',
                                 color='red', label='detected maximum')
                 else:
-                    plt.axvline(X_plot[:, 0][mx], linewidth=1, linestyle='--',
+                    plt.axvline(mx, linewidth=1, linestyle='--',
                                 color='red')
             return fig
         else:
-            peak_locs = X_plot[:, 0][maxs[keep_mxs]]
+            peak_locs = max_locs #X_plot[:, 0][maxs[keep_mxs]]
             peak_vals = np.exp(kde.score_samples(peak_locs[:, np.newaxis]))
-            return peak_locs, peak_vals
+            return peak_locs, peak_vals, cluster_is_clipped
 
 
 class DailyScores():
