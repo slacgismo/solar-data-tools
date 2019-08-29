@@ -41,6 +41,7 @@ class DataHandler():
         self.data_clearness_score = None    # Fraction of days that are approximately clear/sunny
         # Flags for the entire data set
         self.inverter_clipping = None       # True if there is inverter clipping, false otherwise
+        self.num_clip_points = None         # If clipping, the number of clipping set points
         self.capacity_changes = None        # True if the apparent capacity seems to change over the data set
         # Daily scores (floats) and flags (booleans)
         self.daily_scores = DailyScores()
@@ -100,6 +101,10 @@ class DataHandler():
             l5 = 'Inverter clipping:    {}'.format(self.inverter_clipping)
             p_out = l1 + l2 + l3 + l4 + l5
             print(p_out)
+            if self.num_clip_points > 1:
+                print('WARNING: {} clipping set points detected!'.format(
+                    self.num_clip_points
+                ))
             return
         except TypeError:
             print('Please run the pipeline first!')
@@ -188,7 +193,7 @@ class DataHandler():
         # Identify which days have clipping
         clipped_days = np.logical_and(
             clip_stat_1 > 0.05,
-            clip_stat_2 > 0.05
+            clip_stat_2 > 0.1
         )
         clipped_days = np.logical_and(
             self.daily_flags.no_errors,
@@ -210,8 +215,10 @@ class DataHandler():
         self.daily_flags.inverter_clipped = clipped_days
         if np.sum(clipped_days) > 0:
             self.inverter_clipping = True
+            self.num_clip_points = len(point_masses)
         else:
             self.inverter_clipping = False
+            self.num_clip_points = 0
         return
 
 
@@ -340,13 +347,14 @@ class DataHandler():
         clipped_days = self.daily_flags.inverter_clipped
         ax[0].plot(clip_stat_1)
         ax[1].plot(clip_stat_2)
-        ax[0].scatter(np.arange(len(clip_stat_1))[clipped_days],
-                      clip_stat_1[clipped_days], color='red', label='days with inverter clipping')
-        ax[1].scatter(np.arange(len(clip_stat_2))[clipped_days],
-                      clip_stat_2[clipped_days], color='red')
+        if self.inverter_clipping:
+            ax[0].scatter(np.arange(len(clip_stat_1))[clipped_days],
+                          clip_stat_1[clipped_days], color='red', label='days with inverter clipping')
+            ax[1].scatter(np.arange(len(clip_stat_2))[clipped_days],
+                          clip_stat_2[clipped_days], color='red')
+            ax[0].legend()
         ax[0].set_title('Clipping Score 1: ratio of daily max to overal max')
         ax[1].set_title('Clipping Score 2: fraction of time each day spent at daily max')
-        ax[0].legend()
         return fig
 
     def plot_daily_max_pdf(self, figsize=(8, 6)):
@@ -480,7 +488,12 @@ class DataHandler():
              [False]])
         # Catch if the PDF ends in a point mass at the high value
         if cvx.diff(y_hat, k=1).value[-1] > 5e-4:
-            point_masses[-1] = True
+            point_masses[-2] = True
+        pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
+        for ix in range(1, len(point_masses)):
+            if ~point_masses[ix - 1] and point_masses[ix]:
+                pm_reduce[ix] = True
+        point_masses = pm_reduce
         point_mass_values = x_rs[point_masses]
 
         if plot is None:
@@ -534,13 +547,19 @@ class DataHandler():
             return fig
         elif plot == 'diffs':
             fig, ax = plt.subplots(nrows=2, sharex=True, figsize=figsize)
-            ax[0].plot(x_rs[:-1], cvx.diff(y_hat, k=1).value)
-            ax[1].plot(x_rs[1:-1], local_curv / ref_slope)
+            y1 = cvx.diff(y_hat, k=1).value
+            y2 = local_curv / ref_slope
+            ax[0].plot(x_rs[:-1], y1)
+            ax[1].plot(x_rs[1:-1], y2)
             ax[1].axhline(threshold, linewidth=1, color='r', ls=':',
                           label='decision boundary')
             if len(point_mass_values) > 0:
+                ax[0].scatter(x_rs[point_masses],
+                              y1[point_masses[1:]],
+                              color='red', marker='o',
+                              label='detected point mass')
                 ax[1].scatter(x_rs[point_masses],
-                              (local_curv / ref_slope)[np.roll(point_masses[2:], 1)],
+                              y2[point_masses[1:-1]],
                               color='red', marker='o',
                               label='detected point mass')
             ax[0].set_title('1st order difference of CDF fit')
