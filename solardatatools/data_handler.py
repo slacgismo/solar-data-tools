@@ -389,84 +389,6 @@ class DataHandler():
         return fig
 
     def __analyze_distribution(self, data, plot=None, figsize=(8, 6)):
-        # set the bandwidth for the KDE algorithm dynamically as a logarithmic
-        # function of the number of values. The function roughly follows the
-        # following:
-        #
-        # data length  |  bandwidth
-        # -------------|------------
-        #     10       |     0.08
-        #     50       |     0.05
-        #     500      |     0.025
-        #     2000     |     0.01
-        # data = np.copy(data[data > 0])
-        # coeffs = np.array(
-        #     [1.28782573e+01 / 1000, 2.99960708e-07, -8.76881301e+01 / 1000])
-        #
-        # def bdw(x):
-        #     out = coeffs[0] * -np.log(coeffs[1] * x) + coeffs[2]
-        #     return np.clip(out, 0.01, 0.1)
-        #
-        # bandwidth = bdw(len(data))
-        #
-        # kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(
-        #     data[:, np.newaxis])
-        # X_plot = np.linspace(np.min(data) - 0.01,
-        #                      np.max(data) + 0.01)[:, np.newaxis]
-        # log_dens = kde.score_samples(X_plot)
-        # mins = argrelextrema(log_dens, np.less)[0]  # potential cut points to make clusters
-        # maxs = argrelextrema(log_dens, np.greater)[0]  # locations of the max point in each cluster
-        # # The number of max values should be one larger than the number of min
-        # # values, and the min values should always be between two max values
-        # if len(mins) >= len(maxs):
-        #     if mins[0] < maxs[0]:
-        #         mins = mins[1:]
-        #     if mins[-1] > maxs[-1]:
-        #         mins = mins[:-1]
-        # # Now drop peaks that are too small
-        # keep_mxs = np.ones_like(maxs, dtype=np.bool)
-        # keep_mns = np.ones_like(mins, dtype=np.bool)
-        # done = False
-        # if len(mins) > 0:
-        #     while not done:
-        #         comp_left = np.exp(log_dens[maxs[keep_mxs][:-1]]) - np.exp(
-        #             log_dens[mins[keep_mns]])
-        #         comp_right = np.exp(log_dens[maxs[keep_mxs][1:]]) - np.exp(
-        #             log_dens[mins[keep_mns]])
-        #         comp_array = np.c_[comp_left, comp_right]
-        #         min_diff = comp_array.min()
-        #         if min_diff < 0.35:
-        #             min_dif_loc = np.unravel_index(comp_array.argmin(),
-        #                                            comp_array.shape)
-        #             drop_min = min_dif_loc[0]
-        #             keep_mns[mins == mins[keep_mns][drop_min]] = 0
-        #             if np.exp(log_dens[maxs[keep_mxs][drop_min]]) > np.exp(
-        #                     log_dens[maxs[keep_mxs][drop_min + 1]]):
-        #                 keep_mxs[maxs == maxs[keep_mxs][drop_min + 1]] = 0
-        #             else:
-        #                 keep_mxs[maxs == maxs[keep_mxs][drop_min]] = 0
-        #         else:
-        #             done = True
-        #         if np.sum(keep_mns) == 0:
-        #             done = True
-        # counts, bins = np.histogram(data, bins=500)
-        # bins = 0.5 * (bins[1:] + bins[:-1])
-        # cut_points = np.concatenate([[-np.inf], X_plot[:, 0][mins[keep_mns]], [np.inf]])
-        # max_locs = np.empty(len(maxs[keep_mxs]))
-        # for ix in range(len(cut_points) - 1):
-        #     slct = np.logical_and(bins > cut_points[ix], bins < cut_points[ix + 1])
-        #     argmx = np.argmax(counts[slct])
-        #     max_locs[ix] = bins[slct][argmx]
-        # min_locs = X_plot[:, 0][mins[keep_mns]]
-        # cluster_is_clipped = np.zeros(len(max_locs), dtype=np.bool)
-        # b = 0.02
-        # for ix, loc in enumerate(max_locs):
-        #     num_l = np.sum(np.logical_and(data > loc - b, data < loc))
-        #     num_r = np.sum(np.logical_and(data > loc, data < loc + b))
-        #     r = num_r / num_l
-        #     if r < 0.8 or loc > 0.99:  # cluster passes asymmetry test or is at the far right
-        #         cluster_is_clipped[ix] = True
-
         # Calculate empirical CDF
         x = np.sort(np.copy(data))
         x = x[x > 0]
@@ -509,41 +431,25 @@ class DataHandler():
             [[False], metric <= threshold, # looking for drops of more than 65%
              [False]])
         # Catch if the PDF ends in a point mass at the high value
-        # if cvx.diff(y_hat, k=1).value[-1] > 5e-4:
-        #     point_masses[-2] = True
-        # pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
-        # for ix in range(1, len(point_masses)):
-        #     if ~point_masses[ix - 1] and point_masses[ix]:
-        #         pm_reduce[ix] = True
-        # point_masses = pm_reduce
+        if cvx.diff(y_hat, k=1).value[-1] > 5e-4:
+            point_masses[-2] = True
+        # Reduce clusters of detected points to single points
+        pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
+        for ix in range(len(point_masses) - 1):
+            if ~point_masses[ix] and point_masses[ix + 1]:
+                begin_cluster = ix + 1
+            elif point_masses[ix] and ~point_masses[ix + 1]:
+                end_cluster = ix
+                ix_select = np.argmax(metric[begin_cluster:end_cluster + 1])
+                pm_reduce[begin_cluster + ix_select] = True
+        point_masses = pm_reduce
         point_mass_values = x_rs[point_masses]
 
         if plot is None:
             return point_mass_values
         elif plot == 'pdf':
-            # for ix, loc in enumerate(max_locs):
-            #     num_l = np.sum(np.logical_and(data > loc - b, data < loc))
-            #     num_r = np.sum(np.logical_and(data > loc, data < loc + b))
-            #     r = num_r / num_l
-            #     print(loc, r)
             fig = plt.figure(figsize=figsize)
             plt.hist(data[data > 0], bins=100, alpha=0.5, label='histogram')
-            # plt.plot(X_plot.squeeze(),
-            #          0.01 * len(data) * np.exp(log_dens), label='KDE fit')
-            # for ix, mn in enumerate(min_locs):
-            #     if ix == 0:
-            #         plt.axvline(mn, linewidth=1, linestyle=':',
-            #                     color='green', label='detected minimum')
-            #     else:
-            #         plt.axvline(mn, linewidth=1, linestyle=':',
-            #                     color='green')
-            # for ix, mx in enumerate(max_locs): #maxs[keep_mxs]):
-            #     if ix == 0:
-            #         plt.axvline(mx, linewidth=1, linestyle='--',
-            #                     color='red', label='detected maximum')
-            #     else:
-            #         plt.axvline(mx, linewidth=1, linestyle='--',
-            #                     color='red')
             scale = np.histogram(
                 self.daily_scores.clipping_1[self.daily_scores.clipping_1 > 0],
                 bins=100)[0].max() / cvx.diff(y_hat, k=1).value.max()
