@@ -52,14 +52,17 @@ class DataHandler():
             df_ts, keys = make_time_series(self.data_frame)
             self.data_frame = df_ts
             self.keys = keys
+        # Private attributes
+        self.__time_axis_standardized = False
 
     def run_pipeline(self, use_col=None, zero_night=True, interp_day=True,
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
-                     verbose=True):
+                     verbose=True, start_day_ix=None, end_day_ix=None):
         t0 = time()
         if self.data_frame is not None:
-            self.make_data_matrix(use_col)
+            self.make_data_matrix(use_col, start_day_ix=start_day_ix,
+                                  end_day_ix=end_day_ix)
         t1 = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         t2 = time()
@@ -110,11 +113,18 @@ class DataHandler():
             print('Please run the pipeline first!')
             return
 
-    def make_data_matrix(self, use_col=None):
-        df = standardize_time_axis(self.data_frame)
+    def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None):
+
+        if not self.__time_axis_standardized:
+            df = standardize_time_axis(self.data_frame)
+            self.data_frame = df
+            self.__time_axis_standardized = True
+        else:
+            df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
         self.raw_data_matrix = make_2d(df, key=use_col)
+        self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
         self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
         self.use_column = use_col
@@ -276,7 +286,7 @@ class DataHandler():
             plt.scatter(xs[~self.daily_flags.density],
                         self.daily_signals.density[~self.daily_flags.density],
                         color='red')
-            title += ', good days flagged'
+            title += ', density outlier days flagged'
         if flag == 'good':
             plt.scatter(xs[self.daily_flags.no_errors],
                         self.daily_signals.density[self.daily_flags.no_errors],
