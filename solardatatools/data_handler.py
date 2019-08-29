@@ -212,7 +212,7 @@ class DataHandler():
         # clipped days must also be near a peak in the distribution of the
         # 1st clipping statistic that shows the characteristic, strongly skewed
         # peak shape
-        point_masses = self.__analyze_distribution(clip_stat_1)
+        point_masses = self.__analyze_distribution(clip_stat_1[self.daily_flags.no_errors])
         if len(point_masses) == 0:
             clipped_days[:] = False
         else:
@@ -368,14 +368,14 @@ class DataHandler():
         return fig
 
     def plot_daily_max_pdf(self, figsize=(8, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1[self.daily_flags.no_errors],
                                           plot='pdf', figsize=figsize)
         plt.title('Distribution of normalized daily maximum values')
         plt.legend()
         return fig
 
     def plot_daily_max_cdf(self, figsize=(10, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1[self.daily_flags.no_errors],
                                           plot='cdf', figsize=figsize)
         plt.title('Cumulative density function of normalized daily maximum values')
         plt.legend()
@@ -384,7 +384,7 @@ class DataHandler():
         return fig
 
     def plot_cdf_analysis(self, figsize=(12, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1[self.daily_flags.no_errors],
                                           plot='diffs', figsize=figsize)
         return fig
 
@@ -492,18 +492,30 @@ class DataHandler():
         # Look for outliers in the 2nd order difference to identify point masses from clipping
         local_curv = cvx.diff(y_hat, k=2).value
         ref_slope = cvx.diff(y_hat, k=1).value[:-1]
-        threshold = -0.35
+        threshold = -0.5
+        # metric = local_curv / ref_slope
+        metric = np.min([
+            local_curv / ref_slope,
+            np.concatenate([
+                (local_curv[:-1] + local_curv[1:]) / ref_slope[:-1],
+                [local_curv[-1] / ref_slope[-1]]
+            ]),
+            np.concatenate([
+                (local_curv[:-2] + local_curv[1:-1] + local_curv[2:]) / ref_slope[:-2],
+                [local_curv[-2:] / ref_slope[-2:]]
+            ], axis=None)
+        ], axis=0)
         point_masses = np.concatenate(
-            [[False], local_curv / ref_slope <= threshold, # looking for drops of more than 65%
+            [[False], metric <= threshold, # looking for drops of more than 65%
              [False]])
         # Catch if the PDF ends in a point mass at the high value
-        if cvx.diff(y_hat, k=1).value[-1] > 5e-4:
-            point_masses[-2] = True
-        pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
-        for ix in range(1, len(point_masses)):
-            if ~point_masses[ix - 1] and point_masses[ix]:
-                pm_reduce[ix] = True
-        point_masses = pm_reduce
+        # if cvx.diff(y_hat, k=1).value[-1] > 5e-4:
+        #     point_masses[-2] = True
+        # pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
+        # for ix in range(1, len(point_masses)):
+        #     if ~point_masses[ix - 1] and point_masses[ix]:
+        #         pm_reduce[ix] = True
+        # point_masses = pm_reduce
         point_mass_values = x_rs[point_masses]
 
         if plot is None:
@@ -558,7 +570,7 @@ class DataHandler():
         elif plot == 'diffs':
             fig, ax = plt.subplots(nrows=2, sharex=True, figsize=figsize)
             y1 = cvx.diff(y_hat, k=1).value
-            y2 = local_curv / ref_slope
+            y2 = metric
             ax[0].plot(x_rs[:-1], y1)
             ax[1].plot(x_rs[1:-1], y2)
             ax[1].axhline(threshold, linewidth=1, color='r', ls=':',
