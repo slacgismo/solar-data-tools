@@ -8,8 +8,7 @@ from time import time
 import numpy as np
 from scipy.stats import mode, skew
 from scipy.interpolate import interp1d
-from scipy.signal import argrelextrema
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.cluster import DBSCAN
 import cvxpy as cvx
 import matplotlib.pyplot as plt
 from solardatatools.time_axis_manipulation import make_time_series,\
@@ -43,6 +42,7 @@ class DataHandler():
         self.inverter_clipping = None       # True if there is inverter clipping, false otherwise
         self.num_clip_points = None         # If clipping, the number of clipping set points
         self.capacity_changes = None        # True if the apparent capacity seems to change over the data set
+        self.normal_quality_scores = None
         # Daily scores (floats) and flags (booleans)
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
@@ -54,6 +54,10 @@ class DataHandler():
             self.keys = keys
         # Private attributes
         self.__time_axis_standardized = False
+        self.__density_lower_threshold = None
+        self.__density_upper_threshold = None
+        self.__linearity_threshold = None
+        self.__labels = None
 
     def run_pipeline(self, use_col=None, zero_night=True, interp_day=True,
                      fix_shifts=True, density_lower_threshold=0.6,
@@ -108,6 +112,8 @@ class DataHandler():
                 print('WARNING: {} clipping set points detected!'.format(
                     self.num_clip_points
                 ))
+            if not self.normal_quality_scores:
+                print('WARNING: Abnormal clustering of data quality scores!')
             return
         except TypeError:
             print('Please run the pipeline first!')
@@ -156,6 +162,24 @@ class DataHandler():
         )
         self.daily_flags.linearity = self.daily_scores.linearity < linearity_threshold
         self.daily_flags.flag_no_errors()
+
+        scores = np.c_[self.daily_scores.density, self.daily_scores.linearity]
+        db = DBSCAN(eps=.03,
+                    min_samples=max(0.01 * scores.shape[0], 3)).fit(scores)
+        # Count the number of days that cluster to the main group but fall
+        # outside the decision boundaries
+        day_count = np.logical_or(
+            self.daily_scores.linearity[db.labels_ == 0] > linearity_threshold,
+            np.logical_or(
+                self.daily_scores.density[db.labels_ == 0] < density_lower_threshold,
+                self.daily_scores.density[db.labels_ == 0] > density_upper_threshold
+            )
+        )
+        self.normal_quality_scores = np.sum(day_count) <= max(5e-3 * self.num_days, 1)
+        self.__density_lower_threshold = 0.6
+        self.__density_upper_threshold = 1.05
+        self.__linearity_threshold = 0.1
+        self.__labels = db.labels_
 
     def get_density_scores(self, threshold=0.2):
         if self.raw_data_matrix is None:
@@ -307,15 +331,34 @@ class DataHandler():
                         self.daily_signals.density[self.daily_flags.cloudy],
                         color='red')
             title += ', cloudy days flagged'
-        if np.logical_and(show_fit, self.daily_signals.seasonal_density_fit is not None):
+        if np.logical_and(show_fit,
+                          self.daily_signals.seasonal_density_fit is not None):
             plt.plot(self.daily_signals.seasonal_density_fit, color='orange')
-            plt.plot(0.6 * self.daily_signals.seasonal_density_fit, color='green', linewidth=1,
+            plt.plot(0.6 * self.daily_signals.seasonal_density_fit,
+                     color='green', linewidth=1,
                      ls='--')
-            plt.plot(1.05 * self.daily_signals.seasonal_density_fit, color='green', linewidth=1,
+            plt.plot(1.05 * self.daily_signals.seasonal_density_fit,
+                     color='green', linewidth=1,
                      ls='--')
         plt.title(title)
         return fig
 
+    def plot_data_quality_scatter(self, figsize=(6,5)):
+        fig = plt.figure(figsize=figsize)
+        for lb in set(self.__labels):
+            plt.scatter(self.daily_scores.density[self.__labels == lb],
+                        self.daily_scores.linearity[self.__labels == lb],
+                        marker='.', label=lb)
+        plt.xlabel('density score')
+        plt.ylabel('linearity score')
+        plt.axhline(self.__linearity_threshold, linewidth=1, color='red',
+                    ls=':', label='decision boundary')
+        plt.axvline(self.__density_upper_threshold, linewidth=1, color='red',
+                    ls=':')
+        plt.axvline(self.__density_lower_threshold, linewidth=1, color='red',
+                    ls=':')
+        plt.legend()
+        return fig
 
     def plot_daily_energy(self, flag=None, figsize=(8, 6)):
         if self.filled_data_matrix is None:
@@ -440,8 +483,12 @@ class DataHandler():
                 begin_cluster = ix + 1
             elif point_masses[ix] and ~point_masses[ix + 1]:
                 end_cluster = ix
-                ix_select = np.argmax(metric[begin_cluster:end_cluster + 1])
-                pm_reduce[begin_cluster + ix_select] = True
+                try:
+                    ix_select = np.argmax(metric[begin_cluster:end_cluster + 1])
+                except ValueError:
+                    pm_reduce[begin_cluster] = True
+                else:
+                    pm_reduce[begin_cluster + ix_select] = True
         point_masses = pm_reduce
         point_mass_values = x_rs[point_masses]
 
