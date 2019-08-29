@@ -57,12 +57,12 @@ class DataHandler():
         self.__density_lower_threshold = None
         self.__density_upper_threshold = None
         self.__linearity_threshold = None
-        self.__labels = None
 
     def run_pipeline(self, use_col=None, zero_night=True, interp_day=True,
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
-                     verbose=True, start_day_ix=None, end_day_ix=None):
+                     clear_tune_param=0.1, verbose=True, start_day_ix=None,
+                     end_day_ix=None):
         t0 = time()
         if self.data_frame is not None:
             self.make_data_matrix(use_col, start_day_ix=start_day_ix,
@@ -80,7 +80,7 @@ class DataHandler():
                              density_upper_threshold=density_upper_threshold,
                              linearity_threshold=linearity_threshold)
         t5 = time()
-        self.detect_clear_days()
+        self.detect_clear_days(th=clear_tune_param)
         t6 = time()
         self.clipping_check()
         t7 = time()
@@ -179,7 +179,7 @@ class DataHandler():
         self.__density_lower_threshold = 0.6
         self.__density_upper_threshold = 1.05
         self.__linearity_threshold = 0.1
-        self.__labels = db.labels_
+        self.daily_scores.quality_clustering = db.labels_
 
     def get_density_scores(self, threshold=0.2):
         if self.raw_data_matrix is None:
@@ -261,11 +261,11 @@ class DataHandler():
                                                   solar_noon_estimator='srsn',
                                                   c1=c1, c2=c2)
 
-    def detect_clear_days(self):
+    def detect_clear_days(self, th=0.1):
         if self.filled_data_matrix is None:
             print('Generate a filled data matrix first.')
             return
-        clear_days = find_clear_days(self.filled_data_matrix)
+        clear_days = find_clear_days(self.filled_data_matrix, th=th)
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
@@ -298,6 +298,23 @@ class DataHandler():
                           clear_days=self.daily_flags.cloudy)
             plt.title('Measured power, cloudy days flagged')
             return fig
+
+    def plot_daily_signals(self, boolean_index=None, day_start=0, num_days=5,
+                           filled=True, ravel=True, figsize=(12, 6)):
+        if boolean_index is None:
+            boolean_index = np.s_[:]
+        i = day_start
+        j = day_start + num_days
+        slct = np.s_[np.arange(self.num_days)[boolean_index][i:j]]
+        if filled:
+            plot_data = self.filled_data_matrix[:, slct]
+        else:
+            plot_data = self.raw_data_matrix[:, slct]
+        if ravel:
+            plot_data = plot_data.ravel(order='F')
+        fig = plt.figure(figsize=figsize)
+        plt.plot(plot_data, linewidth=1)
+        return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
         if self.daily_signals.density is None:
@@ -345,9 +362,10 @@ class DataHandler():
 
     def plot_data_quality_scatter(self, figsize=(6,5)):
         fig = plt.figure(figsize=figsize)
-        for lb in set(self.__labels):
-            plt.scatter(self.daily_scores.density[self.__labels == lb],
-                        self.daily_scores.linearity[self.__labels == lb],
+        labels = self.daily_scores.quality_clustering
+        for lb in set(labels):
+            plt.scatter(self.daily_scores.density[labels == lb],
+                        self.daily_scores.linearity[labels == lb],
                         marker='.', label=lb)
         plt.xlabel('density score')
         plt.ylabel('linearity score')
@@ -551,6 +569,7 @@ class DailyScores():
         self.linearity = None
         self.clipping_1 = None
         self.clipping_2 = None
+        self.quality_clustering = None
 
 
 class DailyFlags():
