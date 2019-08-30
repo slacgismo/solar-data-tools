@@ -122,6 +122,54 @@ def local_quantile_regression_with_seasonal(signal, use_idxs=None, tau=0.75,
     prob.solve(solver=solver)
     return x.value
 
+
+def total_variation_plus_seasonal_quantile_filter(signal, index_set, tau=0.995,
+                                                  c1=1e3, c2=1e2, c3=1e2):
+    '''
+    This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
+    signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
+    multi-year solar PV power data sets, and therefore does an improved job of estimating the discretely changing
+    signal.
+
+    :param signal: A 1d numpy array (must support boolean indexing) containing the signal of interest
+    :param c1: The regularization parameter to control the total variation in the final output signal
+    :param c2: The regularization parameter to control the smoothness of the seasonal signal
+    :return: A 1d numpy array containing the filtered signal
+    '''
+    n = len(signal)
+    selected_days = np.arange(n)[index_set]
+    np.random.shuffle(selected_days)
+    ix = 2 * n // 3
+    train = selected_days[:ix]
+    validate = selected_days[ix:]
+    train.sort()
+    validate.sort()
+
+    s_hat = cvx.Variable(n)
+    s_seas = cvx.Variable(n)
+    s_error = cvx.Variable(n)
+    c1 = cvx.Parameter(value=c1, nonneg=True)
+    c2 = cvx.Parameter(value=c2, nonneg=True)
+    c3 = cvx.Parameter(value=c3, nonneg=True)
+    tau = cvx.Parameter(value=tau)
+    # w = len(signal) / np.sum(index_set)
+    beta = cvx.Variable()
+    objective = cvx.Minimize(
+        # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
+        2 * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
+        + c1 * cvx.norm1(cvx.diff(s_hat, k=1))
+        + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+        + c3 * beta ** 2
+    )
+    constraints = [
+        signal[train] == s_hat[train] + s_seas[train] + s_error[train],
+        s_seas[365:] - s_seas[:-365] == beta,
+        cvx.sum(s_seas[:365]) == 0
+    ]
+    problem = cvx.Problem(objective=objective, constraints=constraints)
+    problem.solve(solver='MOSEK')
+    return s_hat.value, s_seas.value
+
 def basic_outlier_filter(x, outlier_constant=1.5):
     '''
     Applies an outlier filter based on the interquartile range definition:
