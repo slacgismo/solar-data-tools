@@ -19,6 +19,7 @@ from solardatatools.data_quality import daily_missing_data_advanced,\
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
+from solardatatools.utilities import total_variation_plus_seasonal_quantile_filter
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -90,10 +91,10 @@ class DataHandler():
             out = 'total time: {:.2f} seconds\n'
             out += 'form matrix: {:.2f}, '
             out += 'fill matrix: {:.2f}, '
-            out += 'fix time shifts: {:.2f}, '
-            out += 'daily scores: {:.2f}, \n'
+            out += 'fix time shifts: {:.2f}, \n'
+            out += 'daily scores: {:.2f}, '
             out += 'daily flags: {:.2f}, '
-            out += 'clear detect: {:.2f}, '
+            out += 'clear detect: {:.2f}, \n'
             out += 'clipping check: {:.2f}, '
             out += 'data scoring: {:.2f}'
             print(out.format(t8-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, t7-t6, t8-t7))
@@ -108,6 +109,8 @@ class DataHandler():
             l5 = 'Inverter clipping:    {}'.format(self.inverter_clipping)
             p_out = l1 + l2 + l3 + l4 + l5
             print(p_out)
+            if self.capacity_changes:
+                print('WARNING: Changes in system capacity detected!')
             if self.num_clip_points > 1:
                 print('WARNING: {} clipping set points detected!'.format(
                     self.num_clip_points
@@ -168,14 +171,17 @@ class DataHandler():
                     min_samples=max(0.01 * scores.shape[0], 3)).fit(scores)
         # Count the number of days that cluster to the main group but fall
         # outside the decision boundaries
-        day_count = np.logical_or(
-            self.daily_scores.linearity[db.labels_ == 0] > linearity_threshold,
+        day_counts = [np.logical_or(
+            self.daily_scores.linearity[db.labels_ == lb] > linearity_threshold,
             np.logical_or(
-                self.daily_scores.density[db.labels_ == 0] < density_lower_threshold,
-                self.daily_scores.density[db.labels_ == 0] > density_upper_threshold
+                self.daily_scores.density[db.labels_ == lb] < density_lower_threshold,
+                self.daily_scores.density[db.labels_ == lb] > density_upper_threshold
             )
-        )
-        self.normal_quality_scores = np.sum(day_count) <= max(5e-3 * self.num_days, 1)
+        ) for lb in set(db.labels_)]
+        self.normal_quality_scores = np.any([
+            np.sum(day_count) <= max(5e-3 * self.num_days, 1)
+            for day_count in day_counts
+        ])
         self.__density_lower_threshold = 0.6
         self.__density_upper_threshold = 1.05
         self.__linearity_threshold = 0.1
@@ -212,6 +218,7 @@ class DataHandler():
         num_days = self.raw_data_matrix.shape[1]
         self.data_quality_score = np.sum(self.daily_flags.no_errors) / num_days
         self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
+        self.capacity_clustering()
         return
 
     def clipping_check(self):
@@ -254,6 +261,31 @@ class DataHandler():
             self.inverter_clipping = False
             self.num_clip_points = 0
         return
+
+    def capacity_clustering(self, plot=False, figsize=(8, 6)):
+        s1, s2 = total_variation_plus_seasonal_quantile_filter(
+            self.daily_scores.clipping_1, self.daily_flags.clear,
+            tau=0.5, c1=10, c2=10,
+            c3=300
+        )
+        db = DBSCAN(eps=.01, min_samples=max(0.1 * len(s1), 3)).fit(
+            s1[:, np.newaxis]
+        )
+        if np.max(db.labels_) > 0:
+            self.capacity_changes = True
+        else:
+            self.capacity_changes = False
+        if plot:
+            fig = plt.figure(figsize=figsize)
+            plt.plot(s1, label='capacity change detector')
+            plt.plot(s2 + s1, label='signal model')
+            plt.plot(self.daily_scores.clipping_1, alpha=0.3,
+                     label='measured signal')
+            plt.legend()
+            plt.title('Detection of system capacity changes')
+            plt.xlabel('day number')
+            plt.ylabel('normalized daily maximum power')
+            return fig
 
 
     def auto_fix_time_shifts(self, c1=5., c2=500.):
@@ -402,8 +434,8 @@ class DataHandler():
                         color='red')
             title += ', clear days flagged'
         elif flag == 'cloudy':
-            plt.scatter(xs[self.daily_flags.clear],
-                        energy[self.daily_flags.clear],
+            plt.scatter(xs[self.daily_flags.cloudy],
+                        energy[self.daily_flags.cloudy],
                         color='red')
             title += ', cloudy days flagged'
         plt.title(title)
@@ -447,6 +479,10 @@ class DataHandler():
     def plot_cdf_analysis(self, figsize=(12, 6)):
         fig = self.__analyze_distribution(self.daily_scores.clipping_1[self.daily_flags.no_errors],
                                           plot='diffs', figsize=figsize)
+        return fig
+
+    def plot_capacity_change_analysis(self, figsize=(8, 6)):
+        fig = self.capacity_clustering(plot=True, figsize=figsize)
         return fig
 
     def __analyze_distribution(self, data, plot=None, figsize=(8, 6)):
@@ -515,9 +551,8 @@ class DataHandler():
         elif plot == 'pdf':
             fig = plt.figure(figsize=figsize)
             plt.hist(data[data > 0], bins=100, alpha=0.5, label='histogram')
-            scale = np.histogram(
-                self.daily_scores.clipping_1[self.daily_scores.clipping_1 > 0],
-                bins=100)[0].max() / cvx.diff(y_hat, k=1).value.max()
+            scale = np.histogram(data[data > 0], bins=100)[0].max() \
+                    / cvx.diff(y_hat, k=1).value.max()
             plt.plot(x_rs[:-1], scale * cvx.diff(y_hat, k=1).value,
                      color='orange', linewidth=1, label='piecewise constant PDF estimate')
             for count, val in enumerate(point_mass_values):
