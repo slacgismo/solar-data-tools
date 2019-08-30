@@ -58,9 +58,12 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     # seasonal normalization.
     de = np.clip(np.divide(de, x.value), 0, 1)
     # Take geometric mean
-    weights = np.multiply(np.power(tc, th), np.power(de, 1.-th))
+    weights = np.multiply(np.power(tc, 0.5), np.power(de, 0.5))
     # Set values less than 0.6 to be equal to zero
-    weights[weights < 0.6] = 0.
+    # weights[weights < 0.6] = 0.
+    # Selection rule
+    selection = np.logical_and(tc > 0.5, de > 0.8)
+    weights[~selection] = 0.
     # Apply filter for sparsity to catch data errors related to non-zero nighttime data
     try:
         msk = filter_for_sparsity(data, solver='MOSEK')
@@ -73,4 +76,3 @@ def find_clear_days(data, th=0.1, boolean_out=True):
         return weights >= 1e-3
     else:
         return weights
-
