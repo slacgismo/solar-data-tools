@@ -7,8 +7,10 @@ a matrix
 '''
 
 import numpy as np
+import pandas as pd
 
-def make_2d(df, key='dc_power', trim_start=True, trim_end=True):
+def make_2d(df, key='dc_power', trim_start=True, trim_end=True,
+            return_day_axis=False):
     '''
     This function constructs a 2D array (or matrix) from a time series signal with a standardized time axis. The data is
     chunked into days, and each consecutive day becomes a column of the matrix.
@@ -35,6 +37,10 @@ def make_2d(df, key='dc_power', trim_start=True, trim_end=True):
         else:
             end = days[-2].strftime('%Y-%m-%d')
         D = np.copy(df[key].loc[start:end].values.reshape(n_steps, -1, order='F'))
-        return D
+        if return_day_axis:
+            day_axis = pd.date_range(start=start, end=end, freq='1D')
+            return D, day_axis
+        else:
+            return D
     else:
         return
