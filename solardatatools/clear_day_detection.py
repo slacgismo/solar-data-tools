@@ -36,9 +36,10 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     # day in the data set
     tc = np.linalg.norm(data[:-2] - 2 * data[1:-1] + data[2:], ord=1, axis=0)
     # Shift this metric so the median is at zero
-    tc = np.percentile(tc, 50) - tc
+    # tc = np.percentile(tc, 50) - tc
     # Normalize such that the maximum value is equal to one
     tc /= np.max(tc)
+    tc = 1 - tc
     # Take the positive part function, i.e. set the negative values to zero. This is the first metric
     tc = np.clip(tc, 0, None)
     # Calculate the daily energy
@@ -62,7 +63,7 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     # Set values less than 0.6 to be equal to zero
     # weights[weights < 0.6] = 0.
     # Selection rule
-    selection = np.logical_and(tc > 0.5, de > 0.8)
+    selection = np.logical_and(tc > 0.8, de > 0.8)
     weights[~selection] = 0.
     # Apply filter for sparsity to catch data errors related to non-zero nighttime data
     try:
