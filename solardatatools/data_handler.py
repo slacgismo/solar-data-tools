@@ -514,7 +514,7 @@ class DataHandler():
         return fig
 
     def plot_circ_dist(self, flag='good', num_bins=12*4, figsize=(8,8)):
-        title = 'Distribution of '
+        title = 'Calendar distribution of '
         if flag == 'good':
             slct = self.daily_flags.no_errors
             title += 'good days'
@@ -548,6 +548,7 @@ class DataHandler():
             ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
              'Oct', 'Nov', 'Dec']
         )
+        ax.set_title(title)
         return fig
 
 
