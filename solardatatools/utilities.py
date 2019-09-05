@@ -123,7 +123,7 @@ def local_quantile_regression_with_seasonal(signal, use_idxs=None, tau=0.75,
     return x.value
 
 
-def total_variation_plus_seasonal_quantile_filter(signal, index_set, tau=0.995,
+def total_variation_plus_seasonal_quantile_filter(signal, index_set=None, tau=0.995,
                                                   c1=1e3, c2=1e2, c3=1e2):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
@@ -137,6 +137,8 @@ def total_variation_plus_seasonal_quantile_filter(signal, index_set, tau=0.995,
     :return: A 1d numpy array containing the filtered signal
     '''
     n = len(signal)
+    if index_set is None:
+        index_set = np.ones(n, dtype=np.bool)
     selected_days = np.arange(n)[index_set]
     np.random.shuffle(selected_days)
     ix = 2 * n // 3
