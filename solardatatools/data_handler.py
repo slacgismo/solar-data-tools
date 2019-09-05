@@ -11,6 +11,7 @@ from scipy.interpolate import interp1d
 from sklearn.cluster import DBSCAN
 import cvxpy as cvx
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis, fix_time_shifts
 from solardatatools.matrix_embedding import make_2d
@@ -36,6 +37,8 @@ class DataHandler():
         self.keys = None
         self.use_column = None
         self.capacity_estimate = None
+        self.start_doy = None
+        self.day_index = None
         # Scores for the entire data set
         self.data_quality_score = None      # Fraction of days without data acquisition errors
         self.data_clearness_score = None    # Fraction of days that are approximately clear/sunny
@@ -132,11 +135,13 @@ class DataHandler():
             df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
-        self.raw_data_matrix = make_2d(df, key=use_col)
+        self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
         self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
         self.use_column = use_col
+        self.day_index = day_index[start_day_ix:end_day_ix]
+        self.start_doy = self.day_index.dayofyear[0]
         return
 
     def make_filled_data_matrix(self, zero_night=True, interp_day=True):
@@ -243,7 +248,7 @@ class DataHandler():
         # clipped days must also be near a peak in the distribution of the
         # 1st clipping statistic that shows the characteristic, strongly skewed
         # peak shape
-        point_masses = self.__analyze_distribution(clip_stat_1[self.daily_flags.no_errors])
+        point_masses = self.__analyze_distribution(clip_stat_1)
         if len(point_masses) == 0:
             clipped_days[:] = False
         else:
@@ -264,27 +269,30 @@ class DataHandler():
 
     def capacity_clustering(self, plot=False, figsize=(8, 6)):
         s1, s2 = total_variation_plus_seasonal_quantile_filter(
-            self.daily_scores.clipping_1, self.daily_flags.clear,
-            tau=0.5, c1=10, c2=10,
+            self.daily_scores.clipping_1, self.daily_flags.no_errors,
+            tau=0.5, c1=15, c2=10,
             c3=300
         )
-        db = DBSCAN(eps=.01, min_samples=max(0.1 * len(s1), 3)).fit(
+        db = DBSCAN(eps=.02, min_samples=max(0.1 * len(s1), 3)).fit(
             s1[:, np.newaxis]
         )
-        if np.max(db.labels_) > 0:
+        if len(set(db.labels_)) > 1: #np.max(db.labels_) > 0:
             self.capacity_changes = True
         else:
             self.capacity_changes = False
         if plot:
-            fig = plt.figure(figsize=figsize)
-            plt.plot(s1, label='capacity change detector')
-            plt.plot(s2 + s1, label='signal model')
-            plt.plot(self.daily_scores.clipping_1, alpha=0.3,
+            fig, ax = plt.subplots(nrows=2, figsize=figsize, sharex=True,
+                                   gridspec_kw={'height_ratios': [4, 1]})
+            ax[0].plot(s1, label='capacity change detector')
+            ax[0].plot(s2 + s1, label='signal model')
+            ax[0].plot(self.daily_scores.clipping_1, alpha=0.3,
                      label='measured signal')
-            plt.legend()
-            plt.title('Detection of system capacity changes')
-            plt.xlabel('day number')
-            plt.ylabel('normalized daily maximum power')
+            ax[0].legend()
+            ax[0].set_title('Detection of system capacity changes')
+            ax[1].set_xlabel('day number')
+            ax[0].set_ylabel('normalized daily maximum power')
+            ax[1].plot(db.labels_, ls='none', marker='.')
+            ax[1].set_ylabel('Capacity cluster label')
             return fig
 
 
@@ -332,7 +340,8 @@ class DataHandler():
             return fig
 
     def plot_daily_signals(self, boolean_index=None, day_start=0, num_days=5,
-                           filled=True, ravel=True, figsize=(12, 6)):
+                           filled=True, ravel=True, figsize=(12, 6),
+                           color=None, alpha=None):
         if boolean_index is None:
             boolean_index = np.s_[:]
         i = day_start
@@ -345,51 +354,59 @@ class DataHandler():
         if ravel:
             plot_data = plot_data.ravel(order='F')
         fig = plt.figure(figsize=figsize)
-        plt.plot(plot_data, linewidth=1)
+        kwargs = {}
+        if color is not None:
+            kwargs['color'] = color
+        if alpha is not None:
+            kwargs['alpha'] = alpha
+        plt.plot(plot_data, linewidth=1, **kwargs)
         return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
         if self.daily_signals.density is None:
             return
         fig = plt.figure(figsize=figsize)
-        plt.plot(self.daily_signals.density, linewidth=1)
-        xs = np.arange(len(self.daily_signals.density))
+        xs = self.day_index.to_pydatetime()  #  # np.arange(len(self.daily_signals.density))
+        plt.plot(xs, self.daily_signals.density, linewidth=1)
         title = 'Daily signal density'
         if flag == 'density':
-            plt.scatter(xs[~self.daily_flags.density],
+            plt.plot(xs[~self.daily_flags.density],
                         self.daily_signals.density[~self.daily_flags.density],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', density outlier days flagged'
         if flag == 'good':
-            plt.scatter(xs[self.daily_flags.no_errors],
+            plt.plot(xs[self.daily_flags.no_errors],
                         self.daily_signals.density[self.daily_flags.no_errors],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', days that failed density test flagged'
         elif flag == 'bad':
-            plt.scatter(xs[~self.daily_flags.no_errors],
+            plt.plot(xs[~self.daily_flags.no_errors],
                         self.daily_signals.density[~self.daily_flags.no_errors],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', bad days flagged'
         elif flag in ['clear', 'sunny']:
-            plt.scatter(xs[self.daily_flags.clear],
+            plt.plot(xs[self.daily_flags.clear],
                         self.daily_signals.density[self.daily_flags.clear],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', clear days flagged'
         elif flag == 'cloudy':
-            plt.scatter(xs[self.daily_flags.cloudy],
+            plt.plot(xs[self.daily_flags.cloudy],
                         self.daily_signals.density[self.daily_flags.cloudy],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', cloudy days flagged'
         if np.logical_and(show_fit,
                           self.daily_signals.seasonal_density_fit is not None):
-            plt.plot(self.daily_signals.seasonal_density_fit, color='orange')
-            plt.plot(0.6 * self.daily_signals.seasonal_density_fit,
+            plt.plot(xs, self.daily_signals.seasonal_density_fit, color='orange')
+            plt.plot(xs, 0.6 * self.daily_signals.seasonal_density_fit,
                      color='green', linewidth=1,
                      ls='--')
-            plt.plot(1.05 * self.daily_signals.seasonal_density_fit,
+            plt.plot(xs, 1.05 * self.daily_signals.seasonal_density_fit,
                      color='green', linewidth=1,
                      ls='--')
         plt.title(title)
+        plt.gcf().autofmt_xdate()
+        plt.ylabel('Fraction non-zero values')
+        plt.xlabel('Date')
         return fig
 
     def plot_data_quality_scatter(self, figsize=(6,5)):
@@ -410,35 +427,41 @@ class DataHandler():
         plt.legend()
         return fig
 
-    def plot_daily_energy(self, flag=None, figsize=(8, 6)):
+    def plot_daily_energy(self, flag=None, figsize=(8, 6), units='Wh'):
         if self.filled_data_matrix is None:
             return
         fig = plt.figure(figsize=figsize)
-        energy = self.daily_signals.energy
-        plt.plot(energy, linewidth=1)
-        xs = np.arange(len(energy))
+        energy = np.copy(self.daily_signals.energy)
+        if np.max(energy) > 1000:
+            energy /= 1000
+            units = 'kWh'
+        xs = self.day_index.to_pydatetime() # np.arange(len(energy))
+        plt.plot(xs, energy, linewidth=1)
         title = 'Daily energy production'
         if flag == 'good':
-            plt.scatter(xs[self.daily_flags.no_errors],
+            plt.plot(xs[self.daily_flags.no_errors],
                         energy[self.daily_flags.no_errors],
-                        color='red')
+                        ls='none', marker='.', olor='red')
             title += ', good days flagged'
         elif flag == 'bad':
-            plt.scatter(xs[~self.daily_flags.no_errors],
+            plt.plot(xs[~self.daily_flags.no_errors],
                         energy[~self.daily_flags.no_errors],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', bad days flagged'
         elif flag in ['clear', 'sunny']:
-            plt.scatter(xs[self.daily_flags.clear],
+            plt.plot(xs[self.daily_flags.clear],
                         energy[self.daily_flags.clear],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', clear days flagged'
         elif flag == 'cloudy':
-            plt.scatter(xs[self.daily_flags.cloudy],
+            plt.plot(xs[self.daily_flags.cloudy],
                         energy[self.daily_flags.cloudy],
-                        color='red')
+                        ls='none', marker='.', color='red')
             title += ', cloudy days flagged'
         plt.title(title)
+        plt.gcf().autofmt_xdate()
+        plt.xlabel('Date')
+        plt.ylabel('Energy ({})'.format(units))
         return fig
 
     def plot_clipping(self, figsize=(10, 8)):
@@ -448,27 +471,32 @@ class DataHandler():
         clip_stat_1 = self.daily_scores.clipping_1
         clip_stat_2 = self.daily_scores.clipping_2
         clipped_days = self.daily_flags.inverter_clipped
-        ax[0].plot(clip_stat_1)
-        ax[1].plot(clip_stat_2)
+        xs = self.day_index.to_pydatetime()
+        ax[0].plot(xs, clip_stat_1)
+        ax[1].plot(xs, clip_stat_2)
         if self.inverter_clipping:
-            ax[0].scatter(np.arange(len(clip_stat_1))[clipped_days],
-                          clip_stat_1[clipped_days], color='red', label='days with inverter clipping')
-            ax[1].scatter(np.arange(len(clip_stat_2))[clipped_days],
-                          clip_stat_2[clipped_days], color='red')
+            ax[0].plot(xs[clipped_days],
+                          clip_stat_1[clipped_days], ls='none', marker='.',
+                       color='red', label='days with inverter clipping')
+            ax[1].plot(xs[clipped_days],
+                          clip_stat_2[clipped_days], ls='none', marker='.',
+                       color='red')
             ax[0].legend()
         ax[0].set_title('Clipping Score 1: ratio of daily max to overal max')
         ax[1].set_title('Clipping Score 2: fraction of time each day spent at daily max')
+        ax[1].set_xlabel('Date')
+        plt.gcf().autofmt_xdate()
         return fig
 
     def plot_daily_max_pdf(self, figsize=(8, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1[self.daily_flags.no_errors],
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
                                           plot='pdf', figsize=figsize)
         plt.title('Distribution of normalized daily maximum values')
         plt.legend()
         return fig
 
     def plot_daily_max_cdf(self, figsize=(10, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1[self.daily_flags.no_errors],
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
                                           plot='cdf', figsize=figsize)
         plt.title('Cumulative density function of normalized daily maximum values')
         plt.legend()
@@ -477,13 +505,51 @@ class DataHandler():
         return fig
 
     def plot_cdf_analysis(self, figsize=(12, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1[self.daily_flags.no_errors],
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
                                           plot='diffs', figsize=figsize)
         return fig
 
     def plot_capacity_change_analysis(self, figsize=(8, 6)):
         fig = self.capacity_clustering(plot=True, figsize=figsize)
         return fig
+
+    def plot_circ_dist(self, flag='good', num_bins=12*4, figsize=(8,8)):
+        title = 'Distribution of '
+        if flag == 'good':
+            slct = self.daily_flags.no_errors
+            title += 'good days'
+        elif flag == 'bad':
+            slct = ~self.daily_flags.no_errors
+            title += 'bad days'
+        elif flag in ['clear', 'sunny']:
+            slct = self.daily_flags.clear
+            title += 'clear days'
+        elif flag == 'cloudy':
+            slct = self.daily_flags.cloudy
+            title += 'cloudy days'
+        circ_data = (self.start_doy + np.arange(self.num_days)[slct]) % 365 \
+                    * 2 * np.pi / 365
+        circ_hist = np.histogram(circ_data, bins=num_bins)
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+        start = (circ_hist[1][0] + circ_hist[1][1]) / 2
+        end = (circ_hist[1][-1] + circ_hist[1][-2]) / 2
+        theta = np.linspace(start, end, num_bins)
+        radii = circ_hist[0]
+        width = 2 * np.pi / num_bins
+        bars = ax.bar(theta, radii, width=width, bottom=0.0, edgecolor='none')
+        for r, bar in zip(radii, bars):
+            bar.set_facecolor(cm.magma(r / np.max(circ_hist[0])))
+            bar.set_alpha(0.75)
+        ax.set_theta_zero_location('N')
+        ax.set_theta_direction(-1)
+        ax.set_xticks(np.linspace(0, 2 * np.pi, 12, endpoint=False))
+        ax.set_xticklabels(
+            ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+             'Oct', 'Nov', 'Dec']
+        )
+        return fig
+
 
     def __analyze_distribution(self, data, plot=None, figsize=(8, 6)):
         # Calculate empirical CDF
@@ -525,10 +591,12 @@ class DataHandler():
             ], axis=None)
         ], axis=0)
         point_masses = np.concatenate(
-            [[False], metric <= threshold, # looking for drops of more than 65%
+            [[False], np.logical_and(metric <= threshold, ref_slope > 3e-4), # looking for drops of more than 65%
              [False]])
         # Catch if the PDF ends in a point mass at the high value
-        if cvx.diff(y_hat, k=1).value[-1] > 5e-4:
+        if np.logical_or(cvx.diff(y_hat, k=1).value[-1] > 1e-3,
+                         np.allclose(cvx.diff(y_hat, k=1).value[-1],
+                                     np.max(cvx.diff(y_hat, k=1).value))):
             point_masses[-2] = True
         # Reduce clusters of detected points to single points
         pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
