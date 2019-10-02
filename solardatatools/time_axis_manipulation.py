@@ -248,7 +248,8 @@ def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True
     # Take averages of solar noon estimates over the segments of the data set defined by the shift points
     A = []
     for i in range(len(ixs) - 1):
-        avg = np.average(np.ma.masked_invalid(s1_f[ixs[i]:ixs[i + 1]]))
+        #avg = np.average(np.ma.masked_invalid(s1_f[ixs[i]:ixs[i + 1]]))
+        avg = np.average(np.ma.masked_invalid(s2[ixs[i]:ixs[i + 1]]))
         A.append(np.round(avg * D.shape[0] / 24))
     A = np.array(A)
     # Considering the first segment as the reference point, determine how much to shift the remaining segments
