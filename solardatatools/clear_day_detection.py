@@ -63,7 +63,7 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     # Set values less than 0.6 to be equal to zero
     # weights[weights < 0.6] = 0.
     # Selection rule
-    selection = np.logical_and(tc > 0.8, de > 0.8)
+    selection = np.logical_and(tc > .9, de > 0.8)
     weights[~selection] = 0.
     # Apply filter for sparsity to catch data errors related to non-zero nighttime data
     try:
