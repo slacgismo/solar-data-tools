@@ -12,6 +12,8 @@ from sklearn.cluster import DBSCAN
 import cvxpy as cvx
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis, fix_time_shifts
 from solardatatools.matrix_embedding import make_2d
@@ -29,7 +31,10 @@ class DataHandler():
         self.raw_data_matrix = raw_data_matrix
         if self.raw_data_matrix is not None:
             self.num_days = self.raw_data_matrix.shape[1]
-            self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
+            if self.raw_data_matrix.shape[0] <= 1400:
+                self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
+            else:
+                self.data_sampling = 24 * 60 / self.raw_data_matrix.shape[0]
         else:
             self.num_days = None
             self.data_sampling = None
@@ -46,7 +51,8 @@ class DataHandler():
         self.inverter_clipping = None       # True if there is inverter clipping, false otherwise
         self.num_clip_points = None         # If clipping, the number of clipping set points
         self.capacity_changes = None        # True if the apparent capacity seems to change over the data set
-        self.normal_quality_scores = None
+        self.normal_quality_scores = None   # True if clustering of data quality scores are within decision boundaries
+        self.time_shifts = None             # True if time shifts detected and corrected in data set
         # Daily scores (floats) and flags (booleans)
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
@@ -66,7 +72,7 @@ class DataHandler():
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
-                     end_day_ix=None):
+                     end_day_ix=None, c1=5., c2=500.):
         t0 = time()
         if self.data_frame is not None:
             self.make_data_matrix(use_col, start_day_ix=start_day_ix,
@@ -76,7 +82,7 @@ class DataHandler():
         t2 = time()
         self.capacity_estimate = np.quantile(self.filled_data_matrix, 0.95)
         if fix_shifts:
-            self.auto_fix_time_shifts()
+            self.auto_fix_time_shifts(c1=c1, c2=c2)
         t3 = time()
         self.get_daily_scores(threshold=0.2)
         t4 = time()
@@ -105,12 +111,16 @@ class DataHandler():
 
     def report(self):
         try:
-            l1 = 'Length:               {} days\n'.format(self.num_days)
-            l2 = 'Data sampling:        {} minute\n'.format(self.data_sampling)
-            l3 = 'Data quality score:   {:.1f}%\n'.format(self.data_quality_score * 100)
-            l4 = 'Data clearness score: {:.1f}%\n'.format(self.data_clearness_score * 100)
-            l5 = 'Inverter clipping:    {}'.format(self.inverter_clipping)
-            p_out = l1 + l2 + l3 + l4 + l5
+            l1 = 'Length:                {} days\n'.format(self.num_days)
+            if self.raw_data_matrix.shape[0] <= 1440:
+                l2 = 'Data sampling:         {} minute\n'.format(self.data_sampling)
+            else:
+                l2 = 'Data sampling:         {} second\n'.format(int(self.data_sampling * 60))
+            l3 = 'Data quality score:    {:.1f}%\n'.format(self.data_quality_score * 100)
+            l4 = 'Data clearness score:  {:.1f}%\n'.format(self.data_clearness_score * 100)
+            l5 = 'Inverter clipping:     {}\n'.format(self.inverter_clipping)
+            l6 = 'Time shifts corrected: {}'.format(self.time_shifts)
+            p_out = l1 + l2 + l3 + l4 + l5 + l6
             print(p_out)
             if self.capacity_changes:
                 print('WARNING: Changes in system capacity detected!')
@@ -138,7 +148,10 @@ class DataHandler():
         self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
-        self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
+        if self.raw_data_matrix.shape[0] <= 1400:
+            self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
+        else:
+            self.data_sampling = 24 * 60 / self.raw_data_matrix.shape[0]
         self.use_column = use_col
         self.day_index = day_index[start_day_ix:end_day_ix]
         self.start_doy = self.day_index.dayofyear[0]
@@ -268,11 +281,14 @@ class DataHandler():
         return
 
     def capacity_clustering(self, plot=False, figsize=(8, 6)):
-        s1, s2 = total_variation_plus_seasonal_quantile_filter(
-            self.daily_scores.clipping_1, self.daily_flags.no_errors,
-            tau=0.5, c1=15, c2=10,
-            c3=300
-        )
+        if np.sum(self.daily_flags.no_errors) > 0:
+            s1, s2 = total_variation_plus_seasonal_quantile_filter(
+                self.daily_scores.clipping_1, self.daily_flags.no_errors,
+                tau=0.5, c1=15, c2=10,
+                c3=300
+            )
+        else:
+            return
         db = DBSCAN(eps=.02, min_samples=max(0.1 * len(s1), 3)).fit(
             s1[:, np.newaxis]
         )
@@ -296,10 +312,15 @@ class DataHandler():
             return fig
 
 
-    def auto_fix_time_shifts(self, c1=5., c2=500.):
-        self.filled_data_matrix = fix_time_shifts(self.filled_data_matrix,
-                                                  solar_noon_estimator='srsn',
-                                                  c1=c1, c2=c2)
+    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com'):
+        self.filled_data_matrix, shift_ixs = fix_time_shifts(
+            self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
+            return_ixs=True, verbose=False
+        )
+        if len(shift_ixs) == 0:
+            self.time_shifts = False
+        else:
+            self.time_shifts = True
 
     def detect_clear_days(self, th=0.1):
         if self.filled_data_matrix is None:
@@ -378,7 +399,7 @@ class DataHandler():
             plt.plot(xs[self.daily_flags.no_errors],
                         self.daily_signals.density[self.daily_flags.no_errors],
                         ls='none', marker='.', color='red')
-            title += ', days that failed density test flagged'
+            title += ', good days flagged'
         elif flag == 'bad':
             plt.plot(xs[~self.daily_flags.no_errors],
                         self.daily_signals.density[~self.daily_flags.no_errors],
@@ -543,12 +564,15 @@ class DataHandler():
             bar.set_alpha(0.75)
         ax.set_theta_zero_location('N')
         ax.set_theta_direction(-1)
+        ax.set_rorigin(-2.)
+        ax.set_rlabel_position(0)
         ax.set_xticks(np.linspace(0, 2 * np.pi, 12, endpoint=False))
         ax.set_xticklabels(
             ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
              'Oct', 'Nov', 'Dec']
         )
         ax.set_title(title)
+        # print(np.sum(circ_hist[0] <= 1))
         return fig
 
 
