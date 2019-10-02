@@ -165,9 +165,10 @@ def total_variation_plus_seasonal_quantile_filter(signal, index_set=None, tau=0.
     )
     constraints = [
         signal[train] == s_hat[train] + s_seas[train] + s_error[train],
-        s_seas[365:] - s_seas[:-365] == beta,
         cvx.sum(s_seas[:365]) == 0
     ]
+    if len(signal) > 365:
+        constraints.append(s_seas[365:] - s_seas[:-365] == beta)
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver='MOSEK')
     return s_hat.value, s_seas.value
