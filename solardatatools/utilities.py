@@ -32,7 +32,9 @@ def total_variation_filter(signal, C=5):
         problem.solve(solver='ECOS')
     return s_hat.value
 
-def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
+def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
+                                         residual_weights=None, tv_weights=None,
+                                         index_set=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -44,18 +46,25 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500):
     :param c2: The regularization parameter to control the smoothness of the seasonal signal
     :return: A 1d numpy array containing the filtered signal
     '''
+    if residual_weights is None:
+        residual_weights = np.ones_like(signal)
+    if tv_weights is None:
+        tv_weights = np.ones(len(signal) - 1)
+    if index_set is None:
+        index_set = ~np.isnan(signal)
     s_hat = cvx.Variable(len(signal))
     s_seas = cvx.Variable(len(signal))
     s_error = cvx.Variable(len(signal))
     c1 = cvx.Constant(value=c1)
     c2 = cvx.Constant(value=c2)
-    index_set = ~np.isnan(signal)
-    w = len(signal) / np.sum(index_set)
+    #w = len(signal) / np.sum(index_set)
     objective = cvx.Minimize(
-        (365 * 3 / len(signal)) * w * cvx.sum(cvx.huber(s_error))
-        + c1 * cvx.norm1(cvx.diff(s_hat, k=1))
+        # (365 * 3 / len(signal)) * w *
+        # cvx.sum(cvx.huber(cvx.multiply(residual_weights, s_error)))
+        10 * cvx.norm(cvx.multiply(residual_weights, s_error))
+        + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
         + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-        + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
+        # + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
     )
     constraints = [
         signal[index_set] == s_hat[index_set] + s_seas[index_set] + s_error[index_set],

@@ -10,6 +10,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema
+from scipy.stats import mode
 from sklearn.neighbors.kde import KernelDensity
 
 from solardatatools.clear_day_detection import find_clear_days
@@ -142,8 +143,8 @@ def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=Fal
         df_out.index = index
         return df_out
 
-def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True,
-                    c1=5., c2=500., c3=5., solar_noon_estimator='com'):
+def fix_time_shifts(data, verbose=False, return_ixs=False, use_ixs=None,
+                    c1=5., c2=200., c3=5., solar_noon_estimator='com'):
     '''
     This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
     that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
@@ -177,91 +178,28 @@ def fix_time_shifts(data, verbose=False, return_ixs=False, clear_day_filter=True
     elif solar_noon_estimator == 'srsn':
         # estimate solar noon as the average of sunrise time and sunset time
         s1 = avg_sunrise_sunset(D)
-    # Apply a clear day filter
-    if clear_day_filter:
-        m = find_clear_days(D)
-        # Filter our obvious outliers in the solar noon / center of mass signal
-        msk = basic_outlier_filter(s1[m])
-        idxs = np.arange(D.shape[1])
-        m[idxs[m][~msk]] = False
-        # only keep the entries of the solar noon signal that correspond to clear
-        # days that are not outliers
-        s1_f = np.empty_like(s1)
-        s1_f[:] = np.nan
-        s1_f[m] = s1[m]
-    else:
-        s1_f = s1
-    # Apply total variation filter (with seasonal baseline if >1yr of data)
-    if len(s1) > 365:
-        s2, s_seas = total_variation_plus_seasonal_filter(s1_f, c1=c1, c2=c2)
-    else:
-        s2 = total_variation_filter(s1_f, C=c3)
-    # Perform clustering with KDE
-    kde = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(s2[:, np.newaxis])
-    X_plot = np.linspace(0.95 * np.min(s2), 1.05 * np.max(s2))[:, np.newaxis]
-    log_dens = kde.score_samples(X_plot)
-    mins = argrelextrema(log_dens, np.less)[0]      # potential cut points to make clusters
-    maxs = argrelextrema(log_dens, np.greater)[0]   # locations of the max point in each cluster
-    # Drop clusters with too few members
-    keep = np.ones_like(maxs, dtype=np.bool)
-    for ix, mx in enumerate(maxs):
-        if np.exp(log_dens)[mx] < 1e-1:
-            keep[ix] = 0
-    mx_keep = maxs[keep]
-    mx_drop = maxs[~keep]
-    mn_drop = []
-    # Determine closest clusters in keep set to each cluster that should be dropped
-    for md in mx_drop:
-        dists = np.abs(X_plot[:, 0][md] - X_plot[:, 0][mx_keep])
-        max_merge = mx_keep[np.argmin(dists)]
-        # Determine which minimum index to remove to correctly merge clusters
-        for mn in mins:
-            cond1 = np.logical_and(mn < max_merge, mn > md)
-            cond2 = np.logical_and(mn > max_merge, mn < md)
-            if np.logical_or(cond1, cond2):
-                if verbose:
-                    print('merge', md, 'with', max_merge, 'by dropping', mn)
-                mn_drop.append(mn)
-    mins_new = np.array([i for i in mins if i not in mn_drop])
-    # Assign cluster labels to days in data set
-    clusters = np.zeros_like(s1)
-    if len(mins_new) > 0:
-        for it, ex in enumerate(X_plot[:, 0][mins_new]):
-            m = s2 >= ex
-            clusters[m] = it + 1
-    # Identify indices corresponding to days when time shifts occurred
-    index_set = np.arange(D.shape[1]-1)[clusters[1:] != clusters[:-1]] + 1
-    # Exit if no time shifts detected
-    if len(index_set) == 0:
-        if verbose:
-            print('No time shifts found')
-        if return_ixs:
-            return D, []
-        else:
-            return D
-    #################################################################################################################
-    # Part 2: Fixing the time shifts.
-    #################################################################################################################
-    if verbose:
-        print('Time shifts found at: ', index_set)
-    ixs = np.r_[[None], index_set, [None]]
-    # Take averages of solar noon estimates over the segments of the data set defined by the shift points
-    A = []
-    for i in range(len(ixs) - 1):
-        #avg = np.average(np.ma.masked_invalid(s1_f[ixs[i]:ixs[i + 1]]))
-        avg = np.average(np.ma.masked_invalid(s2[ixs[i]:ixs[i + 1]]))
-        A.append(np.round(avg * D.shape[0] / 24))
-    A = np.array(A)
-    # Considering the first segment as the reference point, determine how much to shift the remaining segments
-    rolls = A[0] - A[1:]
-    # Apply the corresponding shift to each segment
+    if use_ixs is None:
+        use_ixs = ~np.isnan(s1)
+    # Iterative reweighted L1 heuristic
+    w = np.ones(len(s1) - 1)
+    eps = 0.1
+    for i in range(5):
+        s_tv, s_seas = total_variation_plus_seasonal_filter(
+            s1, c1=c1, c2=c2,
+            tv_weights=w,
+            index_set=use_ixs
+        )
+        w = 1 / (eps + np.abs(np.diff(s_tv, n=1)))
+    # Apply corrections
+    roll_by_index = np.round((mode(np.round(s_tv, 3)).mode[0] - s_tv) * D.shape[0] / 24, 0)
     Dout = np.copy(D)
-    for ind, roll in enumerate(rolls):
-        D_rolled = np.roll(D, int(roll), axis=0)
-        Dout[:, ixs[ind + 1]:] = D_rolled[:, ixs[ind + 1]:]
-    # We find that a second pass with halved weights catches some transition points
-    # that might have been missed for data with many small transitions
-    Dout = fix_time_shifts(Dout, return_ixs=False, c1=c1/2, c2=c2/2, c3=c3/2)
+    for roll in np.unique(roll_by_index):
+        if roll != 0:
+            ixs = roll_by_index == roll
+            Dout[:, ixs] = np.roll(D, int(roll), axis=0)[:, ixs]
+    # record indices of transition points
+    index_set = np.arange(len(s_tv) - 1)[np.round(np.diff(s_tv, n=1), 0) != 0]
+
     if return_ixs:
         return Dout, index_set
     else:

@@ -72,7 +72,7 @@ class DataHandler():
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
-                     end_day_ix=None, c1=5., c2=500.):
+                     end_day_ix=None, c1=5., c2=500., estimator='com'):
         t0 = time()
         if self.data_frame is not None:
             self.make_data_matrix(use_col, start_day_ix=start_day_ix,
@@ -82,7 +82,7 @@ class DataHandler():
         t2 = time()
         self.capacity_estimate = np.quantile(self.filled_data_matrix, 0.95)
         if fix_shifts:
-            self.auto_fix_time_shifts(c1=c1, c2=c2)
+            self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator)
         t3 = time()
         self.get_daily_scores(threshold=0.2)
         t4 = time()
@@ -315,7 +315,7 @@ class DataHandler():
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com'):
         self.filled_data_matrix, shift_ixs = fix_time_shifts(
             self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
-            return_ixs=True, verbose=False
+            return_ixs=True, verbose=False, use_ixs=self.daily_flags.no_errors
         )
         if len(shift_ixs) == 0:
             self.time_shifts = False
