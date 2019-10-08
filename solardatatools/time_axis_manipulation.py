@@ -187,7 +187,7 @@ def fix_time_shifts(data, verbose=False, return_ixs=False, use_ixs=None,
         s_tv, s_seas = total_variation_plus_seasonal_filter(
             s1, c1=c1, c2=c2,
             tv_weights=w,
-            index_set=use_ixs
+            use_ixs=use_ixs
         )
         w = 1 / (eps + np.abs(np.diff(s_tv, n=1)))
     # Apply corrections
