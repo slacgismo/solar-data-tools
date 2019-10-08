@@ -48,7 +48,7 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
     use_days = density_signal > threshold
     fit_signal = local_quantile_regression_with_seasonal(
         density_signal,
-        use_idxs=use_days,
+        use_ixs=use_days,
         tau=0.9,
         solver='MOSEK'
     )
