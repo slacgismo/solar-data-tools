@@ -272,7 +272,7 @@ class DataHandler():
         self.daily_scores.clipping_1 = clip_stat_1
         self.daily_scores.clipping_2 = clip_stat_2
         self.daily_flags.inverter_clipped = clipped_days
-        if np.sum(clipped_days) > 0:
+        if np.sum(clipped_days) > 0.01 * self.num_days:
             self.inverter_clipping = True
             self.num_clip_points = len(point_masses)
         else:
@@ -282,11 +282,16 @@ class DataHandler():
 
     def capacity_clustering(self, plot=False, figsize=(8, 6)):
         if np.sum(self.daily_flags.no_errors) > 0:
-            s1, s2 = total_variation_plus_seasonal_quantile_filter(
-                self.daily_scores.clipping_1, self.daily_flags.no_errors,
-                tau=0.5, c1=15, c2=10,
-                c3=300
-            )
+            # Iterative reweighted L1 heuristic
+            w = np.ones(len(self.daily_scores.clipping_1) - 1)
+            eps = 0.5
+            for i in range(5):
+                s1, s2 = total_variation_plus_seasonal_quantile_filter(
+                    self.daily_scores.clipping_1, self.daily_flags.no_errors,
+                    tau=0.5, c1=15, c2=100,
+                    c3=300, tv_weights=w
+                )
+                w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         else:
             return
         db = DBSCAN(eps=.02, min_samples=max(0.1 * len(s1), 3)).fit(
