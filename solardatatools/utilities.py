@@ -34,7 +34,7 @@ def total_variation_filter(signal, C=5):
 
 def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
                                          residual_weights=None, tv_weights=None,
-                                         index_set=None):
+                                         use_ixs=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -50,8 +50,10 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
         residual_weights = np.ones_like(signal)
     if tv_weights is None:
         tv_weights = np.ones(len(signal) - 1)
-    if index_set is None:
+    if use_ixs is None:
         index_set = ~np.isnan(signal)
+    else:
+        index_set = use_ixs
     s_hat = cvx.Variable(len(signal))
     s_seas = cvx.Variable(len(signal))
     s_error = cvx.Variable(len(signal))
@@ -75,22 +77,22 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
     problem.solve()
     return s_hat.value, s_seas.value
 
-def local_median_regression_with_seasonal(signal, use_idxs=None, c1=1e3, solver='ECOS'):
+def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3, solver='ECOS'):
     '''
     for a list of available solvers, see:
         https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
 
     :param signal: 1d numpy array
-    :param use_idxs: optional index set to apply cost function to
+    :param use_ixs: optional index set to apply cost function to
     :param c1: float
     :param solver: string
     :return: median fit with seasonal baseline removed
     '''
-    if use_idxs is None:
-        use_idxs = np.arange(len(signal))
+    if use_ixs is None:
+        use_ixs = np.arange(len(signal))
     x = cvx.Variable(len(signal))
     objective = cvx.Minimize(
-        cvx.norm1(signal[use_idxs] - x[use_idxs]) + c1 * cvx.norm(cvx.diff(x, k=2))
+        cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.norm(cvx.diff(x, k=2))
     )
     if len(signal) > 365:
         constraints = [
@@ -102,22 +104,24 @@ def local_median_regression_with_seasonal(signal, use_idxs=None, c1=1e3, solver=
     prob.solve(solver=solver)
     return x.value
 
-def local_quantile_regression_with_seasonal(signal, use_idxs=None, tau=0.75,
-                                            c1=1e3, solver='ECOS'):
+def local_quantile_regression_with_seasonal(signal, use_ixs=None, tau=0.75,
+                                            c1=1e3, solver='ECOS',
+                                            residual_weights=None,
+                                            tv_weights=None):
     '''
     https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
 
     :param signal: 1d numpy array
-    :param use_idxs: optional index set to apply cost function to
+    :param use_ixs: optional index set to apply cost function to
     :param tau: float, parameter for quantile regression
     :param c1: float
     :param solver: string
     :return: median fit with seasonal baseline removed
     '''
-    if use_idxs is None:
-        use_idxs = np.arange(len(signal))
+    if use_ixs is None:
+        use_ixs = np.arange(len(signal))
     x = cvx.Variable(len(signal))
-    r = signal[use_idxs] - x[use_idxs]
+    r = signal[use_ixs] - x[use_ixs]
     objective = cvx.Minimize(
         cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.norm(cvx.diff(x, k=2))
     )
@@ -132,8 +136,11 @@ def local_quantile_regression_with_seasonal(signal, use_idxs=None, tau=0.75,
     return x.value
 
 
-def total_variation_plus_seasonal_quantile_filter(signal, index_set=None, tau=0.995,
-                                                  c1=1e3, c2=1e2, c3=1e2):
+def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.995,
+                                                  c1=1e3, c2=1e2, c3=1e2,
+                                                  solver='ECOS',
+                                                  residual_weights=None,
+                                                  tv_weights=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -146,15 +153,19 @@ def total_variation_plus_seasonal_quantile_filter(signal, index_set=None, tau=0.
     :return: A 1d numpy array containing the filtered signal
     '''
     n = len(signal)
-    if index_set is None:
-        index_set = np.ones(n, dtype=np.bool)
-    selected_days = np.arange(n)[index_set]
-    np.random.shuffle(selected_days)
-    ix = 2 * n // 3
-    train = selected_days[:ix]
-    validate = selected_days[ix:]
-    train.sort()
-    validate.sort()
+    if residual_weights is None:
+        residual_weights = np.ones_like(signal)
+    if tv_weights is None:
+        tv_weights = np.ones(len(signal) - 1)
+    if use_ixs is None:
+        use_ixs = np.ones(n, dtype=np.bool)
+    # selected_days = np.arange(n)[index_set]
+    # np.random.shuffle(selected_days)
+    # ix = 2 * n // 3
+    # train = selected_days[:ix]
+    # validate = selected_days[ix:]
+    # train.sort()
+    # validate.sort()
 
     s_hat = cvx.Variable(n)
     s_seas = cvx.Variable(n)
@@ -167,13 +178,14 @@ def total_variation_plus_seasonal_quantile_filter(signal, index_set=None, tau=0.
     beta = cvx.Variable()
     objective = cvx.Minimize(
         # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
-        2 * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
-        + c1 * cvx.norm1(cvx.diff(s_hat, k=1))
+        2 * cvx.sum(0.5 * cvx.abs(cvx.multiply(residual_weights, s_error))
+                    + (tau - 0.5) * cvx.multiply(residual_weights, s_error))
+        + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
         + c2 * cvx.norm(cvx.diff(s_seas, k=2))
         + c3 * beta ** 2
     )
     constraints = [
-        signal[train] == s_hat[train] + s_seas[train] + s_error[train],
+        signal[use_ixs] == s_hat[use_ixs] + s_seas[use_ixs] + s_error[use_ixs],
         cvx.sum(s_seas[:365]) == 0
     ]
     if len(signal) > 365:
