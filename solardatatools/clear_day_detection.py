@@ -36,10 +36,23 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     # day in the data set
     tc = np.linalg.norm(data[:-2] - 2 * data[1:-1] + data[2:], ord=1, axis=0)
     # Shift this metric so the median is at zero
-    tc = np.percentile(tc, 50) - tc
+    # tc = np.percentile(tc, 50) - tc
     # Normalize such that the maximum value is equal to one
     tc /= np.max(tc)
+    tc = 1 - tc
     # Take the positive part function, i.e. set the negative values to zero. This is the first metric
+    y = cvx.Variable(len(tc))
+    cost = cvx.sum(
+        0.5 * cvx.abs(y - tc) + (.9 - 0.5) * (tc - y)) + 1e3 * cvx.norm(
+        cvx.diff(y, k=2))
+    prob = cvx.Problem(cvx.Minimize(cost))
+    try:
+        prob.solve(solver='MOSEK')
+    except Exception as e:
+        print(e)
+        print('Trying ECOS solver')
+        prob.solve(solver='ECOS')
+    tc /= y.value
     tc = np.clip(tc, 0, None)
     # Calculate the daily energy
     de = np.sum(data, axis=0)
@@ -58,9 +71,12 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     # seasonal normalization.
     de = np.clip(np.divide(de, x.value), 0, 1)
     # Take geometric mean
-    weights = np.multiply(np.power(tc, th), np.power(de, 1.-th))
+    weights = np.multiply(np.power(tc, 0.5), np.power(de, 0.5))
     # Set values less than 0.6 to be equal to zero
-    weights[weights < 0.6] = 0.
+    # weights[weights < 0.6] = 0.
+    # Selection rule
+    selection = np.logical_and(tc > .9, de > 0.8)
+    weights[~selection] = 0.
     # Apply filter for sparsity to catch data errors related to non-zero nighttime data
     try:
         msk = filter_for_sparsity(data, solver='MOSEK')
@@ -73,4 +89,3 @@ def find_clear_days(data, th=0.1, boolean_out=True):
         return weights >= 1e-3
     else:
         return weights
-

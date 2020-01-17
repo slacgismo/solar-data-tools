@@ -35,7 +35,7 @@ def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None):
                 ylim = ax.get_ylim()
                 use_day = clear_days
                 days = np.arange(D.shape[1])
-                y1 = np.ones_like(days[use_day]) * D.shape[0] * .99
+                y1 = np.ones_like(days[use_day]) * D.shape[0] * .999
                 ax.scatter(days[use_day], y1, marker='|', color='yellow', s=2)
                 ax.scatter(days[use_day], .995*y1, marker='|', color='yellow', s=2)
                 ax.set_xlim(*xlim)

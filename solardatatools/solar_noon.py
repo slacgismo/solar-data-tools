@@ -30,7 +30,7 @@ def energy_com(data):
     com[msk] = np.divide(div1[msk], div2[msk])
     return com
 
-def avg_sunrise_sunset(data_in):
+def avg_sunrise_sunset(data_in, threshold=0.005):
     """ Calculate the sunrise time and sunset time for each day, and use the
     average of these two values as an estimate for solar noon.
 
@@ -42,9 +42,9 @@ def avg_sunrise_sunset(data_in):
     # value in the data set plus all periods with missing values.
     try:
         with np.errstate(invalid='ignore'):
-            night_msk = data < 0.005 * np.max(data[~np.isnan(data)])
+            night_msk = data < threshold * np.max(data[~np.isnan(data)])
     except ValueError:
-        night_msk = data < 0.005 * np.max(data)
+        night_msk = data < threshold * np.max(data)
     data[night_msk] = np.nan
     good_vals = (~np.isnan(data)).astype(int)
     sunrise_idxs = np.argmax(good_vals, axis=0)
