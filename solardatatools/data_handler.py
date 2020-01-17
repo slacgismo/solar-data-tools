@@ -72,11 +72,13 @@ class DataHandler():
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
-                     end_day_ix=None, c1=5., c2=500., estimator='com'):
+                     end_day_ix=None, c1=5., c2=500., estimator='com',
+                     differentiate=False):
         t0 = time()
         if self.data_frame is not None:
             self.make_data_matrix(use_col, start_day_ix=start_day_ix,
-                                  end_day_ix=end_day_ix)
+                                  end_day_ix=end_day_ix,
+                                     differentiate=differentiate)
         t1 = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         t2 = time()
@@ -135,7 +137,8 @@ class DataHandler():
             print('Please run the pipeline first!')
             return
 
-    def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None):
+    def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
+                                differentiate=False):
 
         if not self.__time_axis_standardized:
             df = standardize_time_axis(self.data_frame)
@@ -145,6 +148,8 @@ class DataHandler():
             df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
+        if differentiate:
+            pass
         self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
@@ -280,7 +285,8 @@ class DataHandler():
             self.num_clip_points = 0
         return
 
-    def capacity_clustering(self, plot=False, figsize=(8, 6)):
+    def capacity_clustering(self, plot=False, figsize=(8, 6),
+                            show_clusters=True):
         if np.sum(self.daily_flags.no_errors) > 0:
             # Iterative reweighted L1 heuristic
             w = np.ones(len(self.daily_scores.clipping_1) - 1)
@@ -302,18 +308,28 @@ class DataHandler():
         else:
             self.capacity_changes = False
         if plot:
-            fig, ax = plt.subplots(nrows=2, figsize=figsize, sharex=True,
-                                   gridspec_kw={'height_ratios': [4, 1]})
-            ax[0].plot(s1, label='capacity change detector')
-            ax[0].plot(s2 + s1, label='signal model')
-            ax[0].plot(self.daily_scores.clipping_1, alpha=0.3,
-                     label='measured signal')
-            ax[0].legend()
-            ax[0].set_title('Detection of system capacity changes')
-            ax[1].set_xlabel('day number')
-            ax[0].set_ylabel('normalized daily maximum power')
-            ax[1].plot(db.labels_, ls='none', marker='.')
-            ax[1].set_ylabel('Capacity cluster label')
+            if show_clusters:
+                fig, ax = plt.subplots(nrows=2, figsize=figsize, sharex=True,
+                                       gridspec_kw={'height_ratios': [4, 1]})
+                ax[0].plot(s1, label='capacity change detector')
+                ax[0].plot(s2 + s1, label='signal model')
+                ax[0].plot(self.daily_scores.clipping_1, alpha=0.3,
+                         label='measured signal')
+                ax[0].legend()
+                ax[0].set_title('Detection of system capacity changes')
+                ax[1].set_xlabel('day number')
+                ax[0].set_ylabel('normalized daily maximum power')
+                ax[1].plot(db.labels_, ls='none', marker='.')
+                ax[1].set_ylabel('Capacity cluster label')
+            else:
+                fig, ax = plt.subplots(nrows=1, figsize=figsize)
+                ax.plot(s1, label='capacity change detector')
+                ax.plot(s2 + s1, label='signal model')
+                ax.plot(self.daily_scores.clipping_1, alpha=0.3,
+                         label='measured signal')
+                ax.legend()
+                ax.set_title('Detection of system capacity changes')
+                ax.set_ylabel('normalized daily maximum power')
             return fig
 
 
@@ -335,13 +351,16 @@ class DataHandler():
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
-    def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6)):
+    def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
+                     scale_to_kw=False):
         if matrix == 'raw':
-            mat = self.raw_data_matrix
+            mat = np.copy(self.raw_data_matrix)
         elif matrix == 'filled':
-            mat = self.filled_data_matrix
+            mat = np.copy(self.filled_data_matrix)
         else:
             return
+        if scale_to_kw:
+            mat /= 1000
         if flag is None:
             return plot_2d(mat, figsize=figsize)
         elif flag == 'good':
@@ -392,7 +411,10 @@ class DataHandler():
         if self.daily_signals.density is None:
             return
         fig = plt.figure(figsize=figsize)
-        xs = self.day_index.to_pydatetime()  #  # np.arange(len(self.daily_signals.density))
+        try:
+            xs = self.day_index.to_pydatetime()
+        except AttributeError:
+            xs = np.arange(len(self.daily_signals.density))
         plt.plot(xs, self.daily_signals.density, linewidth=1)
         title = 'Daily signal density'
         if flag == 'density':
@@ -461,7 +483,10 @@ class DataHandler():
         if np.max(energy) > 1000:
             energy /= 1000
             units = 'kWh'
-        xs = self.day_index.to_pydatetime() # np.arange(len(energy))
+        try:
+            xs = self.day_index.to_pydatetime()
+        except AttributeError:
+            xs = np.arange(len(self.daily_signals.density))
         plt.plot(xs, energy, linewidth=1)
         title = 'Daily energy production'
         if flag == 'good':
@@ -497,7 +522,10 @@ class DataHandler():
         clip_stat_1 = self.daily_scores.clipping_1
         clip_stat_2 = self.daily_scores.clipping_2
         clipped_days = self.daily_flags.inverter_clipped
-        xs = self.day_index.to_pydatetime()
+        try:
+            xs = self.day_index.to_pydatetime()
+        except AttributeError:
+            xs = np.arange(len(self.daily_signals.density))
         ax[0].plot(xs, clip_stat_1)
         ax[1].plot(xs, clip_stat_2)
         if self.inverter_clipping:
@@ -518,13 +546,17 @@ class DataHandler():
         fig = self.__analyze_distribution(self.daily_scores.clipping_1,
                                           plot='pdf', figsize=figsize)
         plt.title('Distribution of normalized daily maximum values')
+        plt.xlabel('Normalized daily max power')
+        plt.ylabel('Count')
         plt.legend()
         return fig
 
     def plot_daily_max_cdf(self, figsize=(10, 6)):
         fig = self.__analyze_distribution(self.daily_scores.clipping_1,
                                           plot='cdf', figsize=figsize)
-        plt.title('Cumulative density function of normalized daily maximum values')
+        plt.title('Cumulative density function of\nnormalized daily maximum values')
+        plt.ylabel('Normalized daily max power')
+        plt.xlabel('Cumulative occurance probability')
         plt.legend()
         ax = plt.gca()
         ax.set_aspect('equal')
@@ -535,8 +567,9 @@ class DataHandler():
                                           plot='diffs', figsize=figsize)
         return fig
 
-    def plot_capacity_change_analysis(self, figsize=(8, 6)):
-        fig = self.capacity_clustering(plot=True, figsize=figsize)
+    def plot_capacity_change_analysis(self, figsize=(8, 6), show_clusters=True):
+        fig = self.capacity_clustering(plot=True, figsize=figsize,
+                                       show_clusters=show_clusters)
         return fig
 
     def plot_circ_dist(self, flag='good', num_bins=12*4, figsize=(8,8)):
