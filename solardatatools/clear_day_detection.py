@@ -41,6 +41,18 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     tc /= np.max(tc)
     tc = 1 - tc
     # Take the positive part function, i.e. set the negative values to zero. This is the first metric
+    y = cvx.Variable(len(tc))
+    cost = cvx.sum(
+        0.5 * cvx.abs(y - tc) + (.9 - 0.5) * (tc - y)) + 1e3 * cvx.norm(
+        cvx.diff(y, k=2))
+    prob = cvx.Problem(cvx.Minimize(cost))
+    try:
+        prob.solve(solver='MOSEK')
+    except Exception as e:
+        print(e)
+        print('Trying ECOS solver')
+        prob.solve(solver='ECOS')
+    tc /= y.value
     tc = np.clip(tc, 0, None)
     # Calculate the daily energy
     de = np.sum(data, axis=0)
