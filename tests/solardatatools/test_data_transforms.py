@@ -31,7 +31,7 @@ class TestMake2D(unittest.TestCase):
             os.path.join(os.path.dirname(__file__),
                          "../fixtures/data_transforms/power_mat.csv"))
         with open(expected_data_file_path) as file:
-            expected_output = np.loadtxt(file, delimiter=' ')
+            expected_output = np.genfromtxt(file, delimiter=',')
         data.index.freq = pd.tseries.offsets.Second(300)
         key = data.columns[0]
         actual_output = make_2d(data, key=key)
@@ -46,7 +46,7 @@ class TestMake2D(unittest.TestCase):
             os.path.join(os.path.dirname(__file__),
                          "../fixtures/data_transforms/power_mat.csv"))
         with open(expected_data_file_path) as file:
-            expected_output = np.loadtxt(file, delimiter=' ')
+            expected_output = np.genfromtxt(file, delimiter=',')
         key = data.columns[0]
         actual_output = make_2d(data, key=key)
         np.testing.assert_array_almost_equal(expected_output, actual_output)
