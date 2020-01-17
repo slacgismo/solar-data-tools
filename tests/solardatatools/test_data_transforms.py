@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from solardatatools import standardize_time_axis, make_2d
 
+
 class TestStandardizeTimeAxis(unittest.TestCase):
 
     def test_standardize_time_axis(self):
@@ -17,6 +18,7 @@ class TestStandardizeTimeAxis(unittest.TestCase):
         expected_output = pd.read_csv(expected_data_file_path, index_col=0, parse_dates=True)
         actual_output = standardize_time_axis(data, timeindex=True)
         np.testing.assert_array_almost_equal(expected_output, actual_output)
+
 
 class TestMake2D(unittest.TestCase):
 
@@ -48,6 +50,7 @@ class TestMake2D(unittest.TestCase):
         key = data.columns[0]
         actual_output = make_2d(data, key=key)
         np.testing.assert_array_almost_equal(expected_output, actual_output)
+
 
 if __name__ == '__main__':
     unittest.main()
