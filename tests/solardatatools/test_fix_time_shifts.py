@@ -5,6 +5,7 @@ import numpy as np
 import cvxpy as cvx
 from solardatatools.time_axis_manipulation import fix_time_shifts
 
+
 class TestFixTimeShift(unittest.TestCase):
 
     def setUp(self):
