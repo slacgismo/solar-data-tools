@@ -72,7 +72,7 @@ class DataHandler():
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
-                     end_day_ix=None, c1=5., c2=500., estimator='com',
+                     end_day_ix=None, c1=2., c2=500., estimator='com',
                      differentiate=False):
         t0 = time()
         if self.data_frame is not None:
@@ -230,7 +230,7 @@ class DataHandler():
             print('Run the density check first')
             return
         temp_mat = np.copy(self.filled_data_matrix)
-        temp_mat[temp_mat < 0.005 * self.capacity_estimate] = np.nan
+        temp_mat[temp_mat < 0.02 * self.capacity_estimate] = np.nan
         difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
         modes, counts = mode(difference_mat, axis=0, nan_policy='omit')
         n = self.filled_data_matrix.shape[0] - 1
@@ -492,7 +492,7 @@ class DataHandler():
         if flag == 'good':
             plt.plot(xs[self.daily_flags.no_errors],
                         energy[self.daily_flags.no_errors],
-                        ls='none', marker='.', olor='red')
+                        ls='none', marker='.', color='red')
             title += ', good days flagged'
         elif flag == 'bad':
             plt.plot(xs[~self.daily_flags.no_errors],
