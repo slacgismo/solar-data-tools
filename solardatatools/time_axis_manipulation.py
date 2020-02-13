@@ -132,7 +132,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     return df
 
 def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=False):
-    index = df.index.tz_localize(tz, errors='coerce', ambiguous='NaT')\
+    index = df.index.tz_localize(tz, nonexistent='NaT', ambiguous='NaT')\
                 .tz_convert('Etc/GMT+{}'.format(TZ_LOOKUP[tz]))\
                 .tz_localize(None)
     if inplace:
