@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema
 from scipy.stats import mode
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
