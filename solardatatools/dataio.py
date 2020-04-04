@@ -127,7 +127,7 @@ def load_cassandra_data(siteid, column='ac_power', tmin=None, tmax=None,
     cql = """
         select site, meas_name, ts, sensor, meas_val_f 
         from measurement_raw
-        where site in ('')
+        where site in ('{}')
             and meas_name = '{}'
     """.format(siteid, column)
     if tmin is not None:
@@ -140,3 +140,4 @@ def load_cassandra_data(siteid, column='ac_power', tmin=None, tmax=None,
     rows = session.execute(cql)
     df = pd.DataFrame(list(rows), )
     df.replace(-999999.0, np.NaN, inplace=True)
+    return df
