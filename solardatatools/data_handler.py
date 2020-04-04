@@ -555,11 +555,16 @@ class DataHandler():
         fig = self.__analyze_distribution(self.daily_scores.clipping_1,
                                           plot='cdf', figsize=figsize)
         plt.title('Cumulative density function of\nnormalized daily maximum values')
-        plt.ylabel('Normalized daily max power')
-        plt.xlabel('Cumulative occurance probability')
+        plt.xlabel('Normalized daily max power')
+        plt.ylabel('Cumulative occurance probability')
         plt.legend()
         ax = plt.gca()
         ax.set_aspect('equal')
+        return fig
+
+    def plot_daily_max_cdf_and_pdf(self, figsize=(10, 6)):
+        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
+                                          plot='both', figsize=figsize)
         return fig
 
     def plot_cdf_analysis(self, figsize=(12, 6)):
@@ -725,6 +730,41 @@ class DataHandler():
             ax[1].set_title('2nd order difference of CDF fit')
             ax[1].legend()
             plt.tight_layout()
+            return fig
+        elif plot == 'both':
+            fig = plt.figure(figsize=figsize)
+            gs = fig.add_gridspec(nrows=1, ncols=2, width_ratios=[2, 1])
+            ax1 = fig.add_subplot(gs[0, 0])
+            ax1.plot(y_rs, x_rs, linewidth=1, label='empirical CDF')
+            ax1.plot(y_hat.value, x_rs, linewidth=3, color='orange', alpha=0.57,
+                     label='estimated CDF')
+            if len(point_mass_values) > 0:
+                ax1.scatter(y_rs[point_masses], x_rs[point_masses],
+                            color='red', marker='o',
+                            label='detected point mass')
+            ax1.set_title(
+                'Cumulative density function of\nnormalized daily maximum values')
+            ax1.set_ylabel('Normalized daily max power')
+            ax1.set_xlabel('Cumulative occurance probability')
+            ax1.legend()
+            ax2 = fig.add_subplot(gs[0, 1])
+            ax2.hist(data[data > 0], bins=100, alpha=0.5, label='histogram',
+                     orientation='horizontal')
+            scale = np.histogram(data[data > 0], bins=100)[0].max() \
+                    / cvx.diff(y_hat, k=1).value.max()
+            ax2.plot(scale * cvx.diff(y_hat, k=1).value, x_rs[:-1],
+                     color='orange', linewidth=1, label='piecewise constant fit')
+            for count, val in enumerate(point_mass_values):
+                if count == 0:
+                    plt.axhline(val, linewidth=1, linestyle=':',
+                                color='green', label='detected point mass')
+                else:
+                    plt.axhline(val, linewidth=1, linestyle=':',
+                                color='green')
+            ax2.set_title('Distribution of normalized\ndaily maximum values')
+            # ax2.set_ylabel('Normalized daily max power')
+            ax2.set_xlabel('Count')
+            ax2.legend(loc=(.15, .02))  #-0.4
             return fig
 
 
