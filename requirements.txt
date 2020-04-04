@@ -1,7 +1,7 @@
 scipy
 numpy>=1.16
 pandas
-sklearn
+scikit-learn
 jupyter
 matplotlib
 seaborn
