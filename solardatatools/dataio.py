@@ -15,7 +15,6 @@ import os
 import requests
 import numpy as np
 import pandas as pd
-from cassandra.cluster import Cluster
 
 
 def get_pvdaq_data(sysid=2, api_key = 'DEMO_KEY', year=2011, delim=',',
@@ -110,7 +109,13 @@ def load_pvo_data(file_index=None, id_num=None, location='s3://pv.insight.nrel/P
 
 
 def load_cassandra_data(siteid, column='ac_power', tmin=None, tmax=None,
-                        limit=None, cluster_ip=None):
+                        limit=None, cluster_ip=None, verbose=True):
+    try:
+        from cassandra.cluster import Cluster
+    except ImportError:
+        print('Please install cassandra-driver in your Python environment to use this function')
+        return 
+    ti =time()
     if cluster_ip is None:
         home = os.path.expanduser("~")
         cluster_location_file = home + '/.aws/cassandra_cluster'
@@ -140,4 +145,9 @@ def load_cassandra_data(siteid, column='ac_power', tmin=None, tmax=None,
     rows = session.execute(cql)
     df = pd.DataFrame(list(rows), )
     df.replace(-999999.0, np.NaN, inplace=True)
+    tf = time()
+    if verbose:
+        print('Query of {} rows complete in {:.2f} seconds'.format(
+            len(df), tf - ti)
+        )
     return df
