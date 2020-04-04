@@ -10,9 +10,12 @@ from solardatatools.utilities import progress
 
 from time import time
 from io import StringIO
+import os
 
 import requests
+import numpy as np
 import pandas as pd
+from cassandra.cluster import Cluster
 
 
 def get_pvdaq_data(sysid=2, api_key = 'DEMO_KEY', year=2011, delim=',',
@@ -104,3 +107,36 @@ def load_pvo_data(file_index=None, id_num=None, location='s3://pv.insight.nrel/P
     if verbose:
         print('index: {}; system ID: {}'.format(file_index, id_num))
     return df
+
+
+def load_cassandra_data(siteid, column='ac_power', tmin=None, tmax=None,
+                        limit=None, cluster_ip=None):
+    if cluster_ip is None:
+        home = os.path.expanduser("~")
+        cluster_location_file = home + '/.aws/cassandra_cluster'
+        try:
+            with open(cluster_location_file) as f:
+                cluster_ip = f.readline().strip('\n')
+        except FileNotFoundError:
+            msg = 'Please put text file containing cluster IP address in '
+            msg += '~/.aws/cassander_cluster or provide your own IP address'
+            print(msg)
+            return
+    cluster = Cluster([cluster_ip])
+    session = cluster.connect('measurements')
+    cql = """
+        select site, meas_name, ts, sensor, meas_val_f 
+        from measurement_raw
+        where site in ('')
+            and meas_name = '{}'
+    """.format(siteid, column)
+    if tmin is not None:
+        cql += "and ts > '{}'\n".format(tmin)
+    if tmax is not None:
+        cql += "and ts < {}\n".format(tmax)
+    if limit is not None:
+        cql += "limit {}".format(np.int(limit))
+    cql += ';'
+    rows = session.execute(cql)
+    df = pd.DataFrame(list(rows), )
+    df.replace(-999999.0, np.NaN, inplace=True)
