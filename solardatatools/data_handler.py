@@ -63,6 +63,7 @@ class DataHandler():
             self.data_frame = df_ts
             self.keys = keys
         # Private attributes
+        self._ran_pipeline = False
         self.__time_axis_standardized = False
         self.__density_lower_threshold = None
         self.__density_upper_threshold = None
@@ -86,11 +87,17 @@ class DataHandler():
         if fix_shifts:
             self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator)
         t3 = time()
-        self.get_daily_scores(threshold=0.2)
+        try:
+            self.get_daily_scores(threshold=0.2)
+        except AttributeError:
+            self.daily_scores = None
         t4 = time()
-        self.get_daily_flags(density_lower_threshold=density_lower_threshold,
-                             density_upper_threshold=density_upper_threshold,
-                             linearity_threshold=linearity_threshold)
+        try:
+            self.get_daily_flags(density_lower_threshold=density_lower_threshold,
+                                 density_upper_threshold=density_upper_threshold,
+                                 linearity_threshold=linearity_threshold)
+        except AttributeError:
+            self.daily_scores = None
         t5 = time()
         self.detect_clear_days(th=clear_tune_param)
         t6 = time()
@@ -109,6 +116,7 @@ class DataHandler():
             out += 'clipping check: {:.2f}, '
             out += 'data scoring: {:.2f}'
             print(out.format(t8-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, t7-t6, t8-t7))
+        self._ran_pipeline = True
         return
 
     def report(self):
@@ -134,7 +142,20 @@ class DataHandler():
                 print('WARNING: Abnormal clustering of data quality scores!')
             return
         except TypeError:
-            print('Please run the pipeline first!')
+            if self._ran_pipeline:
+                m1 = 'Pipeline failed, please check data set.\n'
+                m2 = "Suggest run .plot_heatmap(matrix='raw')\n\n"
+                l1 = 'Length:                {} days\n'.format(self.num_days)
+                if self.raw_data_matrix.shape[0] <= 1440:
+                    l2 = 'Data sampling:         {} minute\n'.format(
+                        self.data_sampling)
+                else:
+                    l2 = 'Data sampling:         {} second\n'.format(
+                        int(self.data_sampling * 60))
+                p_out = m1 + m2 + l1 + l2
+                print(p_out)
+            else:
+                print('Please run the pipeline first!')
             return
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
@@ -239,9 +260,18 @@ class DataHandler():
 
     def score_data_set(self):
         num_days = self.raw_data_matrix.shape[1]
-        self.data_quality_score = np.sum(self.daily_flags.no_errors) / num_days
-        self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
-        self.capacity_clustering()
+        try:
+            self.data_quality_score = np.sum(self.daily_flags.no_errors) / num_days
+        except TypeError:
+            self.data_quality_score = None
+        try:
+            self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
+        except TypeError:
+            self.data_clearness_score = None
+        try:
+            self.capacity_clustering()
+        except TypeError:
+            self.capacity_changes = None
         return
 
     def clipping_check(self):
@@ -267,13 +297,18 @@ class DataHandler():
         # 1st clipping statistic that shows the characteristic, strongly skewed
         # peak shape
         point_masses = self.__analyze_distribution(clip_stat_1)
-        if len(point_masses) == 0:
-            clipped_days[:] = False
-        else:
-            clipped_days[clipped_days] = np.any(
-                np.array([np.abs(clip_stat_1[clipped_days] - x0) < .02 for x0 in
-                          point_masses]), axis=0
-            )
+        try:
+            if len(point_masses) == 0:
+                clipped_days[:] = False
+            else:
+                clipped_days[clipped_days] = np.any(
+                    np.array([np.abs(clip_stat_1[clipped_days] - x0) < .02 for x0 in
+                              point_masses]), axis=0
+                )
+        except IndexError:
+            self.inverter_clipping = False
+            self.num_clip_points = 0
+            return
         self.daily_scores.clipping_1 = clip_stat_1
         self.daily_scores.clipping_2 = clip_stat_2
         self.daily_flags.inverter_clipped = clipped_days
