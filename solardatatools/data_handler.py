@@ -329,7 +329,9 @@ class DataHandler():
             daily_max_val = np.max(self.filled_data_matrix, axis=0)
             clip_stat_1 = self.daily_scores.clipping_1      #daily_max_val / max_value
             point_masses = self.__analyze_distribution(clip_stat_1)
-            mat_normed = self.filled_data_matrix / daily_max_val
+            mat_normed = np.zeros_like(self.filled_data_matrix)
+            msk = daily_max_val != 0
+            mat_normed[:, msk] = self.filled_data_matrix[:, msk] / daily_max_val[msk]
             masks = np.stack([np.abs(mat_normed - x0) < 0.02
                               for x0 in point_masses])
             clipped_time_mask = np.alltrue(masks, axis=0)
