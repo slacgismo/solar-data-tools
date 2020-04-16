@@ -320,6 +320,19 @@ class DataHandler():
             self.num_clip_points = 0
         return
 
+    def find_clipped_times(self):
+        if self.inverter_clipping:
+            daily_max_val = np.max(self.filled_data_matrix, axis=0)
+            clip_stat_1 = self.daily_scores.clipping_1      #daily_max_val / max_value
+            point_masses = self.__analyze_distribution(clip_stat_1)
+            mat_normed = self.filled_data_matrix / daily_max_val
+            masks = np.stack([np.abs(mat_normed - x0) < 0.02
+                              for x0 in point_masses])
+            clipped_time_mask = np.alltrue(masks, axis=0)
+            return clipped_time_mask
+        else:
+            return
+
     def capacity_clustering(self, plot=False, figsize=(8, 6),
                             show_clusters=True):
         if np.sum(self.daily_flags.no_errors) > 0:
