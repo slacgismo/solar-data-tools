@@ -279,10 +279,14 @@ class DataHandler():
         daily_max_val = np.max(self.filled_data_matrix, axis=0)
         # 1st clipping statistic: ratio of the max value on each day to overall max value
         clip_stat_1 = daily_max_val / max_value
-        # 2nd clipping statistic: fraction of time each day spent near that day's max value
+        # 2nd clipping statistic: fraction of energy generated each day at or
+        # near that day's max value
         with np.errstate(divide='ignore', invalid='ignore'):
             temp = self.filled_data_matrix / daily_max_val
-            clip_stat_2 = np.sum(temp > 0.995, axis=0) / np.sum(temp > 0.005, axis=0)
+            temp_msk = temp > 0.995
+            temp2 = np.zeros_like(temp)
+            temp2[temp_msk] = temp[temp_msk]
+            clip_stat_2 = np.sum(temp2, axis=0) / np.sum(temp, axis=0)
         clip_stat_2[np.isnan(clip_stat_2)] = 0
         # Identify which days have clipping
         clipped_days = np.logical_and(
@@ -329,6 +333,8 @@ class DataHandler():
             masks = np.stack([np.abs(mat_normed - x0) < 0.02
                               for x0 in point_masses])
             clipped_time_mask = np.alltrue(masks, axis=0)
+            clipped_days = self.daily_flags.inverter_clipped
+            clipped_time_mask[:, ~clipped_days] = False
             return clipped_time_mask
         else:
             return
@@ -585,7 +591,7 @@ class DataHandler():
                        color='red')
             ax[0].legend()
         ax[0].set_title('Clipping Score 1: ratio of daily max to overal max')
-        ax[1].set_title('Clipping Score 2: fraction of time each day spent at daily max')
+        ax[1].set_title('Clipping Score 2: fraction of daily energy generated at daily max power')
         ax[1].set_xlabel('Date')
         plt.gcf().autofmt_xdate()
         return fig
