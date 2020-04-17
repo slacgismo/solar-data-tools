@@ -23,6 +23,7 @@ from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
 from solardatatools.utilities import total_variation_plus_seasonal_quantile_filter
+from solardatatools.clear_time_labeling import find_clear_times
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -62,6 +63,8 @@ class DataHandler():
             df_ts, keys = make_time_series(self.data_frame)
             self.data_frame = df_ts
             self.keys = keys
+        # Statistical clear sky fitting object
+        self.scsf = None
         # Private attributes
         self._ran_pipeline = False
         self.__time_axis_standardized = False
@@ -407,8 +410,43 @@ class DataHandler():
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
-    def find_clear_times(self):
-        pass
+    def find_clear_times(self, power_hyperparam=0.1,
+                         smoothness_hyperparam=200, min_length=3):
+        if self.scsf is None:
+            print('No SCSF model detected. Fitting now...')
+            self.fit_statistical_clear_sky_model()
+        clear = self.scsf.estimated_power_matrix
+        clear_times = find_clear_times(self.filled_data_matrix, clear,
+                                       th_relative_power=power_hyperparam,
+                                       th_relative_smoothness=smoothness_hyperparam,
+                                       min_length=min_length)
+        return clear_times
+
+
+    def fit_statistical_clear_sky_model(self, rank=6, mu_l=None, mu_r=None,
+                                        tau=None, exit_criterion_epsilon=1e-3,
+                                        max_iteration=10,
+                                        calculate_degradation=True,
+                                        max_degradation=None,
+                                        min_degradation=None,
+                                        non_neg_constraints=False,
+                                        verbose=True, bootstraps=None):
+        try:
+            from statistical_clear_sky import SCSF
+        except ImportError:
+            print('Please install statistical-clear-sky package')
+            return
+        scsf = SCSF(data_handler_obj=self, rank_k=rank)
+        scsf.execute(mu_l=mu_l, mu_r=mu_r, tau=tau,
+                     exit_criterion_epsilon=exit_criterion_epsilon,
+                     max_iteration=max_iteration,
+                     is_degradation_calculated=calculate_degradation,
+                     max_degradation=max_degradation,
+                     min_degradation=min_degradation,
+                     non_neg_constraints=non_neg_constraints,
+                     verbose=verbose, bootstraps=bootstraps
+                     )
+        self.scsf = scsf
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
                      scale_to_kw=False):
@@ -445,7 +483,7 @@ class DataHandler():
 
     def plot_daily_signals(self, boolean_index=None, day_start=0, num_days=5,
                            filled=True, ravel=True, figsize=(12, 6),
-                           color=None, alpha=None):
+                           color=None, alpha=None, label=None):
         if boolean_index is None:
             boolean_index = np.s_[:]
         i = day_start
