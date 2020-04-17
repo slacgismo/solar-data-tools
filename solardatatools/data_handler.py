@@ -23,6 +23,7 @@ from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
 from solardatatools.utilities import total_variation_plus_seasonal_quantile_filter
+from solardatatools.clear_time_labeling import find_clear_times
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -409,10 +410,18 @@ class DataHandler():
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
-    def find_clear_times(self):
+    def find_clear_times(self, power_hyperparam=0.1,
+                         smoothness_hyperparam=200, min_length=3):
         if self.scsf is None:
             print('No SCSF model detected. Fitting now...')
             self.fit_statistical_clear_sky_model()
+        clear = self.scsf.estimated_power_matrix
+        clear_times = find_clear_times(self.filled_data_matrix, clear,
+                                       th_relative_power=power_hyperparam,
+                                       th_relative_smoothness=smoothness_hyperparam,
+                                       min_length=min_length)
+        return clear_times
+
 
     def fit_statistical_clear_sky_model(self, rank=6, mu_l=None, mu_r=None,
                                         tau=None, exit_criterion_epsilon=1e-3,
@@ -474,7 +483,7 @@ class DataHandler():
 
     def plot_daily_signals(self, boolean_index=None, day_start=0, num_days=5,
                            filled=True, ravel=True, figsize=(12, 6),
-                           color=None, alpha=None):
+                           color=None, alpha=None, label=None):
         if boolean_index is None:
             boolean_index = np.s_[:]
         i = day_start
