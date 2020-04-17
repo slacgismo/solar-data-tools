@@ -62,6 +62,8 @@ class DataHandler():
             df_ts, keys = make_time_series(self.data_frame)
             self.data_frame = df_ts
             self.keys = keys
+        # Statistical clear sky fitting object
+        self.scsf = None
         # Private attributes
         self._ran_pipeline = False
         self.__time_axis_standardized = False
@@ -408,7 +410,34 @@ class DataHandler():
         return
 
     def find_clear_times(self):
-        pass
+        if self.scsf is None:
+            print('No SCSF model detected. Fitting now...')
+            self.fit_statistical_clear_sky_model()
+
+    def fit_statistical_clear_sky_model(self, rank=6, mu_l=None, mu_r=None,
+                                        tau=None, exit_criterion_epsilon=1e-3,
+                                        max_iteration=10,
+                                        calculate_degradation=True,
+                                        max_degradation=None,
+                                        min_degradation=None,
+                                        non_neg_constraints=False,
+                                        verbose=True, bootstraps=None):
+        try:
+            from statistical_clear_sky import SCSF
+        except ImportError:
+            print('Please install statistical-clear-sky package')
+            return
+        scsf = SCSF(data_handler_obj=self, rank_k=rank)
+        scsf.execute(mu_l=mu_l, mu_r=mu_r, tau=tau,
+                     exit_criterion_epsilon=exit_criterion_epsilon,
+                     max_iteration=max_iteration,
+                     is_degradation_calculated=calculate_degradation,
+                     max_degradation=max_degradation,
+                     min_degradation=min_degradation,
+                     non_neg_constraints=non_neg_constraints,
+                     verbose=verbose, bootstraps=bootstraps
+                     )
+        self.scsf = scsf
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
                      scale_to_kw=False):
