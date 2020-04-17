@@ -407,6 +407,9 @@ class DataHandler():
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
+    def find_clear_times(self):
+        pass
+
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
                      scale_to_kw=False):
         if matrix == 'raw':
