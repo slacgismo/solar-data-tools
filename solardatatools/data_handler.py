@@ -6,6 +6,7 @@ This module contains a class for managing a data processing pipeline
 '''
 from time import time
 import numpy as np
+import pandas as pd
 from scipy.stats import mode, skew
 from scipy.interpolate import interp1d
 from sklearn.cluster import DBSCAN
@@ -160,6 +161,44 @@ class DataHandler():
             else:
                 print('Please run the pipeline first!')
             return
+
+    def augment_data_frame(self, boolean_index, column_name):
+        """
+        Add a column to the data frame (tabular) representation of the data,
+        containing True/False values at each time stamp.
+        Boolean index is a 1-D or 2-D numpy array of True/False values. If 1-D,
+        array should be of length N, where N is the number of days in the data
+        set. If 2-D, the array should be of size M X N where M is the number
+        of measurements each day and N is the number of days.
+
+        :param boolean_index: Length N or size M X N numpy arrays of booleans
+        :param column_name: Name for column
+        :return:
+        """
+        if self.data_frame is None:
+            print('This DataHandler object does not contain a data frame.')
+            return
+        m, n = self.raw_data_matrix.shape
+        index_shape = boolean_index.shape
+        cond1 = index_shape == (m, n)
+        cond2 = index_shape == (n ,)
+        if not cond1 and not cond2:
+            print('Boolean index shape does not match the data.')
+        elif cond1:
+            start = self.day_index[0]
+            freq = '{}min'.format(self.data_sampling)
+            periods = self.filled_data_matrix.size
+            tindex = pd.date_range(start=start, freq=freq, periods=periods)
+            series = pd.Series(data=boolean_index.ravel(order='F'), index=tindex)
+            series.name = column_name
+            self.data_frame = self.data_frame.join(series)
+            self.data_frame[column_name] = self.data_frame[column_name].fillna(False)
+        elif cond2:
+            clear_dates = self.day_index[boolean_index].date
+            bix = np.isin(self.data_frame.index.date, clear_dates)
+            self.data_frame[column_name] = False
+            self.data_frame.loc[bix, column_name] = True
+
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
                                 differentiate=False):
