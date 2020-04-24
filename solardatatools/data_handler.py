@@ -57,9 +57,10 @@ class DataHandler():
         self.normal_quality_scores = None   # True if clustering of data quality scores are within decision boundaries
         self.time_shifts = None             # True if time shifts detected and corrected in data set
         self.tz_correction = 0              # TZ correction factor (determined during pipeline run)
-        # Daily scores (floats) and flags (booleans)
-        self.daily_scores = DailyScores()
-        self.daily_flags = DailyFlags()
+        # Daily scores (floats), flags (booleans), and boolean masks
+        self.daily_scores = DailyScores()   # 1D arrays of floats
+        self.daily_flags = DailyFlags()     # 1D arrays of Booleans
+        self.boolean_masks = BooleanMasks   # 2D arrays of Booleans
         # Useful daily signals defined by the data set
         self.daily_signals = DailySignals()
         if np.alltrue([data_frame is not None, convert_to_ts]):
@@ -292,8 +293,8 @@ class DataHandler():
             self.data_frame = self.data_frame.join(series)
             self.data_frame[column_name] = self.data_frame[column_name].fillna(False)
         elif cond2:
-            clear_dates = self.day_index[boolean_index].date
-            bix = np.isin(self.data_frame.index.date, clear_dates)
+            slct_dates = self.day_index[boolean_index].date
+            bix = np.isin(self.data_frame.index.date, slct_dates)
             self.data_frame[column_name] = False
             self.data_frame.loc[bix, column_name] = True
 
@@ -477,7 +478,7 @@ class DataHandler():
             clipped_time_mask = np.alltrue(masks, axis=0)
             clipped_days = self.daily_flags.inverter_clipped
             clipped_time_mask[:, ~clipped_days] = False
-            return clipped_time_mask
+            self.boolean_masks.clipped_times = clipped_time_mask
         else:
             return
 
@@ -557,7 +558,7 @@ class DataHandler():
                                        th_relative_power=power_hyperparam,
                                        th_relative_smoothness=smoothness_hyperparam,
                                        min_length=min_length)
-        return clear_times
+        self.boolean_masks.clear_times = clear_times
 
 
     def fit_statistical_clear_sky_model(self, rank=6, mu_l=None, mu_r=None,
@@ -1038,3 +1039,17 @@ class DailySignals():
         self.density = None
         self.seasonal_density_fit = None
         self.energy = None
+
+class BooleanMasks():
+    """
+    Boolean masks are used to identify time periods corresponding to elements
+    in the data matrix. The masks have the same shape as the data matrix. The
+    masks can be used to select data according to certain rules, generate the
+    associated time stamp values, or perform other data maniuplation. See,
+    for example:
+
+        https://jakevdp.github.io/PythonDataScienceHandbook/02.06-boolean-arrays-and-masks.html
+    """
+    def __init__(self):
+        self.clear_times = None
+        self.clipped_times = None
