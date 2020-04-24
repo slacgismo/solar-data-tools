@@ -115,6 +115,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
             df[datetimekey] = pd.to_datetime(df[key])
             df.set_index(datetimekey, inplace=True)
     # standardize the timeseries axis to a regular frequency over a full set of days
+    df.index = pd.to_datetime(df.index)
     try:
         diff = (df.index[1:] - df.index[:-1]).seconds
         freq = int(np.median(diff[~np.isnan(diff)]))  # the number of seconds between each measurement
