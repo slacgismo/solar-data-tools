@@ -5,6 +5,7 @@ This module contains a class for managing a data processing pipeline
 
 '''
 from time import time
+from datetime import timedelta
 import numpy as np
 import pandas as pd
 from scipy.stats import mode, skew
@@ -47,6 +48,7 @@ class DataHandler():
         self.capacity_estimate = None
         self.start_doy = None
         self.day_index = None
+        self.extra_matrices = {}
         # Scores for the entire data set
         self.data_quality_score = None      # Fraction of days without data acquisition errors
         self.data_clearness_score = None    # Fraction of days that are approximately clear/sunny
@@ -60,7 +62,7 @@ class DataHandler():
         # Daily scores (floats), flags (booleans), and boolean masks
         self.daily_scores = DailyScores()   # 1D arrays of floats
         self.daily_flags = DailyFlags()     # 1D arrays of Booleans
-        self.boolean_masks = BooleanMasks   # 2D arrays of Booleans
+        self.boolean_masks = BooleanMasks() # 2D arrays of Booleans
         # Useful daily signals defined by the data set
         self.daily_signals = DailySignals()
         if np.alltrue([data_frame is not None, convert_to_ts]):
@@ -86,7 +88,7 @@ class DataHandler():
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
                      end_day_ix=None, c1=2., c2=500., estimator='com',
                      differentiate=False, reference_cols=None,
-                     correct_tz=True):
+                     correct_tz=True, extra_cols=None):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         t0 = time()
@@ -202,6 +204,15 @@ class DataHandler():
             if verbose:
                 print('Data set summary scoring failed.')
         t8 = time()
+        if extra_cols is not None:
+            freq = self.data_sampling * 60
+            new_index = pd.date_range(start=self.day_index[0].date(),
+                                      end=self.day_index[-1].date() + timedelta(
+                                          days=1),
+                                      freq='{}s'.format(freq))[:-1]
+            extra_cols = np.atleast_1d(extra_cols)
+            for col in extra_cols:
+                self.generate_extra_matrix(col, new_index=new_index)
         if verbose:
             out = 'total time: {:.2f} seconds\n'
             out += 'form matrix: {:.2f}, '
@@ -277,6 +288,9 @@ class DataHandler():
         if self.data_frame is None:
             print('This DataHandler object does not contain a data frame.')
             return
+        if boolean_index is None:
+            print('No mask available for ' + column_name)
+            return
         m, n = self.raw_data_matrix.shape
         index_shape = boolean_index.shape
         cond1 = index_shape == (m, n)
@@ -335,6 +349,21 @@ class DataHandler():
             self.filled_data_matrix[msk] = 0
         self.daily_signals.energy = np.sum(self.filled_data_matrix, axis=0) *\
                                    24 / self.filled_data_matrix.shape[1]
+        return
+
+    def generate_extra_matrix(self, column, new_index=None, key=None):
+        if new_index is None:
+            freq = self.data_sampling * 60
+            end = self.day_index[-1].date() + timedelta(days=1)
+            new_index = pd.date_range(start=self.day_index[0].date(),
+                                      end=end,
+                                      freq='{}s'.format(freq))[:-1]
+        num_meas = self.filled_data_matrix.shape[0]
+        new_view = self.data_frame[column].loc[new_index[0]:new_index[-1]]
+        new_view = new_view.values.reshape(num_meas, -1, order='F')
+        if key is None:
+            key = column
+        self.extra_matrices[key] = new_view
         return
 
     def get_daily_scores(self, threshold=0.2):
