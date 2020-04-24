@@ -552,7 +552,7 @@ class DataHandler():
         self.scsf = scsf
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
-                     scale_to_kw=False):
+                     scale_to_kw=False, year_lines=False):
         if matrix == 'raw':
             mat = np.copy(self.raw_data_matrix)
         elif matrix == 'filled':
@@ -562,25 +562,30 @@ class DataHandler():
         if scale_to_kw:
             mat /= 1000
         if flag is None:
-            return plot_2d(mat, figsize=figsize)
+            return plot_2d(mat, figsize=figsize,
+                           dates=self.day_index, year_lines=year_lines)
         elif flag == 'good':
             fig = plot_2d(mat, figsize=figsize,
-                           clear_days=self.daily_flags.no_errors)
+                          clear_days=self.daily_flags.no_errors,
+                          dates=self.day_index, year_lines=year_lines)
             plt.title('Measured power, good days flagged')
             return fig
         elif flag == 'bad':
             fig = plot_2d(mat, figsize=figsize,
-                          clear_days=~self.daily_flags.no_errors)
+                          clear_days=~self.daily_flags.no_errors,
+                          dates=self.day_index, year_lines=year_lines)
             plt.title('Measured power, bad days flagged')
             return fig
         elif flag in ['clear', 'sunny']:
             fig = plot_2d(mat, figsize=figsize,
-                          clear_days=self.daily_flags.clear)
+                          clear_days=self.daily_flags.clear,
+                          dates=self.day_index, year_lines=year_lines)
             plt.title('Measured power, clear days flagged')
             return fig
         elif flag == 'cloudy':
             fig = plot_2d(mat, figsize=figsize,
-                          clear_days=self.daily_flags.cloudy)
+                          clear_days=self.daily_flags.cloudy,
+                          dates=self.day_index, year_lines=year_lines)
             plt.title('Measured power, cloudy days flagged')
             return fig
 
