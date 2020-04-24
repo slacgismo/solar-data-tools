@@ -30,7 +30,7 @@ from solardatatools.solar_noon import avg_sunrise_sunset
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
                  convert_to_ts=False):
-        self.data_frame = data_frame
+        self.data_frame = data_frame.copy()
         self.raw_data_matrix = raw_data_matrix
         if self.raw_data_matrix is not None:
             self.num_days = self.raw_data_matrix.shape[1]
@@ -56,7 +56,7 @@ class DataHandler():
         self.capacity_changes = None        # True if the apparent capacity seems to change over the data set
         self.normal_quality_scores = None   # True if clustering of data quality scores are within decision boundaries
         self.time_shifts = None             # True if time shifts detected and corrected in data set
-        self.tz_correction = None           # TZ correction factor
+        self.tz_correction = 0              # TZ correction factor (determined during pipeline run)
         # Daily scores (floats) and flags (booleans)
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
@@ -79,40 +79,60 @@ class DataHandler():
         self.__density_upper_threshold = None
         self.__linearity_threshold = None
 
-    def run_pipeline(self, use_col=None, zero_night=True, interp_day=True,
+    def run_pipeline(self, power_col=None, zero_night=True, interp_day=True,
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
                      end_day_ix=None, c1=2., c2=500., estimator='com',
-                     differentiate=False):
+                     differentiate=False, reference_cols=None):
         t0 = time()
         if self.data_frame is not None:
-            # Calculate the average time of the maximum value across all days
-            rough_noon_est = np.nanmean(
-                self.data_frame.groupby(pd.Grouper(freq='D'))\
-                    .idxmax()[use_col].dt.time\
-                    .apply(lambda x: 60 * x.hour + x.minute)
-            ) / 60
+            self.make_data_matrix(power_col, start_day_ix=start_day_ix,
+                                  end_day_ix=end_day_ix,
+                                     differentiate=differentiate)
+        ### TZ offset detection and correction ###
+        # (1) Determine if there exists a "large" timezone offset error
+        average_day = np.zeros(self.raw_data_matrix.shape[0])
+        all_nans = np.alltrue(np.isnan(self.raw_data_matrix), axis=1)
+        average_day[~all_nans] = np.nanmean(
+            self.raw_data_matrix[~all_nans, :], axis=1
+        )
+        average_day /= np.max(average_day)
+        if average_day[0] > 0.001 or average_day[-1] > 0.001:
+            if verbose:
+                print(
+                    'Warning: power generation at midnight. Attempting to correct...')
             # Catch values that are more than 4 hours from noon and make a
             # correction to the time axis (rough correction to avoid days
             # rolling over)
-            if np.abs(np.round(rough_noon_est) - 12) > 4:
-                self.tz_correction = 12 - np.round(rough_noon_est)
-                self.data_frame.index = self.data_frame.index.shift(
-                    self.tz_correction, freq='H'
-                )
-            else:
-                self.tz_correction = 0
-            self.make_data_matrix(use_col, start_day_ix=start_day_ix,
-                                  end_day_ix=end_day_ix,
-                                     differentiate=differentiate)
+            rough_noon_est = np.nanmean(
+                self.data_frame.groupby(pd.Grouper(freq='D')) \
+                    .idxmax()[power_col].dt.time \
+                    .apply(lambda x: 60 * x.hour + x.minute)
+            ) / 60
+            self.tz_correction = 12 - np.round(rough_noon_est)
+            self.data_frame.index = self.data_frame.index.shift(
+                self.tz_correction, freq='H'
+            )
+            if verbose:
+                print('Done.\nRestarting the pipeline...')
+            self.run_pipeline(
+                power_col=power_col, zero_night=zero_night,
+                interp_day=interp_day,
+                fix_shifts=fix_shifts,
+                density_lower_threshold=density_lower_threshold,
+                density_upper_threshold=density_upper_threshold,
+                linearity_threshold=linearity_threshold,
+                clear_tune_param=clear_tune_param, verbose=verbose,
+                start_day_ix=start_day_ix, end_day_ix=end_day_ix,
+                c1=c1, c2=c2, estimator=estimator, differentiate=differentiate,
+                reference_cols=reference_cols
+            )
+            return
         t1 = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         ### TZ offset detection and correction ###
-        # Assumption here is that all daily signals are contained with a single
-        # column of the filled data matrix, which should be assured by the
-        # rough correction above. Now we can use a more accurage method--average
-        # of sunrise and sunset to better estimate the average noon value.
+        # (2) Determine if there is a "small" timezone offset error
         average_noon = np.nanmean(avg_sunrise_sunset(self.filled_data_matrix))
         tz_offset = np.round(12 - average_noon)
         if tz_offset != 0:
@@ -122,8 +142,10 @@ class DataHandler():
             )
             meas_per_hour = self.filled_data_matrix.shape[0] / 24
             roll_by = int(meas_per_hour * tz_offset)
-            self.filled_data_matrix = np.roll(self.filled_data_matrix,
-                                              roll_by, axis=0)
+            self.filled_data_matrix = np.nan_to_num(
+                np.roll(self.filled_data_matrix, roll_by, axis=0),
+                0
+            )
         t2 = time()
         self.capacity_estimate = np.quantile(self.filled_data_matrix, 0.95)
         if fix_shifts:
@@ -172,7 +194,10 @@ class DataHandler():
             l4 = 'Data clearness score:  {:.1f}%\n'.format(self.data_clearness_score * 100)
             l5 = 'Inverter clipping:     {}\n'.format(self.inverter_clipping)
             l6 = 'Time shifts corrected: {}\n'.format(self.time_shifts)
-            l7 = 'Time zone correction:  {} hours'.format(int(self.tz_correction))
+            if self.tz_correction != 0:
+                l7 = 'Time zone correction:  {} hours'.format(int(self.tz_correction))
+            else:
+                l7 = 'Time zone correction:  None'
             p_out = l1 + l2 + l3 + l4 + l5 + l6 + l7
             print(p_out)
             if self.capacity_changes:
