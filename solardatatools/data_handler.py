@@ -498,7 +498,7 @@ class DataHandler():
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com'):
         self.filled_data_matrix, shift_ixs = fix_time_shifts(
             self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
-            return_ixs=True, verbose=False, use_ixs=self.daily_flags.no_errors
+            return_ixs=True, verbose=False, use_ixs=None
         )
         if len(shift_ixs) == 0:
             self.time_shifts = False
