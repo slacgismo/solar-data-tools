@@ -48,7 +48,9 @@ class DataHandler():
         self.capacity_estimate = None
         self.start_doy = None
         self.day_index = None
-        self.extra_matrices = {}
+        # "Extra" data, i.e. additional columns to process from the table
+        self.extra_matrices = {}            # Matrix views of extra columns
+        self.extra_quality_scores = {}      # Relative quality: fraction of non-NaN values in column during daylight time periods, as defined by the main power columns
         # Scores for the entire data set
         self.data_quality_score = None      # Fraction of days without data acquisition errors
         self.data_clearness_score = None    # Fraction of days that are approximately clear/sunny
@@ -173,6 +175,8 @@ class DataHandler():
         t2 = time()
         if fix_shifts:
             self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator)
+        self.boolean_masks.daytime = (self.filled_data_matrix
+                                      > self.capacity_estimate * 0.005)
         t3 = time()
         try:
             self.get_daily_scores(threshold=0.2)
@@ -304,6 +308,8 @@ class DataHandler():
             tindex = pd.date_range(start=start, freq=freq, periods=periods)
             series = pd.Series(data=boolean_index.ravel(order='F'), index=tindex)
             series.name = column_name
+            if column_name in self.data_frame.columns:
+                del self.data_frame[column_name]
             self.data_frame = self.data_frame.join(series)
             self.data_frame[column_name] = self.data_frame[column_name].fillna(False)
         elif cond2:
@@ -364,6 +370,10 @@ class DataHandler():
         if key is None:
             key = column
         self.extra_matrices[key] = new_view
+        self.extra_quality_scores[key] = (
+            1 - np.sum(np.isnan(new_view[self.boolean_masks.daytime]))
+            / np.sum(self.boolean_masks.daytime)
+        )
         return
 
     def get_daily_scores(self, threshold=0.2):
@@ -1082,3 +1092,4 @@ class BooleanMasks():
     def __init__(self):
         self.clear_times = None
         self.clipped_times = None
+        self.daytime = None
