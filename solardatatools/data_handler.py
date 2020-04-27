@@ -565,28 +565,33 @@ class DataHandler():
         else:
             self.capacity_changes = False
         if plot:
+            try:
+                xs = self.day_index.to_pydatetime()
+            except AttributeError:
+                xs = np.arange(len(self.daily_signals.density))
             if show_clusters:
                 fig, ax = plt.subplots(nrows=2, figsize=figsize, sharex=True,
                                        gridspec_kw={'height_ratios': [4, 1]})
-                ax[0].plot(s1, label='capacity change detector')
-                ax[0].plot(s2 + s1, label='signal model')
-                ax[0].plot(self.daily_scores.clipping_1, alpha=0.3,
-                         label='measured signal')
+                ax[0].plot(xs, s1, label='capacity change detector')
+                ax[0].plot(xs, s2 + s1, label='signal model')
+                ax[0].plot(xs, self.daily_scores.clipping_1, alpha=0.3,
+                           label='measured signal')
                 ax[0].legend()
                 ax[0].set_title('Detection of system capacity changes')
-                ax[1].set_xlabel('day number')
+                ax[1].set_xlabel('date')
                 ax[0].set_ylabel('normalized daily maximum power')
-                ax[1].plot(db.labels_, ls='none', marker='.')
+                ax[1].plot(xs, db.labels_, ls='none', marker='.')
                 ax[1].set_ylabel('Capacity cluster label')
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
-                ax.plot(s1, label='capacity change detector')
-                ax.plot(s2 + s1, label='signal model')
-                ax.plot(self.daily_scores.clipping_1, alpha=0.3,
+                ax.plot(xs, s1, label='capacity change detector')
+                ax.plot(xs, s2 + s1, label='signal model')
+                ax.plot(xs, self.daily_scores.clipping_1, alpha=0.3,
                          label='measured signal')
                 ax.legend()
                 ax.set_title('Detection of system capacity changes')
                 ax.set_ylabel('normalized daily maximum power')
+                ax.set_xlabel('date')
             return fig
 
 
