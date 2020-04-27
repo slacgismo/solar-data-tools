@@ -685,13 +685,20 @@ class DataHandler():
             plt.title('Measured power, cloudy days flagged')
             return fig
 
-    def plot_daily_signals(self, boolean_index=None, day_start=0, num_days=5,
+    def plot_daily_signals(self, boolean_index=None, start_day=0, num_days=5,
                            filled=True, ravel=True, figsize=(12, 6),
                            color=None, alpha=None, label=None):
+        if type(start_day) is not int:
+            try:
+                loc = self.day_index == start_day
+                start_day = np.arange(self.num_days)[loc][0]
+            except IndexError:
+                print("Please use an integer or a date string for 'start_day'")
+                return
         if boolean_index is None:
             boolean_index = np.s_[:]
-        i = day_start
-        j = day_start + num_days
+        i = start_day
+        j = start_day + num_days
         slct = np.s_[np.arange(self.num_days)[boolean_index][i:j]]
         if filled:
             plot_data = self.filled_data_matrix[:, slct]
@@ -705,7 +712,14 @@ class DataHandler():
             kwargs['color'] = color
         if alpha is not None:
             kwargs['alpha'] = alpha
-        plt.plot(plot_data, linewidth=1, **kwargs)
+        if self.day_index is not None:
+            start = self.day_index[start_day]
+            freq = '{}min'.format(self.data_sampling)
+            periods = len(plot_data)
+            xs = pd.date_range(start=start, freq=freq, periods=periods)
+        else:
+            xs = np.arange(len(plot_data))
+        plt.plot(xs, plot_data, linewidth=1, **kwargs)
         return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
