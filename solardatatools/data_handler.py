@@ -145,7 +145,8 @@ class DataHandler():
                     clear_tune_param=clear_tune_param, verbose=verbose,
                     start_day_ix=start_day_ix, end_day_ix=end_day_ix,
                     c1=c1, c2=c2, estimator=estimator, differentiate=differentiate,
-                    reference_cols=reference_cols, correct_tz=correct_tz
+                    reference_cols=reference_cols, correct_tz=correct_tz,
+                    extra_cols=extra_cols
                 )
                 return
         t1 = time()
