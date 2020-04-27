@@ -27,6 +27,7 @@ from solardatatools.plotting import plot_2d
 from solardatatools.utilities import total_variation_plus_seasonal_quantile_filter
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
+from solardatatools.daytime import find_daytime
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -99,6 +100,7 @@ class DataHandler():
                                   end_day_ix=end_day_ix,
                                      differentiate=differentiate)
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
+        self.boolean_masks.daytime = find_daytime(self.raw_data_matrix)
         ### TZ offset detection and correction ###
         # (1) Determine if there exists a "large" timezone offset error
         if correct_tz:
@@ -148,8 +150,12 @@ class DataHandler():
                 return
         t1 = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
-        num_raw_measurements = np.count_nonzero(np.nan_to_num(self.raw_data_matrix, 0))
-        num_filled_measurements = np.count_nonzero(np.nan_to_num(self.filled_data_matrix, 0))
+        num_raw_measurements = np.count_nonzero(
+            np.nan_to_num(self.raw_data_matrix, 0)[self.boolean_masks.daytime]
+        )
+        num_filled_measurements = np.count_nonzero(
+            np.nan_to_num(self.filled_data_matrix, 0)[self.boolean_masks.daytime]
+        )
         ratio = num_filled_measurements / num_raw_measurements
         if ratio < 0.9:
             if verbose:
@@ -179,11 +185,15 @@ class DataHandler():
                     np.roll(self.filled_data_matrix, roll_by, axis=0),
                     0
                 )
+                self.raw_data_matrix = np.roll(
+                    self.raw_data_matrix, roll_by, axis=0
+                )
+                self.boolean_masks.daytime = np.roll(
+                    self.boolean_masks.daytime, roll_by, axis=0
+                )
         t2 = time()
         if fix_shifts:
             self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator)
-        self.boolean_masks.daytime = (self.filled_data_matrix
-                                      > self.capacity_estimate * 0.005)
         t3 = time()
         try:
             self.get_daily_scores(threshold=0.2)
