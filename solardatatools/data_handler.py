@@ -559,6 +559,7 @@ class DataHandler():
         )
         if len(set(db.labels_)) > 1: #np.max(db.labels_) > 0:
             self.capacity_changes = True
+            self.daily_flags.capacity_cluster = db.labels_
         else:
             self.capacity_changes = False
         if plot:
@@ -1083,6 +1084,7 @@ class DailyFlags():
         self.clear = None
         self.cloudy = None
         self.inverter_clipped = None
+        self.capacity_cluster = None
 
     def flag_no_errors(self):
         self.no_errors = np.logical_and(self.density, self.linearity)
