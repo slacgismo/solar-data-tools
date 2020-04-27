@@ -91,7 +91,7 @@ class DataHandler():
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
                      end_day_ix=None, c1=2., c2=500., estimator='com',
                      differentiate=False, reference_cols=None,
-                     correct_tz=True, extra_cols=None):
+                     correct_tz=True, extra_cols=None, daytime_threshold=0.01):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         t0 = time()
@@ -100,7 +100,8 @@ class DataHandler():
                                   end_day_ix=end_day_ix,
                                      differentiate=differentiate)
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
-        self.boolean_masks.daytime = find_daytime(self.raw_data_matrix)
+        self.boolean_masks.daytime = find_daytime(self.raw_data_matrix,
+                                                  threshold=daytime_threshold)
         ### TZ offset detection and correction ###
         # (1) Determine if there exists a "large" timezone offset error
         if correct_tz:
@@ -194,7 +195,8 @@ class DataHandler():
                 )
         t2 = time()
         if fix_shifts:
-            self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator)
+            self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
+                                      threshold=daytime_threshold)
         t3 = time()
         try:
             self.get_daily_scores(threshold=0.2)
@@ -588,10 +590,11 @@ class DataHandler():
             return fig
 
 
-    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com'):
+    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
+                             threshold=0.1):
         self.filled_data_matrix, shift_ixs = fix_time_shifts(
             self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
-            return_ixs=True, verbose=False, use_ixs=None
+            return_ixs=True, verbose=False, use_ixs=None, threshold=threshold
         )
         if len(shift_ixs) == 0:
             self.time_shifts = False

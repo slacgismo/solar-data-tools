@@ -145,7 +145,8 @@ def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=Fal
         return df_out
 
 def fix_time_shifts(data, verbose=False, return_ixs=False, use_ixs=None,
-                    c1=5., c2=200., c3=5., solar_noon_estimator='com'):
+                    c1=5., c2=200., c3=5., solar_noon_estimator='com',
+                    threshold=0.1):
     '''
     This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
     that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
@@ -178,7 +179,7 @@ def fix_time_shifts(data, verbose=False, return_ixs=False, use_ixs=None,
         s1 = energy_com(D)
     elif solar_noon_estimator == 'srsn':
         # estimate solar noon as the average of sunrise time and sunset time
-        s1 = avg_sunrise_sunset(D)
+        s1 = avg_sunrise_sunset(D, threshold=threshold)
     if use_ixs is None:
         use_ixs = ~np.isnan(s1)
     # Iterative reweighted L1 heuristic
