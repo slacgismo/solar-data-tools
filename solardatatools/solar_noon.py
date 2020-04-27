@@ -11,6 +11,7 @@ tends to give a better estimate of solar noon than the sunrise/sunset approach.
 
 '''
 import numpy as np
+from solardatatools.daytime import find_daytime
 
 def energy_com(data):
     """ Calculate the energy center of mass for each day, and use this quantity
@@ -32,7 +33,7 @@ def energy_com(data):
     com[msk] = np.divide(div1[msk], div2[msk])
     return com
 
-def avg_sunrise_sunset(data_in, threshold=0.005):
+def avg_sunrise_sunset(data_in, threshold=0.01):
     """ Calculate the sunrise time and sunset time for each day, and use the
     average of these two values as an estimate for solar noon.
 
@@ -42,13 +43,7 @@ def avg_sunrise_sunset(data_in, threshold=0.005):
     data = np.copy(data_in).astype(np.float)
     num_meas_per_hour = data.shape[0] / 24
     x = np.arange(0, 24, 1. / num_meas_per_hour)
-    # Infer night time as periods with power power below 0.5% of the max power
-    # value in the data set plus all periods with missing values.
-    try:
-        with np.errstate(invalid='ignore'):
-            night_msk = data < threshold * np.max(data[~np.isnan(data)])
-    except ValueError:
-        night_msk = data < threshold * np.max(data)
+    night_msk = ~find_daytime(threshold=threshold)
     data[night_msk] = np.nan
     good_vals = (~np.isnan(data)).astype(int)
     sunrise_idxs = np.argmax(good_vals, axis=0)
