@@ -43,7 +43,7 @@ def avg_sunrise_sunset(data_in, threshold=0.01):
     data = np.copy(data_in).astype(np.float)
     num_meas_per_hour = data.shape[0] / 24
     x = np.arange(0, 24, 1. / num_meas_per_hour)
-    night_msk = ~find_daytime(threshold=threshold)
+    night_msk = ~find_daytime(data_in, threshold=threshold)
     data[night_msk] = np.nan
     good_vals = (~np.isnan(data)).astype(int)
     sunrise_idxs = np.argmax(good_vals, axis=0)
