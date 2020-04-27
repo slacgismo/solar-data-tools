@@ -107,8 +107,15 @@ class DataHandler():
             average_day[~all_nans] = np.nanmean(
                 self.raw_data_matrix[~all_nans, :], axis=1
             )
+            average_day -= np.min(average_day)
             average_day /= np.max(average_day)
-            if average_day[0] > 0.001 or average_day[-1] > 0.001:
+            ### Troubleshooting code
+            # plt.plot(average_day)
+            # plt.axhline(0.02, color='red', ls='--', linewidth=1)
+            # plt.show()
+            meas_per_hour = np.int(60 / self.data_sampling)
+            if (np.any(average_day[:meas_per_hour] > 0.02)
+                or np.any(average_day[-meas_per_hour:] > 0.02)):
                 if verbose:
                     print(
                         'Warning: power generation at midnight. Attempting to correct...')
