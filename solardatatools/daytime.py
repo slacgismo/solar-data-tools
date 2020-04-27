@@ -7,10 +7,10 @@ series
 
 import numpy as np
 
-def find_daytime(data_matrix):
+def find_daytime(data_matrix, threshold=0.01):
     mat_copy = np.copy(data_matrix)
     np.nan_to_num(mat_copy, copy=False, nan=0.0)
     mat_copy -= np.quantile(mat_copy, 0.05)
     mat_copy /= np.max(mat_copy)
-    daytime_mask = mat_copy >= 0.01
+    daytime_mask = mat_copy >= threshold
     return daytime_mask
