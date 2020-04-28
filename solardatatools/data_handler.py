@@ -692,7 +692,9 @@ class DataHandler():
 
     def plot_daily_signals(self, boolean_index=None, start_day=0, num_days=5,
                            filled=True, ravel=True, figsize=(12, 6),
-                           color=None, alpha=None, label=None):
+                           color=None, alpha=None, label=None,
+                           boolean_mask=None, mask_label=None,
+                           show_clear_model=True):
         if type(start_day) is not int:
             try:
                 loc = self.day_index == start_day
@@ -724,7 +726,28 @@ class DataHandler():
             xs = pd.date_range(start=start, freq=freq, periods=periods)
         else:
             xs = np.arange(len(plot_data))
-        plt.plot(xs, plot_data, linewidth=1, **kwargs)
+        if label is None:
+            label = 'measured power'
+        plt.plot(xs, plot_data, linewidth=1, **kwargs, label=label)
+        if boolean_mask is not None:
+            if mask_label is None:
+                mask_label = 'boolean mask'
+            m, n = self.raw_data_matrix.shape
+            index_shape = boolean_mask.shape
+            cond1 = index_shape == (m, n)
+            cond2 = index_shape == (n,)
+            if cond1:
+                plot_flags = boolean_mask[:, slct].ravel(order='F')
+            elif cond2:
+                temp_bool = np.tile(boolean_mask, (m, 1))
+                plot_flags = temp_bool[:, slct].ravel(order='F')
+            plt.plot(xs[plot_flags], plot_data[plot_flags], ls='none',
+                     marker='.', color='red', label=mask_label)
+        if show_clear_model and self.scsf is not None:
+            plot_model = self.scsf.estimated_power_matrix[:, slct].ravel(order='F')
+            plt.plot(xs, plot_model, color='orange', linewidth=1,
+                     label='clear sky model')
+        plt.legend()
         return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
