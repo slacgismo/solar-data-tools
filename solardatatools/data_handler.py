@@ -80,6 +80,7 @@ class DataHandler():
         self.scsf = None
         # Private attributes
         self._ran_pipeline = False
+        self._error_msg = ''
         self.__time_axis_standardized = False
         self.__density_lower_threshold = None
         self.__density_upper_threshold = None
@@ -158,12 +159,25 @@ class DataHandler():
         num_filled_measurements = np.count_nonzero(
             np.nan_to_num(self.filled_data_matrix, 0)[self.boolean_masks.daytime]
         )
-        ratio = num_filled_measurements / num_raw_measurements
-        if ratio < 0.9:
+        if num_raw_measurements > 0:
+            ratio = num_filled_measurements / num_raw_measurements
+        else:
+            msg = 'Error: data set contains no non-zero values!'
+            self._error_msg += '\n' + msg
             if verbose:
-                msg = 'Error: data was lost during NaN filling procedure. '
-                msg += 'This typically occurs when\nthe time stamps are in the '
-                msg += 'wrong timezone. Please double check your data table.\n'
+                print(msg)
+            self.daily_scores = None
+            self.daily_flags = None
+            self.data_quality_score = 0.0
+            self.data_clearness_score = 0.0
+            self._ran_pipeline = True
+            return
+        if ratio < 0.9:
+            msg = 'Error: data was lost during NaN filling procedure. '
+            msg += 'This typically occurs when\nthe time stamps are in the '
+            msg += 'wrong timezone. Please double check your data table.\n'
+            self._error_msg += '\n' + msg
+            if verbose:
                 print(msg)
             self.daily_scores = None
             self.daily_flags = None
@@ -201,8 +215,10 @@ class DataHandler():
         try:
             self.get_daily_scores(threshold=0.2)
         except AttributeError:
+            msg = 'Daily quality scoring failed.'
+            self._error_msg += '\n' + 'Daily quality scoring failed.'
             if verbose:
-                print('Daily quality scoring failed.')
+                print(msg)
             self.daily_scores = None
         t4 = time()
         try:
@@ -210,23 +226,29 @@ class DataHandler():
                                  density_upper_threshold=density_upper_threshold,
                                  linearity_threshold=linearity_threshold)
         except AttributeError:
+            msg = 'Daily quality and clearness flagging failed.'
+            self._error_msg += '\n' + 'Daily quality and clearness flagging failed.'
             if verbose:
-                print('Daily quality and clearness flagging failed.')
+                print(msg)
             self.daily_flags = None
         t5 = time()
         try:
             self.detect_clear_days(th=clear_tune_param)
         except:
+            msg = 'Clear day detection failed.'
+            self._error_msg += '\n' + 'Clear day detection failed.'
             if verbose:
-                print('Clear day detection failed.')
+                print(msg)
         t6 = time()
         self.clipping_check()
         t7 = time()
         try:
             self.score_data_set()
         except:
+            msg = 'Data set summary scoring failed.'
+            self._error_msg += '\n' + 'Data set summary scoring failed.'
             if verbose:
-                print('Data set summary scoring failed.')
+                print(msg)
         t8 = time()
         if extra_cols is not None:
             freq = self.data_sampling * 60
@@ -268,15 +290,15 @@ class DataHandler():
             else:
                 l7 = 'Time zone correction:  None'
             p_out = l1 + l1_a + l2 + l3 + l4 + l5 + l6 + l7
-            print(p_out)
             if self.capacity_changes:
-                print('WARNING: Changes in system capacity detected!')
+                p_out += '\nWARNING: Changes in system capacity detected!'
             if self.num_clip_points > 1:
-                print('WARNING: {} clipping set points detected!'.format(
+                p_out += '\nWARNING: {} clipping set points detected!'.format(
                     self.num_clip_points
-                ))
+                )
             if not self.normal_quality_scores:
-                print('WARNING: Abnormal clustering of data quality scores!')
+                p_out += '\nWARNING: Abnormal clustering of data quality scores!'
+            print(p_out)
             return
         except TypeError:
             if self._ran_pipeline:
@@ -292,6 +314,7 @@ class DataHandler():
                         int(self.data_sampling * 60))
                 p_out = m1 + m2 + l1 + l1_a + l2
                 print(p_out)
+                print('\nError messages captured from pipeline:' + self._error_msg)
             else:
                 print('Please run the pipeline first!')
             return
