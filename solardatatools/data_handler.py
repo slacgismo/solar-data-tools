@@ -209,14 +209,21 @@ class DataHandler():
                 )
         t2 = time()
         if fix_shifts:
-            self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
-                                      threshold=daytime_threshold)
+            try:
+                self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
+                                          threshold=daytime_threshold)
+            except:
+                msg = 'Fix time shift algorithm failed.'
+                self._error_msg += '\n' + msg
+                if verbose:
+                    print(msg)
+                self.time_shifts = None
         t3 = time()
         try:
             self.get_daily_scores(threshold=0.2)
-        except AttributeError:
+        except:
             msg = 'Daily quality scoring failed.'
-            self._error_msg += '\n' + 'Daily quality scoring failed.'
+            self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
             self.daily_scores = None
@@ -225,9 +232,9 @@ class DataHandler():
             self.get_daily_flags(density_lower_threshold=density_lower_threshold,
                                  density_upper_threshold=density_upper_threshold,
                                  linearity_threshold=linearity_threshold)
-        except AttributeError:
+        except:
             msg = 'Daily quality and clearness flagging failed.'
-            self._error_msg += '\n' + 'Daily quality and clearness flagging failed.'
+            self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
             self.daily_flags = None
@@ -236,19 +243,28 @@ class DataHandler():
             self.detect_clear_days(th=clear_tune_param)
         except:
             msg = 'Clear day detection failed.'
-            self._error_msg += '\n' + 'Clear day detection failed.'
+            self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
         t6 = time()
-        self.clipping_check()
+        try:
+            self.clipping_check()
+        except:
+            msg = 'Clipping check failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+            self.inverter_clipping = None
         t7 = time()
         try:
             self.score_data_set()
         except:
             msg = 'Data set summary scoring failed.'
-            self._error_msg += '\n' + 'Data set summary scoring failed.'
+            self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+            self.data_quality_score = None
+            self.data_clearness_score = None
         t8 = time()
         if extra_cols is not None:
             freq = self.data_sampling * 60
@@ -275,7 +291,10 @@ class DataHandler():
 
     def report(self):
         try:
-            l1 = 'Length:                {:.2f} years\n'.format(self.num_days / 365)
+            if self.num_days >= 365:
+                l1 = 'Length:                {:.2f} years\n'.format(self.num_days / 365)
+            else:
+                l1 = 'Length:                {} days\n'.format(self.num_days)
             l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate / 1000)
             if self.raw_data_matrix.shape[0] <= 1440:
                 l2 = 'Data sampling:         {} minute\n'.format(self.data_sampling)
@@ -304,7 +323,12 @@ class DataHandler():
             if self._ran_pipeline:
                 m1 = 'Pipeline failed, please check data set.\n'
                 m2 = "Try running: self.plot_heatmap(matrix='raw')\n\n"
-                l1 = 'Length:                {:.2f} years\n'.format(self.num_days / 365)
+                if self.num_days >= 365:
+                    l1 = 'Length:                {:.2f} years\n'.format(
+                        self.num_days / 365)
+                else:
+                    l1 = 'Length:                {} days\n'.format(
+                        self.num_days)
                 l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate / 1000)
                 if self.raw_data_matrix.shape[0] <= 1440:
                     l2 = 'Data sampling:         {} minute\n'.format(
@@ -882,6 +906,8 @@ class DataHandler():
         return fig
 
     def plot_clipping(self, figsize=(10, 8)):
+        if self.daily_scores is None:
+            return
         if self.daily_scores.clipping_1 is None:
             return
         fig, ax = plt.subplots(nrows=2, figsize=figsize, sharex=True)
