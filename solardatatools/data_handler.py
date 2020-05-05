@@ -52,6 +52,7 @@ class DataHandler():
         self.capacity_estimate = None
         self.start_doy = None
         self.day_index = None
+        self.power_units = None
         # "Extra" data, i.e. additional columns to process from the table
         self.extra_matrices = {}            # Matrix views of extra columns
         self.extra_quality_scores = {}      # Relative quality: fraction of non-NaN values in column during daylight time periods, as defined by the main power columns
@@ -95,15 +96,19 @@ class DataHandler():
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
                      end_day_ix=None, c1=2., c2=500., estimator='com',
                      differentiate=False, reference_cols=None,
-                     correct_tz=True, extra_cols=None, daytime_threshold=0.01):
+                     correct_tz=True, extra_cols=None, daytime_threshold=0.01,
+                     units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
+        self.power_units = units
         t0 = time()
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix,
                                      differentiate=differentiate)
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
+        if self.capacity_estimate <= 500 and self.power_units == 'W':
+            self.power_units = 'kW'
         self.boolean_masks.daytime = find_daytime(self.raw_data_matrix,
                                                   threshold=daytime_threshold)
         ### TZ offset detection and correction ###
@@ -298,7 +303,13 @@ class DataHandler():
                 l1 = 'Length:                {:.2f} years\n'.format(self.num_days / 365)
             else:
                 l1 = 'Length:                {} days\n'.format(self.num_days)
-            l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate / 1000)
+            if self.power_units == 'W':
+                l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate / 1000)
+            elif self.power_units == 'kW':
+                l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate)
+            else:
+                l1_a = 'Capacity estimate:     {:.2f} '.format(self.capacity_estimate)
+                l1_a += self.power_units + '\n'
             if self.raw_data_matrix.shape[0] <= 1440:
                 l2 = 'Data sampling:         {} minute\n'.format(self.data_sampling)
             else:
@@ -332,7 +343,13 @@ class DataHandler():
                 else:
                     l1 = 'Length:                {} days\n'.format(
                         self.num_days)
-                l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate / 1000)
+                if self.power_units == 'W':
+                    l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate / 1000)
+                elif self.power_units == 'kW':
+                    l1_a = 'Capacity estimate:     {:.2f} kW\n'.format(self.capacity_estimate)
+                else:
+                    l1_a = 'Capacity estimate:     {:.2f} '.format(self.capacity_estimate)
+                    l1_a += self.power_units + '\n'
                 if self.raw_data_matrix.shape[0] <= 1440:
                     l2 = 'Data sampling:         {} minute\n'.format(
                         self.data_sampling)
@@ -710,33 +727,41 @@ class DataHandler():
             mat = np.copy(self.filled_data_matrix)
         else:
             return
-        if scale_to_kw:
+        if scale_to_kw and self.power_units == 'W':
             mat /= 1000
+            units = 'kW'
+        else:
+            units = self.power_units
         if flag is None:
             return plot_2d(mat, figsize=figsize,
-                           dates=self.day_index, year_lines=year_lines)
+                           dates=self.day_index, year_lines=year_lines,
+                           units=units)
         elif flag == 'good':
             fig = plot_2d(mat, figsize=figsize,
                           clear_days=self.daily_flags.no_errors,
-                          dates=self.day_index, year_lines=year_lines)
+                          dates=self.day_index, year_lines=year_lines,
+                          units=units)
             plt.title('Measured power, good days flagged')
             return fig
         elif flag == 'bad':
             fig = plot_2d(mat, figsize=figsize,
                           clear_days=~self.daily_flags.no_errors,
-                          dates=self.day_index, year_lines=year_lines)
+                          dates=self.day_index, year_lines=year_lines,
+                          units=units)
             plt.title('Measured power, bad days flagged')
             return fig
         elif flag in ['clear', 'sunny']:
             fig = plot_2d(mat, figsize=figsize,
                           clear_days=self.daily_flags.clear,
-                          dates=self.day_index, year_lines=year_lines)
+                          dates=self.day_index, year_lines=year_lines,
+                          units=units)
             plt.title('Measured power, clear days flagged')
             return fig
         elif flag == 'cloudy':
             fig = plot_2d(mat, figsize=figsize,
                           clear_days=self.daily_flags.cloudy,
-                          dates=self.day_index, year_lines=year_lines)
+                          dates=self.day_index, year_lines=year_lines,
+                          units=units)
             plt.title('Measured power, cloudy days flagged')
             return fig
 
