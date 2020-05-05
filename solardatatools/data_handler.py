@@ -32,7 +32,8 @@ from solardatatools.daytime import find_daytime
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
                  convert_to_ts=False):
-        self.data_frame = data_frame.copy()
+        if data_frame is not None:
+            self.data_frame = data_frame.copy()
         self.raw_data_matrix = raw_data_matrix
         if self.raw_data_matrix is not None:
             self.num_days = self.raw_data_matrix.shape[1]
