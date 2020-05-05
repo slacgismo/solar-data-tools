@@ -34,6 +34,8 @@ class DataHandler():
                  convert_to_ts=False):
         if data_frame is not None:
             self.data_frame = data_frame.copy()
+        else:
+            self.data_frame = None
         self.raw_data_matrix = raw_data_matrix
         if self.raw_data_matrix is not None:
             self.num_days = self.raw_data_matrix.shape[1]
