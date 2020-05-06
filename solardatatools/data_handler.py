@@ -113,6 +113,8 @@ class DataHandler():
                                                   threshold=daytime_threshold)
         ### TZ offset detection and correction ###
         # (1) Determine if there exists a "large" timezone offset error
+        if power_col is None:
+            power_col = self.data_frame.columns[0]
         if correct_tz:
             average_day = np.zeros(self.raw_data_matrix.shape[0])
             all_nans = np.alltrue(np.isnan(self.raw_data_matrix), axis=1)
