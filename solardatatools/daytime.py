@@ -28,7 +28,7 @@ def find_daytime(data_matrix, threshold=0.01):
     # convert NaNs to zeros
     np.nan_to_num(mat_copy, copy=False, nan=0.0)
     # scale mat_copy to mostly have values >=0 and <= 1, allowing for outliers
-    bottom_scale = np.quantile(mat_copy, 0.05)
+    bottom_scale = min(np.quantile(mat_copy, 0.05), 0)
     top_scale = np.quantile(mat_copy, 0.95)
     mat_copy -= bottom_scale
     mat_copy /= top_scale - bottom_scale
