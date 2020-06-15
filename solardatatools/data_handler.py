@@ -89,6 +89,7 @@ class DataHandler():
         self.__density_lower_threshold = None
         self.__density_upper_threshold = None
         self.__linearity_threshold = None
+        self.__recursion_depth = 0
 
     def run_pipeline(self, power_col=None, zero_night=True, interp_day=True,
                      fix_shifts=True, density_lower_threshold=0.6,
@@ -128,8 +129,10 @@ class DataHandler():
             # plt.axhline(0.02, color='red', ls='--', linewidth=1)
             # plt.show()
             meas_per_hour = np.int(60 / self.data_sampling)
-            if (np.any(average_day[:meas_per_hour] > 0.02)
-                or np.any(average_day[-meas_per_hour:] > 0.02)):
+            cond1 = np.any(average_day[:meas_per_hour] > 0.02)
+            cond2 = np.any(average_day[-meas_per_hour:] > 0.02)
+            cond3 = self.__recursion_depth <= 2
+            if (cond1 or cond2) and cond3:
                 if verbose:
                     print(
                         'Warning: power generation at midnight. Attempting to correct...')
@@ -147,6 +150,7 @@ class DataHandler():
                 )
                 if verbose:
                     print('Done.\nRestarting the pipeline...')
+                self.__recursion_depth += 1
                 self.run_pipeline(
                     power_col=power_col, zero_night=zero_night,
                     interp_day=interp_day,
@@ -164,10 +168,14 @@ class DataHandler():
         t1 = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         num_raw_measurements = np.count_nonzero(
-            np.nan_to_num(self.raw_data_matrix, 0)[self.boolean_masks.daytime]
+            np.nan_to_num(self.raw_data_matrix,
+                          copy=True,
+                          nan=0.)[self.boolean_masks.daytime]
         )
         num_filled_measurements = np.count_nonzero(
-            np.nan_to_num(self.filled_data_matrix, 0)[self.boolean_masks.daytime]
+            np.nan_to_num(self.filled_data_matrix,
+                          copy=True,
+                          nan=0.)[self.boolean_masks.daytime]
         )
         if num_raw_measurements > 0:
             ratio = num_filled_measurements / num_raw_measurements
