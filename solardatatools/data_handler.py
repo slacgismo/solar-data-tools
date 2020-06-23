@@ -603,17 +603,23 @@ class DataHandler():
 
     def find_clipped_times(self):
         if self.inverter_clipping:
-            daily_max_val = np.max(self.filled_data_matrix, axis=0)
+            max_value = np.max(self.filled_data_matrix)
             clip_stat_1 = self.daily_scores.clipping_1      #daily_max_val / max_value
             point_masses = self.__analyze_distribution(clip_stat_1)
+            mat_normed = self.filled_data_matrix / max_value
+            masks = np.stack([np.abs(mat_normed - x0) < 0.01
+                              for x0 in point_masses])
+            clipped_time_mask = np.any(masks, axis=0)
+            daily_max_val = np.max(self.filled_data_matrix, axis=0)
             mat_normed = np.zeros_like(self.filled_data_matrix)
             msk = daily_max_val != 0
-            mat_normed[:, msk] = self.filled_data_matrix[:, msk] / daily_max_val[msk]
-            masks = np.stack([np.abs(mat_normed - x0) < 0.02
-                              for x0 in point_masses])
-            clipped_time_mask = np.alltrue(masks, axis=0)
-            clipped_days = self.daily_flags.inverter_clipped
-            clipped_time_mask[:, ~clipped_days] = False
+            mat_normed[:, msk] = self.filled_data_matrix[:, msk] /  daily_max_val[msk]
+            clipped_time_mask = np.logical_and(
+                clipped_time_mask,
+                mat_normed >= 0.98
+            )
+            # clipped_days = self.daily_flags.inverter_clipped
+            # clipped_time_mask[:, ~clipped_days] = False
             self.boolean_masks.clipped_times = clipped_time_mask
         else:
             return
@@ -774,6 +780,17 @@ class DataHandler():
                           units=units)
             plt.title('Measured power, cloudy days flagged')
             return fig
+        elif flag == 'clipping':
+            fig = plot_2d(mat, figsize=figsize,
+                          clear_days=self.daily_flags.inverter_clipped,
+                          dates=self.day_index, year_lines=year_lines,
+                          units=units)
+            plt.title('Measured power, days with inverter clipping flagged')
+            return fig
+        else:
+            print('Unknown daily flag. Please use one of the following:')
+            print('good, bad, sunny, cloudy, clipping')
+            return
 
     def plot_daily_signals(self, boolean_index=None, start_day=0, num_days=5,
                            filled=True, ravel=True, figsize=(12, 6),
