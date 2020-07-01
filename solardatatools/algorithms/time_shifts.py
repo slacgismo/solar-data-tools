@@ -32,7 +32,7 @@ class TimeShift():
             solar_noon_estimator='com', threshold=0.1):
         if solar_noon_estimator == 'com':
             metric = energy_com(data)
-        elif solar_noon_estimator == 'srsn':
+        elif solar_noon_estimator == 'srss':
             metric = avg_sunrise_sunset(data, threshold=threshold)
         if use_ixs is None:
             use_ixs = ~np.isnan(metric)

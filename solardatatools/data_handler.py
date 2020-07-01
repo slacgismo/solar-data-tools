@@ -97,7 +97,7 @@ class DataHandler():
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
-                     end_day_ix=None, c1=2., c2=500., estimator='com',
+                     end_day_ix=None, c1=2., c2=500., estimator='srss',
                      differentiate=False, reference_cols=None,
                      correct_tz=True, extra_cols=None, daytime_threshold=0.01,
                      units='W'):
@@ -689,11 +689,11 @@ class DataHandler():
             return fig
 
 
-    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
+    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='srss',
                              threshold=0.1):
         self.time_shift_analysis = TimeShift()
         self.time_shift_analysis.run(
-            self.filled_data_matrix, use_ixs=self.daily_flags.no_errors,
+            self.filled_data_matrix, use_ixs=self.daily_flags.clear,
             c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
