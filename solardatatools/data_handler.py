@@ -97,7 +97,7 @@ class DataHandler():
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
                      clear_tune_param=0.1, verbose=True, start_day_ix=None,
-                     end_day_ix=None, c1=2., c2=500., estimator='srss',
+                     end_day_ix=None, c1=2., c2=500., solar_noon_estimator='srss',
                      differentiate=False, reference_cols=None,
                      correct_tz=True, extra_cols=None, daytime_threshold=0.01,
                      units='W'):
@@ -164,7 +164,8 @@ class DataHandler():
                     linearity_threshold=linearity_threshold,
                     clear_tune_param=clear_tune_param, verbose=verbose,
                     start_day_ix=start_day_ix, end_day_ix=end_day_ix,
-                    c1=c1, c2=c2, estimator=estimator, differentiate=differentiate,
+                    c1=c1, c2=c2, solar_noon_estimator=solar_noon_estimator,
+                    differentiate=differentiate,
                     reference_cols=reference_cols, correct_tz=correct_tz,
                     extra_cols=extra_cols
                 )
@@ -290,7 +291,8 @@ class DataHandler():
         t7 = time()
         if fix_shifts:
             try:
-                self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
+                self.auto_fix_time_shifts(c1=c1, c2=c2,
+                                          estimator=solar_noon_estimator,
                                           threshold=daytime_threshold)
             except:
                 msg = 'Fix time shift algorithm failed.'
