@@ -1,1 +1,2 @@
 from solardatatools.algorithms.capacity_change import CapacityChange
+from solardatatools.algorithms.time_shifts import TimeShift

@@ -17,18 +17,17 @@ import matplotlib.cm as cm
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 from solardatatools.time_axis_manipulation import make_time_series,\
-    standardize_time_axis, fix_time_shifts
+    standardize_time_axis
 from solardatatools.matrix_embedding import make_2d
 from solardatatools.data_quality import daily_missing_data_advanced,\
     daily_missing_data_simple, dataset_quality_score
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
-from solardatatools.utilities import total_variation_plus_seasonal_quantile_filter
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.daytime import find_daytime
-from solardatatools.algorithms import CapacityChange
+from solardatatools.algorithms import CapacityChange, TimeShift
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -81,10 +80,10 @@ class DataHandler():
             df = standardize_time_axis(self.data_frame)
             self.data_frame = df
             self.__time_axis_standardized = True
-        # Statistical clear sky fitting object
+        # Algorithm objects
         self.scsf = None
-        # Capacity change analysis object
         self.capacity_analysis = None
+        self.time_shift_analysis = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
@@ -105,6 +104,7 @@ class DataHandler():
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
+        self.time_shift_analysis = None
         self.power_units = units
         t0 = time()
         if self.data_frame is not None:
@@ -679,14 +679,23 @@ class DataHandler():
 
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
                              threshold=0.1):
-        self.filled_data_matrix, shift_ixs = fix_time_shifts(
-            self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
-            return_ixs=True, verbose=False, use_ixs=None, threshold=threshold
-        )
-        if len(shift_ixs) == 0:
+        self.time_shift_analysis = TimeShift()
+        self.time_shift_analysis.run(self.filled_data_matrix, use_ixs=None,
+                                     c1=c1, c2=c2, solar_noon_estimator=estimator,
+                                     threshold=threshold)
+        self.filled_data_matrix = self.time_shift_analysis.corrected_data
+        if len(self.time_shift_analysis.index_set) == 0:
             self.time_shifts = False
         else:
             self.time_shifts = True
+        # self.filled_data_matrix, shift_ixs = fix_time_shifts(
+        #     self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
+        #     return_ixs=True, verbose=False, use_ixs=None, threshold=threshold
+        # )
+        # if len(shift_ixs) == 0:
+        #     self.time_shifts = False
+        # else:
+        #     self.time_shifts = True
 
     def detect_clear_days(self, th=0.1):
         if self.filled_data_matrix is None:
