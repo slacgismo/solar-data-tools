@@ -28,6 +28,7 @@ from solardatatools.utilities import total_variation_plus_seasonal_quantile_filt
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.daytime import find_daytime
+from solardatatools.algorithms import CapacityChange
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -82,6 +83,8 @@ class DataHandler():
             self.__time_axis_standardized = True
         # Statistical clear sky fitting object
         self.scsf = None
+        # Capacity change analysis object
+        self.capacity_analysis = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
@@ -101,6 +104,7 @@ class DataHandler():
                      units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
+        self.capacity_analysis = None
         self.power_units = units
         t0 = time()
         if self.data_frame is not None:
@@ -626,50 +630,45 @@ class DataHandler():
 
     def capacity_clustering(self, plot=False, figsize=(8, 6),
                             show_clusters=True):
-        if np.sum(self.daily_flags.no_errors) > 0:
-            # Iterative reweighted L1 heuristic
-            w = np.ones(len(self.daily_scores.clipping_1) - 1)
-            eps = 0.5
-            for i in range(5):
-                s1, s2 = total_variation_plus_seasonal_quantile_filter(
-                    self.daily_scores.clipping_1, self.daily_flags.no_errors,
-                    tau=0.5, c1=15, c2=100,
-                    c3=300, tv_weights=w
-                )
-                w = 1 / (eps + np.abs(np.diff(s1, n=1)))
-        else:
-            return
-        db = DBSCAN(eps=.02, min_samples=max(0.1 * len(s1), 3)).fit(
-            s1[:, np.newaxis]
-        )
-        if len(set(db.labels_)) > 1: #np.max(db.labels_) > 0:
+        if self.capacity_analysis is None:
+            self.capacity_analysis = CapacityChange()
+            self.capacity_analysis.find_capacity_levels(
+                self.filled_data_matrix, filter=self.daily_flags.no_errors,
+                quantile=1.00, c1=15, c2=100, c3=300, reweight_eps=0.5,
+                reweight_niter=5, dbscan_eps=.02, dbscan_min_samples='auto'
+            )
+        if len(set(self.capacity_analysis.labels)) > 1: #np.max(db.labels_) > 0:
             self.capacity_changes = True
-            self.daily_flags.capacity_cluster = db.labels_
+            self.daily_flags.capacity_cluster = self.capacity_analysis.labels
         else:
             self.capacity_changes = False
         if plot:
+            metric = self.capacity_analysis.metric
+            s1 = self.capacity_analysis.s1
+            s2 = self.capacity_analysis.s2
+            labels = self.capacity_analysis.labels
             try:
                 xs = self.day_index.to_pydatetime()
             except AttributeError:
-                xs = np.arange(len(self.daily_signals.density))
+                xs = np.arange(self.num_days)
             if show_clusters:
                 fig, ax = plt.subplots(nrows=2, figsize=figsize, sharex=True,
                                        gridspec_kw={'height_ratios': [4, 1]})
                 ax[0].plot(xs, s1, label='capacity change detector')
                 ax[0].plot(xs, s2 + s1, label='signal model')
-                ax[0].plot(xs, self.daily_scores.clipping_1, alpha=0.3,
+                ax[0].plot(xs, metric, alpha=0.3,
                            label='measured signal')
                 ax[0].legend()
                 ax[0].set_title('Detection of system capacity changes')
                 ax[1].set_xlabel('date')
                 ax[0].set_ylabel('normalized daily maximum power')
-                ax[1].plot(xs, db.labels_, ls='none', marker='.')
+                ax[1].plot(xs, labels, ls='none', marker='.')
                 ax[1].set_ylabel('Capacity cluster label')
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label='capacity change detector')
                 ax.plot(xs, s2 + s1, label='signal model')
-                ax.plot(xs, self.daily_scores.clipping_1, alpha=0.3,
+                ax.plot(xs, metric, alpha=0.3,
                          label='measured signal')
                 ax.legend()
                 ax.set_title('Detection of system capacity changes')
