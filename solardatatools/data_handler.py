@@ -230,17 +230,6 @@ class DataHandler():
                 self.boolean_masks.daytime = np.roll(
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
-        # t2 = time()
-        # if fix_shifts:
-        #     try:
-        #         self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
-        #                                   threshold=daytime_threshold)
-        #     except:
-        #         msg = 'Fix time shift algorithm failed.'
-        #         self._error_msg += '\n' + msg
-        #         if verbose:
-        #             print(msg)
-        #         self.time_shifts = None
         t2 = time()
         try:
             self.get_daily_scores(threshold=0.2)
@@ -314,7 +303,6 @@ class DataHandler():
             out = 'total time: {:.2f} seconds\n'
             out += 'form matrix: {:.2f}, '
             out += 'fill matrix: {:.2f}, '
-            # out += 'fix time shifts: {:.2f}, \n'
             out += 'daily scores: {:.2f}, \n'
             out += 'daily flags: {:.2f}, '
             out += 'clear detect: {:.2f}, '
