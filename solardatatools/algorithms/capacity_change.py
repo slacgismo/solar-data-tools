@@ -26,10 +26,9 @@ class CapacityChange():
         self.s2 = None
         self.labels = None
 
-    def find_capacity_levels(self, data, filter=None, quantile=1.00, c1=15,
-                             c2=100, c3=300, reweight_eps=0.5,
-                             reweight_niter=5, dbscan_eps=.02,
-                             dbscan_min_samples='auto'):
+    def run(self, data, filter=None, quantile=1.00, c1=15, c2=100, c3=300,
+            reweight_eps=0.5, reweight_niter=5, dbscan_eps=.02,
+            dbscan_min_samples='auto'):
         if filter is None:
             filter = np.ones(data.shape[1], dtype=np.bool)
         if np.sum(filter) > 0:

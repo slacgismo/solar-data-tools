@@ -632,7 +632,7 @@ class DataHandler():
                             show_clusters=True):
         if self.capacity_analysis is None:
             self.capacity_analysis = CapacityChange()
-            self.capacity_analysis.find_capacity_levels(
+            self.capacity_analysis.run(
                 self.filled_data_matrix, filter=self.daily_flags.no_errors,
                 quantile=1.00, c1=15, c2=100, c3=300, reweight_eps=0.5,
                 reweight_niter=5, dbscan_eps=.02, dbscan_min_samples='auto'
