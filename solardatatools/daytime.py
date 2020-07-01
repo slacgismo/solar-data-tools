@@ -35,3 +35,23 @@ def find_daytime(data_matrix, threshold=0.01):
     # define boolean mask rule
     daytime_mask = mat_copy >= threshold
     return daytime_mask
+
+def detect_sun(data, threshold):
+    scaled_mat = scale_data(data)
+    bool_msk = np.zeros_like(scaled_mat, dtype=np.bool)
+    slct = ~np.isnan(scaled_mat)
+    bool_msk[slct] = scaled_mat[slct] > threshold
+    return bool_msk
+
+def scale_data(data, return_metrics=False):
+    low_val = np.nanmin(data)
+    high_val = np.nanquantile(data, .99)
+    scaled_mat = (data - low_val) / high_val
+    nan_mask = np.isnan(scaled_mat)
+    if not return_metrics:
+        return scaled_mat
+    else:
+        m1 = low_val
+        m2 = np.sum(nan_mask) / data.size
+        m3 = np.nanquantile(scaled_mat, 0.5) / np.nanquantile(scaled_mat, 0.99)
+        return scaled_mat, m1, m2, m3
