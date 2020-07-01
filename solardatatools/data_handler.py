@@ -229,18 +229,18 @@ class DataHandler():
                 self.boolean_masks.daytime = np.roll(
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
+        # t2 = time()
+        # if fix_shifts:
+        #     try:
+        #         self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
+        #                                   threshold=daytime_threshold)
+        #     except:
+        #         msg = 'Fix time shift algorithm failed.'
+        #         self._error_msg += '\n' + msg
+        #         if verbose:
+        #             print(msg)
+        #         self.time_shifts = None
         t2 = time()
-        if fix_shifts:
-            try:
-                self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
-                                          threshold=daytime_threshold)
-            except:
-                msg = 'Fix time shift algorithm failed.'
-                self._error_msg += '\n' + msg
-                if verbose:
-                    print(msg)
-                self.time_shifts = None
-        t3 = time()
         try:
             self.get_daily_scores(threshold=0.2)
         except:
@@ -249,7 +249,7 @@ class DataHandler():
             if verbose:
                 print(msg)
             self.daily_scores = None
-        t4 = time()
+        t3 = time()
         try:
             self.get_daily_flags(density_lower_threshold=density_lower_threshold,
                                  density_upper_threshold=density_upper_threshold,
@@ -260,7 +260,7 @@ class DataHandler():
             if verbose:
                 print(msg)
             self.daily_flags = None
-        t5 = time()
+        t4 = time()
         try:
             self.detect_clear_days(th=clear_tune_param)
         except:
@@ -268,7 +268,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
-        t6 = time()
+        t5 = time()
         try:
             self.clipping_check()
         except:
@@ -277,7 +277,7 @@ class DataHandler():
             if verbose:
                 print(msg)
             self.inverter_clipping = None
-        t7 = time()
+        t6 = time()
         try:
             self.score_data_set()
         except:
@@ -287,6 +287,17 @@ class DataHandler():
                 print(msg)
             self.data_quality_score = None
             self.data_clearness_score = None
+        t7 = time()
+        if fix_shifts:
+            try:
+                self.auto_fix_time_shifts(c1=c1, c2=c2, estimator=estimator,
+                                          threshold=daytime_threshold)
+            except:
+                msg = 'Fix time shift algorithm failed.'
+                self._error_msg += '\n' + msg
+                if verbose:
+                    print(msg)
+                self.time_shifts = None
         t8 = time()
         if extra_cols is not None:
             freq = self.data_sampling * 60
@@ -301,12 +312,13 @@ class DataHandler():
             out = 'total time: {:.2f} seconds\n'
             out += 'form matrix: {:.2f}, '
             out += 'fill matrix: {:.2f}, '
-            out += 'fix time shifts: {:.2f}, \n'
-            out += 'daily scores: {:.2f}, '
+            # out += 'fix time shifts: {:.2f}, \n'
+            out += 'daily scores: {:.2f}, \n'
             out += 'daily flags: {:.2f}, '
-            out += 'clear detect: {:.2f}, \n'
-            out += 'clipping check: {:.2f}, '
-            out += 'data scoring: {:.2f}'
+            out += 'clear detect: {:.2f}, '
+            out += 'clipping check: {:.2f}, \n'
+            out += 'data scoring: {:.2f}, '
+            out += 'fix time shifts: {:.2f},'
             print(out.format(t8-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, t7-t6, t8-t7))
         self._ran_pipeline = True
         return
@@ -680,9 +692,10 @@ class DataHandler():
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
                              threshold=0.1):
         self.time_shift_analysis = TimeShift()
-        self.time_shift_analysis.run(self.filled_data_matrix, use_ixs=None,
-                                     c1=c1, c2=c2, solar_noon_estimator=estimator,
-                                     threshold=threshold)
+        self.time_shift_analysis.run(
+            self.filled_data_matrix, use_ixs=self.daily_flags.no_errors,
+            c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold
+        )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
             self.time_shifts = False
