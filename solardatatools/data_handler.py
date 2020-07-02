@@ -707,6 +707,14 @@ class DataHandler():
             print('Generate a filled data matrix first.')
             return
         clear_days = find_clear_days(self.filled_data_matrix, th=th)
+        ### Remove days that are marginally low density, but otherwise pass
+        # the clearness test. Occaisonally, we find an early morning or late
+        # afternoon inverter outage on a clear day is still detected as clear.
+        # Added July 2020 --BM
+        clear_days = np.logical_and(
+            clear_days,
+            self.daily_scores.density > 0.9
+        )
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
