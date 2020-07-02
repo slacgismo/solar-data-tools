@@ -211,7 +211,9 @@ class DataHandler():
         ### TZ offset detection and correction ###
         # (2) Determine if there is a "small" timezone offset error
         if correct_tz:
-            average_noon = np.nanmean(avg_sunrise_sunset(self.filled_data_matrix))
+            average_noon = np.nanmean(
+                avg_sunrise_sunset(self.filled_data_matrix, threshold=0.01)
+            )
             tz_offset = np.round(12 - average_noon)
             if tz_offset != 0:
                 self.tz_correction += tz_offset
@@ -680,7 +682,7 @@ class DataHandler():
 
 
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='srss',
-                             threshold=0.1):
+                             threshold=0.01):
         self.time_shift_analysis = TimeShift()
         self.time_shift_analysis.run(
             self.filled_data_matrix, use_ixs=self.daily_flags.clear,
@@ -1034,6 +1036,29 @@ class DataHandler():
         fig = self.capacity_clustering(plot=True, figsize=figsize,
                                        show_clusters=show_clusters)
         return fig
+
+    def plot_time_shift_analysis_results(self, figsize=(8, 6)):
+        if self.time_shift_analysis is not None:
+            plt.figure(figsize=figsize)
+            plt.plot(self.day_index, self.time_shift_analysis.metric,
+                     linewidth=1, alpha=0.6,
+                     label='daily solar noon')
+            plt.plot(self.day_index[self.daily_flags.clear],
+                     self.time_shift_analysis.metric[self.daily_flags.clear],
+                     linewidth=1, alpha=0.6, color='orange', marker='.',
+                     ls='none',
+                     label='filtered days')
+            plt.plot(self.day_index, self.time_shift_analysis.s1, color='green',
+                     label='shift detector')
+            plt.plot(self.day_index,
+                     self.time_shift_analysis.s1 + self.time_shift_analysis.s2,
+                     color='red', label='signal model', ls='--')
+            # plt.ylim(11, 13)
+            plt.legend()
+            fig = plt.gcf()
+            return fig
+        else:
+            print('Please run pipeline first.')
 
     def plot_circ_dist(self, flag='good', num_bins=12*4, figsize=(8,8)):
         title = 'Calendar distribution of '
