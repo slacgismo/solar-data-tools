@@ -44,7 +44,7 @@ class CapacityChange():
                 )
                 w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         else:
-            print('No valid values! Please check your data and filter.')
+            # print('No valid values! Please check your data and filter.')
             return
         if dbscan_eps is None or dbscan_min_samples is None:
             self.metric = metric
