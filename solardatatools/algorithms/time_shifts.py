@@ -1,6 +1,6 @@
 ''' Time Shift Algorithm Module
 
-This module the algorithm for detecting time shifts in an unlabeled PV
+This module contains the algorithm for detecting time shifts in an unlabeled PV
 power production data sets. These occur because of the local clock on the data
 logging system being changed or by incorrect handling of daylight savings.
 The algorithm works as follows:
