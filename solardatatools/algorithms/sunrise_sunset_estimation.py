@@ -200,7 +200,7 @@ class SunriseSunset():
         else:
             return
 
-    def run_optimizer(self, data, random_seed=None, plot=False,
+    def run_optimizer(self, data, random_seed=None, search_pts=51, plot=False,
                       figsize=(8, 6), groundtruth=None):
         if groundtruth is not None:
             sr_true = groundtruth[0]
@@ -208,7 +208,7 @@ class SunriseSunset():
         else:
             sr_true = None
             ss_true = None
-        ths = np.logspace(-5, -1, 51)
+        ths = np.logspace(-5, -1, search_pts)
         ho_error = []
         full_error = []
         for th in ths:
@@ -221,7 +221,8 @@ class SunriseSunset():
             use_set_ss = np.arange(len(sunsets))[~np.isnan(sunsets)]
             if len(use_set_sr) / len(sunrises) > 0.6 and len(use_set_ss) / len(sunsets) > 0.6:
                 run_ho_errors = []
-                for run in range(5):
+                num_trials = 1     # if > 1, average over multiple random selections
+                for run in range(num_trials):
                     np.random.shuffle(use_set_sr)
                     np.random.shuffle(use_set_ss)
                     split_at_sr = int(len(use_set_sr) * .8)     # 80-20 train test split
@@ -249,7 +250,12 @@ class SunriseSunset():
                     r1 = (sunrises - sr_smoothed)[test_msk_sr]
                     r2 = (sunsets - ss_smoothed)[test_msk_ss]
                     ho_resid = np.r_[r1, r2]
-                    run_ho_errors.append(np.sqrt(np.mean(ho_resid ** 2)))
+                    ### L1-loss instead of L2
+                    # L1-loss is better proxy for goodness of fit when using
+                    # quantile loss function
+                    ###
+                    # run_ho_errors.append(np.sqrt(np.mean(ho_resid ** 2)))
+                    run_ho_errors.append(np.mean(np.abs(ho_resid)))
                 ho_error.append(np.average(run_ho_errors))
                 if groundtruth is not None:
                     full_fit = rise_set_smoothed(measured, sunrise_tau=0.05,
