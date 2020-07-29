@@ -5,8 +5,8 @@ describes a PV power or current data set. We assume a linear model between
 irradiance and power/current, and we use k-fold cross validation to assess
 which irradiance sensor provides the best predictive power.
 
-Generally speaking, we can try to assess a sensors distance from an array and
-its plane-of-array mismatch. Hopefully there exists a sensor that is both
+Generally speaking, we can try to assess a sensor's distance from an array and
+its plane-of-array mismatch. Hopefully, there exists a sensor that is both
 close by the array and well aligned; however, this is not always the case.
 We use clear sky data to assess POA mismatch and cloudy sky data to assess
 distance from array. If there is a discrepancy in which sensor is "best" under
@@ -40,6 +40,7 @@ class SensorIdentification():
         nan_masks = [~np.isnan(m[1])
                      for m in self.data_handler.extra_matrices.items()]
         self.compare_mask = np.alltrue(np.array(nan_masks), axis=0)
+        # These attributes are set when running the identify method
         self.results_table = None
         self.chosen_sensor = None
         self.consistent_answer = None
@@ -101,3 +102,4 @@ class SensorIdentification():
             sensors = self.sensor_keys[ixs]
             self.chosen_sensor = dict(zip(lowest_error.index, sensors))
             self.consistent_answer = False
+        return
