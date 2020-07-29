@@ -1,12 +1,16 @@
 """ Sensor Identification Module
 
 This module contains a class for choosing which irradiance sensor best
-describes a PV power or current data set.
-We assume a linear model between
-irradiance and power/current, and we use k-fold cross validation to
-assess which irradiance sensor provides the best predictive power.
+describes a PV power or current data set. We assume a linear model between
+irradiance and power/current, and we use k-fold cross validation to assess
+which irradiance sensor provides the best predictive power.
 
-Generally speaking, we can describe a sensor
+Generally speaking, we can try to assess a sensors distance from an array and
+its plane-of-array mismatch. Hopefully there exists a sensor that is both
+close by the array and well aligned; however, this is not always the case.
+We use clear sky data to assess POA mismatch and cloudy sky data to assess
+distance from array. If there is a discrepancy in which sensor is "best" under
+these two data filtering schemes, the algorithm alerts the user.
 
 """
 
@@ -20,6 +24,13 @@ def rmse(residuals):
 
 class SensorIdentification():
     def __init__(self, data_handler_obj):
+        """
+        This class is always instantiated with a DataHandler class instance.
+        This instance should have the pipeline run, with extra columns included
+        that identify the candidate sensors.
+
+        :param data_handler_obj: (required) a DataHandler class instance
+        """
         self.data_handler = data_handler_obj
         self.sensor_keys = np.array(list(self.data_handler.extra_matrices.keys()))
         if len(self.sensor_keys) == 0:
