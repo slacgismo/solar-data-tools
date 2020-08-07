@@ -297,7 +297,7 @@ class DataHandler():
                 self.time_shifts = None
         t8 = time()
         if extra_cols is not None:
-            freq = self.data_sampling * 60
+            freq = int(self.data_sampling * 60)
             new_index = pd.date_range(start=self.day_index[0].date(),
                                       end=self.day_index[-1].date() + timedelta(
                                           days=1),
