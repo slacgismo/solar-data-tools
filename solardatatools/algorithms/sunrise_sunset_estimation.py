@@ -32,7 +32,8 @@ class SunriseSunset():
         self.sunset_estimates = None
         self.sunrise_measurements = None
         self.sunset_measurements = None
-        self.sunup_mask = None
+        self.sunup_mask_measured = None
+        self.sunup_mask_estimated = None
         self.threshold = None
         self.total_rmse = None
 
@@ -58,7 +59,14 @@ class SunriseSunset():
         self.sunset_estimates = smoothed['sunsets']
         self.sunrise_measurements = measured['sunrises']
         self.sunset_measurements = measured['sunsets']
-        self.sunup_mask = bool_msk
+        self.sunup_mask_measured = bool_msk
+        data_sampling = int(24 * 60 / data.shape[0])
+        num_days = data.shape[1]
+        mat = np.tile(np.arange(0, 24, data_sampling / 60), (num_days, 1)).T
+        sr_broadcast = np.tile(self.sunrise_estimates, (data.shape[0], 1))
+        ss_broadcast = np.tile(self.sunset_estimates, (data.shape[0], 1))
+        self.sunup_mask_estimated = np.logical_and(mat >= sr_broadcast,
+                                                   mat < ss_broadcast)
         self.threshold = threshold
 
         if plot:
@@ -174,12 +182,29 @@ class SunriseSunset():
                     r1 = (sunrises - sr_smoothed)[test_msk_sr]
                     r2 = (sunsets - ss_smoothed)[test_msk_ss]
                     ho_resid = np.r_[r1, r2]
-                    ### L1-loss instead of L2
-                    # L1-loss is better proxy for goodness of fit when using
-                    # quantile loss function
-                    ###
-                    # run_ho_errors.append(np.sqrt(np.mean(ho_resid ** 2)))
-                    run_ho_errors.append(np.mean(np.abs(ho_resid)))
+                    #### TESTING
+                    # print(th)
+                    # plt.plot(ho_resid)
+                    # plt.show()
+                    #####
+
+
+                    ### 7/30/20:
+                    # Some sites can have "consistent" fit (low holdout error)
+                    # that is not the correct estimate. We impose the restriction
+                    # that the range of sunrise times and sunset times must be
+                    # greater than 15 minutes. Any solution that is less than
+                    # that must be non-physical. (See: PVO ID# 30121)
+                    cond1 = np.max(sr_smoothed) - np.min(sr_smoothed) > 0.25
+                    cond2 = np.max(ss_smoothed) - np.min(ss_smoothed) > 0.25
+                    if cond1 and cond2:
+                        ### L1-loss instead of L2
+                        # L1-loss is better proxy for goodness of fit when using
+                        # quantile loss function
+                        ###
+                        run_ho_errors.append(np.mean(np.abs(ho_resid)))
+                    else:
+                        run_ho_errors.append(1e2)
                 ho_error.append(np.average(run_ho_errors))
                 if groundtruth is not None:
                     full_fit = rise_set_smoothed(measured, sunrise_tau=0.05,
@@ -205,7 +230,14 @@ class SunriseSunset():
         self.sunset_estimates = smoothed['sunsets']
         self.sunrise_measurements = measured['sunrises']
         self.sunset_measurements = measured['sunsets']
-        self.sunup_mask = bool_msk
+        self.sunup_mask_measured = bool_msk
+        data_sampling = int(24 * 60 / data.shape[0])
+        num_days = data.shape[1]
+        mat = np.tile(np.arange(0, 24, data_sampling / 60), (num_days, 1)).T
+        sr_broadcast = np.tile(self.sunrise_estimates, (data.shape[0], 1))
+        ss_broadcast = np.tile(self.sunset_estimates, (data.shape[0], 1))
+        self.sunup_mask_estimated = np.logical_and(mat >= sr_broadcast,
+                                                   mat < ss_broadcast)
         self.threshold = selected_th
         if groundtruth is not None:
             sr_residual = sr_true - self.sunrise_estimates
