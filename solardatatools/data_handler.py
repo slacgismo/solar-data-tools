@@ -302,7 +302,10 @@ class DataHandler():
                                       end=self.day_index[-1].date() + timedelta(
                                           days=1),
                                       freq='{}s'.format(freq))[:-1]
-            extra_cols = np.atleast_1d(extra_cols)
+            if isinstance(extra_cols, str):
+                extra_cols = np.atleast_1d(extra_cols)
+            elif isinstance(extra_cols, tuple):
+                extra_cols = [extra_cols]
             for col in extra_cols:
                 self.generate_extra_matrix(col, new_index=new_index)
         if verbose:
