@@ -96,7 +96,8 @@ class DataHandler():
     def run_pipeline(self, power_col=None, zero_night=True, interp_day=True,
                      fix_shifts=True, density_lower_threshold=0.6,
                      density_upper_threshold=1.05, linearity_threshold=0.1,
-                     clear_tune_param=0.1, verbose=True, start_day_ix=None,
+                     clear_day_smoothness_param=0.9, clear_day_energy_param=0.8,
+                     verbose=True, start_day_ix=None,
                      end_day_ix=None, c1=2., c2=500., solar_noon_estimator='srss',
                      differentiate=False, reference_cols=None,
                      correct_tz=True, extra_cols=None, daytime_threshold=0.01,
@@ -162,7 +163,9 @@ class DataHandler():
                     density_lower_threshold=density_lower_threshold,
                     density_upper_threshold=density_upper_threshold,
                     linearity_threshold=linearity_threshold,
-                    clear_tune_param=clear_tune_param, verbose=verbose,
+                    clear_day_smoothness_param=clear_day_smoothness_param,
+                    clear_day_energy_param=clear_day_smoothness_param,
+                    verbose=verbose,
                     start_day_ix=start_day_ix, end_day_ix=end_day_ix,
                     c1=c1, c2=c2, solar_noon_estimator=solar_noon_estimator,
                     differentiate=differentiate,
@@ -254,7 +257,8 @@ class DataHandler():
             self.daily_flags = None
         t4 = time()
         try:
-            self.detect_clear_days(th=clear_tune_param)
+            self.detect_clear_days(smoothness_threshold=clear_day_smoothness_param,
+                                   energy_threshold=clear_day_energy_param)
         except:
             msg = 'Clear day detection failed.'
             self._error_msg += '\n' + msg
@@ -685,7 +689,7 @@ class DataHandler():
                              threshold=0.01):
         self.time_shift_analysis = TimeShift()
         self.time_shift_analysis.run(
-            self.filled_data_matrix, use_ixs=self.daily_flags.clear,
+            self.filled_data_matrix, use_ixs=self.daily_flags.no_errors,
             c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
@@ -702,11 +706,13 @@ class DataHandler():
         # else:
         #     self.time_shifts = True
 
-    def detect_clear_days(self, th=0.1):
+    def detect_clear_days(self, smoothness_threshold=0.9, energy_threshold=0.8):
         if self.filled_data_matrix is None:
             print('Generate a filled data matrix first.')
             return
-        clear_days = find_clear_days(self.filled_data_matrix, th=th)
+        clear_days = find_clear_days(self.filled_data_matrix,
+                                     smoothness_threshold=smoothness_threshold,
+                                     energy_threshold=energy_threshold)
         ### Remove days that are marginally low density, but otherwise pass
         # the clearness test. Occaisonally, we find an early morning or late
         # afternoon inverter outage on a clear day is still detected as clear.
