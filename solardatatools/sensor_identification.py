@@ -45,7 +45,7 @@ class SensorIdentification():
         self.chosen_sensor = None
         self.consistent_answer = None
 
-    def identify(self, n_splits=100, compare='cv-rmse',
+    def identify(self, n_splits=20, compare='cv-rmse',
                  random_state=None):
         self.results_table = None
         self.consistent_answer = None
