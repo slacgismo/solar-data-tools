@@ -17,7 +17,7 @@ these two data filtering schemes, the algorithm alerts the user.
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, TimeSeriesSplit
 
 def rmse(residuals):
     return np.sqrt(np.average(np.power(residuals, 2)))
@@ -45,8 +45,7 @@ class SensorIdentification():
         self.chosen_sensor = None
         self.consistent_answer = None
 
-    def identify(self, n_splits=20, compare='cv-rmse',
-                 random_state=None):
+    def identify(self, n_splits=20):
         self.results_table = None
         self.consistent_answer = None
         self.chosen_sensor = None
@@ -72,7 +71,7 @@ class SensorIdentification():
                 corr = np.corrcoef(data.squeeze(), y)[0, 1]
                 # Get k-fold splits for cross validation
                 splits = KFold(
-                    n_splits=n_splits, shuffle=True, random_state=random_state
+                    n_splits=n_splits, shuffle=False
                 ).split(data)
                 residuals = []
                 # CV of linear model to predict system output from measured irradiance
