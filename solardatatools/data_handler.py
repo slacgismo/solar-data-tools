@@ -106,6 +106,8 @@ class DataHandler():
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
         self.time_shift_analysis = None
+        self.extra_matrices = {}            # Matrix views of extra columns
+        self.extra_quality_scores = {}
         self.power_units = units
         t0 = time()
         if self.data_frame is not None:
