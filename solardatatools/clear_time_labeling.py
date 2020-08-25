@@ -8,7 +8,8 @@ that correspond to clear sky output..
 import numpy as np
 from solardatatools.utilities import find_runs
 
-def find_clear_times(measured_matrix, clear_matrix, th_relative_power=0.1, th_relative_smoothness=200,
+def find_clear_times(measured_matrix, clear_matrix, capacity_estimate,
+                     th_relative_power=0.1, th_relative_smoothness=0.05,
                      min_length=3):
     n1, n2 = measured_matrix.shape
     # calculate clearness index based on clear sky power estimates
@@ -19,8 +20,16 @@ def find_clear_times(measured_matrix, clear_matrix, th_relative_power=0.1, th_re
     )
     ci[daytime] = np.clip(np.divide(measured_matrix[daytime], clear_matrix[daytime]), 0, 2)
     # compare relative 2nd order smoothness of measured data and clear sky estimate
-    diff_meas = np.r_[0, (np.diff(measured_matrix.ravel(order='F'), n=2)), 0]
-    diff_clear = np.r_[0, (np.diff(clear_matrix.ravel(order='F'), n=2)), 0]
+    diff_meas = np.r_[
+        0,
+        (np.diff(measured_matrix.ravel(order='F') / capacity_estimate, n=2)),
+        0
+    ]
+    diff_clear = np.r_[
+        0,
+        (np.diff(clear_matrix.ravel(order='F') / capacity_estimate, n=2)),
+        0
+    ]
     diff_compare = (np.abs(diff_meas - diff_clear)).reshape(n1, n2, order='F')
     # assign clear times as high clearness index and similar smoothness
     clear_times = np.logical_and(
