@@ -70,8 +70,8 @@ class SensorIdentification():
                 # Calculate correlation coefficient
                 corr = np.corrcoef(data.squeeze(), y)[0, 1]
                 # Get k-fold splits for cross validation
-                splits = KFold(
-                    n_splits=n_splits, shuffle=False
+                splits = TimeSeriesSplit(
+                    n_splits=n_splits
                 ).split(data)
                 residuals = []
                 # CV of linear model to predict system output from measured irradiance
