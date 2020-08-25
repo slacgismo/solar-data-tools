@@ -34,8 +34,10 @@ class DataHandler():
                  convert_to_ts=False):
         if data_frame is not None:
             self.data_frame = data_frame.copy()
+            self.keys = list(data_frame.columns)
         else:
             self.data_frame = None
+            self.keys = None
         self.raw_data_matrix = raw_data_matrix
         if self.raw_data_matrix is not None:
             self.num_days = self.raw_data_matrix.shape[1]
@@ -47,7 +49,6 @@ class DataHandler():
             self.num_days = None
             self.data_sampling = None
         self.filled_data_matrix = None
-        self.keys = None
         self.use_column = None
         self.capacity_estimate = None
         self.start_doy = None
@@ -736,6 +737,7 @@ class DataHandler():
             self.fit_statistical_clear_sky_model()
         clear = self.scsf.estimated_power_matrix
         clear_times = find_clear_times(self.filled_data_matrix, clear,
+                                       self.capacity_estimate,
                                        th_relative_power=power_hyperparam,
                                        th_relative_smoothness=smoothness_hyperparam,
                                        min_length=min_length)
@@ -828,7 +830,7 @@ class DataHandler():
                            filled=True, ravel=True, figsize=(12, 6),
                            color=None, alpha=None, label=None,
                            boolean_mask=None, mask_label=None,
-                           show_clear_model=True):
+                           show_clear_model=True, show_legend=False):
         if type(start_day) is not int:
             try:
                 loc = self.day_index == start_day
@@ -881,7 +883,8 @@ class DataHandler():
             plot_model = self.scsf.estimated_power_matrix[:, slct].ravel(order='F')
             plt.plot(xs, plot_model, color='orange', linewidth=1,
                      label='clear sky model')
-        plt.legend()
+        if show_legend:
+            plt.legend()
         return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
