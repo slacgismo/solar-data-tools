@@ -17,7 +17,7 @@ def filter_for_sparsity(data, c1=1e3, solver='ECOS'):
     mask = basic_outlier_filter(daily_sparsity - filtered_signal, outlier_constant=5.)
     return mask
 
-def find_clear_days(data, th=0.1, boolean_out=True):
+def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8, boolean_out=True):
     '''
     This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
     standardized time series power data. This will typically be the output from
@@ -75,7 +75,7 @@ def find_clear_days(data, th=0.1, boolean_out=True):
     # Set values less than 0.6 to be equal to zero
     # weights[weights < 0.6] = 0.
     # Selection rule
-    selection = np.logical_and(tc > .9, de > 0.8)
+    selection = np.logical_and(tc > smoothness_threshold, de > energy_threshold)
     weights[~selection] = 0.
     # Apply filter for sparsity to catch data errors related to non-zero nighttime data
     try:

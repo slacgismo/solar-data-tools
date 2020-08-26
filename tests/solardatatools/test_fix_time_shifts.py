@@ -3,7 +3,7 @@ import sys
 import os
 import numpy as np
 import cvxpy as cvx
-from solardatatools.time_axis_manipulation import fix_time_shifts
+from solardatatools.algorithms import TimeShift
 
 
 class TestFixTimeShift(unittest.TestCase):
@@ -32,7 +32,11 @@ class TestFixTimeShift(unittest.TestCase):
         # if it's not used, try with ECOS solver.
         # However, fails with ECOS solver and raises cvx.SolverError.
         try:
-            actual_power_data_fix = fix_time_shifts(power_data_matrix)
+            time_shift_analysis = TimeShift()
+            time_shift_analysis.run(
+                power_data_matrix
+            )
+            actual_power_data_fix = time_shift_analysis.corrected_data
         except (cvx.SolverError, ValueError):
             self.skipTest("This test uses MOSEK solver"
                 + "because default ECOS solver fails with large data. "

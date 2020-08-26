@@ -108,8 +108,8 @@ def load_pvo_data(file_index=None, id_num=None, location='s3://pv.insight.nrel/P
     return df
 
 
-def load_cassandra_data(siteid, column='ac_power', tmin=None, tmax=None,
-                        limit=None, cluster_ip=None, verbose=True):
+def load_cassandra_data(siteid, column='ac_power', sensor=None, tmin=None,
+                        tmax=None, limit=None, cluster_ip=None, verbose=True):
     try:
         from cassandra.cluster import Cluster
     except ImportError:
@@ -132,13 +132,22 @@ def load_cassandra_data(siteid, column='ac_power', tmin=None, tmax=None,
     cql = """
         select site, meas_name, ts, sensor, meas_val_f 
         from measurement_raw
-        where site in ('{}')
+        where site = '{}'
             and meas_name = '{}'
     """.format(siteid, column)
+    ts_constraint = np.logical_or(
+        tmin is not None,
+        tmax is not None
+    )
     if tmin is not None:
         cql += "and ts > '{}'\n".format(tmin)
     if tmax is not None:
-        cql += "and ts < {}\n".format(tmax)
+        cql += "and ts < '{}'\n".format(tmax)
+    if sensor is not None and ts_constraint:
+        cql += "and sensor = '{}'\n".format(sensor)
+    elif sensor is not None and not ts_constraint:
+        cql += "and ts > '2000-01-01'\n"
+        cql += "and sensor = '{}'\n".format(sensor)
     if limit is not None:
         cql += "limit {}".format(np.int(limit))
     cql += ';'

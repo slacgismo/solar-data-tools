@@ -115,6 +115,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
             df[datetimekey] = pd.to_datetime(df[key])
             df.set_index(datetimekey, inplace=True)
     # standardize the timeseries axis to a regular frequency over a full set of days
+    df.index = pd.to_datetime(df.index)
     try:
         diff = (df.index[1:] - df.index[:-1]).seconds
         freq = int(np.median(diff[~np.isnan(diff)]))  # the number of seconds between each measurement
@@ -142,65 +143,3 @@ def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=Fal
         df_out = df.copy()
         df_out.index = index
         return df_out
-
-def fix_time_shifts(data, verbose=False, return_ixs=False, use_ixs=None,
-                    c1=5., c2=200., c3=5., solar_noon_estimator='com'):
-    '''
-    This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
-    that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
-    storing the data in the database. The algorithm performs as follows:
-    Part 1:
-        a) Estimate solar noon for each day relative to the provided time axis. This is estimated as the "center of
-           mass" in time of the energy production each day.
-        b) Filter this signal for clear days
-        c) Fit a total variation filter with seasonal baseline to the output of (b)
-        d) Perform KDE-based clustering on the output of (c)
-        e) Extract the days on which the transitions between clusters occur
-    Part 2:
-        a) Find the average solar noon value for each cluster
-        b) Taking the first cluster as a reference point, find the offsets in average values between the first cluster
-           and all others
-        c) Adjust the time axis for all clusters after the first by the amount calculated in (b)
-
-    :param data: A 2D numpy array containing a solar power time series signal (see `data_transforms.make_2d`)
-    :param verbose: An option to print information about what clusters are found
-    :param return_ixs: An option to return the indices of the boundary days for the clusters
-    :return:
-    '''
-    D = data
-    #################################################################################################################
-    # Part 1: Detecting the days on which shifts occurs. If no shifts are detected, the algorithm exits, returning
-    # the original data array. Otherwise, the algorithm proceeds to Part 2.
-    #################################################################################################################
-    if solar_noon_estimator == 'com':
-        # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
-        s1 = energy_com(D)
-    elif solar_noon_estimator == 'srsn':
-        # estimate solar noon as the average of sunrise time and sunset time
-        s1 = avg_sunrise_sunset(D)
-    if use_ixs is None:
-        use_ixs = ~np.isnan(s1)
-    # Iterative reweighted L1 heuristic
-    w = np.ones(len(s1) - 1)
-    eps = 0.1
-    for i in range(5):
-        s_tv, s_seas = total_variation_plus_seasonal_filter(
-            s1, c1=c1, c2=c2,
-            tv_weights=w,
-            use_ixs=use_ixs
-        )
-        w = 1 / (eps + np.abs(np.diff(s_tv, n=1)))
-    # Apply corrections
-    roll_by_index = np.round((mode(np.round(s_tv, 3)).mode[0] - s_tv) * D.shape[0] / 24, 0)
-    Dout = np.copy(D)
-    for roll in np.unique(roll_by_index):
-        if roll != 0:
-            ixs = roll_by_index == roll
-            Dout[:, ixs] = np.roll(D, int(roll), axis=0)[:, ixs]
-    # record indices of transition points
-    index_set = np.arange(len(s_tv) - 1)[np.round(np.diff(s_tv, n=1), 0) != 0]
-
-    if return_ixs:
-        return Dout, index_set
-    else:
-        return Dout
