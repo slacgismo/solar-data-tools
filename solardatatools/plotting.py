@@ -42,10 +42,16 @@ def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None, dates=None,
                 ax.set_xlim(*xlim)
                 ax.set_ylim(*ylim)
         if dates is not None:
-            mask = np.logical_and(dates.month == 1, dates.day == 1)
-            day_ticks = np.arange(D.shape[1])[mask]
-            plt.xticks(day_ticks, dates[day_ticks].year)
-            plt.xlabel('Year')
+            if D.shape[1] >= 356 * 1.5:
+                mask = np.logical_and(dates.month == 1, dates.day == 1)
+                day_ticks = np.arange(D.shape[1])[mask]
+                plt.xticks(day_ticks, dates[day_ticks].year)
+                plt.xlabel('Year')
+            else:
+                mask = dates.day == 1
+                day_ticks = np.arange(D.shape[1])[mask]
+                plt.xticks(day_ticks, dates[day_ticks].month)
+                plt.xlabel('Month')
             if year_lines:
                 for d in day_ticks:
                     plt.axvline(d, ls='--', color='gray', linewidth=1)
