@@ -39,6 +39,10 @@ def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None, dates=None,
                 y1 = np.ones_like(days[use_day]) * D.shape[0] * .999
                 ax.scatter(days[use_day], y1, marker='|', color='yellow', s=2)
                 ax.scatter(days[use_day], .995*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .99*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .985*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .98*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .975*y1, marker='|', color='yellow', s=2)
                 ax.set_xlim(*xlim)
                 ax.set_ylim(*ylim)
         if dates is not None:
