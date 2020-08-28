@@ -675,9 +675,9 @@ class DataHandler():
                 ax[0].legend()
                 ax[0].set_title('Detection of system capacity changes')
                 ax[1].set_xlabel('date')
-                ax[0].set_ylabel('normalized daily maximum power')
+                ax[0].set_ylabel('normalized daily max power')
                 ax[1].plot(xs, labels, ls='none', marker='.')
-                ax[1].set_ylabel('Capacity cluster label')
+                ax[1].set_ylabel('Capacity clusters')
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label='capacity change detector')
