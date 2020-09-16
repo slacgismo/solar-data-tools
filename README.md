@@ -18,7 +18,7 @@ _Updated September 2020_
 
 We recommend seting up a fresh Python virutal environment in which to use `solar-data-tools`. We recommend using the [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) package management system, and creating an environment with the environment configuration file named `pvi-user.yml`, provided in the top level of this repository.
 
-Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more in formation.
+Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more information.
 
 ### Installing this project as PIP package
 
