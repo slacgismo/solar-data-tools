@@ -110,7 +110,11 @@ class DataHandler():
         self.extra_matrices = {}            # Matrix views of extra columns
         self.extra_quality_scores = {}
         self.power_units = units
-        t0 = time()
+        t = np.zeros(6)
+        ######################################################################
+        # Preprocessing
+        ######################################################################
+        t[0] = time()
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix,
@@ -176,7 +180,10 @@ class DataHandler():
                     extra_cols=extra_cols
                 )
                 return
-        t1 = time()
+        ######################################################################
+        # Cleaning
+        ######################################################################
+        t[1] = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         num_raw_measurements = np.count_nonzero(
             np.nan_to_num(self.raw_data_matrix,
@@ -238,7 +245,12 @@ class DataHandler():
                 self.boolean_masks.daytime = np.roll(
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
-        t2 = time()
+        ######################################################################
+        # Cleaning
+        ######################################################################
+        t[2] = time()
+        t_clean = np.zeros(6)
+        t_clean[0] = time()
         try:
             self.get_daily_scores(threshold=0.2)
         except:
@@ -247,18 +259,17 @@ class DataHandler():
             if verbose:
                 print(msg)
             self.daily_scores = None
-        t3 = time()
         try:
             self.get_daily_flags(density_lower_threshold=density_lower_threshold,
                                  density_upper_threshold=density_upper_threshold,
                                  linearity_threshold=linearity_threshold)
         except:
-            msg = 'Daily quality and clearness flagging failed.'
+            msg = 'Daily quality flagging failed.'
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
             self.daily_flags = None
-        t4 = time()
+        t_clean[1] = time()
         try:
             self.detect_clear_days(smoothness_threshold=clear_day_smoothness_param,
                                    energy_threshold=clear_day_energy_param)
@@ -267,7 +278,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
-        t5 = time()
+        t_clean[2] = time()
         try:
             self.clipping_check()
         except:
@@ -276,7 +287,7 @@ class DataHandler():
             if verbose:
                 print(msg)
             self.inverter_clipping = None
-        t6 = time()
+        t_clean[3] = time()
         try:
             self.score_data_set()
         except:
@@ -286,7 +297,16 @@ class DataHandler():
                 print(msg)
             self.data_quality_score = None
             self.data_clearness_score = None
-        t7 = time()
+        t_clean[4] = time()
+        try:
+            self.capacity_clustering()
+        except TypeError:
+            self.capacity_changes = None
+        t_clean[5] = time()
+        ######################################################################
+        # Fix Time Shifts
+        ######################################################################
+        t[3] = time()
         if fix_shifts:
             try:
                 self.auto_fix_time_shifts(c1=c1, c2=c2,
@@ -298,7 +318,10 @@ class DataHandler():
                 if verbose:
                     print(msg)
                 self.time_shifts = None
-        t8 = time()
+        ######################################################################
+        # Process Extra columns
+        ######################################################################
+        t[4] = time()
         if extra_cols is not None:
             freq = int(self.data_sampling * 60)
             new_index = pd.date_range(start=self.day_index[0].date(),
@@ -311,17 +334,35 @@ class DataHandler():
                 extra_cols = [extra_cols]
             for col in extra_cols:
                 self.generate_extra_matrix(col, new_index=new_index)
+        t[5] = time()
+        times = np.diff(t, n=1)
+        cleaning_times = np.diff(t_clean, n=1)
+        total_time = t[-1] - t[0]
         if verbose:
             out = 'total time: {:.2f} seconds\n'
-            out += 'form matrix: {:.2f}, '
-            out += 'fill matrix: {:.2f}, '
-            out += 'daily scores: {:.2f}, \n'
-            out += 'daily flags: {:.2f}, '
-            out += 'clear detect: {:.2f}, '
-            out += 'clipping check: {:.2f}, \n'
-            out += 'data scoring: {:.2f}, '
-            out += 'fix time shifts: {:.2f},'
-            print(out.format(t8-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, t7-t6, t8-t7))
+            out += '--------------------------------\n'
+            out += 'Breakdown\n'
+            out += '--------------------------------\n'
+            out += 'Proprocessing              {:.2f}s\n'
+            out += 'Cleaning                   {:.2f}s\n'
+            out += 'Filtering/Summarizing      {:.2f}s\n'
+            out += '    Data quality           {:.2f}s\n'
+            out += '    Clear day detect       {:.2f}s\n'
+            out += '    Clipping detect        {:.2f}s\n'
+            out += '    Capacity change detect {:.2f}s\n'
+            if extra_cols is not None:
+                out += 'Extra Column Processing    {:.2f}s'
+            print(out.format(
+                total_time,
+                times[0],
+                times[1] + times[3],
+                times[2],
+                cleaning_times[0],
+                cleaning_times[1],
+                cleaning_times[2],
+                cleaning_times[4],
+                times[4]
+            ))
         self._ran_pipeline = True
         return
 
@@ -521,9 +562,9 @@ class DataHandler():
             np.sum(day_count) <= max(5e-3 * self.num_days, 1)
             for day_count in day_counts
         ])
-        self.__density_lower_threshold = 0.6
-        self.__density_upper_threshold = 1.05
-        self.__linearity_threshold = 0.1
+        self.__density_lower_threshold = density_lower_threshold
+        self.__density_upper_threshold = density_upper_threshold
+        self.__linearity_threshold = linearity_threshold
         self.daily_scores.quality_clustering = db.labels_
 
     def get_density_scores(self, threshold=0.2):
@@ -563,10 +604,6 @@ class DataHandler():
             self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
         except TypeError:
             self.data_clearness_score = None
-        try:
-            self.capacity_clustering()
-        except TypeError:
-            self.capacity_changes = None
         return
 
     def clipping_check(self):
