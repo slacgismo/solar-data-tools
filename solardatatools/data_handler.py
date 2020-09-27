@@ -343,7 +343,7 @@ class DataHandler():
             out += '--------------------------------\n'
             out += 'Breakdown\n'
             out += '--------------------------------\n'
-            out += 'Proprocessing              {:.2f}s\n'
+            out += 'Preprocessing              {:.2f}s\n'
             out += 'Cleaning                   {:.2f}s\n'
             out += 'Filtering/Summarizing      {:.2f}s\n'
             out += '    Data quality           {:.2f}s\n'
