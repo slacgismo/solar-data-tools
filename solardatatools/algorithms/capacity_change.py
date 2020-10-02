@@ -27,19 +27,20 @@ class CapacityChange():
         self.labels = None
 
     def run(self, data, filter=None, quantile=1.00, c1=15, c2=100, c3=300,
-            reweight_eps=0.5, reweight_niter=5, dbscan_eps=.02,
+            tau=0.5, reweight_eps=0.5, reweight_niter=5, dbscan_eps=.02,
             dbscan_min_samples='auto'):
         if filter is None:
             filter = np.ones(data.shape[1], dtype=np.bool)
         if np.sum(filter) > 0:
             metric = np.nanquantile(data, q=quantile, axis=0)
+            # metric = np.sum(data, axis=0)
             metric /= np.max(metric)
             w = np.ones(len(metric) - 1)
             eps = reweight_eps
             for i in range(reweight_niter):
                 s1, s2 = total_variation_plus_seasonal_quantile_filter(
-                    metric, filter,
-                    tau=0.5, c1=c1, c2=c2,
+                    metric, use_ixs=filter,
+                    tau=tau, c1=c1, c2=c2,
                     c3=c3, tv_weights=w
                 )
                 w = 1 / (eps + np.abs(np.diff(s1, n=1)))
