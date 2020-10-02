@@ -169,7 +169,7 @@ def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.99
     # validate.sort()
 
     s_hat = cvx.Variable(n)
-    s_seas = cvx.Variable(n)
+    s_seas = cvx.Variable(max(n, 366))
     s_error = cvx.Variable(n)
     s_linear = cvx.Variable(n)
     c1 = cvx.Parameter(value=c1, nonneg=True)
@@ -187,15 +187,15 @@ def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.99
         + c3 * beta ** 2
     )
     constraints = [
-        signal[use_ixs] == s_hat[use_ixs] + s_seas[use_ixs] + s_error[use_ixs],
+        signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
         cvx.sum(s_seas[:365]) == 0
     ]
-    if len(signal) > 365:
+    if True:
         constraints.append(s_seas[365:] - s_seas[:-365] == beta)
         constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver='MOSEK')
-    return s_hat.value, s_seas.value
+    return s_hat.value, s_seas.value[:n]
 
 def basic_outlier_filter(x, outlier_constant=1.5):
     '''
