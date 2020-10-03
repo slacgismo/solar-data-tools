@@ -91,14 +91,18 @@ def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
 
 def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     '''
-    This function takes in a pandas data frame containing tabular time series data, likely generated with a call to
-    pandas.read_csv(). It is assumed that each row of the data frame corresponds to a unique date-time, though not
-    necessarily on standard intervals. This function will attempt to convert a user-specified column containing time
-    stamps to python datetime objects, assign this column to the index of the data frame, and then standardize the
-    index over time. By standardize, we mean reconstruct the index to be at regular intervals, starting at midnight of
-    the first day of the data set. This solves a couple common data errors when working with raw data. (1) Missing data
-    points from skipped scans in the data acquisition system. (2) Time stamps that are at irregular exact times,
-    including fractional seconds.
+    This function takes in a pandas data frame containing tabular time series
+    data, likely generated with a call to pandas.read_csv(). It is assumed that
+    each row of the data frame corresponds to a unique date-time, though not
+    necessarily on standard intervals. This function will attempt to convert a
+    user-specified column containing time stamps to python datetime objects,
+    assign this column to the index of the data frame, and then standardize the
+    index over time. By standardize, we mean reconstruct the index to be at
+    regular intervals, starting at midnight of the first day of the data set.
+    This solves a couple common data errors when working with raw data.
+    (1) Missing data points from skipped scans in the data acquisition system.
+    (2) Time stamps that are at irregular exact times, including fractional
+    seconds.
 
     :param df: A pandas data frame containing the tabular time series data
     :param datetimekey: An optional key corresponding to the name of the column that contains the time stamps
@@ -125,7 +129,10 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     start = df.index[0]
     end = df.index[-1]
 
-    time_index = pd.date_range(start=start.date(), end=end.date() + timedelta(days=1), freq='{}s'.format(freq))[:-1]
+    time_index = pd.date_range(
+        start=start.date(), end=end.date() + timedelta(days=1),
+        freq='{}s'.format(freq)
+    )[:-1]
     # This forces the existing data into the closest new timestamp to the
     # old timestamp.
     df = df.loc[df.index.notnull()]\
