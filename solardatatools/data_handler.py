@@ -33,7 +33,8 @@ class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
                  convert_to_ts=False):
         if data_frame is not None:
-            self.data_frame = data_frame.copy()
+            self.data_frame = None
+            self.data_frame_raw = data_frame.copy()
             self.keys = list(data_frame.columns)
         else:
             self.data_frame = None
@@ -78,7 +79,7 @@ class DataHandler():
             self.data_frame = df_ts
             self.keys = keys
         if data_frame is not None:
-            df = standardize_time_axis(self.data_frame)
+            df = standardize_time_axis(self.data_frame_raw)
             self.data_frame = df
             self.__time_axis_standardized = True
         # Algorithm objects
@@ -93,16 +94,17 @@ class DataHandler():
         self.__density_upper_threshold = None
         self.__linearity_threshold = None
         self.__recursion_depth = 0
+        self.__initial_time = None
 
-    def run_pipeline(self, power_col=None, zero_night=True, interp_day=True,
-                     fix_shifts=True, density_lower_threshold=0.6,
-                     density_upper_threshold=1.05, linearity_threshold=0.1,
-                     clear_day_smoothness_param=0.9, clear_day_energy_param=0.8,
-                     verbose=True, start_day_ix=None,
-                     end_day_ix=None, c1=2., c2=500., solar_noon_estimator='srss',
-                     differentiate=False, reference_cols=None,
-                     correct_tz=True, extra_cols=None, daytime_threshold=0.01,
-                     units='W'):
+    def run_pipeline(self, power_col=None, max_val=None, zero_night=True,
+                     interp_day=True, fix_shifts=True,
+                     density_lower_threshold=0.6, density_upper_threshold=1.05,
+                     linearity_threshold=0.1, clear_day_smoothness_param=0.9,
+                     clear_day_energy_param=0.8, verbose=True,
+                     start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
+                     solar_noon_estimator='srss', differentiate=False,
+                     reference_cols=None, correct_tz=True, extra_cols=None,
+                     daytime_threshold=0.01, units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -119,6 +121,12 @@ class DataHandler():
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix,
                                      differentiate=differentiate)
+        if max_val is not None:
+            mat_copy = np.copy(self.raw_data_matrix)
+            mat_copy[np.isnan(mat_copy)] = -9999
+            slct = mat_copy > max_val
+            if np.sum(slct) > 0:
+                self.raw_data_matrix[slct] = np.nan
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
         if self.capacity_estimate <= 500 and self.power_units == 'W':
             self.power_units = 'kW'
@@ -163,6 +171,8 @@ class DataHandler():
                 if verbose:
                     print('Done.\nRestarting the pipeline...')
                 self.__recursion_depth += 1
+                if self.__initial_time is not None:
+                    self.__initial_time = t[0]
                 self.run_pipeline(
                     power_col=power_col, zero_night=zero_night,
                     interp_day=interp_day,
@@ -339,6 +349,11 @@ class DataHandler():
         cleaning_times = np.diff(t_clean, n=1)
         total_time = t[-1] - t[0]
         if verbose:
+            if self.__initial_time is not None:
+                restart_msg = '{:.2f} seconds spent automatically localizing the time zone\n'
+                restart_msg += 'Info for last pipeline run below:\n'
+                restart_msg = restart_msg.format(t[0] - self.__initial_time)
+                print(restart_msg)
             out = 'total time: {:.2f} seconds\n'
             out += '--------------------------------\n'
             out += 'Breakdown\n'
@@ -479,7 +494,7 @@ class DataHandler():
                                 differentiate=False):
 
         if not self.__time_axis_standardized:
-            df = standardize_time_axis(self.data_frame)
+            df = standardize_time_axis(self.data_frame_raw)
             self.data_frame = df
             self.__time_axis_standardized = True
         else:
@@ -867,7 +882,8 @@ class DataHandler():
                            filled=True, ravel=True, figsize=(12, 6),
                            color=None, alpha=None, label=None,
                            boolean_mask=None, mask_label=None,
-                           show_clear_model=True, show_legend=False):
+                           show_clear_model=True, show_legend=False,
+                           marker=None):
         if type(start_day) is not int:
             try:
                 loc = self.day_index == start_day
@@ -892,6 +908,8 @@ class DataHandler():
             kwargs['color'] = color
         if alpha is not None:
             kwargs['alpha'] = alpha
+        if marker is not None:
+            kwargs['marker'] = marker
         if self.day_index is not None:
             start = self.day_index[start_day]
             freq = '{}min'.format(self.data_sampling)
