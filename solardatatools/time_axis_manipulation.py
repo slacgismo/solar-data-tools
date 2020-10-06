@@ -122,10 +122,30 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     df.index = pd.to_datetime(df.index)
     try:
         diff = (df.index[1:] - df.index[:-1]).seconds
-        freq = int(np.median(diff[~np.isnan(diff)]))  # the number of seconds between each measurement
+        # print('case 1')
     except AttributeError:
         diff = df.index[1:] - df.index[:-1]
-        freq = np.median(diff) / np.timedelta64(1, 's')
+        diff /= np.timedelta64(1, 's')
+        # print('case 2')
+
+    done = False
+    deltas = []
+    counts = []
+    fltr = np.ones_like(diff, dtype=np.bool)
+    while not done:
+        for d in deltas:
+            fltr = np.logical_and(fltr, diff != d)
+        delta, count = mode(diff[fltr])
+        if count / len(diff) < 0.01:
+            done = True
+        else:
+            deltas.append(delta[0])
+            counts.append(count[0])
+    freq = deltas[0]       # the number of seconds between each measurement
+    if len(deltas) > 1:
+        print('CAUTION: Multiple scan rates detected!')
+        print('Scan rates (in seconds):', deltas)
+
     start = df.index[0]
     end = df.index[-1]
 
