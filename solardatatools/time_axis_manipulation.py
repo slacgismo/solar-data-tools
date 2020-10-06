@@ -109,6 +109,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     :return: A new data frame with a standardized time axis
     '''
     # convert index to timeseries
+    df = df.copy()
     if not timeindex:
         try:
             df[datetimekey] = pd.to_datetime(df[datetimekey])
@@ -145,6 +146,25 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     if len(deltas) > 1:
         print('CAUTION: Multiple scan rates detected!')
         print('Scan rates (in seconds):', deltas)
+        df['deltas'] = np.r_[diff, [0]]
+        daily_scanrate = df['diffs'].groupby(df.index.date).median()
+        slct = np.zeros(len(daily_scanrate))
+        for d in deltas:
+            slct = np.logical_or(daily_scanrate == d, slct)
+        leading = daily_scanrate[slct].index[
+            np.r_[np.diff(daily_scanrate[slct]) != 0, [False]]
+        ]
+        trailing = daily_scanrate[slct].index[
+            np.r_[[False], np.diff(daily_scanrate[slct]) != 0]
+        ]
+        if len(leading) == 1:
+            print('\n1 transition detected.\n')
+        else:
+            print('{} transitions detected.'.format(len(leading)))
+        print('Suggest splitting data set between:')
+        for l, t in zip(leading, trailing):
+            print('    ', l, 'and', t)
+
 
     start = df.index[0]
     end = df.index[-1]
