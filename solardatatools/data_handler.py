@@ -33,9 +33,13 @@ class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
                  convert_to_ts=False):
         if data_frame is not None:
-            self.data_frame = None
+            if convert_to_ts:
+                data_frame, keys = make_time_series(data_frame)
+                self.keys = keys
+            else:
+                self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
-            self.keys = list(data_frame.columns)
+            self.data_frame = standardize_time_axis(self.data_frame_raw)
         else:
             self.data_frame = None
             self.keys = None
@@ -74,14 +78,6 @@ class DataHandler():
         self.boolean_masks = BooleanMasks() # 2D arrays of Booleans
         # Useful daily signals defined by the data set
         self.daily_signals = DailySignals()
-        if np.alltrue([data_frame is not None, convert_to_ts]):
-            df_ts, keys = make_time_series(self.data_frame)
-            self.data_frame = df_ts
-            self.keys = keys
-        if data_frame is not None:
-            df = standardize_time_axis(self.data_frame_raw)
-            self.data_frame = df
-            self.__time_axis_standardized = True
         # Algorithm objects
         self.scsf = None
         self.capacity_analysis = None
@@ -89,7 +85,6 @@ class DataHandler():
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
-        self.__time_axis_standardized = False
         self.__density_lower_threshold = None
         self.__density_upper_threshold = None
         self.__linearity_threshold = None
@@ -492,13 +487,7 @@ class DataHandler():
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
                                 differentiate=False):
-
-        if not self.__time_axis_standardized:
-            df = standardize_time_axis(self.data_frame_raw)
-            self.data_frame = df
-            self.__time_axis_standardized = True
-        else:
-            df = self.data_frame
+        df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
         if differentiate:
