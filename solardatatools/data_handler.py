@@ -27,7 +27,7 @@ from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.daytime import find_daytime
-from solardatatools.algorithms import CapacityChange, TimeShift
+from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
@@ -125,8 +125,9 @@ class DataHandler():
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
         if self.capacity_estimate <= 500 and self.power_units == 'W':
             self.power_units = 'kW'
-        self.boolean_masks.daytime = find_daytime(self.raw_data_matrix,
-                                                  threshold=daytime_threshold)
+        ss = SunriseSunset()
+        ss.calculate_times(self.raw_data_matrix, threshold=daytime_threshold)
+        self.boolean_masks.daytime = ss.sunup_mask_estimated
         ### TZ offset detection and correction ###
         # (1) Determine if there exists a "large" timezone offset error
         if power_col is None:
