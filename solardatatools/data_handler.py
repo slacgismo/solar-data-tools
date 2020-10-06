@@ -483,7 +483,9 @@ class DataHandler():
             bix = np.isin(self.data_frame.index.date, slct_dates)
             self.data_frame[column_name] = False
             self.data_frame.loc[bix, column_name] = True
-
+        if column_name in self.data_frame_raw.columns:
+            del self.data_frame_raw[column_name]
+        self.data_frame_raw = self.data_frame_raw.join(self.data_frame[column_name])
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
                                 differentiate=False):
