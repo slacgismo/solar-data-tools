@@ -147,7 +147,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
         print('CAUTION: Multiple scan rates detected!')
         print('Scan rates (in seconds):', deltas)
         df['deltas'] = np.r_[diff, [0]]
-        daily_scanrate = df['diffs'].groupby(df.index.date).median()
+        daily_scanrate = df['deltas'].groupby(df.index.date).median()
         slct = np.zeros(len(daily_scanrate))
         for d in deltas:
             slct = np.logical_or(daily_scanrate == d, slct)
