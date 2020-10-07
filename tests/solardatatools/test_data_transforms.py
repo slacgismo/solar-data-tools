@@ -34,7 +34,7 @@ class TestMake2D(unittest.TestCase):
             expected_output = np.genfromtxt(file, delimiter=',')
         data.index.freq = pd.tseries.offsets.Second(300)
         key = data.columns[0]
-        actual_output = make_2d(data, key=key)
+        actual_output = make_2d(data, key=key, trim_start=True, trim_end=True)
         np.testing.assert_array_almost_equal(expected_output, actual_output)
 
     def test_make_2d_no_freq(self):
@@ -48,7 +48,7 @@ class TestMake2D(unittest.TestCase):
         with open(expected_data_file_path) as file:
             expected_output = np.genfromtxt(file, delimiter=',')
         key = data.columns[0]
-        actual_output = make_2d(data, key=key)
+        actual_output = make_2d(data, key=key, trim_start=True, trim_end=True)
         np.testing.assert_array_almost_equal(expected_output, actual_output)
 
 

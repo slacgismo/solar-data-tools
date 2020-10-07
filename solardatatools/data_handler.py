@@ -27,14 +27,19 @@ from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.daytime import find_daytime
-from solardatatools.algorithms import CapacityChange, TimeShift
+from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
                  convert_to_ts=False):
         if data_frame is not None:
-            self.data_frame = data_frame.copy()
-            self.keys = list(data_frame.columns)
+            if convert_to_ts:
+                data_frame, keys = make_time_series(data_frame)
+                self.keys = keys
+            else:
+                self.keys = list(data_frame.columns)
+            self.data_frame_raw = data_frame.copy()
+            self.data_frame = standardize_time_axis(self.data_frame_raw)
         else:
             self.data_frame = None
             self.keys = None
@@ -73,14 +78,6 @@ class DataHandler():
         self.boolean_masks = BooleanMasks() # 2D arrays of Booleans
         # Useful daily signals defined by the data set
         self.daily_signals = DailySignals()
-        if np.alltrue([data_frame is not None, convert_to_ts]):
-            df_ts, keys = make_time_series(self.data_frame)
-            self.data_frame = df_ts
-            self.keys = keys
-        if data_frame is not None:
-            df = standardize_time_axis(self.data_frame)
-            self.data_frame = df
-            self.__time_axis_standardized = True
         # Algorithm objects
         self.scsf = None
         self.capacity_analysis = None
@@ -88,21 +85,21 @@ class DataHandler():
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
-        self.__time_axis_standardized = False
         self.__density_lower_threshold = None
         self.__density_upper_threshold = None
         self.__linearity_threshold = None
         self.__recursion_depth = 0
+        self.__initial_time = None
 
-    def run_pipeline(self, power_col=None, zero_night=True, interp_day=True,
-                     fix_shifts=True, density_lower_threshold=0.6,
-                     density_upper_threshold=1.05, linearity_threshold=0.1,
-                     clear_day_smoothness_param=0.9, clear_day_energy_param=0.8,
-                     verbose=True, start_day_ix=None,
-                     end_day_ix=None, c1=2., c2=500., solar_noon_estimator='srss',
-                     differentiate=False, reference_cols=None,
-                     correct_tz=True, extra_cols=None, daytime_threshold=0.01,
-                     units='W'):
+    def run_pipeline(self, power_col=None, max_val=None, zero_night=True,
+                     interp_day=True, fix_shifts=True,
+                     density_lower_threshold=0.6, density_upper_threshold=1.05,
+                     linearity_threshold=0.1, clear_day_smoothness_param=0.9,
+                     clear_day_energy_param=0.8, verbose=True,
+                     start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
+                     solar_noon_estimator='srss', differentiate=False,
+                     reference_cols=None, correct_tz=True, extra_cols=None,
+                     daytime_threshold=0.01, units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -110,16 +107,27 @@ class DataHandler():
         self.extra_matrices = {}            # Matrix views of extra columns
         self.extra_quality_scores = {}
         self.power_units = units
-        t0 = time()
+        t = np.zeros(6)
+        ######################################################################
+        # Preprocessing
+        ######################################################################
+        t[0] = time()
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix,
                                      differentiate=differentiate)
+        if max_val is not None:
+            mat_copy = np.copy(self.raw_data_matrix)
+            mat_copy[np.isnan(mat_copy)] = -9999
+            slct = mat_copy > max_val
+            if np.sum(slct) > 0:
+                self.raw_data_matrix[slct] = np.nan
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
         if self.capacity_estimate <= 500 and self.power_units == 'W':
             self.power_units = 'kW'
-        self.boolean_masks.daytime = find_daytime(self.raw_data_matrix,
-                                                  threshold=daytime_threshold)
+        ss = SunriseSunset()
+        ss.calculate_times(self.raw_data_matrix, threshold=daytime_threshold)
+        self.boolean_masks.daytime = ss.sunup_mask_estimated
         ### TZ offset detection and correction ###
         # (1) Determine if there exists a "large" timezone offset error
         if power_col is None:
@@ -159,6 +167,8 @@ class DataHandler():
                 if verbose:
                     print('Done.\nRestarting the pipeline...')
                 self.__recursion_depth += 1
+                if self.__initial_time is not None:
+                    self.__initial_time = t[0]
                 self.run_pipeline(
                     power_col=power_col, zero_night=zero_night,
                     interp_day=interp_day,
@@ -176,7 +186,10 @@ class DataHandler():
                     extra_cols=extra_cols
                 )
                 return
-        t1 = time()
+        ######################################################################
+        # Cleaning
+        ######################################################################
+        t[1] = time()
         self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         num_raw_measurements = np.count_nonzero(
             np.nan_to_num(self.raw_data_matrix,
@@ -238,7 +251,12 @@ class DataHandler():
                 self.boolean_masks.daytime = np.roll(
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
-        t2 = time()
+        ######################################################################
+        # Cleaning
+        ######################################################################
+        t[2] = time()
+        t_clean = np.zeros(6)
+        t_clean[0] = time()
         try:
             self.get_daily_scores(threshold=0.2)
         except:
@@ -247,18 +265,17 @@ class DataHandler():
             if verbose:
                 print(msg)
             self.daily_scores = None
-        t3 = time()
         try:
             self.get_daily_flags(density_lower_threshold=density_lower_threshold,
                                  density_upper_threshold=density_upper_threshold,
                                  linearity_threshold=linearity_threshold)
         except:
-            msg = 'Daily quality and clearness flagging failed.'
+            msg = 'Daily quality flagging failed.'
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
             self.daily_flags = None
-        t4 = time()
+        t_clean[1] = time()
         try:
             self.detect_clear_days(smoothness_threshold=clear_day_smoothness_param,
                                    energy_threshold=clear_day_energy_param)
@@ -267,7 +284,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
-        t5 = time()
+        t_clean[2] = time()
         try:
             self.clipping_check()
         except:
@@ -276,7 +293,7 @@ class DataHandler():
             if verbose:
                 print(msg)
             self.inverter_clipping = None
-        t6 = time()
+        t_clean[3] = time()
         try:
             self.score_data_set()
         except:
@@ -286,7 +303,16 @@ class DataHandler():
                 print(msg)
             self.data_quality_score = None
             self.data_clearness_score = None
-        t7 = time()
+        t_clean[4] = time()
+        try:
+            self.capacity_clustering()
+        except TypeError:
+            self.capacity_changes = None
+        t_clean[5] = time()
+        ######################################################################
+        # Fix Time Shifts
+        ######################################################################
+        t[3] = time()
         if fix_shifts:
             try:
                 self.auto_fix_time_shifts(c1=c1, c2=c2,
@@ -298,7 +324,10 @@ class DataHandler():
                 if verbose:
                     print(msg)
                 self.time_shifts = None
-        t8 = time()
+        ######################################################################
+        # Process Extra columns
+        ######################################################################
+        t[4] = time()
         if extra_cols is not None:
             freq = int(self.data_sampling * 60)
             new_index = pd.date_range(start=self.day_index[0].date(),
@@ -311,17 +340,40 @@ class DataHandler():
                 extra_cols = [extra_cols]
             for col in extra_cols:
                 self.generate_extra_matrix(col, new_index=new_index)
+        t[5] = time()
+        times = np.diff(t, n=1)
+        cleaning_times = np.diff(t_clean, n=1)
+        total_time = t[-1] - t[0]
         if verbose:
+            if self.__initial_time is not None:
+                restart_msg = '{:.2f} seconds spent automatically localizing the time zone\n'
+                restart_msg += 'Info for last pipeline run below:\n'
+                restart_msg = restart_msg.format(t[0] - self.__initial_time)
+                print(restart_msg)
             out = 'total time: {:.2f} seconds\n'
-            out += 'form matrix: {:.2f}, '
-            out += 'fill matrix: {:.2f}, '
-            out += 'daily scores: {:.2f}, \n'
-            out += 'daily flags: {:.2f}, '
-            out += 'clear detect: {:.2f}, '
-            out += 'clipping check: {:.2f}, \n'
-            out += 'data scoring: {:.2f}, '
-            out += 'fix time shifts: {:.2f},'
-            print(out.format(t8-t0, t1-t0, t2-t1, t3-t2, t4-t3, t5-t4, t6-t5, t7-t6, t8-t7))
+            out += '--------------------------------\n'
+            out += 'Breakdown\n'
+            out += '--------------------------------\n'
+            out += 'Preprocessing              {:.2f}s\n'
+            out += 'Cleaning                   {:.2f}s\n'
+            out += 'Filtering/Summarizing      {:.2f}s\n'
+            out += '    Data quality           {:.2f}s\n'
+            out += '    Clear day detect       {:.2f}s\n'
+            out += '    Clipping detect        {:.2f}s\n'
+            out += '    Capacity change detect {:.2f}s\n'
+            if extra_cols is not None:
+                out += 'Extra Column Processing    {:.2f}s'
+            print(out.format(
+                total_time,
+                times[0],
+                times[1] + times[3],
+                times[2],
+                cleaning_times[0],
+                cleaning_times[1],
+                cleaning_times[2],
+                cleaning_times[4],
+                times[4]
+            ))
         self._ran_pipeline = True
         return
 
@@ -432,17 +484,13 @@ class DataHandler():
             bix = np.isin(self.data_frame.index.date, slct_dates)
             self.data_frame[column_name] = False
             self.data_frame.loc[bix, column_name] = True
-
+        if column_name in self.data_frame_raw.columns:
+            del self.data_frame_raw[column_name]
+        self.data_frame_raw = self.data_frame_raw.join(self.data_frame[column_name])
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
                                 differentiate=False):
-
-        if not self.__time_axis_standardized:
-            df = standardize_time_axis(self.data_frame)
-            self.data_frame = df
-            self.__time_axis_standardized = True
-        else:
-            df = self.data_frame
+        df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
         if differentiate:
@@ -521,9 +569,9 @@ class DataHandler():
             np.sum(day_count) <= max(5e-3 * self.num_days, 1)
             for day_count in day_counts
         ])
-        self.__density_lower_threshold = 0.6
-        self.__density_upper_threshold = 1.05
-        self.__linearity_threshold = 0.1
+        self.__density_lower_threshold = density_lower_threshold
+        self.__density_upper_threshold = density_upper_threshold
+        self.__linearity_threshold = linearity_threshold
         self.daily_scores.quality_clustering = db.labels_
 
     def get_density_scores(self, threshold=0.2):
@@ -563,10 +611,6 @@ class DataHandler():
             self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
         except TypeError:
             self.data_clearness_score = None
-        try:
-            self.capacity_clustering()
-        except TypeError:
-            self.capacity_changes = None
         return
 
     def clipping_check(self):
@@ -731,7 +775,7 @@ class DataHandler():
         return
 
     def find_clear_times(self, power_hyperparam=0.1,
-                         smoothness_hyperparam=200, min_length=3):
+                         smoothness_hyperparam=0.05, min_length=3):
         if self.scsf is None:
             print('No SCSF model detected. Fitting now...')
             self.fit_statistical_clear_sky_model()
@@ -746,7 +790,7 @@ class DataHandler():
 
     def fit_statistical_clear_sky_model(self, rank=6, mu_l=None, mu_r=None,
                                         tau=None, exit_criterion_epsilon=1e-3,
-                                        max_iteration=10,
+                                        solver_type='MOSEK', max_iteration=10,
                                         calculate_degradation=True,
                                         max_degradation=None,
                                         min_degradation=None,
@@ -757,7 +801,7 @@ class DataHandler():
         except ImportError:
             print('Please install statistical-clear-sky package')
             return
-        scsf = SCSF(data_handler_obj=self, rank_k=rank)
+        scsf = SCSF(data_handler_obj=self, rank_k=rank, solver_type=solver_type)
         scsf.execute(mu_l=mu_l, mu_r=mu_r, tau=tau,
                      exit_criterion_epsilon=exit_criterion_epsilon,
                      max_iteration=max_iteration,
@@ -830,7 +874,8 @@ class DataHandler():
                            filled=True, ravel=True, figsize=(12, 6),
                            color=None, alpha=None, label=None,
                            boolean_mask=None, mask_label=None,
-                           show_clear_model=True, show_legend=False):
+                           show_clear_model=True, show_legend=False,
+                           marker=None):
         if type(start_day) is not int:
             try:
                 loc = self.day_index == start_day
@@ -855,6 +900,8 @@ class DataHandler():
             kwargs['color'] = color
         if alpha is not None:
             kwargs['alpha'] = alpha
+        if marker is not None:
+            kwargs['marker'] = marker
         if self.day_index is not None:
             start = self.day_index[start_day]
             freq = '{}min'.format(self.data_sampling)

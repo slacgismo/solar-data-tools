@@ -91,20 +91,25 @@ def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
 
 def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     '''
-    This function takes in a pandas data frame containing tabular time series data, likely generated with a call to
-    pandas.read_csv(). It is assumed that each row of the data frame corresponds to a unique date-time, though not
-    necessarily on standard intervals. This function will attempt to convert a user-specified column containing time
-    stamps to python datetime objects, assign this column to the index of the data frame, and then standardize the
-    index over time. By standardize, we mean reconstruct the index to be at regular intervals, starting at midnight of
-    the first day of the data set. This solves a couple common data errors when working with raw data. (1) Missing data
-    points from skipped scans in the data acquisition system. (2) Time stamps that are at irregular exact times,
-    including fractional seconds.
+    This function takes in a pandas data frame containing tabular time series
+    data, likely generated with a call to pandas.read_csv(). It is assumed that
+    each row of the data frame corresponds to a unique date-time, though not
+    necessarily on standard intervals. This function will attempt to convert a
+    user-specified column containing time stamps to python datetime objects,
+    assign this column to the index of the data frame, and then standardize the
+    index over time. By standardize, we mean reconstruct the index to be at
+    regular intervals, starting at midnight of the first day of the data set.
+    This solves a couple common data errors when working with raw data.
+    (1) Missing data points from skipped scans in the data acquisition system.
+    (2) Time stamps that are at irregular exact times, including fractional
+    seconds.
 
     :param df: A pandas data frame containing the tabular time series data
     :param datetimekey: An optional key corresponding to the name of the column that contains the time stamps
     :return: A new data frame with a standardized time axis
     '''
     # convert index to timeseries
+    df = df.copy()
     if not timeindex:
         try:
             df[datetimekey] = pd.to_datetime(df[datetimekey])
@@ -118,14 +123,56 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     df.index = pd.to_datetime(df.index)
     try:
         diff = (df.index[1:] - df.index[:-1]).seconds
-        freq = int(np.median(diff[~np.isnan(diff)]))  # the number of seconds between each measurement
+        # print('case 1')
     except AttributeError:
         diff = df.index[1:] - df.index[:-1]
-        freq = np.median(diff) / np.timedelta64(1, 's')
+        diff /= np.timedelta64(1, 's')
+        # print('case 2')
+
+    done = False
+    deltas = []
+    counts = []
+    fltr = np.ones_like(diff, dtype=np.bool)
+    while not done:
+        for d in deltas:
+            fltr = np.logical_and(fltr, diff != d)
+        delta, count = mode(diff[fltr])
+        if count / len(diff) < 0.01:
+            done = True
+        else:
+            deltas.append(delta[0])
+            counts.append(count[0])
+    freq = deltas[0]       # the number of seconds between each measurement
+    if len(deltas) > 1:
+        print('CAUTION: Multiple scan rates detected!')
+        print('Scan rates (in seconds):', deltas)
+        df['deltas'] = np.r_[diff, [0]]
+        daily_scanrate = df['deltas'].groupby(df.index.date).median()
+        slct = np.zeros(len(daily_scanrate))
+        for d in deltas:
+            slct = np.logical_or(daily_scanrate == d, slct)
+        leading = daily_scanrate[slct].index[
+            np.r_[np.diff(daily_scanrate[slct]) != 0, [False]]
+        ]
+        trailing = daily_scanrate[slct].index[
+            np.r_[[False], np.diff(daily_scanrate[slct]) != 0]
+        ]
+        if len(leading) == 1:
+            print('\n1 transition detected.\n')
+        else:
+            print('{} transitions detected.'.format(len(leading)))
+        print('Suggest splitting data set between:')
+        for l, t in zip(leading, trailing):
+            print('    ', l, 'and', t)
+
+
     start = df.index[0]
     end = df.index[-1]
 
-    time_index = pd.date_range(start=start.date(), end=end.date() + timedelta(days=1), freq='{}s'.format(freq))[:-1]
+    time_index = pd.date_range(
+        start=start.date(), end=end.date() + timedelta(days=1),
+        freq='{}s'.format(freq)
+    )[:-1]
     # This forces the existing data into the closest new timestamp to the
     # old timestamp.
     df = df.loc[df.index.notnull()]\

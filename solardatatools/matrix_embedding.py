@@ -22,7 +22,7 @@ def find_start_end(arr):
         j = None
     return i, j
 
-def make_2d(df, key='dc_power', trim_start=True, trim_end=True,
+def make_2d(df, key='dc_power', trim_start=False, trim_end=False,
             return_day_axis=False):
     '''
     This function constructs a 2D array (or matrix) from a time series signal with a standardized time axis. The data is
