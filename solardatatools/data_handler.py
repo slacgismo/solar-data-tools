@@ -775,7 +775,7 @@ class DataHandler():
         return
 
     def find_clear_times(self, power_hyperparam=0.1,
-                         smoothness_hyperparam=200, min_length=3):
+                         smoothness_hyperparam=0.05, min_length=3):
         if self.scsf is None:
             print('No SCSF model detected. Fitting now...')
             self.fit_statistical_clear_sky_model()
