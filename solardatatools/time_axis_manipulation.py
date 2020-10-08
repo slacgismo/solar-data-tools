@@ -137,7 +137,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
         for d in deltas:
             fltr = np.logical_and(fltr, diff != d)
         delta, count = mode(diff[fltr])
-        if count / len(diff) < 0.01:
+        if count / len(diff) < 0.01 or len(delta) == 0:
             done = True
         else:
             deltas.append(delta[0])
