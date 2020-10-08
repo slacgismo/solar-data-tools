@@ -99,7 +99,7 @@ class DataHandler():
                      start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
                      solar_noon_estimator='srss', differentiate=False,
                      reference_cols=None, correct_tz=True, extra_cols=None,
-                     daytime_threshold=0.01, units='W'):
+                     daytime_threshold=0.005, units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -233,7 +233,7 @@ class DataHandler():
             average_noon = np.nanmean(
                 avg_sunrise_sunset(self.filled_data_matrix, threshold=0.01)
             )
-            tz_offset = np.round(12 - average_noon)
+            tz_offset = int(np.round(12 - average_noon))
             if tz_offset != 0:
                 self.tz_correction += tz_offset
                 self.data_frame.index = self.data_frame.index.shift(
@@ -510,7 +510,8 @@ class DataHandler():
     def make_filled_data_matrix(self, zero_night=True, interp_day=True):
         self.filled_data_matrix = np.copy(self.raw_data_matrix)
         if zero_night:
-            self.filled_data_matrix = zero_nighttime(self.raw_data_matrix)
+            self.filled_data_matrix = zero_nighttime(self.raw_data_matrix,
+                                                     night_mask=~self.boolean_masks.daytime)
         if interp_day:
             self.filled_data_matrix = interp_missing(self.filled_data_matrix)
         else:
