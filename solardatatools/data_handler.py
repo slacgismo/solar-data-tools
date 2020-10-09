@@ -91,8 +91,8 @@ class DataHandler():
         self.__recursion_depth = 0
         self.__initial_time = None
 
-    def run_pipeline(self, power_col=None, max_val=None, zero_night=True,
-                     interp_day=True, fix_shifts=True,
+    def run_pipeline(self, power_col=None, min_val=-5, max_val=None,
+                     zero_night=True, interp_day=True, fix_shifts=True,
                      density_lower_threshold=0.6, density_upper_threshold=1.05,
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
@@ -122,9 +122,16 @@ class DataHandler():
             slct = mat_copy > max_val
             if np.sum(slct) > 0:
                 self.raw_data_matrix[slct] = np.nan
+        if min_val is not None:
+            mat_copy = np.copy(self.raw_data_matrix)
+            mat_copy[np.isnan(mat_copy)] = 9999
+            slct = mat_copy < min_val
+            if np.sum(slct) > 0:
+                self.raw_data_matrix[slct] = np.nan
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
         if self.capacity_estimate <= 500 and self.power_units == 'W':
             self.power_units = 'kW'
+        self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         ss = SunriseSunset()
         ss.calculate_times(self.raw_data_matrix, threshold=daytime_threshold)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
@@ -1368,3 +1375,4 @@ class BooleanMasks():
         self.clear_times = None
         self.clipped_times = None
         self.daytime = None
+        self.missing_values = None
