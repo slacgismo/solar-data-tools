@@ -177,6 +177,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     # old timestamp.
     df = df.loc[df.index.notnull()]\
             .reindex(index=time_index, method='nearest', limit=1)
+    del df['deltas']
     return df
 
 def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=False):
