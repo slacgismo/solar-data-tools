@@ -39,8 +39,9 @@ class DataHandler():
             else:
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
-            self.data_frame = standardize_time_axis(self.data_frame_raw)
+            self.data_frame = None
         else:
+            self.data_frame_raw = None
             self.data_frame = None
             self.keys = None
         self.raw_data_matrix = raw_data_matrix
@@ -112,6 +113,10 @@ class DataHandler():
         # Preprocessing
         ######################################################################
         t[0] = time()
+        if self.data_frame_raw is not None:
+            self.data_frame = standardize_time_axis(self.data_frame_raw,
+                                                    timeindex=True,
+                                                    verbose=verbose)
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix,
