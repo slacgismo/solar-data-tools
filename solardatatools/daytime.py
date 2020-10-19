@@ -44,8 +44,9 @@ def detect_sun(data, threshold):
     return bool_msk
 
 def scale_data(data, return_metrics=False):
-    low_val = np.nanmin(data)
+
     high_val = np.nanquantile(data, .99)
+    low_val = max(np.nanmin(data), -0.005 * high_val)
     scaled_mat = (data - low_val) / high_val
     nan_mask = np.isnan(scaled_mat)
     if not return_metrics:

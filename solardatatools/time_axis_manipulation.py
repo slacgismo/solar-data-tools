@@ -89,7 +89,8 @@ def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
     else:
         return output
 
-def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
+def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True,
+                          verbose=True):
     '''
     This function takes in a pandas data frame containing tabular time series
     data, likely generated with a call to pandas.read_csv(). It is assumed that
@@ -129,41 +130,43 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
         diff /= np.timedelta64(1, 's')
         # print('case 2')
 
+    diff = (np.round(diff / 10, ) * 10).astype(np.int64)          # Round to the nearest 10 seconds
     done = False
     deltas = []
-    counts = []
     fltr = np.ones_like(diff, dtype=np.bool)
     while not done:
         for d in deltas:
             fltr = np.logical_and(fltr, diff != d)
         delta, count = mode(diff[fltr])
-        if count / len(diff) < 0.01:
+        if count / len(diff) < 0.01 or len(delta) == 0:
             done = True
         else:
             deltas.append(delta[0])
-            counts.append(count[0])
     freq = deltas[0]       # the number of seconds between each measurement
     if len(deltas) > 1:
-        print('CAUTION: Multiple scan rates detected!')
-        print('Scan rates (in seconds):', deltas)
-        df['deltas'] = np.r_[diff, [0]]
-        daily_scanrate = df['deltas'].groupby(df.index.date).median()
-        slct = np.zeros(len(daily_scanrate))
-        for d in deltas:
-            slct = np.logical_or(daily_scanrate == d, slct)
-        leading = daily_scanrate[slct].index[
-            np.r_[np.diff(daily_scanrate[slct]) != 0, [False]]
-        ]
-        trailing = daily_scanrate[slct].index[
-            np.r_[[False], np.diff(daily_scanrate[slct]) != 0]
-        ]
-        if len(leading) == 1:
-            print('\n1 transition detected.\n')
-        else:
-            print('{} transitions detected.'.format(len(leading)))
-        print('Suggest splitting data set between:')
-        for l, t in zip(leading, trailing):
-            print('    ', l, 'and', t)
+        if verbose:
+            print('CAUTION: Multiple scan rates detected!')
+            print('Scan rates (in seconds):', deltas)
+            df['deltas'] = np.r_[diff, [0]]
+            daily_scanrate = df['deltas'].groupby(df.index.date).median()
+            slct = np.zeros(len(daily_scanrate))
+            for d in deltas:
+                slct = np.logical_or(daily_scanrate == d, slct)
+            leading = daily_scanrate[slct].index[
+                np.r_[np.diff(daily_scanrate[slct]) != 0, [False]]
+            ]
+            trailing = daily_scanrate[slct].index[
+                np.r_[[False], np.diff(daily_scanrate[slct]) != 0]
+            ]
+            if len(leading) == 1:
+                print('\n1 transition detected.\n')
+            else:
+                print('{} transitions detected.'.format(len(leading)))
+            print('Suggest splitting data set between:')
+            for l, t in zip(leading, trailing):
+                print('    ', l, 'and', t)
+            print('\n')
+            del df['deltas']
 
 
     start = df.index[0]

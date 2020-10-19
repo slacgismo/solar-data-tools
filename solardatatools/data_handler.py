@@ -39,8 +39,9 @@ class DataHandler():
             else:
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
-            self.data_frame = standardize_time_axis(self.data_frame_raw)
+            self.data_frame = None
         else:
+            self.data_frame_raw = None
             self.data_frame = None
             self.keys = None
         self.raw_data_matrix = raw_data_matrix
@@ -91,15 +92,15 @@ class DataHandler():
         self.__recursion_depth = 0
         self.__initial_time = None
 
-    def run_pipeline(self, power_col=None, max_val=None, zero_night=True,
-                     interp_day=True, fix_shifts=True,
+    def run_pipeline(self, power_col=None, min_val=-5, max_val=None,
+                     zero_night=True, interp_day=True, fix_shifts=True,
                      density_lower_threshold=0.6, density_upper_threshold=1.05,
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
                      solar_noon_estimator='srss', differentiate=False,
                      reference_cols=None, correct_tz=True, extra_cols=None,
-                     daytime_threshold=0.01, units='W'):
+                     daytime_threshold=0.005, units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -112,6 +113,10 @@ class DataHandler():
         # Preprocessing
         ######################################################################
         t[0] = time()
+        if self.data_frame_raw is not None:
+            self.data_frame = standardize_time_axis(self.data_frame_raw,
+                                                    timeindex=True,
+                                                    verbose=verbose)
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix,
@@ -122,9 +127,16 @@ class DataHandler():
             slct = mat_copy > max_val
             if np.sum(slct) > 0:
                 self.raw_data_matrix[slct] = np.nan
+        if min_val is not None:
+            mat_copy = np.copy(self.raw_data_matrix)
+            mat_copy[np.isnan(mat_copy)] = 9999
+            slct = mat_copy < min_val
+            if np.sum(slct) > 0:
+                self.raw_data_matrix[slct] = np.nan
         self.capacity_estimate = np.nanquantile(self.raw_data_matrix, 0.95)
         if self.capacity_estimate <= 500 and self.power_units == 'W':
             self.power_units = 'kW'
+        self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         ss = SunriseSunset()
         ss.calculate_times(self.raw_data_matrix, threshold=daytime_threshold)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
@@ -233,7 +245,7 @@ class DataHandler():
             average_noon = np.nanmean(
                 avg_sunrise_sunset(self.filled_data_matrix, threshold=0.01)
             )
-            tz_offset = np.round(12 - average_noon)
+            tz_offset = int(np.round(12 - average_noon))
             if tz_offset != 0:
                 self.tz_correction += tz_offset
                 self.data_frame.index = self.data_frame.index.shift(
@@ -510,7 +522,8 @@ class DataHandler():
     def make_filled_data_matrix(self, zero_night=True, interp_day=True):
         self.filled_data_matrix = np.copy(self.raw_data_matrix)
         if zero_night:
-            self.filled_data_matrix = zero_nighttime(self.raw_data_matrix)
+            self.filled_data_matrix = zero_nighttime(self.raw_data_matrix,
+                                                     night_mask=~self.boolean_masks.daytime)
         if interp_day:
             self.filled_data_matrix = interp_missing(self.filled_data_matrix)
         else:
@@ -594,11 +607,28 @@ class DataHandler():
             print('Run the density check first')
             return
         temp_mat = np.copy(self.filled_data_matrix)
-        temp_mat[temp_mat < 0.02 * self.capacity_estimate] = np.nan
+        temp_mat[temp_mat < 0.005 * self.capacity_estimate] = np.nan
         difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
         modes, counts = mode(difference_mat, axis=0, nan_policy='omit')
         n = self.filled_data_matrix.shape[0] - 1
         self.daily_scores.linearity = counts.data.squeeze() / (n * self.daily_signals.seasonal_density_fit)
+        # Label detected infill points with a boolean mask
+        infill = np.zeros_like(self.raw_data_matrix, dtype=np.bool)
+        slct = self.daily_scores.linearity >= 0.1
+        reference_diffs = np.tile(modes[0][slct],
+                                  (self.filled_data_matrix.shape[0], 1))
+        found_infill = np.logical_or(
+            np.isclose(
+                np.r_[np.zeros(self.num_days).reshape((1, -1)),
+                      difference_mat][ :, slct],
+                reference_diffs),
+            np.isclose(
+                np.r_[difference_mat,
+                      np.zeros(self.num_days).reshape((1, -1))][:, slct],
+                reference_diffs),
+        )
+        infill[:, slct] = found_infill
+        self.boolean_masks.infill = infill
         return
 
     def score_data_set(self):
@@ -1367,3 +1397,5 @@ class BooleanMasks():
         self.clear_times = None
         self.clipped_times = None
         self.daytime = None
+        self.missing_values = None
+        self.infill = None
