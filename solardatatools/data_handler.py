@@ -607,11 +607,28 @@ class DataHandler():
             print('Run the density check first')
             return
         temp_mat = np.copy(self.filled_data_matrix)
-        temp_mat[temp_mat < 0.02 * self.capacity_estimate] = np.nan
+        temp_mat[temp_mat < 0.005 * self.capacity_estimate] = np.nan
         difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
         modes, counts = mode(difference_mat, axis=0, nan_policy='omit')
         n = self.filled_data_matrix.shape[0] - 1
         self.daily_scores.linearity = counts.data.squeeze() / (n * self.daily_signals.seasonal_density_fit)
+        # Label detected infill points with a boolean mask
+        infill = np.zeros_like(self.raw_data_matrix, dtype=np.bool)
+        slct = self.daily_scores.linearity >= 0.1
+        reference_diffs = np.tile(modes[0][slct],
+                                  (self.filled_data_matrix.shape[0], 1))
+        found_infill = np.logical_or(
+            np.isclose(
+                np.r_[np.zeros(self.num_days).reshape((1, -1)),
+                      difference_mat][ :, slct],
+                reference_diffs),
+            np.isclose(
+                np.r_[difference_mat,
+                      np.zeros(self.num_days).reshape((1, -1))][:, slct],
+                reference_diffs),
+        )
+        infill[:, slct] = found_infill
+        self.boolean_masks.infill = infill
         return
 
     def score_data_set(self):
@@ -1381,3 +1398,4 @@ class BooleanMasks():
         self.clipped_times = None
         self.daytime = None
         self.missing_values = None
+        self.infill = None
