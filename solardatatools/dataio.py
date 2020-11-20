@@ -173,7 +173,7 @@ def load_constellation_data(file_id, location='s3://pv.insight.misc/pv_fleets/',
     df = pd.read_csv(location + data_fn_pattern.format(file_id), index_col=index_col, parse_dates=parse_dates)
 
     if json_file:
-        for line in smart_open(location + file_id + '_system_details.json', 'rb'):
+        for line in smart_open(location + str(file_id) + '_system_details.json', 'rb'):
             file_json = json.loads(line)
             file_json
         return df, file_json
