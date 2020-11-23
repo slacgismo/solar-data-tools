@@ -29,7 +29,7 @@ class TimeShift():
         self.corrected_data = None
 
     def run(self, data, use_ixs=None, c1=5., c2=200.,
-            solar_noon_estimator='com', threshold=0.1):
+            solar_noon_estimator='com', threshold=0.1, periodic_detector=False):
         if solar_noon_estimator == 'com':
             metric = energy_com(data)
         elif solar_noon_estimator == 'srss':
@@ -43,7 +43,8 @@ class TimeShift():
             s1, s2 = total_variation_plus_seasonal_filter(
                 metric, c1=c1, c2=c2,
                 tv_weights=w,
-                use_ixs=use_ixs
+                use_ixs=use_ixs,
+                periodic_detector=periodic_detector
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         # Apply corrections

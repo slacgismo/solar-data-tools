@@ -98,7 +98,8 @@ class DataHandler():
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
-                     solar_noon_estimator='srss', differentiate=False,
+                     solar_noon_estimator='srss',
+                     fix_dst=False, differentiate=False,
                      reference_cols=None, correct_tz=True, extra_cols=None,
                      daytime_threshold=0.005, units='W'):
         self.daily_scores = DailyScores()
@@ -327,9 +328,16 @@ class DataHandler():
         t[3] = time()
         if fix_shifts:
             try:
-                self.auto_fix_time_shifts(c1=c1, c2=c2,
-                                          estimator=solar_noon_estimator,
-                                          threshold=daytime_threshold)
+                if not fix_dst:
+                    self.auto_fix_time_shifts(c1=c1, c2=c2,
+                                              estimator=solar_noon_estimator,
+                                              threshold=daytime_threshold,
+                                              periodic_detector=False)
+                else:
+                    self.auto_fix_time_shifts(c1=c1 / 4, c2=c2,
+                                              estimator=solar_noon_estimator,
+                                              threshold=daytime_threshold,
+                                              periodic_detector=True)
             except:
                 msg = 'Fix time shift algorithm failed.'
                 self._error_msg += '\n' + msg
@@ -766,11 +774,12 @@ class DataHandler():
 
 
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='srss',
-                             threshold=0.01):
+                             threshold=0.01, periodic_detector=False):
         self.time_shift_analysis = TimeShift()
         self.time_shift_analysis.run(
             self.filled_data_matrix, use_ixs=self.daily_flags.no_errors,
-            c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold
+            c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold,
+            periodic_detector=periodic_detector
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
