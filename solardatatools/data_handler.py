@@ -249,9 +249,13 @@ class DataHandler():
             tz_offset = int(np.round(12 - average_noon))
             if tz_offset != 0:
                 self.tz_correction += tz_offset
+                old_index = self.data_frame.index.copy()
                 self.data_frame.index = self.data_frame.index.shift(
                     tz_offset, freq='H'
                 )
+                self.data_frame = self.data_frame.reindex(index=old_index,
+                                                          method='nearest',
+                                                          limit=1).fillna(0)
                 meas_per_hour = self.filled_data_matrix.shape[0] / 24
                 roll_by = int(meas_per_hour * tz_offset)
                 self.filled_data_matrix = np.nan_to_num(
