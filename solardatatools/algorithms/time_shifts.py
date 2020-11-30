@@ -70,3 +70,12 @@ class TimeShift():
                 ixs = roll_by_index == roll
                 Dout[:, ixs] = np.roll(data, int(roll), axis=0)[:, ixs]
         return Dout
+
+    def invert_corrections(self, data):
+        roll_by_index = self.roll_by_index
+        Dout = np.copy(data)
+        for roll in np.unique(roll_by_index):
+            if roll != 0:
+                ixs = roll_by_index == roll
+                Dout[:, ixs] = np.roll(data, -int(roll), axis=0)[:, ixs]
+        return Dout

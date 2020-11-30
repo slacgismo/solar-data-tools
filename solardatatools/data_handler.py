@@ -493,6 +493,9 @@ class DataHandler():
         if not cond1 and not cond2:
             print('Boolean index shape does not match the data.')
         elif cond1:
+            if self.time_shifts:
+                ts = self.time_shift_analysis
+                boolean_index = ts.invert_corrections(boolean_index)
             start = self.day_index[0]
             freq = '{}min'.format(self.data_sampling)
             periods = self.filled_data_matrix.size
