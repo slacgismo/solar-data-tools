@@ -27,6 +27,7 @@ class TimeShift():
         self.s2 = None
         self.index_set = None
         self.corrected_data = None
+        self.roll_by_index = None
 
     def run(self, data, use_ixs=None, c1=5., c2=200.,
             solar_noon_estimator='com', threshold=0.1, periodic_detector=False):
@@ -50,11 +51,8 @@ class TimeShift():
         # Apply corrections
         roll_by_index = np.round(
             (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0)
-        Dout = np.copy(data)
-        for roll in np.unique(roll_by_index):
-            if roll != 0:
-                ixs = roll_by_index == roll
-                Dout[:, ixs] = np.roll(data, int(roll), axis=0)[:, ixs]
+        self.roll_by_index = roll_by_index
+        Dout = self.apply_corrections(data)
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 0) != 0]
         # save results
@@ -63,3 +61,12 @@ class TimeShift():
         self.s2 = s2
         self.index_set = index_set
         self.corrected_data = Dout
+
+    def apply_corrections(self, data):
+        roll_by_index = self.roll_by_index
+        Dout = np.copy(data)
+        for roll in np.unique(roll_by_index):
+            if roll != 0:
+                ixs = roll_by_index == roll
+                Dout[:, ixs] = np.roll(data, int(roll), axis=0)[:, ixs]
+        return Dout

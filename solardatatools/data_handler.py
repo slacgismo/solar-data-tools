@@ -555,6 +555,9 @@ class DataHandler():
         num_meas = self.filled_data_matrix.shape[0]
         new_view = self.data_frame[column].loc[new_index[0]:new_index[-1]]
         new_view = new_view.values.reshape(num_meas, -1, order='F')
+        if self.time_shifts:
+            ts = self.time_shift_analysis
+            new_view = ts.apply_corrections(new_view)
         if key is None:
             key = column
         self.extra_matrices[key] = new_view
