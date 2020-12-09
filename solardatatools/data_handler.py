@@ -100,8 +100,7 @@ class DataHandler():
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
                      solar_noon_estimator='com',
-                     fix_dst=False, differentiate=False,
-                     reference_cols=None, correct_tz=True, extra_cols=None,
+                     fix_dst=False, correct_tz=True, extra_cols=None,
                      daytime_threshold=0.005, units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
@@ -128,8 +127,7 @@ class DataHandler():
                                                     verbose=verbose)
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
-                                  end_day_ix=end_day_ix,
-                                     differentiate=differentiate)
+                                  end_day_ix=end_day_ix)
         if max_val is not None:
             mat_copy = np.copy(self.raw_data_matrix)
             mat_copy[np.isnan(mat_copy)] = -9999
@@ -192,20 +190,20 @@ class DataHandler():
                 if self.__initial_time is not None:
                     self.__initial_time = t[0]
                 self.run_pipeline(
-                    power_col=power_col, zero_night=zero_night,
-                    interp_day=interp_day,
-                    fix_shifts=fix_shifts,
+                    self, power_col=power_col, min_val=min_val,
+                    max_val=max_val, zero_night=zero_night,
+                    interp_day=interp_day, fix_shifts=fix_shifts,
                     density_lower_threshold=density_lower_threshold,
                     density_upper_threshold=density_upper_threshold,
                     linearity_threshold=linearity_threshold,
                     clear_day_smoothness_param=clear_day_smoothness_param,
-                    clear_day_energy_param=clear_day_smoothness_param,
-                    verbose=verbose,
-                    start_day_ix=start_day_ix, end_day_ix=end_day_ix,
-                    c1=c1, c2=c2, solar_noon_estimator=solar_noon_estimator,
-                    differentiate=differentiate,
-                    reference_cols=reference_cols, correct_tz=correct_tz,
-                    extra_cols=extra_cols
+                    clear_day_energy_param=clear_day_energy_param,
+                    verbose=verbose, start_day_ix=start_day_ix,
+                    end_day_ix=end_day_ix, c1=c1, c2=c2,
+                    solar_noon_estimator=solar_noon_estimator,
+                    fix_dst=fix_dst, correct_tz=correct_tz,
+                    extra_cols=extra_cols, daytime_threshold=daytime_threshold,
+                    units=units
                 )
                 return
         ######################################################################
@@ -530,13 +528,10 @@ class DataHandler():
             del self.data_frame_raw[column_name]
         self.data_frame_raw = self.data_frame_raw.join(self.data_frame[column_name])
 
-    def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
-                                differentiate=False):
+    def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None):
         df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
-        if differentiate:
-            pass
         self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
