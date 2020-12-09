@@ -83,6 +83,7 @@ class DataHandler():
         self.scsf = None
         self.capacity_analysis = None
         self.time_shift_analysis = None
+        self.daytime_analysis = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
@@ -98,7 +99,7 @@ class DataHandler():
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
-                     solar_noon_estimator='srss',
+                     solar_noon_estimator='com',
                      fix_dst=False, differentiate=False,
                      reference_cols=None, correct_tz=True, extra_cols=None,
                      daytime_threshold=0.005, units='W'):
@@ -115,6 +116,13 @@ class DataHandler():
         ######################################################################
         t[0] = time()
         if self.data_frame_raw is not None:
+            # if fix_dst:
+            #     df_localized = df.tz_localize('US/Pacific', ambiguous='NaT')
+            #     df_localized = df_localized[
+            #         df_localized.index == df_localized.index] # drop NaT values
+            #     df_localized = df_localized.tz_convert('Etc/GMT+8')
+            #     df_localized = df_localized.tz_localize(None)
+            #     self.data_frame_raw = df_localized
             self.data_frame = standardize_time_axis(self.data_frame_raw,
                                                     timeindex=True,
                                                     verbose=verbose)
@@ -139,8 +147,9 @@ class DataHandler():
             self.power_units = 'kW'
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         ss = SunriseSunset()
-        ss.calculate_times(self.raw_data_matrix, threshold=daytime_threshold)
+        ss.run_optimizer(self.raw_data_matrix)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
+        self.daytime_analysis = ss
         ### TZ offset detection and correction ###
         # (1) Determine if there exists a "large" timezone offset error
         if power_col is None:
@@ -348,6 +357,12 @@ class DataHandler():
                 if verbose:
                     print(msg)
                 self.time_shifts = None
+        ######################################################################
+        # Update daytime detection based on cleaned up data
+        ######################################################################
+        # self.daytime_analysis.run_optimizer(self.filled_data_matrix, plot=False)
+        self.daytime_analysis.calculate_times(self.filled_data_matrix)
+        self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
         ######################################################################
         # Process Extra columns
         ######################################################################
@@ -783,8 +798,8 @@ class DataHandler():
             return fig
 
 
-    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='srss',
-                             threshold=0.01, periodic_detector=False):
+    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
+                             threshold=0.1, periodic_detector=False):
         self.time_shift_analysis = TimeShift()
         self.time_shift_analysis.run(
             self.filled_data_matrix, use_ixs=self.daily_flags.no_errors,
