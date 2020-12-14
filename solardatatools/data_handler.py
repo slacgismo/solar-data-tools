@@ -99,9 +99,8 @@ class DataHandler():
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
-                     solar_noon_estimator='com',
-                     fix_dst=False, correct_tz=True, extra_cols=None,
-                     daytime_threshold=0.005, units='W'):
+                     solar_noon_estimator='com', correct_tz=True, extra_cols=None,
+                     daytime_threshold=0.1, units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -115,13 +114,6 @@ class DataHandler():
         ######################################################################
         t[0] = time()
         if self.data_frame_raw is not None:
-            # if fix_dst:
-            #     df_localized = df.tz_localize('US/Pacific', ambiguous='NaT')
-            #     df_localized = df_localized[
-            #         df_localized.index == df_localized.index] # drop NaT values
-            #     df_localized = df_localized.tz_convert('Etc/GMT+8')
-            #     df_localized = df_localized.tz_localize(None)
-            #     self.data_frame_raw = df_localized
             self.data_frame = standardize_time_axis(self.data_frame_raw,
                                                     timeindex=True,
                                                     verbose=verbose)
@@ -201,9 +193,8 @@ class DataHandler():
                     verbose=verbose, start_day_ix=start_day_ix,
                     end_day_ix=end_day_ix, c1=c1, c2=c2,
                     solar_noon_estimator=solar_noon_estimator,
-                    fix_dst=fix_dst, correct_tz=correct_tz,
-                    extra_cols=extra_cols, daytime_threshold=daytime_threshold,
-                    units=units
+                    correct_tz=correct_tz, extra_cols=extra_cols,
+                    daytime_threshold=daytime_threshold, units=units
                 )
                 return
         ######################################################################
@@ -339,21 +330,17 @@ class DataHandler():
         t[3] = time()
         if fix_shifts:
             try:
-                if not fix_dst:
-                    self.auto_fix_time_shifts(c1=c1, c2=c2,
-                                              estimator=solar_noon_estimator,
-                                              threshold=daytime_threshold,
-                                              periodic_detector=False)
-                else:
-                    self.auto_fix_time_shifts(c1=c1 / 4, c2=c2,
-                                              estimator=solar_noon_estimator,
-                                              threshold=daytime_threshold,
-                                              periodic_detector=True)
-            except:
+                self.auto_fix_time_shifts(c1=c1, c2=c2,
+                                          estimator=solar_noon_estimator,
+                                          threshold=daytime_threshold,
+                                          periodic_detector=False)
+            except Exception as e:
                 msg = 'Fix time shift algorithm failed.'
                 self._error_msg += '\n' + msg
                 if verbose:
                     print(msg)
+                    print('Error message:', e)
+                    print('\n')
                 self.time_shifts = None
         ######################################################################
         # Update daytime detection based on cleaned up data
@@ -527,6 +514,22 @@ class DataHandler():
         if column_name in self.data_frame_raw.columns:
             del self.data_frame_raw[column_name]
         self.data_frame_raw = self.data_frame_raw.join(self.data_frame[column_name])
+
+    def fix_dst(self):
+        """
+        Helper function for fixing data sets with known DST shift. This function
+        works for data recorded anywhere in the United States. The choice of
+        timezone (e.g. 'US/Pacific') does not matter, as long as the dates
+        of the clock changes are the same.
+        :return:
+        """
+        df = self.data_frame_raw
+        df_localized = df.tz_localize('US/Pacific', ambiguous='NaT',
+                                      nonexistent='NaT')
+        df_localized = df_localized[df_localized.index == df_localized.index]
+        df_localized = df_localized.tz_convert('Etc/GMT+8')
+        df_localized = df_localized.tz_localize(None)
+        self.data_frame_raw = df_localized
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None):
         df = self.data_frame
@@ -796,8 +799,12 @@ class DataHandler():
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
                              threshold=0.1, periodic_detector=False):
         self.time_shift_analysis = TimeShift()
+        if self.data_clearness_score > 0.1 and self.num_days > 365 * 2:
+            use_ixs = self.daily_flags.clear
+        else:
+            use_ixs = self.daily_flags.no_errors
         self.time_shift_analysis.run(
-            self.filled_data_matrix, use_ixs=self.daily_flags.no_errors,
+            self.filled_data_matrix, use_ixs=use_ixs,
             c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold,
             periodic_detector=periodic_detector
         )
@@ -1167,12 +1174,13 @@ class DataHandler():
 
     def plot_time_shift_analysis_results(self, figsize=(8, 6)):
         if self.time_shift_analysis is not None:
+            use_ixs = self.time_shift_analysis.use_ixs
             plt.figure(figsize=figsize)
             plt.plot(self.day_index, self.time_shift_analysis.metric,
                      linewidth=1, alpha=0.6,
                      label='daily solar noon')
-            plt.plot(self.day_index[self.daily_flags.clear],
-                     self.time_shift_analysis.metric[self.daily_flags.clear],
+            plt.plot(self.day_index[use_ixs],
+                     self.time_shift_analysis.metric[use_ixs],
                      linewidth=1, alpha=0.6, color='orange', marker='.',
                      ls='none',
                      label='filtered days')
