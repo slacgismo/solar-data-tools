@@ -53,7 +53,7 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
     if use_ixs is None:
         index_set = ~np.isnan(signal)
     else:
-        index_set = use_ixs
+        index_set = np.logical_and(use_ixs, ~np.isnan(signal))
     s_hat = cvx.Variable(len(signal))
     s_seas = cvx.Variable(len(signal))
     s_error = cvx.Variable(len(signal))
