@@ -34,7 +34,8 @@ def total_variation_filter(signal, C=5):
 
 def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
                                          residual_weights=None, tv_weights=None,
-                                         use_ixs=None, periodic_detector=False):
+                                         use_ixs=None, periodic_detector=False,
+                                         transition_locs=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -60,14 +61,20 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
     c1 = cvx.Constant(value=c1)
     c2 = cvx.Constant(value=c2)
     #w = len(signal) / np.sum(index_set)
-    objective = cvx.Minimize(
-        # (365 * 3 / len(signal)) * w *
-        # cvx.sum(cvx.huber(cvx.multiply(residual_weights, s_error)))
-        10 * cvx.norm(cvx.multiply(residual_weights, s_error))
-        + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-        + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-        # + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
-    )
+    if transition_locs is None:
+        objective = cvx.Minimize(
+            # (365 * 3 / len(signal)) * w *
+            # cvx.sum(cvx.huber(cvx.multiply(residual_weights, s_error)))
+            10 * cvx.norm(cvx.multiply(residual_weights, s_error))
+            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            # + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
+        )
+    else:
+        objective = cvx.Minimize(
+            10 * cvx.norm(cvx.multiply(residual_weights, s_error))
+            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+        )
     constraints = [
         signal[index_set] == s_hat[index_set] + s_seas[index_set] + s_error[index_set],
         cvx.sum(s_seas[:365]) == 0
@@ -76,6 +83,11 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
         constraints.append(s_seas[365:] - s_seas[:-365] == 0)
         if periodic_detector:
             constraints.append(s_hat[365:] - s_hat[:-365] == 0)
+    if transition_locs is not None:
+        loc_mask = np.ones(len(signal) - 1, dtype=np.bool)
+        loc_mask[transition_locs] = False
+        # loc_mask[transition_locs + 1] = False
+        constraints.append(cvx.diff(s_hat, k=1)[loc_mask] == 0)
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve()
     return s_hat.value, s_seas.value
