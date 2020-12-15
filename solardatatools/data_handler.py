@@ -92,6 +92,7 @@ class DataHandler():
         self.__linearity_threshold = None
         self.__recursion_depth = 0
         self.__initial_time = None
+        self.__fix_dst_ran = False
 
     def run_pipeline(self, power_col=None, min_val=-5, max_val=None,
                      zero_night=True, interp_day=True, fix_shifts=True,
@@ -523,13 +524,19 @@ class DataHandler():
         of the clock changes are the same.
         :return:
         """
-        df = self.data_frame_raw
-        df_localized = df.tz_localize('US/Pacific', ambiguous='NaT',
-                                      nonexistent='NaT')
-        df_localized = df_localized[df_localized.index == df_localized.index]
-        df_localized = df_localized.tz_convert('Etc/GMT+8')
-        df_localized = df_localized.tz_localize(None)
-        self.data_frame_raw = df_localized
+        if not self.__fix_dst_ran:
+            df =    self.data_frame_raw
+            df_localized = df.tz_localize('US/Pacific', ambiguous='NaT',
+                                          nonexistent='NaT')
+            df_localized = df_localized[df_localized.index == df_localized.index]
+            df_localized = df_localized.tz_convert('Etc/GMT+8')
+            df_localized = df_localized.tz_localize(None)
+            self.data_frame_raw = df_localized
+            self.__fix_dst_ran = True
+            return
+        else:
+            print('DST correction already performed on this data set.')
+            return
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None):
         df = self.data_frame
