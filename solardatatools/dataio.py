@@ -172,7 +172,7 @@ def load_constellation_data(file_id, location='s3://pv.insight.misc/pv_fleets/',
             from smart_open import smart_open
         except ImportError:
             print('Please install smart_open in your Python environment to use this function')
-            return
+            return df, None
 
         for line in smart_open(location + str(file_id) + '_system_details.json', 'rb'):
             file_json = json.loads(line)
