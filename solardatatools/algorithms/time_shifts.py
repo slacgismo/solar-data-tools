@@ -52,7 +52,7 @@ class TimeShift():
         test = np.copy(use_ixs)
         train[use_ixs] = select
         test[use_ixs] = ~select
-        c1s = np.logspace(-1, 1, 10)
+        c1s = np.logspace(-1, 2, 15)
         train_r = np.zeros_like(c1s)
         test_r = np.zeros_like(c1s)
         for i, v in enumerate(c1s):
@@ -63,19 +63,22 @@ class TimeShift():
         zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
         hn = zero_one_scale(test_r)
         rn = zero_one_scale(train_r)
-        # best_ix = np.argmax(hn * rn)
         best_ix = np.argmin(hn)
-        if np.isclose(hn[best_ix], hn[-1]):
-            best_ix = np.argmin(hn * rn)
+        # if np.isclose(hn[best_ix], hn[-1]):
+        #     best_ix = np.argmax(hn * rn)
         best_c1 = c1s[best_ix]
         s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs, periodic_detector)
+        # find indices of transition points
+        index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
+        s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs,
+                                          periodic_detector,
+                                          transition_locs=index_set)
         # Apply corrections
         roll_by_index = np.round(
             (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0)
         self.roll_by_index = roll_by_index
         Dout = self.apply_corrections(data)
-        # find indices of transition points
-        index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 0) != 0]
+
         # save results
         self.normalized_holdout_error = hn
         self.normalized_train_error = rn
@@ -87,7 +90,8 @@ class TimeShift():
         self.index_set = index_set
         self.corrected_data = Dout
 
-    def estimate_components(self, metric, c1, c2, use_ixs, periodic_detector):
+    def estimate_components(self, metric, c1, c2, use_ixs, periodic_detector,
+                            transition_locs=None):
         # Iterative reweighted L1 heuristic
         w = np.ones(len(metric) - 1)
         eps = 0.1
@@ -96,7 +100,8 @@ class TimeShift():
                 metric, c1=c1, c2=c2,
                 tv_weights=w,
                 use_ixs=use_ixs,
-                periodic_detector=periodic_detector
+                periodic_detector=periodic_detector,
+                transition_locs=transition_locs
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
@@ -108,18 +113,22 @@ class TimeShift():
             rn = self.normalized_train_error
             best_c1 = self.best_c1
             import matplotlib.pyplot as plt
-            plt.plot(c1s, hn * rn, marker='.')
-            plt.axvline(best_c1, ls='--', color='red')
-            plt.xscale('log')
-            plt.show()
             plt.plot(c1s, hn, marker='.')
             plt.axvline(best_c1, ls='--', color='red')
             plt.xscale('log')
+            plt.title('holdout validation')
             plt.show()
             plt.plot(c1s, rn, marker='.')
             plt.axvline(best_c1, ls='--', color='red')
             plt.xscale('log')
+            plt.title('training residuals')
             plt.show()
+            plt.plot(c1s, hn * rn, marker='.')
+            plt.axvline(best_c1, ls='--', color='red')
+            plt.xscale('log')
+            plt.title('holdout error times training error')
+            plt.show()
+            print(hn)
 
     def apply_corrections(self, data):
         roll_by_index = self.roll_by_index
