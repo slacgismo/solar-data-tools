@@ -248,6 +248,8 @@ class DataHandler():
             tz_offset = int(np.round(12 - average_noon))
             if tz_offset != 0:
                 self.tz_correction += tz_offset
+                # Related to this bug fix:
+                # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da 
                 old_index = self.data_frame.index.copy()
                 self.data_frame.index = self.data_frame.index.shift(
                     tz_offset, freq='H'
@@ -525,7 +527,7 @@ class DataHandler():
         :return:
         """
         if not self.__fix_dst_ran:
-            df =    self.data_frame_raw
+            df = self.data_frame_raw
             df_localized = df.tz_localize('US/Pacific', ambiguous='NaT',
                                           nonexistent='NaT')
             df_localized = df_localized[df_localized.index == df_localized.index]
