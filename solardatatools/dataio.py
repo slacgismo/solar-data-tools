@@ -165,16 +165,18 @@ def load_cassandra_data(siteid, column='ac_power', sensor=None, tmin=None,
 def load_constellation_data(file_id, location='s3://pv.insight.misc/pv_fleets/',
                             data_fn_pattern='{}_20201006_composite.csv',
                             index_col=0, parse_dates=[0], json_file=False):
-    try:
-        from smart_open import smart_open
-    except ImportError:
-        print('Please install smart_open in your Python environment to use this function')
-        return
     df = pd.read_csv(location + data_fn_pattern.format(file_id), index_col=index_col, parse_dates=parse_dates)
 
     if json_file:
+        try:
+            from smart_open import smart_open
+        except ImportError:
+            print('Please install smart_open in your Python environment to use this function')
+            return
+
         for line in smart_open(location + str(file_id) + '_system_details.json', 'rb'):
             file_json = json.loads(line)
             file_json
+
         return df, file_json
     return df
