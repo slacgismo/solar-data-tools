@@ -28,6 +28,10 @@ class TimeShift():
         self.index_set = None
         self.corrected_data = None
         self.roll_by_index = None
+        self.normalized_holdout_error = None
+        self.normalized_train_error = None
+        self.best_c1 = None
+        self.best_ix = None
 
     def run(self, data, use_ixs=None, c1=5., c2=200.,
             solar_noon_estimator='com', threshold=0.1, periodic_detector=False):
@@ -61,15 +65,9 @@ class TimeShift():
         rn = zero_one_scale(train_r)
         # best_ix = np.argmax(hn * rn)
         best_ix = np.argmin(hn)
+        if np.isclose(hn[best_ix], hn[-1]):
+            best_ix = np.argmin(hn * rn)
         best_c1 = c1s[best_ix]
-        import matplotlib.pyplot as plt
-        plt.plot(c1s, hn * rn, marker='.')
-        plt.show()
-        plt.plot(c1s, hn, marker='.')
-        plt.show()
-        plt.plot(c1s, rn, marker='.')
-        plt.show()
-        print(best_c1)
         s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs, periodic_detector)
         # Apply corrections
         roll_by_index = np.round(
@@ -79,7 +77,11 @@ class TimeShift():
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 0) != 0]
         # save results
-
+        self.normalized_holdout_error = hn
+        self.normalized_train_error = rn
+        self.c1_vals = c1s
+        self.best_c1 = best_c1
+        self.best_ix = best_ix
         self.s1 = s1
         self.s2 = s2
         self.index_set = index_set
@@ -98,6 +100,26 @@ class TimeShift():
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
+
+    def plot_optimization(self):
+        if self.best_ix is not None:
+            c1s = self.c1_vals
+            hn = self.normalized_holdout_error
+            rn = self.normalized_train_error
+            best_c1 = self.best_c1
+            import matplotlib.pyplot as plt
+            plt.plot(c1s, hn * rn, marker='.')
+            plt.axvline(best_c1, ls='--', color='red')
+            plt.xscale('log')
+            plt.show()
+            plt.plot(c1s, hn, marker='.')
+            plt.axvline(best_c1, ls='--', color='red')
+            plt.xscale('log')
+            plt.show()
+            plt.plot(c1s, rn, marker='.')
+            plt.axvline(best_c1, ls='--', color='red')
+            plt.xscale('log')
+            plt.show()
 
     def apply_corrections(self, data):
         roll_by_index = self.roll_by_index
