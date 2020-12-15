@@ -177,6 +177,5 @@ def load_constellation_data(file_id, location='s3://pv.insight.misc/pv_fleets/',
         for line in smart_open(location + str(file_id) + '_system_details.json', 'rb'):
             file_json = json.loads(line)
             file_json
-
         return df, file_json
     return df
