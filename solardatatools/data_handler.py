@@ -249,7 +249,7 @@ class DataHandler():
             if tz_offset != 0:
                 self.tz_correction += tz_offset
                 # Related to this bug fix:
-                # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da 
+                # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da
                 old_index = self.data_frame.index.copy()
                 self.data_frame.index = self.data_frame.index.shift(
                     tz_offset, freq='H'
@@ -754,7 +754,9 @@ class DataHandler():
             # clipped_time_mask[:, ~clipped_days] = False
             self.boolean_masks.clipped_times = clipped_time_mask
         else:
-            return
+            self.boolean_masks.clipped_times = np.zeros_like(
+                self.filled_data_matrix, dtype=np.bool
+            )
 
     def capacity_clustering(self, plot=False, figsize=(8, 6),
                             show_clusters=True):
