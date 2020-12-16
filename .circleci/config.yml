@@ -2,7 +2,7 @@ version: 2
 
 368_config: &368_config
   docker:
-    - image: circleci/python:3.6.8
+    - image: circleci/python:3.7
 
 jobs:
   build:
