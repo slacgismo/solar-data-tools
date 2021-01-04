@@ -83,6 +83,7 @@ class DataHandler():
         self.scsf = None
         self.capacity_analysis = None
         self.time_shift_analysis = None
+        self.daytime_analysis = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
@@ -91,6 +92,7 @@ class DataHandler():
         self.__linearity_threshold = None
         self.__recursion_depth = 0
         self.__initial_time = None
+        self.__fix_dst_ran = False
 
     def run_pipeline(self, power_col=None, min_val=-5, max_val=None,
                      zero_night=True, interp_day=True, fix_shifts=True,
@@ -98,9 +100,8 @@ class DataHandler():
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
-                     solar_noon_estimator='srss', differentiate=False,
-                     reference_cols=None, correct_tz=True, extra_cols=None,
-                     daytime_threshold=0.005, units='W'):
+                     solar_noon_estimator='com', correct_tz=True, extra_cols=None,
+                     daytime_threshold=0.1, units='W'):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -119,8 +120,7 @@ class DataHandler():
                                                     verbose=verbose)
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
-                                  end_day_ix=end_day_ix,
-                                     differentiate=differentiate)
+                                  end_day_ix=end_day_ix)
         if max_val is not None:
             mat_copy = np.copy(self.raw_data_matrix)
             mat_copy[np.isnan(mat_copy)] = -9999
@@ -138,8 +138,9 @@ class DataHandler():
             self.power_units = 'kW'
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         ss = SunriseSunset()
-        ss.calculate_times(self.raw_data_matrix, threshold=daytime_threshold)
+        ss.run_optimizer(self.raw_data_matrix)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
+        self.daytime_analysis = ss
         ### TZ offset detection and correction ###
         # (1) Determine if there exists a "large" timezone offset error
         if power_col is None:
@@ -182,20 +183,19 @@ class DataHandler():
                 if self.__initial_time is not None:
                     self.__initial_time = t[0]
                 self.run_pipeline(
-                    power_col=power_col, zero_night=zero_night,
-                    interp_day=interp_day,
-                    fix_shifts=fix_shifts,
+                    self, power_col=power_col, min_val=min_val,
+                    max_val=max_val, zero_night=zero_night,
+                    interp_day=interp_day, fix_shifts=fix_shifts,
                     density_lower_threshold=density_lower_threshold,
                     density_upper_threshold=density_upper_threshold,
                     linearity_threshold=linearity_threshold,
                     clear_day_smoothness_param=clear_day_smoothness_param,
-                    clear_day_energy_param=clear_day_smoothness_param,
-                    verbose=verbose,
-                    start_day_ix=start_day_ix, end_day_ix=end_day_ix,
-                    c1=c1, c2=c2, solar_noon_estimator=solar_noon_estimator,
-                    differentiate=differentiate,
-                    reference_cols=reference_cols, correct_tz=correct_tz,
-                    extra_cols=extra_cols
+                    clear_day_energy_param=clear_day_energy_param,
+                    verbose=verbose, start_day_ix=start_day_ix,
+                    end_day_ix=end_day_ix, c1=c1, c2=c2,
+                    solar_noon_estimator=solar_noon_estimator,
+                    correct_tz=correct_tz, extra_cols=extra_cols,
+                    daytime_threshold=daytime_threshold, units=units
                 )
                 return
         ######################################################################
@@ -248,9 +248,15 @@ class DataHandler():
             tz_offset = int(np.round(12 - average_noon))
             if tz_offset != 0:
                 self.tz_correction += tz_offset
+                # Related to this bug fix:
+                # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da
+                old_index = self.data_frame.index.copy()
                 self.data_frame.index = self.data_frame.index.shift(
                     tz_offset, freq='H'
                 )
+                self.data_frame = self.data_frame.reindex(index=old_index,
+                                                          method='nearest',
+                                                          limit=1).fillna(0)
                 meas_per_hour = self.filled_data_matrix.shape[0] / 24
                 roll_by = int(meas_per_hour * tz_offset)
                 self.filled_data_matrix = np.nan_to_num(
@@ -329,13 +335,22 @@ class DataHandler():
             try:
                 self.auto_fix_time_shifts(c1=c1, c2=c2,
                                           estimator=solar_noon_estimator,
-                                          threshold=daytime_threshold)
-            except:
+                                          threshold=daytime_threshold,
+                                          periodic_detector=False)
+            except Exception as e:
                 msg = 'Fix time shift algorithm failed.'
                 self._error_msg += '\n' + msg
                 if verbose:
                     print(msg)
+                    print('Error message:', e)
+                    print('\n')
                 self.time_shifts = None
+        ######################################################################
+        # Update daytime detection based on cleaned up data
+        ######################################################################
+        # self.daytime_analysis.run_optimizer(self.filled_data_matrix, plot=False)
+        self.daytime_analysis.calculate_times(self.filled_data_matrix)
+        self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
         ######################################################################
         # Process Extra columns
         ######################################################################
@@ -481,6 +496,9 @@ class DataHandler():
         if not cond1 and not cond2:
             print('Boolean index shape does not match the data.')
         elif cond1:
+            if self.time_shifts:
+                ts = self.time_shift_analysis
+                boolean_index = ts.invert_corrections(boolean_index)
             start = self.day_index[0]
             freq = '{}min'.format(self.data_sampling)
             periods = self.filled_data_matrix.size
@@ -500,13 +518,32 @@ class DataHandler():
             del self.data_frame_raw[column_name]
         self.data_frame_raw = self.data_frame_raw.join(self.data_frame[column_name])
 
-    def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None,
-                                differentiate=False):
+    def fix_dst(self):
+        """
+        Helper function for fixing data sets with known DST shift. This function
+        works for data recorded anywhere in the United States. The choice of
+        timezone (e.g. 'US/Pacific') does not matter, as long as the dates
+        of the clock changes are the same.
+        :return:
+        """
+        if not self.__fix_dst_ran:
+            df = self.data_frame_raw
+            df_localized = df.tz_localize('US/Pacific', ambiguous='NaT',
+                                          nonexistent='NaT')
+            df_localized = df_localized[df_localized.index == df_localized.index]
+            df_localized = df_localized.tz_convert('Etc/GMT+8')
+            df_localized = df_localized.tz_localize(None)
+            self.data_frame_raw = df_localized
+            self.__fix_dst_ran = True
+            return
+        else:
+            print('DST correction already performed on this data set.')
+            return
+
+    def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None):
         df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
-        if differentiate:
-            pass
         self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
@@ -543,6 +580,9 @@ class DataHandler():
         num_meas = self.filled_data_matrix.shape[0]
         new_view = self.data_frame[column].loc[new_index[0]:new_index[-1]]
         new_view = new_view.values.reshape(num_meas, -1, order='F')
+        if self.time_shifts:
+            ts = self.time_shift_analysis
+            new_view = ts.apply_corrections(new_view)
         if key is None:
             key = column
         self.extra_matrices[key] = new_view
@@ -714,7 +754,9 @@ class DataHandler():
             # clipped_time_mask[:, ~clipped_days] = False
             self.boolean_masks.clipped_times = clipped_time_mask
         else:
-            return
+            self.boolean_masks.clipped_times = np.zeros_like(
+                self.filled_data_matrix, dtype=np.bool
+            )
 
     def capacity_clustering(self, plot=False, figsize=(8, 6),
                             show_clusters=True):
@@ -765,12 +807,17 @@ class DataHandler():
             return fig
 
 
-    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='srss',
-                             threshold=0.01):
+    def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
+                             threshold=0.1, periodic_detector=False):
         self.time_shift_analysis = TimeShift()
+        if self.data_clearness_score > 0.1 and self.num_days > 365 * 2:
+            use_ixs = self.daily_flags.clear
+        else:
+            use_ixs = self.daily_flags.no_errors
         self.time_shift_analysis.run(
-            self.filled_data_matrix, use_ixs=self.daily_flags.no_errors,
-            c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold
+            self.filled_data_matrix, use_ixs=use_ixs,
+            c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold,
+            periodic_detector=periodic_detector
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
@@ -1138,12 +1185,13 @@ class DataHandler():
 
     def plot_time_shift_analysis_results(self, figsize=(8, 6)):
         if self.time_shift_analysis is not None:
+            use_ixs = self.time_shift_analysis.use_ixs
             plt.figure(figsize=figsize)
             plt.plot(self.day_index, self.time_shift_analysis.metric,
                      linewidth=1, alpha=0.6,
                      label='daily solar noon')
-            plt.plot(self.day_index[self.daily_flags.clear],
-                     self.time_shift_analysis.metric[self.daily_flags.clear],
+            plt.plot(self.day_index[use_ixs],
+                     self.time_shift_analysis.metric[use_ixs],
                      linewidth=1, alpha=0.6, color='orange', marker='.',
                      ls='none',
                      label='filtered days')

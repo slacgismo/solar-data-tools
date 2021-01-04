@@ -17,7 +17,7 @@ def zero_nighttime(data_matrix, night_mask=None, daytime_threshold=0.005):
         ss = SunriseSunset()
         ss.calculate_times(data_matrix, threshold=daytime_threshold)
         night_mask = ~ss.sunup_mask_estimated
-    D[night_mask] = 0
+    D[np.logical_and(night_mask, np.isnan(D))] = 0
     return D
 
 def interp_missing(data_matrix):
