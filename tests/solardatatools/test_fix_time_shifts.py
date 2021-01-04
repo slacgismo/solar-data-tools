@@ -21,6 +21,13 @@ class TestFixTimeShift(unittest.TestCase):
         with open(input_power_signals_file_path) as file:
             power_data_matrix = np.loadtxt(file, delimiter=',')
 
+        use_days_file_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                "../fixtures/time_shifts",
+                "clear_days.csv"))
+        with open(use_days_file_path) as file:
+            use_days = np.loadtxt(file, delimiter=',')
+
         output_power_signals_file_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                 "../fixtures/time_shifts",
@@ -34,7 +41,7 @@ class TestFixTimeShift(unittest.TestCase):
         try:
             time_shift_analysis = TimeShift()
             time_shift_analysis.run(
-                power_data_matrix
+                power_data_matrix, use_ixs=use_days
             )
             actual_power_data_fix = time_shift_analysis.corrected_data
         except (cvx.SolverError, ValueError):
