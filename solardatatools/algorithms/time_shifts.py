@@ -33,7 +33,7 @@ class TimeShift():
         self.best_c1 = None
         self.best_ix = None
 
-    def run(self, data, use_ixs=None, c1=5., c2=200.,
+    def run(self, data, use_ixs=None, c1=None, c2=200.,
             solar_noon_estimator='com', threshold=0.1, periodic_detector=False):
         if solar_noon_estimator == 'com':
             metric = energy_com(data)
@@ -46,27 +46,34 @@ class TimeShift():
             use_ixs = np.logical_and(use_ixs, ~np.isnan(metric))
         self.use_ixs = use_ixs
         # Optimize c1
-        n = np.sum(use_ixs)
-        select = np.random.uniform(size=n) <= 0.8
-        train = np.copy(use_ixs)
-        test = np.copy(use_ixs)
-        train[use_ixs] = select
-        test[use_ixs] = ~select
-        c1s = np.logspace(-1, 2, 15)
-        train_r = np.zeros_like(c1s)
-        test_r = np.zeros_like(c1s)
-        for i, v in enumerate(c1s):
-            s1, s2 = self.estimate_components(metric, v, c2, train, periodic_detector)
-            y = metric
-            train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
-            test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
-        zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
-        hn = zero_one_scale(test_r)
-        rn = zero_one_scale(train_r)
-        best_ix = np.argmin(hn)
-        # if np.isclose(hn[best_ix], hn[-1]):
-        #     best_ix = np.argmax(hn * rn)
-        best_c1 = c1s[best_ix]
+        if c1 is None:
+            n = np.sum(use_ixs)
+            select = np.random.uniform(size=n) <= 0.8
+            train = np.copy(use_ixs)
+            test = np.copy(use_ixs)
+            train[use_ixs] = select
+            test[use_ixs] = ~select
+            c1s = np.logspace(-1, 2, 15)
+            train_r = np.zeros_like(c1s)
+            test_r = np.zeros_like(c1s)
+            for i, v in enumerate(c1s):
+                s1, s2 = self.estimate_components(metric, v, c2, train, periodic_detector)
+                y = metric
+                train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
+                test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
+            zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
+            hn = zero_one_scale(test_r)
+            rn = zero_one_scale(train_r)
+            best_ix = np.argmin(hn)
+            # if np.isclose(hn[best_ix], hn[-1]):
+            #     best_ix = np.argmax(hn * rn)
+            best_c1 = c1s[best_ix]
+        else:
+            best_c1 = c1
+            hn = None
+            rn = None
+            c1s = None
+            best_ix = None
         s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs, periodic_detector)
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
