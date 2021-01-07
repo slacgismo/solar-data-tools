@@ -34,7 +34,8 @@ def total_variation_filter(signal, C=5):
 
 def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
                                          residual_weights=None, tv_weights=None,
-                                         use_ixs=None):
+                                         use_ixs=None, periodic_detector=False,
+                                         transition_locs=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -53,26 +54,40 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
     if use_ixs is None:
         index_set = ~np.isnan(signal)
     else:
-        index_set = use_ixs
+        index_set = np.logical_and(use_ixs, ~np.isnan(signal))
     s_hat = cvx.Variable(len(signal))
     s_seas = cvx.Variable(len(signal))
     s_error = cvx.Variable(len(signal))
     c1 = cvx.Constant(value=c1)
     c2 = cvx.Constant(value=c2)
     #w = len(signal) / np.sum(index_set)
-    objective = cvx.Minimize(
-        # (365 * 3 / len(signal)) * w *
-        # cvx.sum(cvx.huber(cvx.multiply(residual_weights, s_error)))
-        10 * cvx.norm(cvx.multiply(residual_weights, s_error))
-        + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-        + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-        # + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
-    )
+    if transition_locs is None:
+        objective = cvx.Minimize(
+            # (365 * 3 / len(signal)) * w *
+            # cvx.sum(cvx.huber(cvx.multiply(residual_weights, s_error)))
+            10 * cvx.norm(cvx.multiply(residual_weights, s_error))
+            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            # + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
+        )
+    else:
+        objective = cvx.Minimize(
+            10 * cvx.norm(cvx.multiply(residual_weights, s_error))
+            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+        )
     constraints = [
         signal[index_set] == s_hat[index_set] + s_seas[index_set] + s_error[index_set],
-        s_seas[365:] - s_seas[:-365] == 0,
         cvx.sum(s_seas[:365]) == 0
     ]
+    if len(signal) > 365:
+        constraints.append(s_seas[365:] - s_seas[:-365] == 0)
+        if periodic_detector:
+            constraints.append(s_hat[365:] - s_hat[:-365] == 0)
+    if transition_locs is not None:
+        loc_mask = np.ones(len(signal) - 1, dtype=np.bool)
+        loc_mask[transition_locs] = False
+        # loc_mask[transition_locs + 1] = False
+        constraints.append(cvx.diff(s_hat, k=1)[loc_mask] == 0)
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve()
     return s_hat.value, s_seas.value
@@ -168,8 +183,9 @@ def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.99
     # validate.sort()
 
     s_hat = cvx.Variable(n)
-    s_seas = cvx.Variable(n)
+    s_seas = cvx.Variable(max(n, 366))
     s_error = cvx.Variable(n)
+    s_linear = cvx.Variable(n)
     c1 = cvx.Parameter(value=c1, nonneg=True)
     c2 = cvx.Parameter(value=c2, nonneg=True)
     c3 = cvx.Parameter(value=c3, nonneg=True)
@@ -185,14 +201,15 @@ def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.99
         + c3 * beta ** 2
     )
     constraints = [
-        signal[use_ixs] == s_hat[use_ixs] + s_seas[use_ixs] + s_error[use_ixs],
+        signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
         cvx.sum(s_seas[:365]) == 0
     ]
-    if len(signal) > 365:
+    if True:
         constraints.append(s_seas[365:] - s_seas[:-365] == beta)
+        constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver='MOSEK')
-    return s_hat.value, s_seas.value
+    return s_hat.value, s_seas.value[:n]
 
 def basic_outlier_filter(x, outlier_constant=1.5):
     '''
@@ -235,3 +252,32 @@ def progress(count, total, status='', bar_length=60):
 
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
     sys.stdout.flush()
+
+def find_runs(x):
+    """Find runs of consecutive items in an array.
+    https://gist.github.com/alimanfoo/c5977e87111abe8127453b21204c1065"""
+
+    # ensure array
+    x = np.asanyarray(x)
+    if x.ndim != 1:
+        raise ValueError('only 1D array supported')
+    n = x.shape[0]
+
+    # handle empty array
+    if n == 0:
+        return np.array([]), np.array([]), np.array([])
+
+    else:
+        # find run starts
+        loc_run_start = np.empty(n, dtype=bool)
+        loc_run_start[0] = True
+        np.not_equal(x[:-1], x[1:], out=loc_run_start[1:])
+        run_starts = np.nonzero(loc_run_start)[0]
+
+        # find run values
+        run_values = x[loc_run_start]
+
+        # find run lengths
+        run_lengths = np.diff(np.append(run_starts, n))
+
+        return run_values, run_starts, run_lengths

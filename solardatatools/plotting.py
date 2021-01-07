@@ -9,7 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None):
+def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None, dates=None,
+            year_lines=False):
     """
     A function for plotting the power heat map for solar power data
     
@@ -35,11 +36,29 @@ def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None):
                 ylim = ax.get_ylim()
                 use_day = clear_days
                 days = np.arange(D.shape[1])
-                y1 = np.ones_like(days[use_day]) * D.shape[0] * .99
+                y1 = np.ones_like(days[use_day]) * D.shape[0] * .999
                 ax.scatter(days[use_day], y1, marker='|', color='yellow', s=2)
                 ax.scatter(days[use_day], .995*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .99*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .985*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .98*y1, marker='|', color='yellow', s=2)
+                ax.scatter(days[use_day], .975*y1, marker='|', color='yellow', s=2)
                 ax.set_xlim(*xlim)
                 ax.set_ylim(*ylim)
+        if dates is not None:
+            if D.shape[1] >= 356 * 1.5:
+                mask = np.logical_and(dates.month == 1, dates.day == 1)
+                day_ticks = np.arange(D.shape[1])[mask]
+                plt.xticks(day_ticks, dates[day_ticks].year)
+                plt.xlabel('Year')
+            else:
+                mask = dates.day == 1
+                day_ticks = np.arange(D.shape[1])[mask]
+                plt.xticks(day_ticks, dates[day_ticks].month)
+                plt.xlabel('Month')
+            if year_lines:
+                for d in day_ticks:
+                    plt.axvline(d, ls='--', color='gray', linewidth=1)
         return fig
     else:
         return

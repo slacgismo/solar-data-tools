@@ -6,11 +6,21 @@
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in
 a data set, common data transforms, and fixing time stamp issues. These tools are designed to be
 automatic and require little if any input from the user. Libraries are included to help with data IO
-and plotting as well.  
+and plotting as well.
 
-See notebooks folder for examples.
+There is close integration between this repository and the [Statistical Clear Sky](https://github.com/slacgismo/StatisticalClearSky) repository, which provides a "clear sky model" of system output, given only measured power as an input. 
+
+See [notebooks](/notebooks) folder for examples.
 
 ## Setup
+
+### Recommended: Set up `conda` environment with provided `.yml` file
+
+_Updated September 2020_
+
+We recommend seting up a fresh Python virutal environment in which to use `solar-data-tools`. We recommend using the [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) package management system, and creating an environment with the environment configuration file named `pvi-user.yml`, provided in the top level of this repository. This will install the `statistical-clear-sky` package as well.
+
+Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more information.
 
 ### Installing this project as PIP package
 

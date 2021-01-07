@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema
 from scipy.stats import mode
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
@@ -89,22 +89,28 @@ def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
     else:
         return output
 
-def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
+def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True,
+                          verbose=True):
     '''
-    This function takes in a pandas data frame containing tabular time series data, likely generated with a call to
-    pandas.read_csv(). It is assumed that each row of the data frame corresponds to a unique date-time, though not
-    necessarily on standard intervals. This function will attempt to convert a user-specified column containing time
-    stamps to python datetime objects, assign this column to the index of the data frame, and then standardize the
-    index over time. By standardize, we mean reconstruct the index to be at regular intervals, starting at midnight of
-    the first day of the data set. This solves a couple common data errors when working with raw data. (1) Missing data
-    points from skipped scans in the data acquisition system. (2) Time stamps that are at irregular exact times,
-    including fractional seconds.
+    This function takes in a pandas data frame containing tabular time series
+    data, likely generated with a call to pandas.read_csv(). It is assumed that
+    each row of the data frame corresponds to a unique date-time, though not
+    necessarily on standard intervals. This function will attempt to convert a
+    user-specified column containing time stamps to python datetime objects,
+    assign this column to the index of the data frame, and then standardize the
+    index over time. By standardize, we mean reconstruct the index to be at
+    regular intervals, starting at midnight of the first day of the data set.
+    This solves a couple common data errors when working with raw data.
+    (1) Missing data points from skipped scans in the data acquisition system.
+    (2) Time stamps that are at irregular exact times, including fractional
+    seconds.
 
     :param df: A pandas data frame containing the tabular time series data
     :param datetimekey: An optional key corresponding to the name of the column that contains the time stamps
     :return: A new data frame with a standardized time axis
     '''
     # convert index to timeseries
+    df = df.copy()
     if not timeindex:
         try:
             df[datetimekey] = pd.to_datetime(df[datetimekey])
@@ -115,16 +121,61 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
             df[datetimekey] = pd.to_datetime(df[key])
             df.set_index(datetimekey, inplace=True)
     # standardize the timeseries axis to a regular frequency over a full set of days
+    df.index = pd.to_datetime(df.index)
     try:
         diff = (df.index[1:] - df.index[:-1]).seconds
-        freq = int(np.median(diff[~np.isnan(diff)]))  # the number of seconds between each measurement
+        # print('case 1')
     except AttributeError:
         diff = df.index[1:] - df.index[:-1]
-        freq = np.median(diff) / np.timedelta64(1, 's')
+        diff /= np.timedelta64(1, 's')
+        # print('case 2')
+
+    diff = (np.round(diff / 10, ) * 10).astype(np.int64)          # Round to the nearest 10 seconds
+    done = False
+    deltas = []
+    fltr = np.ones_like(diff, dtype=np.bool)
+    while not done:
+        for d in deltas:
+            fltr = np.logical_and(fltr, diff != d)
+        delta, count = mode(diff[fltr])
+        if count / len(diff) < 0.01 or len(delta) == 0:
+            done = True
+        else:
+            deltas.append(delta[0])
+    freq = deltas[0]       # the number of seconds between each measurement
+    if len(deltas) > 1:
+        if verbose:
+            print('CAUTION: Multiple scan rates detected!')
+            print('Scan rates (in seconds):', deltas)
+            df['deltas'] = np.r_[diff, [0]]
+            daily_scanrate = df['deltas'].groupby(df.index.date).median()
+            slct = np.zeros(len(daily_scanrate))
+            for d in deltas:
+                slct = np.logical_or(daily_scanrate == d, slct)
+            leading = daily_scanrate[slct].index[
+                np.r_[np.diff(daily_scanrate[slct]) != 0, [False]]
+            ]
+            trailing = daily_scanrate[slct].index[
+                np.r_[[False], np.diff(daily_scanrate[slct]) != 0]
+            ]
+            if len(leading) == 1:
+                print('\n1 transition detected.\n')
+            else:
+                print('{} transitions detected.'.format(len(leading)))
+            print('Suggest splitting data set between:')
+            for l, t in zip(leading, trailing):
+                print('    ', l, 'and', t)
+            print('\n')
+            del df['deltas']
+
+
     start = df.index[0]
     end = df.index[-1]
 
-    time_index = pd.date_range(start=start.date(), end=end.date() + timedelta(days=1), freq='{}s'.format(freq))[:-1]
+    time_index = pd.date_range(
+        start=start.date(), end=end.date() + timedelta(days=1),
+        freq='{}s'.format(freq)
+    )[:-1]
     # This forces the existing data into the closest new timestamp to the
     # old timestamp.
     df = df.loc[df.index.notnull()]\
@@ -132,7 +183,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True):
     return df
 
 def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=False):
-    index = df.index.tz_localize(tz, errors='coerce', ambiguous='NaT')\
+    index = df.index.tz_localize(tz, nonexistent='NaT', ambiguous='NaT')\
                 .tz_convert('Etc/GMT+{}'.format(TZ_LOOKUP[tz]))\
                 .tz_localize(None)
     if inplace:
@@ -142,65 +193,3 @@ def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=Fal
         df_out = df.copy()
         df_out.index = index
         return df_out
-
-def fix_time_shifts(data, verbose=False, return_ixs=False, use_ixs=None,
-                    c1=5., c2=200., c3=5., solar_noon_estimator='com'):
-    '''
-    This is an algorithm to detect and fix time stamping shifts in a PV power database. This is a common data error
-    that can have a number of causes: improper handling of DST, resetting of a data logger clock, or issues with
-    storing the data in the database. The algorithm performs as follows:
-    Part 1:
-        a) Estimate solar noon for each day relative to the provided time axis. This is estimated as the "center of
-           mass" in time of the energy production each day.
-        b) Filter this signal for clear days
-        c) Fit a total variation filter with seasonal baseline to the output of (b)
-        d) Perform KDE-based clustering on the output of (c)
-        e) Extract the days on which the transitions between clusters occur
-    Part 2:
-        a) Find the average solar noon value for each cluster
-        b) Taking the first cluster as a reference point, find the offsets in average values between the first cluster
-           and all others
-        c) Adjust the time axis for all clusters after the first by the amount calculated in (b)
-
-    :param data: A 2D numpy array containing a solar power time series signal (see `data_transforms.make_2d`)
-    :param verbose: An option to print information about what clusters are found
-    :param return_ixs: An option to return the indices of the boundary days for the clusters
-    :return:
-    '''
-    D = data
-    #################################################################################################################
-    # Part 1: Detecting the days on which shifts occurs. If no shifts are detected, the algorithm exits, returning
-    # the original data array. Otherwise, the algorithm proceeds to Part 2.
-    #################################################################################################################
-    if solar_noon_estimator == 'com':
-        # Find "center of mass" of each day's energy content. This generates a 1D signal from the 2D input signal.
-        s1 = energy_com(D)
-    elif solar_noon_estimator == 'srsn':
-        # estimate solar noon as the average of sunrise time and sunset time
-        s1 = avg_sunrise_sunset(D)
-    if use_ixs is None:
-        use_ixs = ~np.isnan(s1)
-    # Iterative reweighted L1 heuristic
-    w = np.ones(len(s1) - 1)
-    eps = 0.1
-    for i in range(5):
-        s_tv, s_seas = total_variation_plus_seasonal_filter(
-            s1, c1=c1, c2=c2,
-            tv_weights=w,
-            use_ixs=use_ixs
-        )
-        w = 1 / (eps + np.abs(np.diff(s_tv, n=1)))
-    # Apply corrections
-    roll_by_index = np.round((mode(np.round(s_tv, 3)).mode[0] - s_tv) * D.shape[0] / 24, 0)
-    Dout = np.copy(D)
-    for roll in np.unique(roll_by_index):
-        if roll != 0:
-            ixs = roll_by_index == roll
-            Dout[:, ixs] = np.roll(D, int(roll), axis=0)[:, ixs]
-    # record indices of transition points
-    index_set = np.arange(len(s_tv) - 1)[np.round(np.diff(s_tv, n=1), 0) != 0]
-
-    if return_ixs:
-        return Dout, index_set
-    else:
-        return Dout

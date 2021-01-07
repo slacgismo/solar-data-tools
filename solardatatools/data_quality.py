@@ -43,7 +43,7 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
     capacity_est = np.quantile(data_matrix[~nans], 0.95)
     data_copy = np.copy(data_matrix)
     data_copy[nans] = 0.
-    foo = data_copy > 0.005 * capacity_est
+    foo = data_copy > 0.02 * capacity_est
     density_signal = np.sum(foo, axis=0) / data_matrix.shape[0]
     use_days = density_signal > threshold
     fit_signal = local_quantile_regression_with_seasonal(

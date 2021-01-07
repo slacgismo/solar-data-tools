@@ -1,0 +1,33 @@
+name: pvi-user
+channels:
+  - mosek
+  - slacgismo
+  - conda-forge
+  - defaults
+dependencies:
+  - jupyter
+  - ipython
+  - matplotlib
+  - scipy
+  - seaborn
+  - python=3.7.6
+  - pandas
+  - pip
+  - nose
+  - numpy
+  - requests
+  - scikit-learn
+  - s3fs
+  - solar-data-tools
+  - statistical-clear-sky
+  - cassandra-driver
+  - openblas
+  - mosek
+  - pip:
+    - cvxpy
+    - dill
+    - ecos
+    - future
+    - multiprocess
+    - osqp
+    - scs

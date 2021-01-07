@@ -4,18 +4,20 @@
 This module contains functions for obtaining data from various sources.
 
 '''
-from solardatatools.time_axis_manipulation import standardize_time_axis,\
+from solardatatools.time_axis_manipulation import standardize_time_axis, \
     fix_daylight_savings_with_known_tz
 from solardatatools.utilities import progress
 
 from time import time
 from io import StringIO
-
+import os
+import json
 import requests
+import numpy as np
 import pandas as pd
 
 
-def get_pvdaq_data(sysid=2, api_key = 'DEMO_KEY', year=2011, delim=',',
+def get_pvdaq_data(sysid=2, api_key='DEMO_KEY', year=2011, delim=',',
                    standardize=True):
     """
     This fuction queries one or more years of raw PV system data from NREL's PVDAQ data service:
@@ -103,4 +105,77 @@ def load_pvo_data(file_index=None, id_num=None, location='s3://pv.insight.nrel/P
         fix_daylight_savings_with_known_tz(df, tz=tz, inplace=True)
     if verbose:
         print('index: {}; system ID: {}'.format(file_index, id_num))
+    return df
+
+
+def load_cassandra_data(siteid, column='ac_power', sensor=None, tmin=None,
+                        tmax=None, limit=None, cluster_ip=None, verbose=True):
+    try:
+        from cassandra.cluster import Cluster
+    except ImportError:
+        print('Please install cassandra-driver in your Python environment to use this function')
+        return
+    ti = time()
+    if cluster_ip is None:
+        home = os.path.expanduser("~")
+        cluster_location_file = home + '/.aws/cassandra_cluster'
+        try:
+            with open(cluster_location_file) as f:
+                cluster_ip = f.readline().strip('\n')
+        except FileNotFoundError:
+            msg = 'Please put text file containing cluster IP address in '
+            msg += '~/.aws/cassander_cluster or provide your own IP address'
+            print(msg)
+            return
+    cluster = Cluster([cluster_ip])
+    session = cluster.connect('measurements')
+    cql = """
+        select site, meas_name, ts, sensor, meas_val_f 
+        from measurement_raw
+        where site = '{}'
+            and meas_name = '{}'
+    """.format(siteid, column)
+    ts_constraint = np.logical_or(
+        tmin is not None,
+        tmax is not None
+    )
+    if tmin is not None:
+        cql += "and ts > '{}'\n".format(tmin)
+    if tmax is not None:
+        cql += "and ts < '{}'\n".format(tmax)
+    if sensor is not None and ts_constraint:
+        cql += "and sensor = '{}'\n".format(sensor)
+    elif sensor is not None and not ts_constraint:
+        cql += "and ts > '2000-01-01'\n"
+        cql += "and sensor = '{}'\n".format(sensor)
+    if limit is not None:
+        cql += "limit {}".format(np.int(limit))
+    cql += ';'
+    rows = session.execute(cql)
+    df = pd.DataFrame(list(rows), )
+    df.replace(-999999.0, np.NaN, inplace=True)
+    tf = time()
+    if verbose:
+        print('Query of {} rows complete in {:.2f} seconds'.format(
+            len(df), tf - ti)
+        )
+    return df
+
+
+def load_constellation_data(file_id, location='s3://pv.insight.misc/pv_fleets/',
+                            data_fn_pattern='{}_20201006_composite.csv',
+                            index_col=0, parse_dates=[0], json_file=False):
+    df = pd.read_csv(location + data_fn_pattern.format(file_id), index_col=index_col, parse_dates=parse_dates)
+
+    if json_file:
+        try:
+            from smart_open import smart_open
+        except ImportError:
+            print('Please install smart_open in your Python environment to use this function')
+            return df, None
+
+        for line in smart_open(location + str(file_id) + '_system_details.json', 'rb'):
+            file_json = json.loads(line)
+            file_json
+        return df, file_json
     return df
