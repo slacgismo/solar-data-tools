@@ -1,6 +1,24 @@
 Setup
 -----
 
+Recommended: Set up ``conda`` environment with provided ``.yml`` file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*Updated September 2020*
+
+We recommend seting up a fresh Python virutal environment in which to
+use ``solar-data-tools``. We recommend using the
+`Conda <https://docs.conda.io/projects/conda/en/latest/index.html>`__
+package management system, and creating an environment with the
+environment configuration file named ``pvi-user.yml``, provided in the
+top level of this repository. This will install the
+``statistical-clear-sky`` package as well.
+
+Please see the Conda documentation page, "`Creating an environment from
+an environment.yml
+file <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file>`__\ "
+for more information.
+
 Installing this project as PIP package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
