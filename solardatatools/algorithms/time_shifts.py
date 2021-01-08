@@ -32,6 +32,7 @@ class TimeShift():
         self.normalized_train_error = None
         self.best_c1 = None
         self.best_ix = None
+        self.__recursion_depth = 0
 
     def run(self, data, use_ixs=None, c1=None, c2=200.,
             solar_noon_estimator='com', threshold=0.1, periodic_detector=False):
@@ -47,24 +48,15 @@ class TimeShift():
         self.use_ixs = use_ixs
         # Optimize c1
         if c1 is None:
-            n = np.sum(use_ixs)
-            select = np.random.uniform(size=n) <= 0.7
-            train = np.copy(use_ixs)
-            test = np.copy(use_ixs)
-            train[use_ixs] = select
-            test[use_ixs] = ~select
             c1s = np.logspace(-1, 2, 15)
-            train_r = np.zeros_like(c1s)
-            test_r = np.zeros_like(c1s)
-            for i, v in enumerate(c1s):
-                s1, s2 = self.estimate_components(metric, v, c2, train, periodic_detector)
-                y = metric
-                train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
-                test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
-            zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
-            hn = zero_one_scale(test_r)
-            rn = zero_one_scale(train_r)
-            best_ix = np.argmin(hn)
+            hn, rn, tv_metric, best_ix = self.optimize_c1(
+                metric, c1s, use_ixs, c2, periodic_detector
+            )
+            if tv_metric[best_ix] >= 0.009:
+                # rerun the optimizer with a new random data selection
+                hn, rn, tv_metric, best_ix = self.optimize_c1(
+                    metric, c1s, use_ixs, c2, periodic_detector
+                )
             # if np.isclose(hn[best_ix], hn[-1]):
             #     best_ix = np.argmax(hn * rn)
             best_c1 = c1s[best_ix]
@@ -72,6 +64,7 @@ class TimeShift():
             best_c1 = c1
             hn = None
             rn = None
+            tv_metric = None
             c1s = None
             best_ix = None
         s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs, periodic_detector)
@@ -80,6 +73,19 @@ class TimeShift():
         s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs,
                                           periodic_detector,
                                           transition_locs=index_set)
+        cond1 = np.isclose(np.max(s2), 0.5)
+        cond2 = c1 is None
+        cond3 = self.__recursion_depth < 2
+        if cond1 and cond2 and cond3:
+            # Unlikely that constraint should be active. Try a different
+            # random sampling
+            self.__recursion_depth += 1
+            self.run(
+                data, use_ixs=use_ixs, c1=c1, c2=c2,
+                solar_noon_estimator=solar_noon_estimator, threshold=threshold,
+                periodic_detector=periodic_detector
+            )
+            return
         # Apply corrections
         roll_by_index = np.round(
             (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0)
@@ -95,6 +101,7 @@ class TimeShift():
         # save results
         self.normalized_holdout_error = hn
         self.normalized_train_error = rn
+        self.tv_metric = tv_metric
         self.c1_vals = c1s
         self.best_c1 = best_c1
         self.best_ix = best_ix
@@ -102,6 +109,31 @@ class TimeShift():
         self.s2 = s2
         self.index_set = index_set
         self.corrected_data = Dout
+        self.__recursion_depth = 0
+
+    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector):
+        n = np.sum(use_ixs)
+        select = np.random.uniform(size=n) <= 0.7 # random holdout selection
+        train = np.copy(use_ixs)
+        test = np.copy(use_ixs)
+        train[use_ixs] = select
+        test[use_ixs] = ~select
+        train_r = np.zeros_like(c1s)
+        test_r = np.zeros_like(c1s)
+        tv_metric = np.zeros_like(c1s)
+        for i, v in enumerate(c1s):
+            s1, s2 = self.estimate_components(metric, v, c2, train,
+                                              periodic_detector)
+            y = metric
+            train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
+            test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
+            tv_metric[i] = np.average(np.abs(np.diff(s1, n=1)))
+        zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
+        hn = zero_one_scale(test_r)
+        rn = zero_one_scale(train_r)
+        best_ix = np.argmin(hn)
+        return hn, rn, tv_metric, best_ix
+
 
     def estimate_components(self, metric, c1, c2, use_ixs, periodic_detector,
                             transition_locs=None):
@@ -142,7 +174,11 @@ class TimeShift():
             plt.xscale('log')
             plt.title('holdout error times training error')
             plt.show()
-            print(hn)
+            plt.plot(c1s, self.tv_metric, marker='.')
+            plt.axvline(best_c1, ls='--', color='red')
+            plt.xscale('log')
+            plt.title('Total variation metric')
+            plt.show()
 
     def apply_corrections(self, data):
         roll_by_index = self.roll_by_index
