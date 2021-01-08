@@ -114,7 +114,8 @@ class TimeShift():
                 tv_weights=w,
                 use_ixs=use_ixs,
                 periodic_detector=periodic_detector,
-                transition_locs=transition_locs
+                transition_locs=transition_locs,
+                seas_max = 0.5
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
