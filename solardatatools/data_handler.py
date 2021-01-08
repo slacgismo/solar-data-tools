@@ -99,7 +99,7 @@ class DataHandler():
                      density_lower_threshold=0.6, density_upper_threshold=1.05,
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
-                     start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
+                     start_day_ix=None, end_day_ix=None, c1=None, c2=500.,
                      solar_noon_estimator='com', correct_tz=True, extra_cols=None,
                      daytime_threshold=0.1, units='W'):
         self.daily_scores = DailyScores()
