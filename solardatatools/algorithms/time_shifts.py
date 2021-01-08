@@ -48,7 +48,7 @@ class TimeShift():
         # Optimize c1
         if c1 is None:
             n = np.sum(use_ixs)
-            select = np.random.uniform(size=n) <= 0.8
+            select = np.random.uniform(size=n) <= 0.7
             train = np.copy(use_ixs)
             test = np.copy(use_ixs)
             train[use_ixs] = select
@@ -83,6 +83,9 @@ class TimeShift():
         # Apply corrections
         roll_by_index = np.round(
             (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0)
+        correction_metric = np.average(np.abs(roll_by_index))
+        if correction_metric < 0.01:
+            roll_by_index[:] = 0
         self.roll_by_index = roll_by_index
         index_set = np.arange(len(roll_by_index) - 1)[
             np.round(np.diff(roll_by_index, n=1), 3) != 0
