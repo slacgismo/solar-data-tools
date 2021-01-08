@@ -109,6 +109,8 @@ class DataHandler():
         self.extra_matrices = {}            # Matrix views of extra columns
         self.extra_quality_scores = {}
         self.power_units = units
+        if self.__recursion_depth == 0:
+            self.tz_correction = 0
         t = np.zeros(6)
         ######################################################################
         # Preprocessing
@@ -371,6 +373,8 @@ class DataHandler():
         times = np.diff(t, n=1)
         cleaning_times = np.diff(t_clean, n=1)
         total_time = t[-1] - t[0]
+        # Cleanup
+        self.__recursion_depth = 0
         if verbose:
             if self.__initial_time is not None:
                 restart_msg = '{:.2f} seconds spent automatically localizing the time zone\n'
