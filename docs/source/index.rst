@@ -10,7 +10,7 @@ There is close integration between this repository and the `Statistical Clear Sk
 See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebooks>`_ folder for examples.
 
 Contents
-^^^^^
+^^^^^^^^
 
 .. toctree::
    :maxdepth: 1
