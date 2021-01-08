@@ -84,6 +84,9 @@ class TimeShift():
         roll_by_index = np.round(
             (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0)
         self.roll_by_index = roll_by_index
+        index_set = np.arange(len(roll_by_index) - 1)[
+            np.round(np.diff(roll_by_index, n=1), 3) != 0
+        ]
         Dout = self.apply_corrections(data)
 
         # save results
