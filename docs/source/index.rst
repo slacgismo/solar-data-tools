@@ -17,10 +17,10 @@ Contents
 
    setup
    usage
+   modules
    versioning
    authors
    license
-   modules
 
 
 
