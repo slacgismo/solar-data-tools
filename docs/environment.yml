@@ -96,5 +96,3 @@ dependencies:
     - typing-extensions==3.7.4.3
     - wrapt==1.12.1
     - yarl==1.6.3
-prefix: /Users/derins/opt/anaconda3/envs/venv_rdt
-
