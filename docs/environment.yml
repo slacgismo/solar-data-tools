@@ -9,7 +9,6 @@ dependencies:
   - ca-certificates=2020.12.8=hecd8cb5_0
   - certifi=2020.12.5=py39hecd8cb5_0
   - cffi=1.14.4=py39h2125817_0
-  - chardet=4.0.0=py39hecd8cb5_1003
   - colorama=0.4.4=pyhd3eb1b0_0
   - cryptography=3.3.1=py39hbcfaee0_0
   - cycler=0.10.0=py39hecd8cb5_0
@@ -74,12 +73,28 @@ dependencies:
   - zlib=1.2.11=h1de35cc_3
   - zstd=1.4.5=h41d2c2f_0
   - pip:
+    - aiobotocore==1.2.0
+    - aiohttp==3.7.3
+    - aioitertools==0.7.1
+    - async-timeout==3.0.1
+    - attrs==20.3.0
+    - botocore==1.19.52
+    - chardet==3.0.4
     - cvxpy==1.1.7
     - ecos==2.0.7.post1
+    - fsspec==0.8.5
+    - jmespath==0.10.0
     - joblib==1.0.0
+    - multidict==5.1.0
     - osqp==0.6.2
     - qdldl==0.1.5.post0
+    - s3fs==0.5.2
     - scikit-learn==0.24.0
     - scs==2.1.2
     - sklearn==0.0
     - threadpoolctl==2.1.0
+    - typing-extensions==3.7.4.3
+    - wrapt==1.12.1
+    - yarl==1.6.3
+prefix: /Users/derins/opt/anaconda3/envs/venv_rdt
+
