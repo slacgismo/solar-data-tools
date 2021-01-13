@@ -13,14 +13,14 @@ Contents
 ^^^^^^^^
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
 
    setup
    usage
+   modules
    versioning
    authors
    license
-
 
 
 
