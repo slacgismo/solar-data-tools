@@ -99,7 +99,7 @@ class DataHandler():
                      density_lower_threshold=0.6, density_upper_threshold=1.05,
                      linearity_threshold=0.1, clear_day_smoothness_param=0.9,
                      clear_day_energy_param=0.8, verbose=True,
-                     start_day_ix=None, end_day_ix=None, c1=2., c2=500.,
+                     start_day_ix=None, end_day_ix=None, c1=None, c2=500.,
                      solar_noon_estimator='com', correct_tz=True, extra_cols=None,
                      daytime_threshold=0.1, units='W'):
         self.daily_scores = DailyScores()
@@ -109,6 +109,8 @@ class DataHandler():
         self.extra_matrices = {}            # Matrix views of extra columns
         self.extra_quality_scores = {}
         self.power_units = units
+        if self.__recursion_depth == 0:
+            self.tz_correction = 0
         t = np.zeros(6)
         ######################################################################
         # Preprocessing
@@ -183,7 +185,7 @@ class DataHandler():
                 if self.__initial_time is not None:
                     self.__initial_time = t[0]
                 self.run_pipeline(
-                    self, power_col=power_col, min_val=min_val,
+                    power_col=power_col, min_val=min_val,
                     max_val=max_val, zero_night=zero_night,
                     interp_day=interp_day, fix_shifts=fix_shifts,
                     density_lower_threshold=density_lower_threshold,
@@ -371,6 +373,8 @@ class DataHandler():
         times = np.diff(t, n=1)
         cleaning_times = np.diff(t_clean, n=1)
         total_time = t[-1] - t[0]
+        # Cleanup
+        self.__recursion_depth = 0
         if verbose:
             if self.__initial_time is not None:
                 restart_msg = '{:.2f} seconds spent automatically localizing the time zone\n'

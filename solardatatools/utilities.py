@@ -35,7 +35,8 @@ def total_variation_filter(signal, C=5):
 def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
                                          residual_weights=None, tv_weights=None,
                                          use_ixs=None, periodic_detector=False,
-                                         transition_locs=None):
+                                         transition_locs=None,
+                                         seas_max=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -88,6 +89,8 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
         loc_mask[transition_locs] = False
         # loc_mask[transition_locs + 1] = False
         constraints.append(cvx.diff(s_hat, k=1)[loc_mask] == 0)
+    if seas_max is not None:
+        constraints.append(s_seas <= seas_max)
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve()
     return s_hat.value, s_seas.value
