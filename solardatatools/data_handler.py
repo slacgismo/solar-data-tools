@@ -185,7 +185,7 @@ class DataHandler():
                 if self.__initial_time is not None:
                     self.__initial_time = t[0]
                 self.run_pipeline(
-                    self, power_col=power_col, min_val=min_val,
+                    power_col=power_col, min_val=min_val,
                     max_val=max_val, zero_night=zero_night,
                     interp_day=interp_day, fix_shifts=fix_shifts,
                     density_lower_threshold=density_lower_threshold,
