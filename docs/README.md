@@ -1,11 +1,6 @@
 ## Instructions to getting started locally:
 
-```sh
-conda env create -f environment.yml
-conda activate venv_rdt
-```
-
-Navigate to docs/source and run
+Navigate to ./docs and run (make sure pvi-user conda env is active)
 
 ```sh
 $ make html

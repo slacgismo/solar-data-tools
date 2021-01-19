@@ -31,3 +31,6 @@ dependencies:
     - multiprocess
     - osqp
     - scs
+    - sphinx
+    - sphinxcontrib-apidoc
+    - sphinx-rtd-theme
