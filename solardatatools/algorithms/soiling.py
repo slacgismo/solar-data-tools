@@ -9,8 +9,8 @@ import numpy as np
 import cvxpy as cvx
 
 
-def soiling_seperation_algorithm(observed, iterations=5, weights=None,
-                                 index_set=None, tau=0.85):
+def soiling_seperation(observed, iterations=5, weights=None, index_set=None,
+                       tau=0.85):
     if weights is None:
         weights =  np.ones_like(observed)
     if index_set is None:
