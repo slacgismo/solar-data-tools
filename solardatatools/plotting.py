@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None, dates=None,
-            year_lines=False):
+            year_lines=False, ax=None):
     """
     A function for plotting the power heat map for solar power data
     
@@ -24,7 +24,10 @@ def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None, dates=None,
     """
     if D is not None:
         with sns.axes_style("white"):
-            fig, ax = plt.subplots(nrows=1, figsize=figsize)
+            if ax is None:
+                fig, ax = plt.subplots(nrows=1, figsize=figsize)
+            else:
+                fig = ax.get_figure()
             foo = ax.imshow(D, cmap='plasma', interpolation='none', aspect='auto', vmin=0)
             ax.set_title('Measured power')
             plt.colorbar(foo, ax=ax, label=units)
