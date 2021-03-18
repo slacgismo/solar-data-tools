@@ -894,6 +894,17 @@ class DataHandler():
                      )
         self.scsf = scsf
 
+    def calculate_scsf_performance_index(self):
+        if self.scsf is None:
+            print('No SCSF model detected. Fitting now...')
+            self.fit_statistical_clear_sky_model()
+        clear = self.scsf.estimated_power_matrix
+        clear_energy = np.sum(clear, axis=0)
+        measured_energy = np.sum(self.filled_data_matrix, axis=0)
+        pi = np.divide(measured_energy, clear_energy)
+        return pi
+
+
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
                      scale_to_kw=True, year_lines=True):
         if matrix == 'raw':
