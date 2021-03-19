@@ -13,6 +13,7 @@ from solardatatools.algorithms import SunriseSunset
 
 def zero_nighttime(data_matrix, night_mask=None, daytime_threshold=0.005):
     D = np.copy(data_matrix)
+    D[D < 0] = 0
     if night_mask is None:
         ss = SunriseSunset()
         ss.calculate_times(data_matrix, threshold=daytime_threshold)
