@@ -19,14 +19,12 @@ register_matplotlib_converters()
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis
 from solardatatools.matrix_embedding import make_2d
-from solardatatools.data_quality import daily_missing_data_advanced,\
-    daily_missing_data_simple, dataset_quality_score
+from solardatatools.data_quality import daily_missing_data_advanced
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
-from solardatatools.daytime import find_daytime
 from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
 
 class DataHandler():
@@ -140,7 +138,7 @@ class DataHandler():
             self.power_units = 'kW'
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         ss = SunriseSunset()
-        ss.run_optimizer(self.raw_data_matrix)
+        ss.run_optimizer(self.raw_data_matrix, plot=False)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
         self.daytime_analysis = ss
         ### TZ offset detection and correction ###
@@ -272,7 +270,7 @@ class DataHandler():
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
         ######################################################################
-        # Cleaning
+        # Scoring
         ######################################################################
         t[2] = time()
         t_clean = np.zeros(6)
