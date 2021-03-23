@@ -29,7 +29,7 @@ from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
-                 convert_to_ts=False):
+                 convert_to_ts=False, aggregate=None, how=lambda x: x.mean()):
         if data_frame is not None:
             if convert_to_ts:
                 data_frame, keys = make_time_series(data_frame)
@@ -38,6 +38,9 @@ class DataHandler():
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
             self.data_frame = None
+            if aggregate is not None:
+                new_data = how(self.data_frame_raw.resample(aggregate))
+                self.data_frame_raw = new_data
         else:
             self.data_frame_raw = None
             self.data_frame = None
