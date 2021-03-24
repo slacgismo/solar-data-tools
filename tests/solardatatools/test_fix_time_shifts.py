@@ -49,7 +49,7 @@ class TestFixTimeShift(unittest.TestCase):
                 + "because default ECOS solver fails with large data. "
                 + "Unless MOSEK is installed, this test fails.")
         else:
-            np.testing.tst.assert_almost_equal(
+            np.testing.assert_almost_equal(
                 actual_power_data_fix,
                 expected_power_data_fix,
                 decimal=.2
