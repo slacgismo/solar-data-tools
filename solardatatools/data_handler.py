@@ -19,19 +19,17 @@ register_matplotlib_converters()
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis
 from solardatatools.matrix_embedding import make_2d
-from solardatatools.data_quality import daily_missing_data_advanced,\
-    daily_missing_data_simple, dataset_quality_score
+from solardatatools.data_quality import daily_missing_data_advanced
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
-from solardatatools.daytime import find_daytime
 from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None,
-                 convert_to_ts=False):
+                 convert_to_ts=False, aggregate=None, how=lambda x: x.mean()):
         if data_frame is not None:
             if convert_to_ts:
                 data_frame, keys = make_time_series(data_frame)
@@ -40,6 +38,9 @@ class DataHandler():
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
             self.data_frame = None
+            if aggregate is not None:
+                new_data = how(self.data_frame_raw.resample(aggregate))
+                self.data_frame_raw = new_data
         else:
             self.data_frame_raw = None
             self.data_frame = None
@@ -140,7 +141,7 @@ class DataHandler():
             self.power_units = 'kW'
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         ss = SunriseSunset()
-        ss.run_optimizer(self.raw_data_matrix)
+        ss.run_optimizer(self.raw_data_matrix, plot=False)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
         self.daytime_analysis = ss
         ### TZ offset detection and correction ###
@@ -272,7 +273,7 @@ class DataHandler():
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
         ######################################################################
-        # Cleaning
+        # Scoring
         ######################################################################
         t[2] = time()
         t_clean = np.zeros(6)
@@ -893,6 +894,17 @@ class DataHandler():
                      verbose=verbose, bootstraps=bootstraps
                      )
         self.scsf = scsf
+
+    def calculate_scsf_performance_index(self):
+        if self.scsf is None:
+            print('No SCSF model detected. Fitting now...')
+            self.fit_statistical_clear_sky_model()
+        clear = self.scsf.estimated_power_matrix
+        clear_energy = np.sum(clear, axis=0)
+        measured_energy = np.sum(self.filled_data_matrix, axis=0)
+        pi = np.divide(measured_energy, clear_energy)
+        return pi
+
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
                      scale_to_kw=True, year_lines=True):

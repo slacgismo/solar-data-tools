@@ -39,6 +39,7 @@ class SunriseSunset():
 
     def calculate_times(self, data, threshold=None, plot=False,
                         figsize=(12, 10), groundtruth=None, zoom_fit=False):
+        # print('Calculating times')
         if threshold is None:
             if self.threshold is not None:
                 threshold = self.threshold
@@ -220,7 +221,7 @@ class SunriseSunset():
                 full_error.append(1e2)
         ho_error = np.array(ho_error)
         min_val = np.min(ho_error)
-        slct_vals = ho_error < 1.2 * min_val
+        slct_vals = ho_error < 1.1 * min_val # everything within 10% of min val
         selected_th = np.min(ths[slct_vals])
         bool_msk = detect_sun(data, selected_th)
         measured = rise_set_rough(bool_msk)
