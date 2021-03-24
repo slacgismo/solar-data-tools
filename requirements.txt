@@ -1,5 +1,5 @@
 scipy
-numpy==1.18.1
+numpy
 pandas
 scikit-learn
 jupyter
