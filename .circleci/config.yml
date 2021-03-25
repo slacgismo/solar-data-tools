@@ -14,7 +14,7 @@ jobs:
           command: |
             sudo pip install -r requirements.txt
             sudo pip install awscli coverage
-            sudo pip install -f https://download.mosek.com/stable/wheel/index.html Mosek==8.1.63
+            sudo pip install -f https://download.mosek.com/stable/wheel/index.html
       
       - run:
           name: Setup Mosek License File
