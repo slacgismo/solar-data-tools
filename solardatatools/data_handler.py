@@ -28,7 +28,7 @@ from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
 
 class DataHandler():
-    def __init__(self, data_frame=None, raw_data_matrix=None,
+    def __init__(self, data_frame=None, raw_data_matrix=None, datetime_col=None,
                  convert_to_ts=False, aggregate=None, how=lambda x: x.mean()):
         if data_frame is not None:
             if convert_to_ts:
@@ -37,6 +37,18 @@ class DataHandler():
             else:
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
+            if not isinstance(self.data_frame_raw.index, pd.DatetimeIndex):
+                if datetime_col is not None:
+                    df = self.data_frame_raw
+                    df[datetime_col] = pd.to_datetime(df[datetime_col])
+                    df.set_index(datetime_col, inplace=True)
+                else:
+                    e = "Data frame must have a DatetimeIndex or"
+                    e += "the user must set the datetime_col kwarg."
+                    raise Exception(e)
+            df_index = self.data_frame_raw.index
+            if df_index.tz is not None:
+                df_index = df_index.tz_localize(None)
             self.data_frame = None
             if aggregate is not None:
                 new_data = how(self.data_frame_raw.resample(aggregate))
@@ -907,18 +919,21 @@ class DataHandler():
 
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
-                     scale_to_kw=True, year_lines=True):
+                     scale_to_kw=True, year_lines=True, units=None):
         if matrix == 'raw':
             mat = np.copy(self.raw_data_matrix)
         elif matrix == 'filled':
             mat = np.copy(self.filled_data_matrix)
+        elif matrix in self.extra_matrices.keys():
+            mat = self.extra_matrices[matrix]
         else:
             return
-        if scale_to_kw and self.power_units == 'W':
-            mat /= 1000
-            units = 'kW'
-        else:
-            units = self.power_units
+        if units is None:
+            if scale_to_kw and self.power_units == 'W':
+                mat /= 1000
+                units = 'kW'
+            else:
+                units = self.power_units
         if flag is None:
             return plot_2d(mat, figsize=figsize,
                            dates=self.day_index, year_lines=year_lines,

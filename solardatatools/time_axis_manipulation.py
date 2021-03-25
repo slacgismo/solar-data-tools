@@ -55,7 +55,7 @@ def make_time_series(df, return_keys=True, localize_time=-8, timestamp_key='ts',
     # Determine the start and end times
     start = df.iloc[0][timestamp_key]
     end = df.iloc[-1][timestamp_key]
-    time_index = pd.to_datetime(df['ts'].sort_values())
+    time_index = pd.to_datetime(df[timestamp_key].sort_values())
     time_index = time_index[~time_index.duplicated(keep='first')]
     output = pd.DataFrame(index=time_index)
     site_keys = []
@@ -178,7 +178,12 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True,
     )[:-1]
     # This forces the existing data into the closest new timestamp to the
     # old timestamp.
-    df = df.loc[df.index.notnull()]\
+    try:
+        df = df.loc[df.index.notnull()]\
+                .reindex(index=time_index, method='nearest', limit=1)
+    except TypeError:
+        df.index = df.index.tz_localize(None)
+        df = df.loc[df.index.notnull()] \
             .reindex(index=time_index, method='nearest', limit=1)
     return df
 

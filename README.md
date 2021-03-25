@@ -16,9 +16,11 @@ See [notebooks](/notebooks) folder for examples.
 
 ### Recommended: Set up `conda` environment with provided `.yml` file
 
-_Updated September 2020_
+_Updated March 2021_
 
-We recommend seting up a fresh Python virutal environment in which to use `solar-data-tools`. We recommend using the [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) package management system, and creating an environment with the environment configuration file named `pvi-user.yml`, provided in the top level of this repository. This will install the `statistical-clear-sky` package as well.
+We recommend setting up a fresh Python virtual environment in which to use `solar-data-tools`. We recommend using the [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) package management system, and creating an environment with the environment configuration file named `pvi-user.yml`, provided in the top level of this repository. This will install the `statistical-clear-sky` package as well.
+
+Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
 
 Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more information.
 
@@ -41,14 +43,10 @@ $ pip install statistical-clear-sky
 
 #### Solvers
 
-By default, ECOS solver is used, which is supported by cvxpy because it is Open Source.
 
-However, it is found that Mosek solver is more stable. Thus, we encourage you to install it separately as below and obtain the license on your own.
+Currently, this sofware package requires the use of a commercial software package called MOSEK. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
 
-* [mosek](https://www.mosek.com/resources/getting-started/) - For using MOSEK solver.
-
-    ```sh
-    $ pip install -f https://download.mosek.com/stable/wheel/index.html Mosek
+* [mosek](https://www.mosek.com/resources/getting-started/)stall -f https://download.mosek.com/stable/wheel/index.html Mosek
     ```
 
 ### Installing this project as Anaconda package
@@ -65,11 +63,8 @@ By default, ECOS solver is used, which is supported by cvxpy because it is Open 
 
 However, it is found that Mosek solver is more stable. Thus, we encourage you to install it separately as below and obtain the license on your own.
 
-* [mosek](https://www.mosek.com/resources/getting-started/) - For using MOSEK solver.
-
-    ```sh
-    $ conda install -c mosek mosek
-    ```
+* [Free 30-day trial](https://www.mosek.com/products/trial/)
+* [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
 ### Using this project by cloning this GIT repository
 
@@ -79,60 +74,36 @@ From a fresh `python` environment, run the following from the base project folde
 $ pip install -r requirements.txt
 ```
 
-As of March 6, 2019, it fails because scs package installed as a dependency of cxvpy expects numpy to be already installed.
-[scs issue 85](https://github.com/cvxgrp/scs/issues/85) says, it is fixed.
-However, it doesn't seem to be reflected in its pip package.
-Also, cvxpy doesn't work with numpy version less than 1.16.
-As a work around, install numpy separatly first and then install this package.
-i.e.
-```bash
-$ pip install 'numpy>=1.16'
-$ pip install -r requirements.txt
-```
-
-To test that everything is working correctly, launch
-
-```bash
-$ jupyter notebook
-```
-
-and run the two notebooks in the `notebooks/` folder.
 
 ## Usage
 
-#### Clear Day Detection
-
-This algorithm estimates the clear days in a data set two ways and then combines the estimates for the final estimations. The first estimate is based on the "smoothness" of each daily power signal. The second estimate is based on the seasonally adjusted daily energy output of the system.
+Users will primarily interact with this software through the `DataHandler` class.
 
 ```python
-import numpy as np
-from solardatatools.clear_day_detection import find_clear_days
-from solardatatools.data_transforms import make_2d
+from solardatatools import DataHandler
 from solardatatools.dataio import get_pvdaq_data
 
 pv_system_data = get_pvdaq_data(sysid=35, api_key='DEMO_KEY', year=[2011, 2012, 2013])
 
-power_signals_d = make_2d(pv_system_data, key='dc_power')
+dh = DataHandler(pv_system_data)
+dh.run_pipeline(power_col='dc_power')
+```
+If everything is working correctly, you should see something like the following
 
-clear_days = find_clear_days(power_signals_d)
+```
+total time: 16.67 seconds
+--------------------------------
+Breakdown
+--------------------------------
+Preprocessing              6.52s
+Cleaning                   8.62s
+Filtering/Summarizing      1.53s
+    Data quality           0.23s
+    Clear day detect       0.19s
+    Clipping detect        0.21s
+    Capacity change detect 0.91s
 ```
 
-#### Time Shift Detection and Fixing
-
-This algorithm determines if the time stamps provided with the data have "shifted" at any point and then corrects the shift if found. These shifts can often be caused by incorrect handling of daylight savings time, but can come from other sources as well.
-
-```python
-from solardatatools.data_transforms import fix_time_shifts, make_2d
-from solardatatools.dataio import get_pvdaq_data
-from solardatatools.plotting import plot_2d
-
-pv_system_data = get_pvdaq_data(sysid=1199, year=[2015, 2016, 2017], api_key='DEMO_KEY')
-
-power_signals_d = make_2d(pv_system_data, key='dc_power')
-
-fixed_power_signals_d, time_shift_days_indices_ixs = fix_time_shifts(
-    power_signals_d, return_ixs=True)
-```
 
 ## Versioning
 

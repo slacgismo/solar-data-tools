@@ -28,7 +28,7 @@ def plot_2d(D, figsize=(12, 6), units='kW', clear_days=None, dates=None,
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
             else:
                 fig = ax.get_figure()
-            foo = ax.imshow(D, cmap='plasma', interpolation='none', aspect='auto', vmin=0)
+            foo = ax.imshow(D, cmap='plasma', interpolation='none', aspect='auto')
             ax.set_title('Measured power')
             plt.colorbar(foo, ax=ax, label=units)
             ax.set_xlabel('Day number')
