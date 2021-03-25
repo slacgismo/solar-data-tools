@@ -919,18 +919,21 @@ class DataHandler():
 
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
-                     scale_to_kw=True, year_lines=True):
+                     scale_to_kw=True, year_lines=True, units=None):
         if matrix == 'raw':
             mat = np.copy(self.raw_data_matrix)
         elif matrix == 'filled':
             mat = np.copy(self.filled_data_matrix)
+        elif matrix in self.extra_matrices.keys():
+            mat = self.extra_matrices[matrix]
         else:
             return
-        if scale_to_kw and self.power_units == 'W':
-            mat /= 1000
-            units = 'kW'
-        else:
-            units = self.power_units
+        if units is None:
+            if scale_to_kw and self.power_units == 'W':
+                mat /= 1000
+                units = 'kW'
+            else:
+                units = self.power_units
         if flag is None:
             return plot_2d(mat, figsize=figsize,
                            dates=self.day_index, year_lines=year_lines,
