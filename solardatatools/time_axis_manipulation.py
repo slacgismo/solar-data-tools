@@ -133,7 +133,7 @@ def standardize_time_axis(df, datetimekey='Date-Time', timeindex=True,
     diff = (np.round(diff / 10, ) * 10).astype(np.int64)          # Round to the nearest 10 seconds
     done = False
     deltas = []
-    fltr = np.ones_like(diff, dtype=np.bool)
+    fltr = np.ones_like(diff, dtype=bool)
     while not done:
         for d in deltas:
             fltr = np.logical_and(fltr, diff != d)
