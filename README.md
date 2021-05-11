@@ -1,14 +1,90 @@
 # solar-data-tools
 
-[![PyPI release](https://img.shields.io/pypi/v/solar-data-tools.svg)](https://pypi.org/project/solar-data-tools/)
-[![Anaconda Cloud release](https://anaconda.org/slacgismo/solar-data-tools/badges/version.svg)](https://anaconda.org/slacgismo/solar-data-tools)
+<table>
+<tr>
+  <td>Latest Release</td>
+  <td>
+    <a href="https://pypi.org/project/solar-data-tools/">
+    <img src="https://img.shields.io/pypi/v/solar-data-tools.svg" alt="latest release" />
+    </a>
+    <a href="https://anaconda.org/slacgismo/solar-data-tools">
+    <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/version.svg" />
+    </a>
+    <a href="https://anaconda.org/slacgismo/solar-data-tools">
+    <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/latest_release_date.svg" />
+    </a>
+</tr>
+<tr>
+  <td>License</td>
+  <td>
+    <a href="https://github.com/slacgismo/solar-data-tools/blob/master/LICENSE">
+    <img src="https://img.shields.io/pypi/l/solar-data-tools.svg" alt="license" />
+    </a>
+</td>
+</tr>
+<tr>
+  <td>Build Status</td>
+  <td>
+    <a href="https://solar-data-tools.readthedocs.io/en/stable/">
+    <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
+    </a>
+    <a href="https://app.circleci.com/pipelines/github/slacgismo/solar-data-tools">
+      <img src="https://circleci.com/gh/slacgismo/solar-data-tools.svg?style=svg" alt="CircleCi build status" />
+    </a>
+  </td>
+</tr>
+<!-- <tr>
+  <td>Code Quality</td>
+  <td>
+    <a href="https://lgtm.com/projects/g/pvlib/pvlib-python/context:python">
+    <img src="https://img.shields.io/lgtm/grade/python/g/pvlib/pvlib-python.svg?logo=lgtm&logoWidth=18" alt="lgtm quality grade" />
+    </a>
+    <a href="https://lgtm.com/projects/g/pvlib/pvlib-python/alerts">
+    <img src="https://img.shields.io/lgtm/alerts/g/pvlib/pvlib-python.svg?logo=lgtm&logoWidth=18" alt="lgtm alters" />
+    </a>
+  </td>
+</tr>
+<tr>
+  <td>Coverage</td>
+  <td>
+    <a href="https://coveralls.io/r/pvlib/pvlib-python">
+    <img src="https://img.shields.io/coveralls/pvlib/pvlib-python.svg" alt="coveralls coverage" />
+    </a>
+    <a href="https://codecov.io/gh/pvlib/pvlib-python">
+    <img src="https://codecov.io/gh/pvlib/pvlib-python/branch/master/graph/badge.svg" alt="codecov coverage" />
+    </a>
+  </td>
+</tr>
+<tr>
+  <td>Publications</td>
+  <td>
+    <a href="https://doi.org/10.5281/zenodo.3762635">
+    <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.3762635.svg" alt="zenodo reference">
+    </a>
+    <a href="http://joss.theoj.org/papers/41187535cad22dd4b076c89b72f874b1">
+    <img src="http://joss.theoj.org/papers/41187535cad22dd4b076c89b72f874b1/status.svg" alt="JOSS reference" />
+    </a>
+  </td>
+</tr> -->
+<tr>
+  <td>Downloads</td>
+  <td>
+    <a href="https://pypi.org/project/solar-data-tools/">
+    <img src="https://img.shields.io/pypi/dm/solar-data-tools" alt="PyPI downloads" />
+    </a>
+    <a href="https://anaconda.org/conda-forge/solar-data-tools">
+    <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/downloads.svg" alt="conda-forge downloads" />
+    </a>
+  </td>
+</tr>
+</table>
 
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in
 a data set, common data transforms, and fixing time stamp issues. These tools are designed to be
 automatic and require little if any input from the user. Libraries are included to help with data IO
 and plotting as well.
 
-There is close integration between this repository and the [Statistical Clear Sky](https://github.com/slacgismo/StatisticalClearSky) repository, which provides a "clear sky model" of system output, given only measured power as an input. 
+There is close integration between this repository and the [Statistical Clear Sky](https://github.com/slacgismo/StatisticalClearSky) repository, which provides a "clear sky model" of system output, given only measured power as an input.
 
 See [notebooks](/notebooks) folder for examples.
 
