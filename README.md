@@ -5,20 +5,20 @@
   <td>Latest Release</td>
   <td>
     <a href="https://pypi.org/project/solar-data-tools/">
-    <img src="https://img.shields.io/pypi/v/solar-data-tools.svg" alt="latest release" />
+        <img src="https://img.shields.io/pypi/v/solar-data-tools.svg" alt="latest release" />
     </a>
     <a href="https://anaconda.org/slacgismo/solar-data-tools">
-    <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/version.svg" />
+        <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/version.svg" />
     </a>
     <a href="https://anaconda.org/slacgismo/solar-data-tools">
-    <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/latest_release_date.svg" />
+        <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/latest_release_date.svg" />
     </a>
 </tr>
 <tr>
   <td>License</td>
   <td>
     <a href="https://github.com/slacgismo/solar-data-tools/blob/master/LICENSE">
-    <img src="https://img.shields.io/pypi/l/solar-data-tools.svg" alt="license" />
+        <img src="https://img.shields.io/pypi/l/solar-data-tools.svg" alt="license" />
     </a>
 </td>
 </tr>
@@ -26,54 +26,36 @@
   <td>Build Status</td>
   <td>
     <a href="https://solar-data-tools.readthedocs.io/en/stable/">
-    <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
+        <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
     </a>
     <a href="https://app.circleci.com/pipelines/github/slacgismo/solar-data-tools">
-      <img src="https://circleci.com/gh/slacgismo/solar-data-tools.svg?style=svg" alt="CircleCi build status" />
+        <img src="https://circleci.com/gh/slacgismo/solar-data-tools.svg?style=svg" alt="CircleCi build status" />
+    </a>
+    <!-- switch below from tadatoshi to gismo -->
+    <a href="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
+        <img src="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
     </a>
   </td>
 </tr>
-<!-- <tr>
-  <td>Code Quality</td>
-  <td>
-    <a href="https://lgtm.com/projects/g/pvlib/pvlib-python/context:python">
-    <img src="https://img.shields.io/lgtm/grade/python/g/pvlib/pvlib-python.svg?logo=lgtm&logoWidth=18" alt="lgtm quality grade" />
-    </a>
-    <a href="https://lgtm.com/projects/g/pvlib/pvlib-python/alerts">
-    <img src="https://img.shields.io/lgtm/alerts/g/pvlib/pvlib-python.svg?logo=lgtm&logoWidth=18" alt="lgtm alters" />
-    </a>
-  </td>
-</tr>
+<!-- add Code Quality here -->
 <tr>
+<!-- switch this from tadatoshi to gismo account -->
   <td>Coverage</td>
   <td>
-    <a href="https://coveralls.io/r/pvlib/pvlib-python">
-    <img src="https://img.shields.io/coveralls/pvlib/pvlib-python.svg" alt="coveralls coverage" />
-    </a>
-    <a href="https://codecov.io/gh/pvlib/pvlib-python">
-    <img src="https://codecov.io/gh/pvlib/pvlib-python/branch/master/graph/badge.svg" alt="codecov coverage" />
+    <a href="https://codecov.io/gh/tadatoshi/solar-data-tools">
+        <img src="https://codecov.io/gh/tadatoshi/solar-data-tools/branch/development/graph/badge.svg" alt="codecov coverage" />
     </a>
   </td>
 </tr>
-<tr>
-  <td>Publications</td>
-  <td>
-    <a href="https://doi.org/10.5281/zenodo.3762635">
-    <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.3762635.svg" alt="zenodo reference">
-    </a>
-    <a href="http://joss.theoj.org/papers/41187535cad22dd4b076c89b72f874b1">
-    <img src="http://joss.theoj.org/papers/41187535cad22dd4b076c89b72f874b1/status.svg" alt="JOSS reference" />
-    </a>
-  </td>
-</tr> -->
+<!-- add Publications here -->
 <tr>
   <td>Downloads</td>
   <td>
     <a href="https://pypi.org/project/solar-data-tools/">
-    <img src="https://img.shields.io/pypi/dm/solar-data-tools" alt="PyPI downloads" />
+        <img src="https://img.shields.io/pypi/dm/solar-data-tools" alt="PyPI downloads" />
     </a>
     <a href="https://anaconda.org/conda-forge/solar-data-tools">
-    <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/downloads.svg" alt="conda-forge downloads" />
+        <img src="https://anaconda.org/slacgismo/solar-data-tools/badges/downloads.svg" alt="conda-forge downloads" />
     </a>
   </td>
 </tr>
