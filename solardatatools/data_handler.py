@@ -570,6 +570,9 @@ class DataHandler():
             self.data_sampling = 24 * 60 / self.raw_data_matrix.shape[0]
         self.use_column = use_col
         self.day_index = day_index[start_day_ix:end_day_ix]
+        d1 = self.day_index[0].strftime('%x')
+        d2 = self.day_index[-1].strftime('%x')
+        self.data_frame = self.data_frame[d1:d2]
         self.start_doy = self.day_index.dayofyear[0]
         return
 
