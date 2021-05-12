@@ -79,11 +79,11 @@ def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8, boolea
     weights[~selection] = 0.
     # Apply filter for sparsity to catch data errors related to non-zero nighttime data
     try:
-        msk = filter_for_sparsity(data, solver='MOSEK')
+        msk = filter_for_sparsity(data, solver=None)
     except Exception as e:
         print(e)
-        print('Trying ECOS solver')
-        msk = filter_for_sparsity(data, solver='ECOS')
+        print('Trying MOSEK solver')
+        msk = filter_for_sparsity(data, solver='MOSEK')
     weights = weights * msk.astype(int)
     if boolean_out:
         return weights >= 1e-3

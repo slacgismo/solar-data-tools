@@ -123,7 +123,7 @@ class TimeShift():
         tv_metric = np.zeros_like(c1s)
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(metric, v, c2, train,
-                                              periodic_detector)
+                                              periodic_detector, n_iter=5)
             y = metric
             train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
             test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
@@ -136,11 +136,11 @@ class TimeShift():
 
 
     def estimate_components(self, metric, c1, c2, use_ixs, periodic_detector,
-                            transition_locs=None):
+                            transition_locs=None, n_iter=5):
         # Iterative reweighted L1 heuristic
         w = np.ones(len(metric) - 1)
         eps = 0.1
-        for i in range(5):
+        for i in range(n_iter):
             s1, s2 = total_variation_plus_seasonal_filter(
                 metric, c1=c1, c2=c2,
                 tv_weights=w,

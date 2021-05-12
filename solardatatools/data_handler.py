@@ -114,7 +114,7 @@ class DataHandler():
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=None, c2=500.,
                      solar_noon_estimator='com', correct_tz=True, extra_cols=None,
-                     daytime_threshold=0.1, units='W'):
+                     daytime_threshold=0.1, units='W', solver=None):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -1302,7 +1302,7 @@ class DataHandler():
             y[-1] == y_hat[-1]
         ]
         problem = cvx.Problem(objective, constraints)
-        problem.solve(solver='MOSEK')
+        problem.solve(solver='MOSEK', verbose=False)
         # Look for outliers in the 2nd order difference to identify point masses from clipping
         local_curv = cvx.diff(y_hat, k=2).value
         ref_slope = cvx.diff(y_hat, k=1).value[:-1]
