@@ -86,7 +86,7 @@ class ClippingDetection():
         return
 
 
-    def pointmass_detection(self, data, threshold=-0.5, solver='MOSEK',
+    def pointmass_detection(self, data, threshold=-0.35, solver='MOSEK',
                             verbose=False, weight=1e1):
         self.threshold = threshold
         x_rs, y_rs = self.calculate_cdf(data)
