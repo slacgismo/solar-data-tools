@@ -1309,7 +1309,7 @@ class DataHandler():
         # Look for outliers in the 2nd order difference to identify point masses from clipping
         local_curv = cvx.diff(y_hat, k=2).value
         ref_slope = cvx.diff(y_hat, k=1).value[:-1]
-        threshold = -0.5
+        threshold = -0.35
         # metric = local_curv / ref_slope
         metric = np.min([
             local_curv / ref_slope,
