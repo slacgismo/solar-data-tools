@@ -29,16 +29,18 @@ class ClippingDetection():
         self.cdf_x = None
         self.cdf_y = None
         self.problem = None
+        self.y_hat = None
         self.y_param = None
         self.weight = None
         self.metric = None
         self.point_masses = None
         self.point_mass_locations = None
 
-    def check_clipping(self, data_matrix, no_error_flag=None, threshold=-0.5,
+    def check_clipping(self, data_matrix, no_error_flag=None, threshold=-0.35,
                        solver='MOSEK', verbose=False, weight=1e1):
         self.num_days = data_matrix.shape[1]
         self.num_rows = data_matrix.shape[0]
+        self.data = data_matrix
         if no_error_flag is None:
             no_error_flag = np.ones(self.num_days, dtype=bool)
         max_value = np.max(data_matrix)
@@ -96,11 +98,37 @@ class ClippingDetection():
             self.num_clip_points = 0
         return
 
+    def find_clipped_times(self):
+        if self.inverter_clipping:
+            max_value = self.max_value
+            daily_max_val = self.daily_max_val
+            clip_stat_1 = self.clip_stat_1
+            point_masses = self.point_masses
+            mat_normed = self.data / max_value
+            mat_daily_normed = np.zeros_like(self.data)
+            msk = daily_max_val != 0
+            mat_daily_normed[:, msk] = self.data[:, msk] / \
+                                       daily_max_val[msk]
+            # select all points that are within 1% of estimated clipping values
+            masks = np.stack([
+                np.abs(mat_normed - x0) < 0.01 for x0 in point_masses
+            ])
+            clipped_time_mask = np.any(masks, axis=0)
+            # values also must be within 2% of daily maximum value
+            clipped_time_mask = np.logical_and(
+                clipped_time_mask,
+                mat_normed >= 0.98
+            )
+            # set the class attribute
+            self.clipping_mask = clipped_time_mask
+        else:
+            self.clipping_mask = np.zeros(
+                (self.num_rows, self.num_days), dtype=bool
+            )
 
     def pointmass_detection(self, data, threshold=-0.35, solver='MOSEK',
                             verbose=False, weight=1e1):
         self.threshold = threshold
-        self.data = data
         x_rs, y_rs = self.calculate_cdf(data)
         self.cdf_x = x_rs
         self.cdf_y = y_rs
@@ -111,7 +139,7 @@ class ClippingDetection():
             self.y_param.value = y_rs
             self.weight.value = weight
         self.problem.solve(solver=solver, verbose=verbose)
-        y_hat = self.y_param
+        y_hat = self.y_hat
         # Look for outliers in the 2nd order difference to identify point masses from clipping
         local_curv = cvx.diff(y_hat, k=2).value
         ref_slope = cvx.diff(y_hat, k=1).value[:-1]
@@ -156,34 +184,6 @@ class ClippingDetection():
         self.metric = metric
         self.point_masses = point_masses
         self.point_mass_locations = point_mass_values
-
-    def find_clipped_times(self):
-        if self.inverter_clipping:
-            max_value = self.max_value
-            daily_max_val = self.daily_max_val
-            clip_stat_1 = self.clip_stat_1
-            point_masses = self.point_masses
-            mat_normed = self.data / max_value
-            mat_daily_normed = np.zeros_like(self.data)
-            msk = daily_max_val != 0
-            mat_daily_normed[:, msk] = self.data[:, msk] / \
-                                       daily_max_val[msk]
-            # select all points that are within 1% of estimated clipping values
-            masks = np.stack([
-                np.abs(mat_normed - x0) < 0.01 for x0 in point_masses
-            ])
-            clipped_time_mask = np.any(masks, axis=0)
-            # values also must be within 2% of daily maximum value
-            clipped_time_mask = np.logical_and(
-                clipped_time_mask,
-                mat_normed >= 0.98
-            )
-            # set the class attribute
-            self.clipping_mask = clipped_time_mask
-        else:
-            self.clipping_mask = np.zeros(
-                (self.num_rows, self.num_days), dtype=bool
-            )
 
 
     def plot_cdf(self, figsize=(8, 6)):
