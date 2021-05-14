@@ -39,14 +39,6 @@
 </tr>
 <!-- add Code Quality here -->
 <tr>
-<!-- switch this from tadatoshi to gismo account -->
-  <td>Coverage</td>
-  <td>
-    <a href="https://codecov.io/gh/tadatoshi/solar-data-tools">
-        <img src="https://codecov.io/gh/tadatoshi/solar-data-tools/branch/development/graph/badge.svg" alt="codecov coverage" />
-    </a>
-  </td>
-</tr>
 <!-- add Publications here -->
 <tr>
   <td>Downloads</td>
