@@ -775,7 +775,7 @@ class DataHandler():
             self.boolean_masks.clipped_times = clipped_time_mask
         else:
             self.boolean_masks.clipped_times = np.zeros_like(
-                self.filled_data_matrix, dtype=np.bool
+                self.filled_data_matrix, dtype=bool
             )
 
     def capacity_clustering(self, plot=False, figsize=(8, 6),
