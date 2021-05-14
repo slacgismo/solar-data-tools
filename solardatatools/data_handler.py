@@ -37,6 +37,7 @@ class DataHandler():
             else:
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
+            self.data_frame_raw['seq_index'] = np.arange(len(self.data_frame_raw))
             if not isinstance(self.data_frame_raw.index, pd.DatetimeIndex):
                 if datetime_col is not None:
                     df = self.data_frame_raw
@@ -533,7 +534,12 @@ class DataHandler():
             self.data_frame.loc[bix, column_name] = True
         if column_name in self.data_frame_raw.columns:
             del self.data_frame_raw[column_name]
-        self.data_frame_raw = self.data_frame_raw.join(self.data_frame[column_name])
+        temp = (self.data_frame[[column_name, 'seq_index']]).copy()
+        temp = temp.dropna()
+        temp = temp.set_index('seq_index')
+        self.data_frame_raw = self.data_frame_raw.join(
+            temp, on='seq_index'
+        )
 
     def fix_dst(self):
         """
