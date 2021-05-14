@@ -33,7 +33,7 @@ def make_2d(df, key='dc_power', trim_start=False, trim_end=False,
     :return: A 2D numpy array with shape (measurements per day, days in data set)
     '''
     if df is not None:
-        days = df.resample('D').max().index
+        days = df.resample('D').first().index
         try:
             n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
         except AttributeError:
