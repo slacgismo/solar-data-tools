@@ -25,7 +25,8 @@ from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
-from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
+from solardatatools.algorithms import CapacityChange, TimeShift,\
+    SunriseSunset, ClippingDetection
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None, datetime_col=None,
@@ -98,6 +99,7 @@ class DataHandler():
         self.capacity_analysis = None
         self.time_shift_analysis = None
         self.daytime_analysis = None
+        self.clipping_analysis = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
@@ -321,11 +323,13 @@ class DataHandler():
         t_clean[2] = time()
         try:
             self.clipping_check()
-        except:
-            msg = 'Clipping check failed.'
+        except Exception as e:
+            msg = 'clipping check failed: ' + str(e)
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+                import traceback, sys
+                traceback.print_exception(*sys.exc_info())
             self.inverter_clipping = None
         t_clean[3] = time()
         try:
@@ -710,79 +714,22 @@ class DataHandler():
         return
 
     def clipping_check(self):
-        max_value = np.max(self.filled_data_matrix)
-        daily_max_val = np.max(self.filled_data_matrix, axis=0)
-        # 1st clipping statistic: ratio of the max value on each day to overall max value
-        clip_stat_1 = daily_max_val / max_value
-        # 2nd clipping statistic: fraction of energy generated each day at or
-        # near that day's max value
-        with np.errstate(divide='ignore', invalid='ignore'):
-            temp = self.filled_data_matrix / daily_max_val
-            temp_msk = temp > 0.995
-            temp2 = np.zeros_like(temp)
-            temp2[temp_msk] = temp[temp_msk]
-            clip_stat_2 = np.sum(temp2, axis=0) / np.sum(temp, axis=0)
-        clip_stat_2[np.isnan(clip_stat_2)] = 0
-        # Identify which days have clipping
-        clipped_days = np.logical_and(
-            clip_stat_1 > 0.05,
-            clip_stat_2 > 0.1
+        if self.clipping_analysis is None:
+            self.clipping_analysis = ClippingDetection()
+        self.clipping_analysis.check_clipping(
+            self.filled_data_matrix, no_error_flag=self.daily_flags.no_errors
         )
-        clipped_days = np.logical_and(
-            self.daily_flags.no_errors,
-            clipped_days
-        )
-        # clipped days must also be near a peak in the distribution of the
-        # 1st clipping statistic that shows the characteristic, strongly skewed
-        # peak shape
-        point_masses = self.__analyze_distribution(clip_stat_1)
-        try:
-            if len(point_masses) == 0:
-                clipped_days[:] = False
-            else:
-                clipped_days[clipped_days] = np.any(
-                    np.array([np.abs(clip_stat_1[clipped_days] - x0) < .02 for x0 in
-                              point_masses]), axis=0
-                )
-        except IndexError:
-            self.inverter_clipping = False
-            self.num_clip_points = 0
-            return
-        self.daily_scores.clipping_1 = clip_stat_1
-        self.daily_scores.clipping_2 = clip_stat_2
-        self.daily_flags.inverter_clipped = clipped_days
-        if np.sum(clipped_days) > 0.01 * self.num_days:
-            self.inverter_clipping = True
-            self.num_clip_points = len(point_masses)
-        else:
-            self.inverter_clipping = False
-            self.num_clip_points = 0
-        return
+        self.inverter_clipping = self.clipping_analysis.inverter_clipping
+        self.num_clip_points = self.clipping_analysis.num_clip_points
+        self.daily_scores.clipping_1 = self.clipping_analysis.clip_stat_1
+        self.daily_scores.clipping_2 = self.clipping_analysis.clip_stat_2
+        self.daily_flags.inverter_clipped = self.clipping_analysis.clipped_days
 
     def find_clipped_times(self):
-        if self.inverter_clipping:
-            max_value = np.max(self.filled_data_matrix)
-            clip_stat_1 = self.daily_scores.clipping_1      #daily_max_val / max_value
-            point_masses = self.__analyze_distribution(clip_stat_1)
-            mat_normed = self.filled_data_matrix / max_value
-            masks = np.stack([np.abs(mat_normed - x0) < 0.01
-                              for x0 in point_masses])
-            clipped_time_mask = np.any(masks, axis=0)
-            daily_max_val = np.max(self.filled_data_matrix, axis=0)
-            mat_normed = np.zeros_like(self.filled_data_matrix)
-            msk = daily_max_val != 0
-            mat_normed[:, msk] = self.filled_data_matrix[:, msk] /  daily_max_val[msk]
-            clipped_time_mask = np.logical_and(
-                clipped_time_mask,
-                mat_normed >= 0.98
-            )
-            # clipped_days = self.daily_flags.inverter_clipped
-            # clipped_time_mask[:, ~clipped_days] = False
-            self.boolean_masks.clipped_times = clipped_time_mask
-        else:
-            self.boolean_masks.clipped_times = np.zeros_like(
-                self.filled_data_matrix, dtype=bool
-            )
+        if self.clipping_analysis is None:
+            self.clipping_check()
+        self.clipping_analysis.find_clipped_times()
+        self.boolean_masks.clipped_times = self.clipping_analysis.clipping_mask
 
     def capacity_clustering(self, plot=False, figsize=(8, 6),
                             show_clusters=True):

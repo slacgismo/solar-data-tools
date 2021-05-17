@@ -74,16 +74,21 @@ class ClippingDetection():
             clip_stat_1, threshold=threshold, solver=solver, verbose=verbose,
             weight=weight
         )
+        pm_neighborhood_threshold = 0.0075
         try:
             if len(self.point_masses) == 0:
                 clipped_days[:] = False
             else:
-                clipped_days[clipped_days] = np.any(
-                    np.array(
-                        [np.abs(clip_stat_1[clipped_days] - x0) < .02 for x0 in
-                         self.point_masses]), axis=0
+                close_to_pm = [
+                    np.abs(clip_stat_1 - x0) < pm_neighborhood_threshold
+                    for x0 in self.point_mass_locations
+                ]
+                close_to_pm = np.any(close_to_pm, axis=0)
+                clipped_days = np.logical_and(
+                    clipped_days, close_to_pm
                 )
         except IndexError:
+            print('there was an error in ClippingDetection.check_clipping()')
             self.inverter_clipping = False
             self.num_clip_points = 0
             return
@@ -103,7 +108,7 @@ class ClippingDetection():
             max_value = self.max_value
             daily_max_val = self.daily_max_val
             clip_stat_1 = self.clip_stat_1
-            point_masses = self.point_masses
+            point_masses = self.point_mass_locations
             mat_normed = self.data / max_value
             mat_daily_normed = np.zeros_like(self.data)
             msk = daily_max_val != 0
@@ -117,7 +122,7 @@ class ClippingDetection():
             # values also must be within 2% of daily maximum value
             clipped_time_mask = np.logical_and(
                 clipped_time_mask,
-                mat_normed >= 0.98
+                mat_daily_normed >= 0.98
             )
             # set the class attribute
             self.clipping_mask = clipped_time_mask
