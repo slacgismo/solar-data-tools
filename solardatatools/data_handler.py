@@ -132,13 +132,19 @@ class DataHandler():
         # Preprocessing
         ######################################################################
         t[0] = time()
+        # Pandas operations to make a time axis with regular intervals
         if self.data_frame_raw is not None:
             self.data_frame = standardize_time_axis(self.data_frame_raw,
                                                     timeindex=True,
                                                     verbose=verbose)
+        # Embed the data as a matrix, with days in columns. Also, set some
+        # attributes, like the scan rate, day index, and day of year arary.
+        # Almost never use start_day_ix and end_day_ix, but they're there
+        # if a user wants to use a portion of the data set.
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix)
+
         if max_val is not None:
             mat_copy = np.copy(self.raw_data_matrix)
             mat_copy[np.isnan(mat_copy)] = -9999
@@ -1136,34 +1142,16 @@ class DataHandler():
         return fig
 
     def plot_daily_max_pdf(self, figsize=(8, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='pdf', figsize=figsize)
-        plt.title('Distribution of normalized daily maximum values')
-        plt.xlabel('Normalized daily max power')
-        plt.ylabel('Count')
-        plt.legend()
-        return fig
+        return self.clipping_analysis.plot_pdf(figsize=figsize)
 
     def plot_daily_max_cdf(self, figsize=(10, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='cdf', figsize=figsize)
-        plt.title('Cumulative density function of\nnormalized daily maximum values')
-        plt.xlabel('Normalized daily max power')
-        plt.ylabel('Cumulative occurance probability')
-        plt.legend()
-        ax = plt.gca()
-        ax.set_aspect('equal')
-        return fig
+        return self.clipping_analysis.plot_cdf(figsize=figsize)
 
     def plot_daily_max_cdf_and_pdf(self, figsize=(10, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='both', figsize=figsize)
-        return fig
+        return self.clipping_analysis.plot_both(figsize=figsize)
 
     def plot_cdf_analysis(self, figsize=(12, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='diffs', figsize=figsize)
-        return fig
+        return self.clipping_analysis.plot_diffs(figsize=figsize)
 
     def plot_capacity_change_analysis(self, figsize=(8, 6), show_clusters=True):
         fig = self.capacity_clustering(plot=True, figsize=figsize,
