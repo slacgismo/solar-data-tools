@@ -176,7 +176,10 @@ class DataHandler():
         # is finished
         ss = SunriseSunset()
         # CVXPY
-        ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
+        if solver is None:
+            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
+        else:
+            ss.run_optimizer(self.raw_data_matrix, plot=False, solver='ECOS')
         self.boolean_masks.daytime = ss.sunup_mask_estimated
         self.daytime_analysis = ss
         ######################################################################
