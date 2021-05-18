@@ -16,7 +16,7 @@ class TestStandardizeTimeAxis(unittest.TestCase):
             os.path.join(os.path.dirname(__file__),
                          "../fixtures/data_transforms/timeseries_standardized.csv"))
         expected_output = pd.read_csv(expected_data_file_path, index_col=0, parse_dates=True)
-        actual_output = standardize_time_axis(data, timeindex=True)
+        actual_output, _ = standardize_time_axis(data, timeindex=True)
         np.testing.assert_array_almost_equal(expected_output, actual_output)
 
 
