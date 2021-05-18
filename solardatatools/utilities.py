@@ -11,8 +11,9 @@ import cvxpy as cvx
 
 
 def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
+                                         solver=None, verbose=False,
                                          residual_weights=None, tv_weights=None,
-                                         use_ixs=None, periodic_detector=False,
+                                         use_ixs=None, yearly_periodic=False,
                                          transition_locs=None,
                                          seas_max=None):
     '''
@@ -60,7 +61,7 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
     ]
     if len(signal) > 365:
         constraints.append(s_seas[365:] - s_seas[:-365] == 0)
-        if periodic_detector:
+        if yearly_periodic:
             constraints.append(s_hat[365:] - s_hat[:-365] == 0)
     if transition_locs is not None:
         loc_mask = np.ones(len(signal) - 1, dtype=bool)
@@ -71,10 +72,12 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
         constraints.append(s_seas <= seas_max)
     print('filter 1')
     problem = cvx.Problem(objective=objective, constraints=constraints)
-    problem.solve(solver='MOSEK', verbose=False)
+    problem.solve(solver=solver, verbose=verbose)
     return s_hat.value, s_seas.value
 
-def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3, solver='ECOS'):
+def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3,
+                                          yearly_periodic=True, solver='ECOS',
+                                          verbose=False):
     '''
     for a list of available solvers, see:
         https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
@@ -91,7 +94,7 @@ def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3, solver='
     objective = cvx.Minimize(
         cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.norm(cvx.diff(x, k=2))
     )
-    if len(signal) > 365:
+    if len(signal) > 365 and yearly_periodic:
         constraints = [
             x[365:] == x[:-365]
         ]
@@ -100,11 +103,13 @@ def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3, solver='
     prob = cvx.Problem(objective, constraints=constraints)
     # Currently seems to work with SCS or MOSEK
     print('filter 2')
-    prob.solve(solver=solver, verbose=False)
+    prob.solve(solver=solver, verbose=verbose)
     return x.value
 
 def local_quantile_regression_with_seasonal(signal, use_ixs=None, tau=0.75,
                                             c1=1e3, solver='ECOS',
+                                            yearly_periodic=True,
+                                            verbose=False,
                                             residual_weights=None,
                                             tv_weights=None):
     '''
@@ -124,20 +129,20 @@ def local_quantile_regression_with_seasonal(signal, use_ixs=None, tau=0.75,
     objective = cvx.Minimize(
         cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.norm(cvx.diff(x, k=2))
     )
-    if len(signal) > 365:
+    if len(signal) > 365 and yearly_periodic:
         constraints = [
             x[365:] == x[:-365]
         ]
     else:
         constraints = []
     prob = cvx.Problem(objective, constraints=constraints)
-    prob.solve(solver=solver)
+    prob.solve(solver=solver, verbose=verbose)
     return x.value
 
 
 def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.995,
                                                   c1=1e3, c2=1e2, c3=1e2,
-                                                  solver='ECOS',
+                                                  solver=None, verbose=False,
                                                   residual_weights=None,
                                                   tv_weights=None):
     '''
@@ -192,7 +197,7 @@ def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.99
         constraints.append(s_seas[365:] - s_seas[:-365] == beta)
         constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
-    problem.solve(solver='MOSEK')
+    problem.solve(solver=solver, verbose=verbose)
     return s_hat.value, s_seas.value[:n]
 
 def basic_outlier_filter(x, outlier_constant=1.5):
