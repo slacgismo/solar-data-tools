@@ -145,7 +145,7 @@ class TimeShift():
                 metric, c1=c1, c2=c2,
                 tv_weights=w,
                 use_ixs=use_ixs,
-                periodic_detector=periodic_detector,
+                yearly_periodic=periodic_detector,
                 transition_locs=transition_locs,
                 seas_max = 0.5
             )
