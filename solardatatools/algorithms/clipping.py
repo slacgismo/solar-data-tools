@@ -37,7 +37,7 @@ class ClippingDetection():
         self.point_mass_locations = None
 
     def check_clipping(self, data_matrix, no_error_flag=None, threshold=-0.35,
-                       solver='MOSEK', verbose=False, weight=1e1):
+                       solver=None, verbose=False, weight=1e1):
         self.num_days = data_matrix.shape[1]
         self.num_rows = data_matrix.shape[0]
         self.data = data_matrix
@@ -97,7 +97,7 @@ class ClippingDetection():
         self.clipped_days = clipped_days
         if np.sum(clipped_days) > 0.01 * self.num_days:
             self.inverter_clipping = True
-            self.num_clip_points = len(self.point_masses)
+            self.num_clip_points = len(self.point_mass_locations)
         else:
             self.inverter_clipping = False
             self.num_clip_points = 0
@@ -107,7 +107,6 @@ class ClippingDetection():
         if self.inverter_clipping:
             max_value = self.max_value
             daily_max_val = self.daily_max_val
-            clip_stat_1 = self.clip_stat_1
             point_masses = self.point_mass_locations
             mat_normed = self.data / max_value
             mat_daily_normed = np.zeros_like(self.data)
@@ -131,7 +130,7 @@ class ClippingDetection():
                 (self.num_rows, self.num_days), dtype=bool
             )
 
-    def pointmass_detection(self, data, threshold=-0.35, solver='MOSEK',
+    def pointmass_detection(self, data, threshold=-0.35, solver=None,
                             verbose=False, weight=1e1):
         self.threshold = threshold
         x_rs, y_rs = self.calculate_cdf(data)
