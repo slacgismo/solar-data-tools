@@ -35,7 +35,8 @@ class TimeShift():
         self.__recursion_depth = 0
 
     def run(self, data, use_ixs=None, c1=None, c2=200.,
-            solar_noon_estimator='com', threshold=0.1, periodic_detector=False):
+            solar_noon_estimator='com', threshold=0.1, periodic_detector=False,
+            solver=None):
         if solar_noon_estimator == 'com':
             metric = energy_com(data)
         elif solar_noon_estimator == 'srss':
@@ -50,12 +51,12 @@ class TimeShift():
         if c1 is None:
             c1s = np.logspace(-1, 2, 15)
             hn, rn, tv_metric, best_ix = self.optimize_c1(
-                metric, c1s, use_ixs, c2, periodic_detector
+                metric, c1s, use_ixs, c2, periodic_detector, solver=solver
             )
             if tv_metric[best_ix] >= 0.009:
                 # rerun the optimizer with a new random data selection
                 hn, rn, tv_metric, best_ix = self.optimize_c1(
-                    metric, c1s, use_ixs, c2, periodic_detector
+                    metric, c1s, use_ixs, c2, periodic_detector, solver=solver
                 )
             # if np.isclose(hn[best_ix], hn[-1]):
             #     best_ix = np.argmax(hn * rn)
@@ -67,7 +68,9 @@ class TimeShift():
             tv_metric = None
             c1s = None
             best_ix = None
-        s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs, periodic_detector)
+        s1, s2 = self.estimate_components(
+            metric, best_c1, c2, use_ixs, periodic_detector, solver=solver
+        )
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
         s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs,
@@ -111,7 +114,8 @@ class TimeShift():
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
-    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector):
+    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector,
+                    solver=None):
         n = np.sum(use_ixs)
         select = np.random.uniform(size=n) <= 0.7 # random holdout selection
         train = np.copy(use_ixs)
@@ -122,8 +126,10 @@ class TimeShift():
         test_r = np.zeros_like(c1s)
         tv_metric = np.zeros_like(c1s)
         for i, v in enumerate(c1s):
-            s1, s2 = self.estimate_components(metric, v, c2, train,
-                                              periodic_detector, n_iter=5)
+            s1, s2 = self.estimate_components(
+                metric, v, c2, train, periodic_detector, n_iter=5,
+                solver=solver
+            )
             y = metric
             train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
             test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
@@ -136,7 +142,7 @@ class TimeShift():
 
 
     def estimate_components(self, metric, c1, c2, use_ixs, periodic_detector,
-                            transition_locs=None, n_iter=5):
+                            transition_locs=None, n_iter=5, solver=None):
         # Iterative reweighted L1 heuristic
         w = np.ones(len(metric) - 1)
         eps = 0.1
@@ -147,7 +153,8 @@ class TimeShift():
                 use_ixs=use_ixs,
                 yearly_periodic=periodic_detector,
                 transition_locs=transition_locs,
-                seas_max = 0.5
+                seas_max = 0.5,
+                solver=solver
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2

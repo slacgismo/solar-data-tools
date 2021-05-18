@@ -175,7 +175,8 @@ class DataHandler():
         # Run once to get a rough estimate. Update at the end after cleaning
         # is finished
         ss = SunriseSunset()
-        ss.run_optimizer(self.raw_data_matrix, plot=False)
+        # CVXPY
+        ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
         self.daytime_analysis = ss
         ######################################################################
@@ -226,7 +227,8 @@ class DataHandler():
         t_clean = np.zeros(6)
         t_clean[0] = time()
         try:
-            self.get_daily_scores(threshold=0.2)
+            # CVXPY - density scoring
+            self.get_daily_scores(threshold=0.2, solver=solver)
         except:
             msg = 'Daily quality scoring failed.'
             self._error_msg += '\n' + msg
@@ -245,8 +247,12 @@ class DataHandler():
             self.daily_flags = None
         t_clean[1] = time()
         try:
-            self.detect_clear_days(smoothness_threshold=clear_day_smoothness_param,
-                                   energy_threshold=clear_day_energy_param)
+            # CVXPY
+            self.detect_clear_days(
+                smoothness_threshold=clear_day_smoothness_param,
+                energy_threshold=clear_day_energy_param,
+                solver=solver
+            )
         except:
             msg = 'Clear day detection failed.'
             self._error_msg += '\n' + msg
@@ -254,7 +260,8 @@ class DataHandler():
                 print(msg)
         t_clean[2] = time()
         try:
-            self.clipping_check()
+            # CVXPY
+            self.clipping_check(solver=solver)
         except Exception as e:
             msg = 'clipping check failed: ' + str(e)
             self._error_msg += '\n' + msg
@@ -275,7 +282,8 @@ class DataHandler():
             self.data_clearness_score = None
         t_clean[4] = time()
         try:
-            self.capacity_clustering()
+            # CVXPY
+            self.capacity_clustering(solver=solver)
         except TypeError:
             self.capacity_changes = None
         t_clean[5] = time()
@@ -287,10 +295,12 @@ class DataHandler():
         t[3] = time()
         if fix_shifts:
             try:
+                # CVXPY
                 self.auto_fix_time_shifts(c1=c1, c2=c2,
                                           estimator=solar_noon_estimator,
                                           threshold=daytime_threshold,
-                                          periodic_detector=False)
+                                          periodic_detector=False,
+                                          solver=solver)
             except Exception as e:
                 msg = 'Fix time shift algorithm failed.'
                 self._error_msg += '\n' + msg
@@ -334,7 +344,9 @@ class DataHandler():
 
         # Update daytime detection based on cleaned up data
         # self.daytime_analysis.run_optimizer(self.filled_data_matrix, plot=False)
-        self.daytime_analysis.calculate_times(self.filled_data_matrix)
+        # CVXPY
+        self.daytime_analysis.calculate_times(self.filled_data_matrix,
+                                              solver=solver)
         self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
         ######################################################################
         # Process Extra columns
@@ -587,8 +599,8 @@ class DataHandler():
         )
         return
 
-    def get_daily_scores(self, threshold=0.2):
-        self.get_density_scores(threshold=threshold)
+    def get_daily_scores(self, threshold=0.2, solver=None):
+        self.get_density_scores(threshold=threshold, solver=solver) # CVXPY
         self.get_linearity_scores()
         return
 
@@ -622,17 +634,17 @@ class DataHandler():
         self.__linearity_threshold = linearity_threshold
         self.daily_scores.quality_clustering = db.labels_
 
-    def get_density_scores(self, threshold=0.2):
+    def get_density_scores(self, threshold=0.2, solver=None):
         if self.raw_data_matrix is None:
             print('Generate a raw data matrix first.')
             return
-        self.daily_scores.density, self.daily_signals.density, self.daily_signals.seasonal_density_fit\
-            = daily_missing_data_advanced(
-            self.raw_data_matrix,
-            threshold=threshold,
-            return_density_signal=True,
-            return_fit=True
+        s1, s2, s3 = daily_missing_data_advanced(
+            self.raw_data_matrix, threshold=threshold,
+            return_density_signal=True, return_fit=True, solver=solver
         )
+        self.daily_scores.density = s1
+        self.daily_signals.density = s2
+        self.daily_signals.seasonal_density_fit = s3
         return
 
     def get_linearity_scores(self):
@@ -678,11 +690,12 @@ class DataHandler():
             self.data_clearness_score = None
         return
 
-    def clipping_check(self):
+    def clipping_check(self, solver=None):
         if self.clipping_analysis is None:
             self.clipping_analysis = ClippingDetection()
         self.clipping_analysis.check_clipping(
-            self.filled_data_matrix, no_error_flag=self.daily_flags.no_errors
+            self.filled_data_matrix, no_error_flag=self.daily_flags.no_errors,
+            solver=solver
         )
         self.inverter_clipping = self.clipping_analysis.inverter_clipping
         self.num_clip_points = self.clipping_analysis.num_clip_points
@@ -696,14 +709,15 @@ class DataHandler():
         self.clipping_analysis.find_clipped_times()
         self.boolean_masks.clipped_times = self.clipping_analysis.clipping_mask
 
-    def capacity_clustering(self, plot=False, figsize=(8, 6),
+    def capacity_clustering(self, solver=None, plot=False, figsize=(8, 6),
                             show_clusters=True):
         if self.capacity_analysis is None:
             self.capacity_analysis = CapacityChange()
             self.capacity_analysis.run(
                 self.filled_data_matrix, filter=self.daily_flags.no_errors,
                 quantile=1.00, c1=15, c2=100, c3=300, reweight_eps=0.5,
-                reweight_niter=5, dbscan_eps=.02, dbscan_min_samples='auto'
+                reweight_niter=5, dbscan_eps=.02, dbscan_min_samples='auto',
+                solver=solver
             )
         if len(set(self.capacity_analysis.labels)) > 1: #np.max(db.labels_) > 0:
             self.capacity_changes = True
@@ -746,7 +760,8 @@ class DataHandler():
 
 
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
-                             threshold=0.1, periodic_detector=False):
+                             threshold=0.1, periodic_detector=False,
+                             solver=None):
         self.time_shift_analysis = TimeShift()
         if self.data_clearness_score > 0.1 and self.num_days > 365 * 2:
             use_ixs = self.daily_flags.clear
@@ -755,7 +770,7 @@ class DataHandler():
         self.time_shift_analysis.run(
             self.filled_data_matrix, use_ixs=use_ixs,
             c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold,
-            periodic_detector=periodic_detector
+            periodic_detector=periodic_detector, solver=solver
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
@@ -771,15 +786,17 @@ class DataHandler():
         # else:
         #     self.time_shifts = True
 
-    def detect_clear_days(self, smoothness_threshold=0.9, energy_threshold=0.8):
+    def detect_clear_days(self, smoothness_threshold=0.9, energy_threshold=0.8,
+                          solver=None):
         if self.filled_data_matrix is None:
             print('Generate a filled data matrix first.')
             return
         clear_days = find_clear_days(self.filled_data_matrix,
                                      smoothness_threshold=smoothness_threshold,
-                                     energy_threshold=energy_threshold)
+                                     energy_threshold=energy_threshold,
+                                     solver=solver)
         ### Remove days that are marginally low density, but otherwise pass
-        # the clearness test. Occaisonally, we find an early morning or late
+        # the clearness test. Occasionally, we find an early morning or late
         # afternoon inverter outage on a clear day is still detected as clear.
         # Added July 2020 --BM
         clear_days = np.logical_and(

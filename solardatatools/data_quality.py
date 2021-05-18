@@ -37,7 +37,7 @@ def daily_missing_data_simple(data_matrix, threshold=0.2,
 
 def daily_missing_data_advanced(data_matrix, threshold=0.2,
                                 return_density_signal=False,
-                                return_fit=False):
+                                return_fit=False, solver=None):
     nans = np.isnan(data_matrix)
     capacity_est = np.quantile(data_matrix[~nans], 0.95)
     data_copy = np.copy(data_matrix)
@@ -49,7 +49,7 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
         density_signal,
         use_ixs=use_days,
         tau=0.9,
-        solver='MOSEK'
+        solver=solver
     )
     scores = density_signal / fit_signal
     out = [scores]

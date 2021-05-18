@@ -70,7 +70,6 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
         constraints.append(cvx.diff(s_hat, k=1)[loc_mask] == 0)
     if seas_max is not None:
         constraints.append(s_seas <= seas_max)
-    print('filter 1')
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
     return s_hat.value, s_seas.value
@@ -102,12 +101,11 @@ def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3,
         constraints = []
     prob = cvx.Problem(objective, constraints=constraints)
     # Currently seems to work with SCS or MOSEK
-    print('filter 2')
     prob.solve(solver=solver, verbose=verbose)
     return x.value
 
 def local_quantile_regression_with_seasonal(signal, use_ixs=None, tau=0.75,
-                                            c1=1e3, solver='ECOS',
+                                            c1=1e3, solver=None,
                                             yearly_periodic=True,
                                             verbose=False,
                                             residual_weights=None,

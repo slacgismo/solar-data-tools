@@ -38,7 +38,8 @@ class SunriseSunset():
         self.total_rmse = None
 
     def calculate_times(self, data, threshold=None, plot=False,
-                        figsize=(12, 10), groundtruth=None, zoom_fit=False):
+                        figsize=(12, 10), groundtruth=None, zoom_fit=False,
+                        solver=None):
         # print('Calculating times')
         if threshold is None:
             if self.threshold is not None:
@@ -55,7 +56,7 @@ class SunriseSunset():
         bool_msk = detect_sun(data, threshold)
         measured = rise_set_rough(bool_msk)
         smoothed = rise_set_smoothed(measured, sunrise_tau=.05,
-                                     sunset_tau=.95)
+                                     sunset_tau=.95, solver=solver)
         self.sunrise_estimates = smoothed['sunrises']
         self.sunset_estimates = smoothed['sunsets']
         self.sunrise_measurements = measured['sunrises']
@@ -134,7 +135,7 @@ class SunriseSunset():
             return
 
     def run_optimizer(self, data, random_seed=None, search_pts=51, plot=False,
-                      figsize=(8, 6), groundtruth=None):
+                      figsize=(8, 6), groundtruth=None, solver=None):
         if groundtruth is not None:
             sr_true = groundtruth[0]
             ss_true = groundtruth[1]
@@ -172,14 +173,12 @@ class SunriseSunset():
                     test_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
                     test_msk_sr[test_sr] = True
                     test_msk_ss[test_ss] = True
-                    sr_smoothed = local_quantile_regression_with_seasonal(sunrises,
-                                                                          train_msk_sr,
-                                                                          tau=0.05,
-                                                                          solver='MOSEK')
-                    ss_smoothed = local_quantile_regression_with_seasonal(sunsets,
-                                                                          train_msk_ss,
-                                                                          tau=0.95,
-                                                                          solver='MOSEK')
+                    sr_smoothed = local_quantile_regression_with_seasonal(
+                        sunrises, train_msk_sr, tau=0.05, solver=solver
+                    )
+                    ss_smoothed = local_quantile_regression_with_seasonal(
+                        sunsets, train_msk_ss, tau=0.95, solver=solver
+                    )
                     r1 = (sunrises - sr_smoothed)[test_msk_sr]
                     r2 = (sunsets - ss_smoothed)[test_msk_ss]
                     ho_resid = np.r_[r1, r2]

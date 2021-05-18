@@ -24,13 +24,14 @@ def rise_set_rough(bool_msk):
     return {'sunrises': sunrises, 'sunsets': sunsets}
 
 
-def rise_set_smoothed(rough_dict, sunrise_tau=0.05, sunset_tau=0.95):
+def rise_set_smoothed(rough_dict, sunrise_tau=0.05, sunset_tau=0.95,
+                      solver=None):
     sunrises = rough_dict['sunrises']
     sunsets = rough_dict['sunsets']
     sr_smoothed = local_quantile_regression_with_seasonal(
-        sunrises, ~np.isnan(sunrises), tau=sunrise_tau, solver='MOSEK'
+        sunrises, ~np.isnan(sunrises), tau=sunrise_tau, solver=solver
     )
     ss_smoothed = local_quantile_regression_with_seasonal(
-        sunsets, ~np.isnan(sunsets), tau=sunset_tau, solver='MOSEK'
+        sunsets, ~np.isnan(sunsets), tau=sunset_tau, solver=solver
     )
     return {'sunrises': sr_smoothed, 'sunsets': ss_smoothed}
