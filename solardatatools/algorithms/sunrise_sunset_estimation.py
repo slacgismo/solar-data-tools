@@ -134,7 +134,7 @@ class SunriseSunset():
         else:
             return
 
-    def run_optimizer(self, data, random_seed=None, search_pts=51, plot=False,
+    def run_optimizer(self, data, random_seed=None, search_pts=21, plot=False,
                       figsize=(8, 6), groundtruth=None, solver=None):
         if groundtruth is not None:
             sr_true = groundtruth[0]
