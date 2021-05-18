@@ -132,11 +132,22 @@ class DataHandler():
         # Preprocessing
         ######################################################################
         t[0] = time()
-        # Pandas operations to make a time axis with regular intervals
+        # If power_col not passed, assume that the first column contains the
+        # data to be processed
+        if power_col is None:
+            power_col = self.data_frame_raw.columns[0]
+        if power_col not in self.data_frame_raw.columns:
+            print('Power column key not present in data frame.')
+            return
+        # Pandas operations to make a time axis with regular intervals.
+        # If correct_tz is True, it will also align the median daily maximum
         if self.data_frame_raw is not None:
-            self.data_frame = standardize_time_axis(self.data_frame_raw,
-                                                    timeindex=True,
-                                                    verbose=verbose)
+            self.data_frame, sn_deviation = standardize_time_axis(
+                self.data_frame_raw, timeindex=True, power_col=power_col,
+                correct_tz=correct_tz, verbose=verbose
+            )
+            if correct_tz:
+                self.tz_correction = sn_deviation
         # Embed the data as a matrix, with days in columns. Also, set some
         # attributes, like the scan rate, day index, and day of year arary.
         # Almost never use start_day_ix and end_day_ix, but they're there
@@ -161,67 +172,12 @@ class DataHandler():
         if self.capacity_estimate <= 500 and self.power_units == 'W':
             self.power_units = 'kW'
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
+        # Run once to get a rough estimate. Update at the end after cleaning
+        # is finished
         ss = SunriseSunset()
         ss.run_optimizer(self.raw_data_matrix, plot=False)
         self.boolean_masks.daytime = ss.sunup_mask_estimated
         self.daytime_analysis = ss
-        ### TZ offset detection and correction ###
-        # (1) Determine if there exists a "large" timezone offset error
-        if power_col is None:
-            power_col = self.data_frame.columns[0]
-        if correct_tz:
-            average_day = np.zeros(self.raw_data_matrix.shape[0])
-            all_nans = np.alltrue(np.isnan(self.raw_data_matrix), axis=1)
-            average_day[~all_nans] = np.nanmean(
-                self.raw_data_matrix[~all_nans, :], axis=1
-            )
-            average_day -= np.min(average_day)
-            average_day /= np.max(average_day)
-            ### Troubleshooting code
-            # plt.plot(average_day)
-            # plt.axhline(0.02, color='red', ls='--', linewidth=1)
-            # plt.show()
-            meas_per_hour = np.int(60 / self.data_sampling)
-            cond1 = np.any(average_day[:meas_per_hour] > 0.02)
-            cond2 = np.any(average_day[-meas_per_hour:] > 0.02)
-            cond3 = self.__recursion_depth <= 2
-            if (cond1 or cond2) and cond3:
-                if verbose:
-                    print(
-                        'Warning: power generation at midnight. Attempting to correct...')
-                # Catch values that are more than 4 hours from noon and make a
-                # correction to the time axis (rough correction to avoid days
-                # rolling over)
-                rough_noon_est = np.nanmean(
-                    self.data_frame.groupby(pd.Grouper(freq='D')) \
-                        .idxmax()[power_col].dt.time \
-                        .apply(lambda x: 60 * x.hour + x.minute)
-                ) / 60
-                self.tz_correction = 12 - np.round(rough_noon_est)
-                self.data_frame.index = self.data_frame.index.shift(
-                    self.tz_correction, freq='H'
-                )
-                if verbose:
-                    print('Done.\nRestarting the pipeline...')
-                self.__recursion_depth += 1
-                if self.__initial_time is not None:
-                    self.__initial_time = t[0]
-                self.run_pipeline(
-                    power_col=power_col, min_val=min_val,
-                    max_val=max_val, zero_night=zero_night,
-                    interp_day=interp_day, fix_shifts=fix_shifts,
-                    density_lower_threshold=density_lower_threshold,
-                    density_upper_threshold=density_upper_threshold,
-                    linearity_threshold=linearity_threshold,
-                    clear_day_smoothness_param=clear_day_smoothness_param,
-                    clear_day_energy_param=clear_day_energy_param,
-                    verbose=verbose, start_day_ix=start_day_ix,
-                    end_day_ix=end_day_ix, c1=c1, c2=c2,
-                    solar_noon_estimator=solar_noon_estimator,
-                    correct_tz=correct_tz, extra_cols=extra_cols,
-                    daytime_threshold=daytime_threshold, units=units
-                )
-                return
         ######################################################################
         # Cleaning
         ######################################################################
@@ -263,36 +219,6 @@ class DataHandler():
             self.data_clearness_score = None
             self._ran_pipeline = True
             return
-        ### TZ offset detection and correction ###
-        # (2) Determine if there is a "small" timezone offset error
-        if correct_tz:
-            average_noon = np.nanmean(
-                avg_sunrise_sunset(self.filled_data_matrix, threshold=0.01)
-            )
-            tz_offset = int(np.round(12 - average_noon))
-            if tz_offset != 0:
-                self.tz_correction += tz_offset
-                # Related to this bug fix:
-                # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da
-                old_index = self.data_frame.index.copy()
-                self.data_frame.index = self.data_frame.index.shift(
-                    tz_offset, freq='H'
-                )
-                self.data_frame = self.data_frame.reindex(index=old_index,
-                                                          method='nearest',
-                                                          limit=1).fillna(0)
-                meas_per_hour = self.filled_data_matrix.shape[0] / 24
-                roll_by = int(meas_per_hour * tz_offset)
-                self.filled_data_matrix = np.nan_to_num(
-                    np.roll(self.filled_data_matrix, roll_by, axis=0),
-                    0
-                )
-                self.raw_data_matrix = np.roll(
-                    self.raw_data_matrix, roll_by, axis=0
-                )
-                self.boolean_masks.daytime = np.roll(
-                    self.boolean_masks.daytime, roll_by, axis=0
-                )
         ######################################################################
         # Scoring
         ######################################################################
@@ -354,7 +280,9 @@ class DataHandler():
             self.capacity_changes = None
         t_clean[5] = time()
         ######################################################################
-        # Fix Time Shifts
+        # Remaining data cleaning operations
+        # Fix time shifts depends on the data clearness scoring, and the other
+        # two depend on fixing the time shifts, when then occur.
         ######################################################################
         t[3] = time()
         if fix_shifts:
@@ -371,9 +299,40 @@ class DataHandler():
                     print('Error message:', e)
                     print('\n')
                 self.time_shifts = None
-        ######################################################################
+
+        # check for remaining TZ offset issues
+        if correct_tz:
+            average_noon = np.nanmean(
+                avg_sunrise_sunset(self.filled_data_matrix, threshold=0.01)
+            )
+            tz_offset = int(np.round(12 - average_noon))
+            if np.abs(tz_offset) > 1:
+                # TODO: delete me
+                print('Doing the second thing!')
+                self.tz_correction += tz_offset
+                # Related to this bug fix:
+                # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da
+                old_index = self.data_frame.index.copy()
+                self.data_frame.index = self.data_frame.index.shift(
+                    tz_offset, freq='H'
+                )
+                self.data_frame = self.data_frame.reindex(index=old_index,
+                                                          method='nearest',
+                                                          limit=1).fillna(0)
+                meas_per_hour = self.filled_data_matrix.shape[0] / 24
+                roll_by = int(meas_per_hour * tz_offset)
+                self.filled_data_matrix = np.nan_to_num(
+                    np.roll(self.filled_data_matrix, roll_by, axis=0),
+                    0
+                )
+                self.raw_data_matrix = np.roll(
+                    self.raw_data_matrix, roll_by, axis=0
+                )
+                self.boolean_masks.daytime = np.roll(
+                    self.boolean_masks.daytime, roll_by, axis=0
+                )
+
         # Update daytime detection based on cleaned up data
-        ######################################################################
         # self.daytime_analysis.run_optimizer(self.filled_data_matrix, plot=False)
         self.daytime_analysis.calculate_times(self.filled_data_matrix)
         self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
