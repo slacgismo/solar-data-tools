@@ -50,7 +50,8 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
     fit_signal = local_quantile_regression_with_seasonal(
         density_signal,
         use_ixs=use_days,
-        tau=0.85
+        tau=0.85,
+        solver=solver
     )
     scores = density_signal / fit_signal
     out = [scores]
