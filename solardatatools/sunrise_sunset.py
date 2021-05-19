@@ -5,7 +5,7 @@ unlabel PV power dataset.
 '''
 
 import numpy as np
-from solardatatools.signal_decompositions import local_quantile_regression_with_seasonal
+from solardatatools.signal_decompositions import tl1_l2d2p365
 
 def rise_set_rough(bool_msk):
     nvals = bool_msk.shape[0]
@@ -28,10 +28,10 @@ def rise_set_smoothed(rough_dict, sunrise_tau=0.05, sunset_tau=0.95,
                       solver=None):
     sunrises = rough_dict['sunrises']
     sunsets = rough_dict['sunsets']
-    sr_smoothed = local_quantile_regression_with_seasonal(
+    sr_smoothed = tl1_l2d2p365(
         sunrises, ~np.isnan(sunrises), tau=sunrise_tau, solver=solver
     )
-    ss_smoothed = local_quantile_regression_with_seasonal(
+    ss_smoothed = tl1_l2d2p365(
         sunsets, ~np.isnan(sunsets), tau=sunset_tau, solver=solver
     )
     return {'sunrises': sr_smoothed, 'sunsets': ss_smoothed}

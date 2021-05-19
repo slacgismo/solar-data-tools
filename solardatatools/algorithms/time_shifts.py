@@ -18,7 +18,7 @@ The algorithm works as follows:
 import numpy as np
 from scipy.stats import mode
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
-from solardatatools.signal_decompositions import total_variation_plus_seasonal_filter
+from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
 
 class TimeShift():
     def __init__(self):
@@ -147,7 +147,7 @@ class TimeShift():
         w = np.ones(len(metric) - 1)
         eps = 0.1
         for i in range(n_iter):
-            s1, s2 = total_variation_plus_seasonal_filter(
+            s1, s2 = l2_l1d1_l2d2p365(
                 metric, c1=c1, c2=c2,
                 tv_weights=w,
                 use_ixs=use_ixs,

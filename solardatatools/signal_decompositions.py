@@ -1,7 +1,32 @@
 # -*- coding: utf-8 -*-
-''' Utilities Module
+''' Signal Decompositions Module
 
-This module contains utility functions used by other modules.
+This module contains standardized signal decomposition models for use in the
+SDT algorithms. The defined signal decompositions are:
+
+1) 'l2_l1d1_l2d2p365': separating a piecewise constant component from a smooth
+and seasonal component, with Gaussian noise
+    - l2: gaussian noise, sum-of-squares small or l2-norm squared
+    - l1d1: piecewise constant heuristic, l1-norm of first order differences
+    - l2d2p365: small second order diffs (smooth) and 365-periodic
+2) 'l1_l2d2p365': estimating a smooth, seasonal component with a laplacian
+noise model, fitting a local median instead of a local average
+    - l1: laplacian noise, sum-of-absolute values or l1-norm
+    - l2d2p365: small second order diffs (smooth) and 365-periodic
+3) 'tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
+an asymmetric laplacian noise model, fitting a local quantile instead of a
+local average
+    - tl1: 'tilted l1-norm,' also known as quantile cost function
+    - l2d2p365: small second order diffs (smooth) and 365-periodic
+4) 'tl1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
+of Gaussian residuals
+    - tl1: 'tilted l1-norm,' also known as quantile cost function
+    - l1d1: piecewise constant heuristic, l1-norm of first order differences
+    - l2d2p365: small second order diffs (smooth) and 365-periodic
+5) 'hu_l1d1': total variation denoising with Huber residual cost
+    - hu: Huber cost, a function that is quadratic below a cutoff point and
+    linear above the cutoff point
+    - l1d1: piecewise constant heuristic, l1-norm of first order differences
 
 '''
 import sys
@@ -9,13 +34,12 @@ import numpy as np
 import cvxpy as cvx
 
 
-
-def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
-                                         solver=None, verbose=False,
-                                         residual_weights=None, tv_weights=None,
-                                         use_ixs=None, yearly_periodic=False,
-                                         transition_locs=None,
-                                         seas_max=None):
+def l2_l1d1_l2d2p365(signal, c1=10, c2=500,
+                     solver=None, verbose=False,
+                     residual_weights=None, tv_weights=None,
+                     use_ixs=None, yearly_periodic=False,
+                     transition_locs=None,
+                     seas_max=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -74,9 +98,8 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
     problem.solve(solver=solver, verbose=verbose)
     return s_hat.value, s_seas.value
 
-def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3,
-                                          yearly_periodic=True, solver='ECOS',
-                                          verbose=False):
+def l1_l2d2p365(signal, use_ixs=None, c1=1e3, yearly_periodic=True,
+                solver='ECOS', verbose=False):
     '''
     for a list of available solvers, see:
         https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
@@ -104,12 +127,12 @@ def local_median_regression_with_seasonal(signal, use_ixs=None, c1=1e3,
     prob.solve(solver=solver, verbose=verbose)
     return x.value
 
-def local_quantile_regression_with_seasonal(signal, use_ixs=None, tau=0.75,
-                                            c1=1e3, solver=None,
-                                            yearly_periodic=True,
-                                            verbose=False,
-                                            residual_weights=None,
-                                            tv_weights=None):
+def tl1_l2d2p365(signal, use_ixs=None, tau=0.75,
+                 c1=1e3, solver=None,
+                 yearly_periodic=True,
+                 verbose=False,
+                 residual_weights=None,
+                 tv_weights=None):
     '''
     https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
 
@@ -138,11 +161,11 @@ def local_quantile_regression_with_seasonal(signal, use_ixs=None, tau=0.75,
     return x.value
 
 
-def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.995,
-                                                  c1=1e3, c2=1e2, c3=1e2,
-                                                  solver=None, verbose=False,
-                                                  residual_weights=None,
-                                                  tv_weights=None):
+def tl1_l1d1_l2d2p365(signal, use_ixs=None, tau=0.995,
+                      c1=1e3, c2=1e2, c3=1e2,
+                      solver=None, verbose=False,
+                      residual_weights=None,
+                      tv_weights=None):
     '''
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
     signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
@@ -203,7 +226,7 @@ def total_variation_plus_seasonal_quantile_filter(signal, use_ixs=None, tau=0.99
 # NOT CURRENTLY USED
 ##############################################################################
 
-def total_variation_filter(signal, C=5):
+def hu_l1d1(signal, C=5):
     '''
     This function performs total variation filtering or denoising on a 1D signal. This filter is implemented as a
     convex optimization problem which is solved with cvxpy.

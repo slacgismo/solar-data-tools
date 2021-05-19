@@ -8,13 +8,13 @@ This module contains functions for detecting clear days in historical PV solar d
 import numpy as np
 import cvxpy as cvx
 from solardatatools.signal_decompositions import \
-    local_median_regression_with_seasonal,\
-    local_quantile_regression_with_seasonal
+    l1_l2d2p365,\
+    tl1_l2d2p365
 from solardatatools.utilities import basic_outlier_filter
 
 def filter_for_sparsity(data, c1=1e3, solver='ECOS'):
     daily_sparsity = np.sum(data > 0.005 * np.max(data), axis=0)
-    filtered_signal = local_median_regression_with_seasonal(
+    filtered_signal = l1_l2d2p365(
         daily_sparsity, c1=c1, solver=solver
     )
     mask = basic_outlier_filter(daily_sparsity - filtered_signal,
@@ -48,7 +48,7 @@ def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8,
     # Seasonal renormalization: estimate a "baseline smoothness" based on local
     # 90th percentile of smoothness signal. This has the effect of increasing
     # the score of days if there aren't very many smooth days nearby
-    y = local_quantile_regression_with_seasonal(
+    y = tl1_l2d2p365(
         tc, tau=0.9, c1=1e3, yearly_periodic=False, solver=solver
     )
     tc /= y
@@ -59,7 +59,7 @@ def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8,
     de = np.sum(data, axis=0)
     # Solve a convex minimization problem to roughly fit the local 90th
     # percentile of the data (quantile regression)
-    x = local_quantile_regression_with_seasonal(
+    x = tl1_l2d2p365(
         de, tau=0.9, c1=1e3, yearly_periodic=False, solver=solver
     )
     # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our

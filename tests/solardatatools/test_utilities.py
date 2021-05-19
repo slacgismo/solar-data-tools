@@ -2,7 +2,7 @@ import unittest
 import os
 import numpy as np
 from solardatatools.signal_decompositions import \
-    local_median_regression_with_seasonal
+    l1_l2d2p365
 from solardatatools.utilities import basic_outlier_filter
 
 
@@ -19,7 +19,7 @@ class TestCVXFilters(unittest.TestCase):
             "../fixtures/utilities/local_median_seasonal_filter.csv"))
         with open(expected_data_file_path) as file:
             expected_output = np.loadtxt(file, delimiter=',')
-        actual_output = local_median_regression_with_seasonal(data)
+        actual_output = l1_l2d2p365(data)
         np.testing.assert_array_equal(expected_output,
                                       actual_output)
 

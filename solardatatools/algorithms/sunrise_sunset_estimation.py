@@ -23,7 +23,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from solardatatools.daytime import detect_sun
 from solardatatools.sunrise_sunset import rise_set_rough, rise_set_smoothed
-from solardatatools.signal_decompositions import local_quantile_regression_with_seasonal
+from solardatatools.signal_decompositions import tl1_l2d2p365
 
 
 class SunriseSunset():
@@ -173,10 +173,10 @@ class SunriseSunset():
                     test_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
                     test_msk_sr[test_sr] = True
                     test_msk_ss[test_ss] = True
-                    sr_smoothed = local_quantile_regression_with_seasonal(
+                    sr_smoothed = tl1_l2d2p365(
                         sunrises, train_msk_sr, tau=0.05, solver=solver
                     )
-                    ss_smoothed = local_quantile_regression_with_seasonal(
+                    ss_smoothed = tl1_l2d2p365(
                         sunsets, train_msk_ss, tau=0.95, solver=solver
                     )
                     r1 = (sunrises - sr_smoothed)[test_msk_sr]
@@ -411,14 +411,14 @@ class SunriseSunset_v1():
                 test_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
                 test_msk_sr[test_sr] = True
                 test_msk_ss[test_ss] = True
-                sr_smoothed = local_quantile_regression_with_seasonal(sunrises,
-                                                                      train_msk_sr,
-                                                                      tau=0.05,
-                                                                      solver='MOSEK')
-                ss_smoothed = local_quantile_regression_with_seasonal(sunsets,
-                                                                      train_msk_ss,
-                                                                      tau=0.95,
-                                                                      solver='MOSEK')
+                sr_smoothed = tl1_l2d2p365(sunrises,
+                                           train_msk_sr,
+                                           tau=0.05,
+                                           solver='MOSEK')
+                ss_smoothed = tl1_l2d2p365(sunsets,
+                                           train_msk_ss,
+                                           tau=0.95,
+                                           solver='MOSEK')
                 r1 = (sunrises - sr_smoothed)[test_msk_sr]
                 r2 = (sunsets - ss_smoothed)[test_msk_ss]
                 ho_resid = np.r_[r1, r2]

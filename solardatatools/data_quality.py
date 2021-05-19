@@ -6,7 +6,7 @@ This module contains functions for identifying corrupt or bad quality data.
 '''
 
 import numpy as np
-from solardatatools.signal_decompositions import local_quantile_regression_with_seasonal
+from solardatatools.signal_decompositions import tl1_l2d2p365
 
 def daily_missing_data_simple(data_matrix, threshold=0.2,
                               return_density_signal=False):
@@ -47,7 +47,7 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
     use_days = np.logical_and(
         density_signal > threshold, density_signal < 0.8
     )
-    fit_signal = local_quantile_regression_with_seasonal(
+    fit_signal = tl1_l2d2p365(
         density_signal,
         use_ixs=use_days,
         tau=0.85,
