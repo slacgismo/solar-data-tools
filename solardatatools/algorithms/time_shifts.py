@@ -73,9 +73,10 @@ class TimeShift():
         )
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
-        s1, s2 = self.estimate_components(metric, best_c1, c2, use_ixs,
-                                          periodic_detector,
-                                          transition_locs=index_set)
+        s1, s2 = self.estimate_components(
+            metric, best_c1, c2, use_ixs, periodic_detector,
+            transition_locs=index_set, solver=solver
+        )
         cond1 = np.isclose(np.max(s2), 0.5)
         cond2 = c1 is None
         cond3 = self.__recursion_depth < 2
@@ -86,7 +87,7 @@ class TimeShift():
             self.run(
                 data, use_ixs=use_ixs, c1=c1, c2=c2,
                 solar_noon_estimator=solar_noon_estimator, threshold=threshold,
-                periodic_detector=periodic_detector
+                periodic_detector=periodic_detector, solver=solver
             )
             return
         # Apply corrections

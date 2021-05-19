@@ -103,7 +103,7 @@ def l2_l1d1_l2d2p365(signal, c1=10, c2=500,
     return s_hat.value, s_seas.value
 
 def l1_l2d2p365(signal, use_ixs=None, c1=1e3, yearly_periodic=True,
-                solver='ECOS', verbose=False):
+                solver=None, verbose=False):
     '''
     for a list of available solvers, see:
         https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
