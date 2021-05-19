@@ -41,14 +41,18 @@ def l2_l1d1_l2d2p365(signal, c1=10, c2=500,
                      transition_locs=None,
                      seas_max=None):
     '''
-    This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
-    signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
-    multi-year solar PV power data sets, and therefore does an improved job of estimating the discretely changing
-    signal.
+    This performs total variation filtering with the addition of a seasonal
+    baseline fit. This introduces a new signal to the model that is smooth and
+    periodic on a yearly time frame. This does a better job of describing real,
+    multi-year solar PV power data sets, and therefore does an improved job of
+    estimating the discretely changing signal.
 
-    :param signal: A 1d numpy array (must support boolean indexing) containing the signal of interest
-    :param c1: The regularization parameter to control the total variation in the final output signal
-    :param c2: The regularization parameter to control the smoothness of the seasonal signal
+    :param signal: A 1d numpy array (must support boolean indexing) containing
+    the signal of interest
+    :param c1: The regularization parameter to control the total variation in
+    the final output signal
+    :param c2: The regularization parameter to control the smoothness of the
+    seasonal signal
     :return: A 1d numpy array containing the filtered signal
     '''
     if residual_weights is None:
