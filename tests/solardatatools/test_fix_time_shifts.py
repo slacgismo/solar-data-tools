@@ -41,7 +41,7 @@ class TestFixTimeShift(unittest.TestCase):
         try:
             time_shift_analysis = TimeShift()
             time_shift_analysis.run(
-                power_data_matrix, use_ixs=use_days
+                power_data_matrix, use_ixs=use_days, solver='MOSEK'
             )
             actual_power_data_fix = time_shift_analysis.corrected_data
         except (cvx.SolverError, ValueError):
