@@ -23,7 +23,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from solardatatools.daytime import detect_sun
 from solardatatools.sunrise_sunset import rise_set_rough, rise_set_smoothed
-from solardatatools.utilities import local_quantile_regression_with_seasonal
+from solardatatools.signal_decompositions import local_quantile_regression_with_seasonal
 
 
 class SunriseSunset():

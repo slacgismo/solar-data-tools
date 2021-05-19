@@ -5,7 +5,7 @@ unlabel PV power dataset.
 '''
 
 import numpy as np
-from solardatatools.utilities import local_quantile_regression_with_seasonal
+from solardatatools.signal_decompositions import local_quantile_regression_with_seasonal
 
 def rise_set_rough(bool_msk):
     nvals = bool_msk.shape[0]

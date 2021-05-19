@@ -1,9 +1,9 @@
 import unittest
 import os
 import numpy as np
-from solardatatools.utilities import \
-    local_median_regression_with_seasonal, \
-    basic_outlier_filter
+from solardatatools.signal_decompositions import \
+    local_median_regression_with_seasonal
+from solardatatools.utilities import basic_outlier_filter
 
 
 class TestCVXFilters(unittest.TestCase):

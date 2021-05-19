@@ -7,10 +7,10 @@ This module contains functions for detecting clear days in historical PV solar d
 
 import numpy as np
 import cvxpy as cvx
-from solardatatools.utilities import \
+from solardatatools.signal_decompositions import \
     local_median_regression_with_seasonal,\
-    local_quantile_regression_with_seasonal,\
-    basic_outlier_filter
+    local_quantile_regression_with_seasonal
+from solardatatools.utilities import basic_outlier_filter
 
 def filter_for_sparsity(data, c1=1e3, solver='ECOS'):
     daily_sparsity = np.sum(data > 0.005 * np.max(data), axis=0)

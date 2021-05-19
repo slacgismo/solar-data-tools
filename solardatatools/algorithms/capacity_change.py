@@ -15,7 +15,7 @@ power production data sets. The algorithm works as follows:
 '''
 
 import numpy as np
-from solardatatools.utilities import total_variation_plus_seasonal_quantile_filter
+from solardatatools.signal_decompositions import total_variation_plus_seasonal_quantile_filter
 from sklearn.cluster import DBSCAN
 
 
