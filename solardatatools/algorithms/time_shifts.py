@@ -17,6 +17,7 @@ The algorithm works as follows:
 
 import numpy as np
 from scipy.stats import mode
+import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
 
@@ -30,6 +31,8 @@ class TimeShift():
         self.roll_by_index = None
         self.normalized_holdout_error = None
         self.normalized_train_error = None
+        self.tv_metric = None
+        self.jumps_per_year = None
         self.best_c1 = None
         self.best_ix = None
         self.__recursion_depth = 0
@@ -49,13 +52,13 @@ class TimeShift():
         self.use_ixs = use_ixs
         # Optimize c1
         if c1 is None:
-            c1s = np.logspace(-1, 2, 15)
-            hn, rn, tv_metric, best_ix = self.optimize_c1(
+            c1s = np.logspace(-1, 2, 11)
+            hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
                 metric, c1s, use_ixs, c2, periodic_detector, solver=solver
             )
             if tv_metric[best_ix] >= 0.009:
                 # rerun the optimizer with a new random data selection
-                hn, rn, tv_metric, best_ix = self.optimize_c1(
+                hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
                     metric, c1s, use_ixs, c2, periodic_detector, solver=solver
                 )
             # if np.isclose(hn[best_ix], hn[-1]):
@@ -66,6 +69,7 @@ class TimeShift():
             hn = None
             rn = None
             tv_metric = None
+            jpy = None
             c1s = None
             best_ix = None
         s1, s2 = self.estimate_components(
@@ -79,9 +83,7 @@ class TimeShift():
             transition_locs=index_set, solver=solver
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
-        cond1 = np.logical_or(
-            np.isclose(np.max(s2), 0.5), jumps_per_year > 5
-        )
+        cond1 = np.isclose(np.max(s2), 0.5)
         cond2 = c1 is None
         cond3 = self.__recursion_depth < 2
         if cond1 and cond2 and cond3:
@@ -110,6 +112,7 @@ class TimeShift():
         self.normalized_holdout_error = hn
         self.normalized_train_error = rn
         self.tv_metric = tv_metric
+        self.jumps_per_year = jpy
         self.c1_vals = c1s
         self.best_c1 = best_c1
         self.best_ix = best_ix
@@ -122,7 +125,7 @@ class TimeShift():
     def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector,
                     solver=None):
         n = np.sum(use_ixs)
-        select = np.random.uniform(size=n) <= 0.7 # random holdout selection
+        select = np.random.uniform(size=n) <= 0.75 # random holdout selection
         train = np.copy(use_ixs)
         test = np.copy(use_ixs)
         train[use_ixs] = select
@@ -130,6 +133,7 @@ class TimeShift():
         train_r = np.zeros_like(c1s)
         test_r = np.zeros_like(c1s)
         tv_metric = np.zeros_like(c1s)
+        jpy = np.zeros_like(c1s)
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
                 metric, v, c2, train, periodic_detector, n_iter=5,
@@ -139,11 +143,18 @@ class TimeShift():
             train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
             test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
             tv_metric[i] = np.average(np.abs(np.diff(s1, n=1)))
+            count_jumps = np.sum(~np.isclose(np.diff(s1), 0, atol=1e-4))
+            jumps_per_year = count_jumps / (len(metric) / 365)
+            jpy[i] = jumps_per_year
         zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
         hn = zero_one_scale(test_r)
         rn = zero_one_scale(train_r)
-        best_ix = np.argmin(hn)
-        return hn, rn, tv_metric, best_ix
+        ixs = np.arange(len(c1s))
+        # Detecting more than 5 time shifts per year is extremely uncommon,
+        # and is considered non-physical
+        slct = jpy <= 5
+        best_ix = ixs[slct][np.argmin(hn[slct])]
+        return hn, rn, tv_metric, jpy, best_ix
 
 
     def estimate_components(self, metric, c1, c2, use_ixs, periodic_detector,
@@ -176,16 +187,21 @@ class TimeShift():
             plt.xscale('log')
             plt.title('holdout validation')
             plt.show()
+            plt.plot(c1s, self.jumps_per_year, marker='.')
+            plt.axvline(best_c1, ls='--', color='red')
+            plt.xscale('log')
+            plt.title('jumps per year')
+            plt.show()
             plt.plot(c1s, rn, marker='.')
             plt.axvline(best_c1, ls='--', color='red')
             plt.xscale('log')
             plt.title('training residuals')
             plt.show()
-            plt.plot(c1s, hn * rn, marker='.')
-            plt.axvline(best_c1, ls='--', color='red')
-            plt.xscale('log')
-            plt.title('holdout error times training error')
-            plt.show()
+            # plt.plot(c1s, hn * rn, marker='.')
+            # plt.axvline(best_c1, ls='--', color='red')
+            # plt.xscale('log')
+            # plt.title('holdout error times training error')
+            # plt.show()
             plt.plot(c1s, self.tv_metric, marker='.')
             plt.axvline(best_c1, ls='--', color='red')
             plt.xscale('log')

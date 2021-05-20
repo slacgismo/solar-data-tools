@@ -772,10 +772,7 @@ class DataHandler():
                              threshold=0.1, periodic_detector=False,
                              solver=None):
         self.time_shift_analysis = TimeShift()
-        if self.data_clearness_score > 0.1 and self.num_days > 365 * 2:
-            use_ixs = self.daily_flags.clear
-        else:
-            use_ixs = self.daily_flags.no_errors
+        use_ixs = self.daily_flags.clear
         self.time_shift_analysis.run(
             self.filled_data_matrix, use_ixs=use_ixs,
             c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold,
@@ -786,14 +783,6 @@ class DataHandler():
             self.time_shifts = False
         else:
             self.time_shifts = True
-        # self.filled_data_matrix, shift_ixs = fix_time_shifts(
-        #     self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
-        #     return_ixs=True, verbose=False, use_ixs=None, threshold=threshold
-        # )
-        # if len(shift_ixs) == 0:
-        #     self.time_shifts = False
-        # else:
-        #     self.time_shifts = True
 
     def detect_clear_days(self, smoothness_threshold=0.9, energy_threshold=0.8,
                           solver=None):
