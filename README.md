@@ -37,8 +37,17 @@
     </a>
   </td>
 </tr>
-<!-- add Code Quality here -->
 <tr>
+    <td>Code Quality</td>
+    <td>
+        <a href="https://lgtm.com/projects/g/slacgismo/solar-data-tools/context:python">
+            <img alt="Language grade: Python" src="https://img.shields.io/lgtm/grade/python/g/slacgismo/solar-data-tools.svg?logo=lgtm&logoWidth=18"/>
+        </a>
+        <a href="https://lgtm.com/projects/g/slacgismo/solar-data-tools/alerts/">
+            <img alt="Total alerts" src="https://img.shields.io/lgtm/alerts/g/slacgismo/solar-data-tools.svg?logo=lgtm&logoWidth=18"/>
+        </a>
+    </td>
+</tr>
 <!-- add Publications here -->
 <tr>
   <td>Downloads</td>

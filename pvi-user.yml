@@ -34,3 +34,4 @@ dependencies:
     - sphinx
     - sphinxcontrib-apidoc
     - sphinx-rtd-theme
+    - coverage
