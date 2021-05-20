@@ -85,7 +85,7 @@ def total_variation_plus_seasonal_filter(signal, c1=10, c2=500,
         if periodic_detector:
             constraints.append(s_hat[365:] - s_hat[:-365] == 0)
     if transition_locs is not None:
-        loc_mask = np.ones(len(signal) - 1, dtype=np.bool)
+        loc_mask = np.ones(len(signal) - 1, dtype=bool)
         loc_mask[transition_locs] = False
         # loc_mask[transition_locs + 1] = False
         constraints.append(cvx.diff(s_hat, k=1)[loc_mask] == 0)

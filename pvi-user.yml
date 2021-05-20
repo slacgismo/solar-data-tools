@@ -1,9 +1,10 @@
 name: pvi-user
 channels:
+  - defaults
+  - anaconda
   - mosek
   - slacgismo
   - conda-forge
-  - defaults
 dependencies:
   - jupyter
   - ipython
@@ -14,6 +15,7 @@ dependencies:
   - pandas
   - pip
   - nose
+  - pytest
   - numpy
   - requests
   - scikit-learn
@@ -22,16 +24,11 @@ dependencies:
   - statistical-clear-sky
   - cassandra-driver
   - openblas
+  - smart_open
   - mosek
+  - cvxpy
+  - scs
   - pip:
-    - cvxpy
     - dill
-    - ecos
     - future
     - multiprocess
-    - osqp
-    - scs
-    - sphinx
-    - sphinxcontrib-apidoc
-    - sphinx-rtd-theme
-    - coverage

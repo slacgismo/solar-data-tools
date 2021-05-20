@@ -45,12 +45,13 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
     data_copy[nans] = 0.
     foo = data_copy > 0.02 * capacity_est
     density_signal = np.sum(foo, axis=0) / data_matrix.shape[0]
-    use_days = density_signal > threshold
+    use_days = np.logical_and(
+        density_signal > threshold, density_signal < 0.8
+    )
     fit_signal = local_quantile_regression_with_seasonal(
         density_signal,
         use_ixs=use_days,
-        tau=0.9,
-        solver='MOSEK'
+        tau=0.85
     )
     scores = density_signal / fit_signal
     out = [scores]

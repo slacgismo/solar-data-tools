@@ -28,7 +28,7 @@ from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
 
 class DataHandler():
-    def __init__(self, data_frame=None, raw_data_matrix=None,
+    def __init__(self, data_frame=None, raw_data_matrix=None, datetime_col=None,
                  convert_to_ts=False, aggregate=None, how=lambda x: x.mean()):
         if data_frame is not None:
             if convert_to_ts:
@@ -37,6 +37,25 @@ class DataHandler():
             else:
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
+            seq_index = np.arange(len(self.data_frame_raw))
+            if isinstance(self.keys[0], tuple):
+                num_levels = len(self.keys[0])
+                self.seq_index_key = tuple(['seq_index'] * num_levels)
+            else:
+                self.seq_index_key = 'seq_index'
+            self.data_frame_raw[self.seq_index_key] = seq_index
+            if not isinstance(self.data_frame_raw.index, pd.DatetimeIndex):
+                if datetime_col is not None:
+                    df = self.data_frame_raw
+                    df[datetime_col] = pd.to_datetime(df[datetime_col])
+                    df.set_index(datetime_col, inplace=True)
+                else:
+                    e = "Data frame must have a DatetimeIndex or"
+                    e += "the user must set the datetime_col kwarg."
+                    raise Exception(e)
+            df_index = self.data_frame_raw.index
+            if df_index.tz is not None:
+                df_index = df_index.tz_localize(None)
             self.data_frame = None
             if aggregate is not None:
                 new_data = how(self.data_frame_raw.resample(aggregate))
@@ -521,7 +540,12 @@ class DataHandler():
             self.data_frame.loc[bix, column_name] = True
         if column_name in self.data_frame_raw.columns:
             del self.data_frame_raw[column_name]
-        self.data_frame_raw = self.data_frame_raw.join(self.data_frame[column_name])
+        temp = (self.data_frame[[column_name, self.seq_index_key]]).copy()
+        temp = temp.dropna()
+        temp = temp.set_index(self.seq_index_key)
+        self.data_frame_raw = self.data_frame_raw.join(
+            temp, on=self.seq_index_key
+        )
 
     def fix_dst(self):
         """
@@ -558,6 +582,9 @@ class DataHandler():
             self.data_sampling = 24 * 60 / self.raw_data_matrix.shape[0]
         self.use_column = use_col
         self.day_index = day_index[start_day_ix:end_day_ix]
+        d1 = self.day_index[0].strftime('%x')
+        d2 = self.day_index[-1].strftime('%x')
+        self.data_frame = self.data_frame[d1:d2]
         self.start_doy = self.day_index.dayofyear[0]
         return
 
@@ -907,18 +934,21 @@ class DataHandler():
 
 
     def plot_heatmap(self, matrix='raw', flag=None, figsize=(12, 6),
-                     scale_to_kw=True, year_lines=True):
+                     scale_to_kw=True, year_lines=True, units=None):
         if matrix == 'raw':
             mat = np.copy(self.raw_data_matrix)
         elif matrix == 'filled':
             mat = np.copy(self.filled_data_matrix)
+        elif matrix in self.extra_matrices.keys():
+            mat = self.extra_matrices[matrix]
         else:
             return
-        if scale_to_kw and self.power_units == 'W':
-            mat /= 1000
-            units = 'kW'
-        else:
-            units = self.power_units
+        if units is None:
+            if scale_to_kw and self.power_units == 'W':
+                mat /= 1000
+                units = 'kW'
+            else:
+                units = self.power_units
         if flag is None:
             return plot_2d(mat, figsize=figsize,
                            dates=self.day_index, year_lines=year_lines,
@@ -1291,7 +1321,7 @@ class DataHandler():
         # Look for outliers in the 2nd order difference to identify point masses from clipping
         local_curv = cvx.diff(y_hat, k=2).value
         ref_slope = cvx.diff(y_hat, k=1).value[:-1]
-        threshold = -0.5
+        threshold = -0.35
         # metric = local_curv / ref_slope
         metric = np.min([
             local_curv / ref_slope,
