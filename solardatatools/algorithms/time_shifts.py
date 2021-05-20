@@ -73,16 +73,20 @@ class TimeShift():
         )
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
+        # print(len(index_set), len(index_set) / (len(metric) / 365))
         s1, s2 = self.estimate_components(
             metric, best_c1, c2, use_ixs, periodic_detector,
             transition_locs=index_set, solver=solver
         )
-        cond1 = np.isclose(np.max(s2), 0.5)
+        jumps_per_year = len(index_set) / (len(metric) / 365)
+        cond1 = np.logical_or(
+            np.isclose(np.max(s2), 0.5), jumps_per_year > 5
+        )
         cond2 = c1 is None
         cond3 = self.__recursion_depth < 2
         if cond1 and cond2 and cond3:
-            # Unlikely that constraint should be active. Try a different
-            # random sampling
+            # Unlikely that constraint should be active or that there are more
+            # than 5 time shifts per year. Try a different random sampling
             self.__recursion_depth += 1
             self.run(
                 data, use_ixs=use_ixs, c1=c1, c2=c2,
