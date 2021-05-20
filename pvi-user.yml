@@ -1,4 +1,4 @@
-name: pvi-pycharm
+name: pvi-user
 channels:
   - defaults
   - anaconda
