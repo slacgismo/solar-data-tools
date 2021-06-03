@@ -39,7 +39,7 @@ class DataHandler():
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
             seq_index = np.arange(len(self.data_frame_raw))
-            if isinstance(self.keys[0], tuple):
+            if isinstance(self.keys[0], tuple) and not convert_to_ts:
                 num_levels = len(self.keys[0])
                 self.seq_index_key = tuple(['seq_index'] * num_levels)
             else:
