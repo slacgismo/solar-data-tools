@@ -211,11 +211,11 @@ def standardize_time_axis(df, timeindex=True, power_col=None, datetimekey=None,
     # old timestamp.
     try:
         df = df.loc[df.index.notnull()]\
-                .reindex(index=time_index, method='nearest', limit=1)
+                .reindex(index=time_index, method=None, limit=None)
     except TypeError:
         df.index = df.index.tz_localize(None)
         df = df.loc[df.index.notnull()] \
-            .reindex(index=time_index, method='nearest', limit=1)
+            .reindex(index=time_index, method=None, limit=None)
     return df, sn_deviation
 
 def fix_daylight_savings_with_known_tz(df, tz='America/Los_Angeles', inplace=False):
