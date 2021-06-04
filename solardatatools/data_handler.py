@@ -182,17 +182,30 @@ class DataHandler():
         # is finished
         ss = SunriseSunset()
         # CVXPY - either MOSEK of ECOS for this one, SCS fails
-        if solver is None or solver == 'MOSEK':
-            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
-        else:
-            ss.run_optimizer(self.raw_data_matrix, plot=False, solver='ECOS')
-        self.boolean_masks.daytime = ss.sunup_mask_estimated
+        try:
+            if solver is None or solver == 'MOSEK':
+                ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
+            else:
+                ss.run_optimizer(self.raw_data_matrix, plot=False, solver='ECOS')
+            self.boolean_masks.daytime = ss.sunup_mask_estimated
+        except:
+            msg = 'Sunrise/sunset detection failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
         self.daytime_analysis = ss
         ######################################################################
         # Cleaning
         ######################################################################
         t[1] = time()
-        self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
+        try:
+            self.make_filled_data_matrix(zero_night=zero_night,
+                                         interp_day=interp_day)
+        except:
+            msg = 'Matrix filling failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
         num_raw_measurements = np.count_nonzero(
             np.nan_to_num(self.raw_data_matrix,
                           copy=True,
