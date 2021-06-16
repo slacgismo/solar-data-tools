@@ -53,7 +53,7 @@
     <td>PyPI Downloads</td>
     <td>
         <a href="https://pepy.tech/project/solar-data-tools">
-            <img src="https://static.pepy.tech/badge/solar-data-tools" alt="PyPI downloads" />
+            <img src="https://img.shields.io/pypi/dm/solar-data-tools" alt="PyPI downloads" />
         </a>
     </td>
 </tr>
@@ -78,7 +78,9 @@ See [notebooks](/notebooks) folder for examples.
 
 ## Setup
 
-### Recommended: Set up `conda` environment with provided `.yml` file
+### Using this project by cloning this GIT repository
+
+##### Recommended: Set up `conda` environment with provided `.yml` file
 
 _Updated March 2021_
 
@@ -88,7 +90,15 @@ Additional documentation on setting up the Conda environment is available [here]
 
 Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more information.
 
-### Installing this project as PIP package
+##### Alternative: From a fresh `python` environment, run the following from the base project folder:
+
+```bash
+$ pip install -r requirements.txt
+```
+
+### Install
+
+#### PIP Package
 
 ```sh
 $ pip install solar-data-tools
@@ -105,15 +115,7 @@ $ pip install 'numpy>=1.16'
 $ pip install statistical-clear-sky
 ```
 
-#### Solvers
-
-
-Currently, this sofware package requires the use of a commercial software package called MOSEK. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
-
-* [mosek](https://www.mosek.com/resources/getting-started/)stall -f https://download.mosek.com/stable/wheel/index.html Mosek
-    ```
-
-### Installing this project as Anaconda package
+##### Anaconda Package
 
 ```sh
 $ conda install -c slacgismo solar-data-tools
@@ -121,23 +123,21 @@ $ conda install -c slacgismo solar-data-tools
 
 If you are using Anaconda, the problem described in the section for PIP package above doesn't occur since numpy is already installed. And during solar-data-tools installation, numpy is upgraded above 1.16.
 
+
 #### Solvers
 
-By default, ECOS solver is used, which is supported by cvxpy because it is Open Source.
+###### ECOS
 
+By default, ECOS solver is used, which is supported by cvxpy because it is Open Source.
 However, it is found that Mosek solver is more stable. Thus, we encourage you to install it separately as below and obtain the license on your own.
 
+###### MOSEK
+
+ MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
+
+* [mosek](https://www.mosek.com/resources/getting-started/)
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
-
-### Using this project by cloning this GIT repository
-
-From a fresh `python` environment, run the following from the base project folder:
-
-```bash
-$ pip install -r requirements.txt
-```
-
 
 ## Usage
 
