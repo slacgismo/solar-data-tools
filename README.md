@@ -167,6 +167,12 @@ Filtering/Summarizing      1.53s
     Capacity change detect 0.91s
 ```
 
+## Test Coverage
+In order to view the current test coverage metrics, run:
+```
+coverage run --source solardatatools -m unittest discover && coverage html
+open htmlcov/index.html
+```
 
 ## Versioning
 
