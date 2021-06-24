@@ -78,9 +78,9 @@ See [notebooks](/notebooks) folder for examples.
 
 ## Setup
 
-### Using this project by cloning this GIT repository
+### 3 ways of setting up:
 
-##### Recommended: Set up `conda` environment with provided `.yml` file
+#### 1) Recommended: Set up `conda` environment with provided `.yml` file
 
 _Updated March 2021_
 
@@ -90,10 +90,19 @@ Additional documentation on setting up the Conda environment is available [here]
 
 Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more information.
 
-##### Alternative: From a fresh `python` environment, run the following from the base project folder:
+
+#### 2) Alternative: From a fresh `python` environment, run the following from the base project folder:
 
 ```bash
 $ pip install -r requirements.txt
+```
+
+#### 3) Alternative: Clone repo from GitHub
+
+Mimic the pip package by setting up locally.
+
+```bash
+$ pip install -e path/to/root/folder
 ```
 
 ## Install
