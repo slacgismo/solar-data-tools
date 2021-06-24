@@ -6,6 +6,7 @@ This module contains a class for managing a data processing pipeline
 '''
 from time import time
 from datetime import timedelta
+from datetime import datetime
 import numpy as np
 import pandas as pd
 from scipy.stats import mode, skew
@@ -30,7 +31,8 @@ from solardatatools.algorithms import CapacityChange, TimeShift,\
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None, datetime_col=None,
-                 convert_to_ts=False, aggregate=None, how=lambda x: x.mean()):
+                 convert_to_ts=False, no_future_dates=True,
+                 aggregate=None, how=lambda x: x.mean()):
         if data_frame is not None:
             if convert_to_ts:
                 data_frame, keys = make_time_series(data_frame)
@@ -57,6 +59,11 @@ class DataHandler():
             df_index = self.data_frame_raw.index
             if df_index.tz is not None:
                 df_index = df_index.tz_localize(None)
+            if no_future_dates:
+                now = datetime.now()
+                self.data_frame_raw = self.data_frame_raw[
+                    self.data_frame_raw.index <= now
+                ]
             self.data_frame = None
             if aggregate is not None:
                 new_data = how(self.data_frame_raw.resample(aggregate))
@@ -339,8 +346,6 @@ class DataHandler():
             )
             tz_offset = int(np.round(12 - average_noon))
             if np.abs(tz_offset) > 1:
-                # TODO: delete me
-                print('Doing the second thing!')
                 self.tz_correction += tz_offset
                 # Related to this bug fix:
                 # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da

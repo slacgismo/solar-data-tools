@@ -72,7 +72,7 @@ class SunriseSunset():
         self.threshold = threshold
 
         if plot:
-            fig, ax = plt.subplots(nrows=4, figsize=figsize)
+            fig, ax = plt.subplots(nrows=4, figsize=figsize, sharex=True)
             ylims = []
             ax[0].set_title('Sunrise Times')
             ax[0].plot(self.sunrise_estimates, ls='--',
@@ -125,11 +125,11 @@ class SunriseSunset():
             if groundtruth is not None:
                 ax[3].plot(ss_true - sr_true, label='true', color='orange')
             for i in range(4):
-                ax[i].legend()
+                ax[i].legend(loc=1)
             if zoom_fit:
                 for ax_it, ylim_it in zip(ax, ylims):
                     ax_it.set_ylim(ylim_it)
-            plt.tight_layout()
+            # plt.tight_layout()
             return fig
         else:
             return
