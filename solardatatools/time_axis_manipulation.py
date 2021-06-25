@@ -210,6 +210,8 @@ def standardize_time_axis(df, timeindex=True, power_col=None, datetimekey=None,
     # This forces the existing data into the closest new timestamp to the
     # old timestamp.
     try:
+        df = df.loc[df.index.notnull()]
+        df = df.loc[~df.index.duplicated()]
         df = df.loc[df.index.notnull()]\
                 .reindex(index=time_index, method='nearest', limit=1)
     except TypeError:
