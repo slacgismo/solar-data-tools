@@ -48,7 +48,14 @@
         </a>
     </td>
 </tr>
-<!-- add Publications here -->
+<tr>
+    <td>Publications</td>
+    <td>
+        <a href="https://zenodo.org/badge/latestdoi/171066536">
+            <img src="https://zenodo.org/badge/171066536.svg" alt="DOI">
+        </a>
+    </td>
+</tr>
 <tr>
     <td>PyPI Downloads</td>
     <td>
