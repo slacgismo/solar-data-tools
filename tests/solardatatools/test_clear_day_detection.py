@@ -1,5 +1,4 @@
 import unittest
-import os
 from pathlib import Path
 import numpy as np
 import cvxpy as cvx
@@ -11,8 +10,9 @@ class TestClearDayDetection(unittest.TestCase):
     def test_find_clear_days(self):
 
         filepath = Path(__file__).parent.parent
-        data_file_path = filepath / 'fixtures' / 'clear_day_detection' / \
-                         'one_year_power_signals_1.csv'
+        data_file_path = \
+            filepath / 'fixtures' / 'clear_day_detection' / \
+            'one_year_power_signals_1.csv'
         with open(data_file_path) as file:
             data = np.loadtxt(file, delimiter=',')
         expected_data_file_path = \
