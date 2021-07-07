@@ -117,34 +117,37 @@ def standardize_time_axis(df, timeindex=True, power_col=None, datetimekey=None,
     df.index = pd.to_datetime(df.index)
     # Check for "large" time zone issues (> 4 hrs off). This is to avoid power
     # generation at midnight, which "wraps around" when forming a matrix
-    thresh = 0.01
-    # calculate average day
-    s = df[power_col]
-    avg_day = s.groupby(s.index.time).mean()
-    # normalize to [0, 1]
-    avg_day /= np.max(avg_day)
-    avg_day -= np.min(avg_day)
-    # find sunrise and sunset times
-    idxs = np.arange(len(avg_day))
-    sr_loc = idxs[np.r_[
-        [False], np.diff((avg_day.values >= thresh).astype(float)) == 1]]
-    ss_loc = idxs[np.r_[
-        np.diff((avg_day.values >= thresh).astype(float)) == -1, [False]]]
-    sunrise = avg_day.index.values[sr_loc]
-    sunrise = sunrise[0].hour + sunrise[0].minute / 60
-    sunset = avg_day.index.values[ss_loc]
-    sunset = sunset[0].hour + sunset[0].minute / 60
-    # calculate solar noon of average day
-    if sunrise < sunset:
-        sn = np.average([sunrise, sunset])
+    if power_col is not None:
+        thresh = 0.01
+        # calculate average day
+        s = df[power_col]
+        avg_day = s.groupby(s.index.time).mean()
+        # normalize to [0, 1]
+        avg_day /= np.max(avg_day)
+        avg_day -= np.min(avg_day)
+        # find sunrise and sunset times
+        idxs = np.arange(len(avg_day))
+        sr_loc = idxs[np.r_[
+            [False], np.diff((avg_day.values >= thresh).astype(float)) == 1]]
+        ss_loc = idxs[np.r_[
+            np.diff((avg_day.values >= thresh).astype(float)) == -1, [False]]]
+        sunrise = avg_day.index.values[sr_loc]
+        sunrise = sunrise[0].hour + sunrise[0].minute / 60
+        sunset = avg_day.index.values[ss_loc]
+        sunset = sunset[0].hour + sunset[0].minute / 60
+        # calculate solar noon of average day
+        if sunrise < sunset:
+            sn = np.average([sunrise, sunset])
+        else:
+            sn = np.average([sunrise, sunset + 24])
+            if sn > 24:
+                sn -= 24
+        avg_solar_noon = sn
+        sn_deviation = int(np.round(12 - avg_solar_noon))
     else:
-        sn = np.average([sunrise, sunset + 24])
-        if sn > 24:
-            sn -= 24
-    avg_solar_noon = sn
-    sn_deviation = int(np.round(12 - avg_solar_noon))
-        # if estimated average solar noon is more than 4 hours from clock noon,
-        # then apply a correction
+        sn_deviation = 0
+    # if estimated average solar noon is more than 4 hours from clock noon,
+    # then apply a correction
     if correct_tz and power_col is not None:
         if np.abs(sn_deviation) > 4:
             df.index = df.index.shift(sn_deviation, freq='H')
