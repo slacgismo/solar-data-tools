@@ -83,28 +83,42 @@ There is close integration between this repository and the [Statistical Clear Sk
 
 See [notebooks](/notebooks) folder for examples.
 
-## Setup
+## Install & Setup
 
-### 3 ways of setting up:
+### 2 ways of setting up either approach works:
 
 #### 1) Recommended: Set up `conda` environment with provided `.yml` file
 
-_Updated March 2021_
-
 We recommend setting up a fresh Python virtual environment in which to use `solar-data-tools`. We recommend using the [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) package management system, and creating an environment with the environment configuration file named `pvi-user.yml`, provided in the top level of this repository. This will install the `statistical-clear-sky` package as well.
+
+Creating the env:
+
+```bash
+$ conda env create -f pvi-user.yml
+```
+
+Starting the env:
+
+```bash
+$ conda activate pvi_user
+```
+
+Stopping the env
+
+```bash
+$ conda deactivate
+```
 
 Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
 
-Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more information.
 
+#### 2) PIP Package
 
-#### 2) Alternative: From a fresh `python` environment, run the following from the base project folder:
-
-```bash
-$ pip install -r requirements.txt
+```sh
+$ pip install solar-data-tools
 ```
 
-#### 3) Alternative: Clone repo from GitHub
+Alternative: Clone repo from GitHub
 
 Mimic the pip package by setting up locally.
 
@@ -112,32 +126,11 @@ Mimic the pip package by setting up locally.
 $ pip install -e path/to/root/folder
 ```
 
-## Install
-
-### PIP Package
-
-```sh
-$ pip install solar-data-tools
-```
-
-As of March 6, 2019, it fails because scs package installed as a dependency of cxvpy expects numpy to be already installed.
-[scs issue 85](https://github.com/cvxgrp/scs/issues/85) says, it is fixed.
-However, it doesn't seem to be reflected in its pip package.
-Also, cvxpy doesn't work with numpy version less than 1.16.
-As a work around, install numpy separatly first and then install this package.
-i.e.
-```sh
-$ pip install 'numpy>=1.16'
-$ pip install statistical-clear-sky
-```
-
-### Anaconda Package
+<!-- #### 3) Anaconda Package
 
 ```sh
 $ conda install -c slacgismo solar-data-tools
-```
-
-If you are using Anaconda, the problem described in the section for PIP package above doesn't occur since numpy is already installed. And during solar-data-tools installation, numpy is upgraded above 1.16.
+``` -->
 
 ### Solvers
 
