@@ -8,7 +8,6 @@ from solardatatools.clear_day_detection import find_clear_days
 class TestClearDayDetection(unittest.TestCase):
 
     def test_find_clear_days(self):
-
         filepath = Path(__file__).parent.parent
         data_file_path = \
             filepath / 'fixtures' / 'clear_day_detection' / \
