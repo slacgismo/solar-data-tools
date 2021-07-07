@@ -8,6 +8,7 @@ import numpy as np
 import cvxpy as cvx
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from solardatatools.signal_decompositions import make_l2_ll1d1
 
 class ClippingDetection():
     def __init__(self):
@@ -311,19 +312,9 @@ class ClippingDetection():
         return x_rs, y_rs
 
     def make_problem(self, y, weight=1e1):
-        y_hat = cvx.Variable(len(y))
-        y_param = cvx.Parameter(len(y), value=y)
-        mu = cvx.Parameter(nonneg=True)
-        mu.value = weight
-        error = cvx.sum_squares(y_param - y_hat)
-        reg = cvx.norm(cvx.diff(y_hat, k=2), p=1)
-        objective = cvx.Minimize(error + mu * reg)
-        constraints = [
-            y_param[0] == y_hat[0],
-            y[-1] == y_hat[-1]
-        ]
-        problem = cvx.Problem(objective, constraints)
-        self.problem = problem
-        self.y_param = y_param
-        self.y_hat = y_hat
-        self.weight = mu
+        out = make_l2_ll1d1(y, weight=weight)
+
+        self.problem = out[0]
+        self.y_param = out[1]
+        self.y_hat = out[2]
+        self.weight = out[3]

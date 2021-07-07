@@ -226,6 +226,21 @@ def tl1_l1d1_l2d2p365(signal, use_ixs=None, tau=0.995,
     return s_hat.value, s_seas.value[:n]
 
 
+def make_l2_ll1d1(y, weight=1e1):
+    y_hat = cvx.Variable(len(y))
+    y_param = cvx.Parameter(len(y), value=y)
+    mu = cvx.Parameter(nonneg=True)
+    mu.value = weight
+    error = cvx.sum_squares(y_param - y_hat)
+    reg = cvx.norm(cvx.diff(y_hat, k=2), p=1)
+    objective = cvx.Minimize(error + mu * reg)
+    constraints = [
+        y_param[0] == y_hat[0],
+        y[-1] == y_hat[-1]
+    ]
+    problem = cvx.Problem(objective, constraints)
+    return problem, y_param, y_hat, mu
+
 ##############################################################################
 # NOT CURRENTLY USED
 ##############################################################################
