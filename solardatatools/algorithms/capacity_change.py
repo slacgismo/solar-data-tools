@@ -15,7 +15,7 @@ power production data sets. The algorithm works as follows:
 '''
 
 import numpy as np
-from solardatatools.utilities import total_variation_plus_seasonal_quantile_filter
+from solardatatools.signal_decompositions import tl1_l1d1_l2d2p365
 from sklearn.cluster import DBSCAN
 
 
@@ -28,7 +28,7 @@ class CapacityChange():
 
     def run(self, data, filter=None, quantile=1.00, c1=15, c2=100, c3=300,
             tau=0.5, reweight_eps=0.5, reweight_niter=5, dbscan_eps=.02,
-            dbscan_min_samples='auto'):
+            dbscan_min_samples='auto', solver=None):
         if filter is None:
             filter = np.ones(data.shape[1], dtype=np.bool)
         if np.sum(filter) > 0:
@@ -38,10 +38,10 @@ class CapacityChange():
             w = np.ones(len(metric) - 1)
             eps = reweight_eps
             for i in range(reweight_niter):
-                s1, s2 = total_variation_plus_seasonal_quantile_filter(
+                s1, s2 = tl1_l1d1_l2d2p365(
                     metric, use_ixs=filter,
                     tau=tau, c1=c1, c2=c2,
-                    c3=c3, tv_weights=w
+                    c3=c3, tv_weights=w, solver=solver
                 )
                 w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         else:
