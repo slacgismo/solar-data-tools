@@ -187,7 +187,7 @@ class DataHandler():
         # Run once to get a rough estimate. Update at the end after cleaning
         # is finished
         ss = SunriseSunset()
-        # CVXPY - either MOSEK of ECOS for this one, SCS fails
+        # CVXPY - either MOSEK or ECOS for this one, SCS fails
         try:
             if solver is None or solver == 'MOSEK':
                 ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
