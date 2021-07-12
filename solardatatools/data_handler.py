@@ -10,13 +10,12 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from scipy.stats import mode, skew
-from scipy.interpolate import interp1d
 from sklearn.cluster import DBSCAN
-import cvxpy as cvx
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
+import traceback, sys
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis
 from solardatatools.matrix_embedding import make_2d
@@ -188,7 +187,7 @@ class DataHandler():
         # Run once to get a rough estimate. Update at the end after cleaning
         # is finished
         ss = SunriseSunset()
-        # CVXPY - either MOSEK of ECOS for this one, SCS fails
+        # CVXPY - either MOSEK or ECOS for this one, SCS fails
         try:
             if solver is None or solver == 'MOSEK':
                 ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
@@ -200,6 +199,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+                traceback.print_exception(*sys.exc_info())
         self.daytime_analysis = ss
         ######################################################################
         # Cleaning
@@ -213,6 +213,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+                traceback.print_exception(*sys.exc_info())
         num_raw_measurements = np.count_nonzero(
             np.nan_to_num(self.raw_data_matrix,
                           copy=True,
@@ -263,6 +264,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+                traceback.print_exception(*sys.exc_info())
             self.daily_scores = None
         try:
             self.get_daily_flags(density_lower_threshold=density_lower_threshold,
@@ -273,6 +275,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+                traceback.print_exception(*sys.exc_info())
             self.daily_flags = None
         t_clean[1] = time()
         try:
@@ -287,6 +290,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+                traceback.print_exception(*sys.exc_info())
         t_clean[2] = time()
         try:
             # CVXPY
@@ -296,7 +300,6 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
-                import traceback, sys
                 traceback.print_exception(*sys.exc_info())
             self.inverter_clipping = None
         t_clean[3] = time()
@@ -307,6 +310,7 @@ class DataHandler():
             self._error_msg += '\n' + msg
             if verbose:
                 print(msg)
+                traceback.print_exception(*sys.exc_info())
             self.data_quality_score = None
             self.data_clearness_score = None
         t_clean[4] = time()
@@ -314,6 +318,11 @@ class DataHandler():
             # CVXPY
             self.capacity_clustering(solver=solver)
         except TypeError:
+            msg = 'Capacity clustering failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
             self.capacity_changes = None
         t_clean[5] = time()
         ######################################################################
@@ -337,6 +346,7 @@ class DataHandler():
                     print(msg)
                     print('Error message:', e)
                     print('\n')
+                    traceback.print_exception(*sys.exc_info())
                 self.time_shifts = None
 
         # check for remaining TZ offset issues

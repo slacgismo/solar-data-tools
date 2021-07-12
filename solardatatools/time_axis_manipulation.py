@@ -117,7 +117,7 @@ def standardize_time_axis(df, timeindex=True, power_col=None, datetimekey=None,
     df.index = pd.to_datetime(df.index)
     # Check for "large" time zone issues (> 4 hrs off). This is to avoid power
     # generation at midnight, which "wraps around" when forming a matrix
-    if correct_tz and power_col is not None:
+    if power_col is not None:
         thresh = 0.01
         # calculate average day
         s = df[power_col]
@@ -144,13 +144,22 @@ def standardize_time_axis(df, timeindex=True, power_col=None, datetimekey=None,
                 sn -= 24
         avg_solar_noon = sn
         sn_deviation = int(np.round(12 - avg_solar_noon))
-        # if estimated average solar noon is more than 4 hours from clock noon,
-        # then apply a correction
+    else:
+        sn_deviation = 0
+    # if estimated average solar noon is more than 4 hours from clock noon,
+    # then apply a correction
+    if correct_tz and power_col is not None:
         if np.abs(sn_deviation) > 4:
             df.index = df.index.shift(sn_deviation, freq='H')
         else:
             sn_deviation = 0
     else:
+        if np.abs(sn_deviation) > 4:
+            m1 = 'CAUTION: Time zone offset error detected, '
+            m1 += 'but TZ correction flag turned off!\n'
+            m1 += 'Recommend checking timezone localization in data or '
+            m1 += 'turning on TZ correction flag.'
+            print(m1)
         sn_deviation = 0
     # determine most common sampling frequency
     try:
