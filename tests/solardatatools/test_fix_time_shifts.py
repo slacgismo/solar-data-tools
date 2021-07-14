@@ -1,6 +1,6 @@
 import unittest
 import sys
-import os
+import pathlib
 import numpy as np
 import cvxpy as cvx
 from solardatatools.algorithms import TimeShift
@@ -14,24 +14,18 @@ class TestFixTimeShift(unittest.TestCase):
 
     def test_fix_time_shifts(self):
 
-        input_power_signals_file_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__),
-                "../fixtures/time_shifts",
-                "two_year_signal_with_shift.csv"))
+        input_power_signals_file_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/time_shifts",
+                "two_year_signal_with_shift.csv")
         with open(input_power_signals_file_path) as file:
             power_data_matrix = np.loadtxt(file, delimiter=',')
 
-        use_days_file_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__),
-                "../fixtures/time_shifts",
-                "clear_days.csv"))
+        use_days_file_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/time_shifts",
+                "clear_days.csv")
         with open(use_days_file_path) as file:
             use_days = np.loadtxt(file, delimiter=',')
 
-        output_power_signals_file_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__),
-                "../fixtures/time_shifts",
-                "two_year_signal_fixed.csv"))
+        output_power_signals_file_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/time_shifts",
+                "two_year_signal_fixed.csv")
         with open(output_power_signals_file_path) as file:
             expected_power_data_fix = np.loadtxt(file, delimiter=',')
 
