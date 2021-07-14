@@ -1,5 +1,5 @@
 import unittest
-import pathlib
+from pathlib import Path
 import numpy as np
 from solardatatools.algorithms.soiling import soiling_seperation
 
@@ -8,13 +8,13 @@ class TestDataFilling(unittest.TestCase):
 
     def test_soiling_seperation(self):
         # inputs for soiling seperation
-        bix_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/bix_soiling_seperation_input.csv")
-        pi_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/pi_soiling_seperation_input.csv")
+        bix_path = Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/bix_soiling_seperation_input.csv")
+        pi_path = Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/pi_soiling_seperation_input.csv")
 
         # expected outputs
-        expected_s1_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/s1_soiling_seperation_output.csv")
-        expected_s2_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/s2_soiling_seperation_output.csv")
-        expected_s3_path = pathlib.Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/s3_soiling_seperation_output.csv")
+        expected_s1_path = Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/s1_soiling_seperation_output.csv")
+        expected_s2_path = Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/s2_soiling_seperation_output.csv")
+        expected_s3_path = Path(__file__).parent.parent.joinpath("fixtures/soiling_seperation/s3_soiling_seperation_output.csv")
 
         with open(bix_path) as file:
             bix = np.genfromtxt(file, delimiter=',')

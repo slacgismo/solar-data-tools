@@ -16,7 +16,7 @@ these two data filtering schemes, the algorithm alerts the user.
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, HuberRegressor
 from sklearn.model_selection import KFold, TimeSeriesSplit
 
 def rmse(residuals):
@@ -45,7 +45,14 @@ class SensorIdentification():
         self.chosen_sensor = None
         self.consistent_answer = None
 
-    def identify(self, n_splits=20):
+    def identify(self, n_splits=20, model='least-squares', epsilon=1.35,
+                 max_iter=100, alpha=0.0001):
+        # least squares is about 10x faster than huber, but less robust
+        if model == 'least-squares':
+            lr = LinearRegression()
+        elif model == 'huber':
+            lr = HuberRegressor(epsilon=epsilon, max_iter=max_iter,
+                                alpha=alpha)
         self.results_table = None
         self.consistent_answer = None
         self.chosen_sensor = None
@@ -59,7 +66,7 @@ class SensorIdentification():
         )
         counter = 0
         for filter_key, filter in filters.items():
-            mask = np.zeros_like(self.compare_mask, dtype=np.bool)
+            mask = np.zeros_like(self.compare_mask, dtype=bool)
             mask[:, filter] = self.compare_mask[:, filter]
             # Form (x, y) data
             y = self.data_handler.filled_data_matrix[mask]
@@ -76,12 +83,15 @@ class SensorIdentification():
                 residuals = []
                 # CV of linear model to predict system output from measured irradiance
                 for train_ix, test_ix in splits:
-                    # Fit linear regression model for each data split
-                    fit = LinearRegression().fit(data[train_ix], y[train_ix])
-                    # Get predictions for holdout set
-                    y_pred = fit.predict(data[test_ix])
-                    # Calculate the residuals
-                    residuals.append(y[test_ix] - y_pred)
+                    try:
+                        # Fit linear regression model for each data split
+                        fit = lr.fit(data[train_ix], y[train_ix])
+                        # Get predictions for holdout set
+                        y_pred = fit.predict(data[test_ix])
+                        # Calculate the residuals
+                        residuals.append(y[test_ix] - y_pred)
+                    except:
+                        residuals.append(np.inf)
                 # Collect the residuals from all the splits
                 residuals = np.concatenate(residuals)
                 # Calculate statistics and store results

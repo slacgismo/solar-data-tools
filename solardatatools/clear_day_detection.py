@@ -7,17 +7,22 @@ This module contains functions for detecting clear days in historical PV solar d
 
 import numpy as np
 import cvxpy as cvx
-from solardatatools.utilities import \
-    local_median_regression_with_seasonal,\
-    basic_outlier_filter
+from solardatatools.signal_decompositions import \
+    l1_l2d2p365,\
+    tl1_l2d2p365
+from solardatatools.utilities import basic_outlier_filter
 
 def filter_for_sparsity(data, c1=1e3, solver='ECOS'):
     daily_sparsity = np.sum(data > 0.005 * np.max(data), axis=0)
-    filtered_signal = local_median_regression_with_seasonal(daily_sparsity, c1=c1, solver=solver)
-    mask = basic_outlier_filter(daily_sparsity - filtered_signal, outlier_constant=5.)
+    filtered_signal = l1_l2d2p365(
+        daily_sparsity, c1=c1, solver=solver
+    )
+    mask = basic_outlier_filter(daily_sparsity - filtered_signal,
+                                outlier_constant=5.)
     return mask
 
-def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8, boolean_out=True):
+def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8,
+                    boolean_out=True, solver=None):
     '''
     This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
     standardized time series power data. This will typically be the output from
@@ -40,36 +45,26 @@ def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8, boolea
     # Normalize such that the maximum value is equal to one
     tc /= np.max(tc)
     tc = 1 - tc
-    # Take the positive part function, i.e. set the negative values to zero. This is the first metric
-    y = cvx.Variable(len(tc))
-    cost = cvx.sum(
-        0.5 * cvx.abs(y - tc) + (.9 - 0.5) * (tc - y)) + 1e3 * cvx.norm(
-        cvx.diff(y, k=2))
-    prob = cvx.Problem(cvx.Minimize(cost))
-    try:
-        prob.solve(solver='MOSEK')
-    except Exception as e:
-        print(e)
-        print('Trying ECOS solver')
-        prob.solve(solver='ECOS')
-    tc /= y.value
+    # Seasonal renormalization: estimate a "baseline smoothness" based on local
+    # 90th percentile of smoothness signal. This has the effect of increasing
+    # the score of days if there aren't very many smooth days nearby
+    y = tl1_l2d2p365(
+        tc, tau=0.9, c1=1e3, yearly_periodic=False, solver=solver
+    )
+    tc /= y
+    # Take the positive part function, i.e. set the negative values to zero.
+    # This is the first metric
     tc = np.clip(tc, 0, None)
     # Calculate the daily energy
     de = np.sum(data, axis=0)
-    # Solve a convex minimization problem to roughly fit the local 90th percentile of the data (quantile regression)
-    x = cvx.Variable(len(tc))
-    obj = cvx.Minimize(
-        cvx.sum(0.5 * cvx.abs(de - x) + (.9 - 0.5) * (de - x)) + 1e3 * cvx.norm(cvx.diff(x, k=2)))
-    prob = cvx.Problem(obj)
-    try:
-        prob.solve(solver='MOSEK')
-    except Exception as e:
-        print(e)
-        print('Trying ECOS solver')
-        prob.solve(solver='ECOS')
+    # Solve a convex minimization problem to roughly fit the local 90th
+    # percentile of the data (quantile regression)
+    x = tl1_l2d2p365(
+        de, tau=0.9, c1=1e3, yearly_periodic=False, solver=solver
+    )
     # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our
     # seasonal normalization.
-    de = np.clip(np.divide(de, x.value), 0, 1)
+    de = np.clip(np.divide(de, x), 0, 1)
     # Take geometric mean
     weights = np.multiply(np.power(tc, 0.5), np.power(de, 0.5))
     # Set values less than 0.6 to be equal to zero
@@ -78,12 +73,7 @@ def find_clear_days(data, smoothness_threshold=0.9, energy_threshold=0.8, boolea
     selection = np.logical_and(tc > smoothness_threshold, de > energy_threshold)
     weights[~selection] = 0.
     # Apply filter for sparsity to catch data errors related to non-zero nighttime data
-    try:
-        msk = filter_for_sparsity(data, solver='MOSEK')
-    except Exception as e:
-        print(e)
-        print('Trying ECOS solver')
-        msk = filter_for_sparsity(data, solver='ECOS')
+    msk = filter_for_sparsity(data, solver=None)
     weights = weights * msk.astype(int)
     if boolean_out:
         return weights >= 1e-3

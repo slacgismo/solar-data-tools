@@ -6,16 +6,16 @@ This module contains a class for managing a data processing pipeline
 '''
 from time import time
 from datetime import timedelta
+from datetime import datetime
 import numpy as np
 import pandas as pd
 from scipy.stats import mode, skew
-from scipy.interpolate import interp1d
 from sklearn.cluster import DBSCAN
-import cvxpy as cvx
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
+import traceback, sys
 from solardatatools.time_axis_manipulation import make_time_series,\
     standardize_time_axis
 from solardatatools.matrix_embedding import make_2d
@@ -25,11 +25,13 @@ from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
-from solardatatools.algorithms import CapacityChange, TimeShift, SunriseSunset
+from solardatatools.algorithms import CapacityChange, TimeShift,\
+    SunriseSunset, ClippingDetection
 
 class DataHandler():
     def __init__(self, data_frame=None, raw_data_matrix=None, datetime_col=None,
-                 convert_to_ts=False, aggregate=None, how=lambda x: x.mean()):
+                 convert_to_ts=False, no_future_dates=True,
+                 aggregate=None, how=lambda x: x.mean()):
         if data_frame is not None:
             if convert_to_ts:
                 data_frame, keys = make_time_series(data_frame)
@@ -38,7 +40,7 @@ class DataHandler():
                 self.keys = list(data_frame.columns)
             self.data_frame_raw = data_frame.copy()
             seq_index = np.arange(len(self.data_frame_raw))
-            if isinstance(self.keys[0], tuple):
+            if isinstance(self.keys[0], tuple) and not convert_to_ts:
                 num_levels = len(self.keys[0])
                 self.seq_index_key = tuple(['seq_index'] * num_levels)
             else:
@@ -56,6 +58,11 @@ class DataHandler():
             df_index = self.data_frame_raw.index
             if df_index.tz is not None:
                 df_index = df_index.tz_localize(None)
+            if no_future_dates:
+                now = datetime.now()
+                self.data_frame_raw = self.data_frame_raw[
+                    self.data_frame_raw.index <= now
+                ]
             self.data_frame = None
             if aggregate is not None:
                 new_data = how(self.data_frame_raw.resample(aggregate))
@@ -104,6 +111,7 @@ class DataHandler():
         self.capacity_analysis = None
         self.time_shift_analysis = None
         self.daytime_analysis = None
+        self.clipping_analysis = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ''
@@ -121,7 +129,7 @@ class DataHandler():
                      clear_day_energy_param=0.8, verbose=True,
                      start_day_ix=None, end_day_ix=None, c1=None, c2=500.,
                      solar_noon_estimator='com', correct_tz=True, extra_cols=None,
-                     daytime_threshold=0.1, units='W'):
+                     daytime_threshold=0.1, units='W', solver=None):
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -136,13 +144,30 @@ class DataHandler():
         # Preprocessing
         ######################################################################
         t[0] = time()
+        # If power_col not passed, assume that the first column contains the
+        # data to be processed
+        if power_col is None:
+            power_col = self.data_frame_raw.columns[0]
+        if power_col not in self.data_frame_raw.columns:
+            print('Power column key not present in data frame.')
+            return
+        # Pandas operations to make a time axis with regular intervals.
+        # If correct_tz is True, it will also align the median daily maximum
         if self.data_frame_raw is not None:
-            self.data_frame = standardize_time_axis(self.data_frame_raw,
-                                                    timeindex=True,
-                                                    verbose=verbose)
+            self.data_frame, sn_deviation = standardize_time_axis(
+                self.data_frame_raw, timeindex=True, power_col=power_col,
+                correct_tz=correct_tz, verbose=verbose
+            )
+            if correct_tz:
+                self.tz_correction = sn_deviation
+        # Embed the data as a matrix, with days in columns. Also, set some
+        # attributes, like the scan rate, day index, and day of year arary.
+        # Almost never use start_day_ix and end_day_ix, but they're there
+        # if a user wants to use a portion of the data set.
         if self.data_frame is not None:
             self.make_data_matrix(power_col, start_day_ix=start_day_ix,
                                   end_day_ix=end_day_ix)
+
         if max_val is not None:
             mat_copy = np.copy(self.raw_data_matrix)
             mat_copy[np.isnan(mat_copy)] = -9999
@@ -159,72 +184,36 @@ class DataHandler():
         if self.capacity_estimate <= 500 and self.power_units == 'W':
             self.power_units = 'kW'
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
+        # Run once to get a rough estimate. Update at the end after cleaning
+        # is finished
         ss = SunriseSunset()
-        ss.run_optimizer(self.raw_data_matrix, plot=False)
-        self.boolean_masks.daytime = ss.sunup_mask_estimated
+        # CVXPY - either MOSEK or ECOS for this one, SCS fails
+        try:
+            if solver is None or solver == 'MOSEK':
+                ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
+            else:
+                ss.run_optimizer(self.raw_data_matrix, plot=False, solver='ECOS')
+            self.boolean_masks.daytime = ss.sunup_mask_estimated
+        except:
+            msg = 'Sunrise/sunset detection failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
         self.daytime_analysis = ss
-        ### TZ offset detection and correction ###
-        # (1) Determine if there exists a "large" timezone offset error
-        if power_col is None:
-            power_col = self.data_frame.columns[0]
-        if correct_tz:
-            average_day = np.zeros(self.raw_data_matrix.shape[0])
-            all_nans = np.alltrue(np.isnan(self.raw_data_matrix), axis=1)
-            average_day[~all_nans] = np.nanmean(
-                self.raw_data_matrix[~all_nans, :], axis=1
-            )
-            average_day -= np.min(average_day)
-            average_day /= np.max(average_day)
-            ### Troubleshooting code
-            # plt.plot(average_day)
-            # plt.axhline(0.02, color='red', ls='--', linewidth=1)
-            # plt.show()
-            meas_per_hour = np.int(60 / self.data_sampling)
-            cond1 = np.any(average_day[:meas_per_hour] > 0.02)
-            cond2 = np.any(average_day[-meas_per_hour:] > 0.02)
-            cond3 = self.__recursion_depth <= 2
-            if (cond1 or cond2) and cond3:
-                if verbose:
-                    print(
-                        'Warning: power generation at midnight. Attempting to correct...')
-                # Catch values that are more than 4 hours from noon and make a
-                # correction to the time axis (rough correction to avoid days
-                # rolling over)
-                rough_noon_est = np.nanmean(
-                    self.data_frame.groupby(pd.Grouper(freq='D')) \
-                        .idxmax()[power_col].dt.time \
-                        .apply(lambda x: 60 * x.hour + x.minute)
-                ) / 60
-                self.tz_correction = 12 - np.round(rough_noon_est)
-                self.data_frame.index = self.data_frame.index.shift(
-                    self.tz_correction, freq='H'
-                )
-                if verbose:
-                    print('Done.\nRestarting the pipeline...')
-                self.__recursion_depth += 1
-                if self.__initial_time is not None:
-                    self.__initial_time = t[0]
-                self.run_pipeline(
-                    power_col=power_col, min_val=min_val,
-                    max_val=max_val, zero_night=zero_night,
-                    interp_day=interp_day, fix_shifts=fix_shifts,
-                    density_lower_threshold=density_lower_threshold,
-                    density_upper_threshold=density_upper_threshold,
-                    linearity_threshold=linearity_threshold,
-                    clear_day_smoothness_param=clear_day_smoothness_param,
-                    clear_day_energy_param=clear_day_energy_param,
-                    verbose=verbose, start_day_ix=start_day_ix,
-                    end_day_ix=end_day_ix, c1=c1, c2=c2,
-                    solar_noon_estimator=solar_noon_estimator,
-                    correct_tz=correct_tz, extra_cols=extra_cols,
-                    daytime_threshold=daytime_threshold, units=units
-                )
-                return
         ######################################################################
         # Cleaning
         ######################################################################
         t[1] = time()
-        self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
+        try:
+            self.make_filled_data_matrix(zero_night=zero_night,
+                                         interp_day=interp_day)
+        except:
+            msg = 'Matrix filling failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
         num_raw_measurements = np.count_nonzero(
             np.nan_to_num(self.raw_data_matrix,
                           copy=True,
@@ -261,14 +250,112 @@ class DataHandler():
             self.data_clearness_score = None
             self._ran_pipeline = True
             return
-        ### TZ offset detection and correction ###
-        # (2) Determine if there is a "small" timezone offset error
+        ######################################################################
+        # Scoring
+        ######################################################################
+        t[2] = time()
+        t_clean = np.zeros(6)
+        t_clean[0] = time()
+        try:
+            # CVXPY - density scoring
+            self.get_daily_scores(threshold=0.2, solver=solver)
+        except:
+            msg = 'Daily quality scoring failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
+            self.daily_scores = None
+        try:
+            self.get_daily_flags(density_lower_threshold=density_lower_threshold,
+                                 density_upper_threshold=density_upper_threshold,
+                                 linearity_threshold=linearity_threshold)
+        except:
+            msg = 'Daily quality flagging failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
+            self.daily_flags = None
+        t_clean[1] = time()
+        try:
+            # CVXPY
+            self.detect_clear_days(
+                smoothness_threshold=clear_day_smoothness_param,
+                energy_threshold=clear_day_energy_param,
+                solver=solver
+            )
+        except:
+            msg = 'Clear day detection failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
+        t_clean[2] = time()
+        try:
+            # CVXPY
+            self.clipping_check(solver=solver)
+        except Exception as e:
+            msg = 'clipping check failed: ' + str(e)
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
+            self.inverter_clipping = None
+        t_clean[3] = time()
+        try:
+            self.score_data_set()
+        except:
+            msg = 'Data set summary scoring failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
+            self.data_quality_score = None
+            self.data_clearness_score = None
+        t_clean[4] = time()
+        try:
+            # CVXPY
+            self.capacity_clustering(solver=solver)
+        except TypeError:
+            msg = 'Capacity clustering failed.'
+            self._error_msg += '\n' + msg
+            if verbose:
+                print(msg)
+                traceback.print_exception(*sys.exc_info())
+            self.capacity_changes = None
+        t_clean[5] = time()
+        ######################################################################
+        # Remaining data cleaning operations
+        # Fix time shifts depends on the data clearness scoring, and the other
+        # two depend on fixing the time shifts, when then occur.
+        ######################################################################
+        t[3] = time()
+        if fix_shifts:
+            try:
+                # CVXPY
+                self.auto_fix_time_shifts(c1=c1, c2=c2,
+                                          estimator=solar_noon_estimator,
+                                          threshold=daytime_threshold,
+                                          periodic_detector=False,
+                                          solver=solver)
+            except Exception as e:
+                msg = 'Fix time shift algorithm failed.'
+                self._error_msg += '\n' + msg
+                if verbose:
+                    print(msg)
+                    print('Error message:', e)
+                    print('\n')
+                    traceback.print_exception(*sys.exc_info())
+                self.time_shifts = None
+
+        # check for remaining TZ offset issues
         if correct_tz:
             average_noon = np.nanmean(
                 avg_sunrise_sunset(self.filled_data_matrix, threshold=0.01)
             )
             tz_offset = int(np.round(12 - average_noon))
-            if tz_offset != 0:
+            if np.abs(tz_offset) > 1:
                 self.tz_correction += tz_offset
                 # Related to this bug fix:
                 # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da
@@ -291,87 +378,12 @@ class DataHandler():
                 self.boolean_masks.daytime = np.roll(
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
-        ######################################################################
-        # Scoring
-        ######################################################################
-        t[2] = time()
-        t_clean = np.zeros(6)
-        t_clean[0] = time()
-        try:
-            self.get_daily_scores(threshold=0.2)
-        except:
-            msg = 'Daily quality scoring failed.'
-            self._error_msg += '\n' + msg
-            if verbose:
-                print(msg)
-            self.daily_scores = None
-        try:
-            self.get_daily_flags(density_lower_threshold=density_lower_threshold,
-                                 density_upper_threshold=density_upper_threshold,
-                                 linearity_threshold=linearity_threshold)
-        except:
-            msg = 'Daily quality flagging failed.'
-            self._error_msg += '\n' + msg
-            if verbose:
-                print(msg)
-            self.daily_flags = None
-        t_clean[1] = time()
-        try:
-            self.detect_clear_days(smoothness_threshold=clear_day_smoothness_param,
-                                   energy_threshold=clear_day_energy_param)
-        except:
-            msg = 'Clear day detection failed.'
-            self._error_msg += '\n' + msg
-            if verbose:
-                print(msg)
-        t_clean[2] = time()
-        try:
-            self.clipping_check()
-        except:
-            msg = 'Clipping check failed.'
-            self._error_msg += '\n' + msg
-            if verbose:
-                print(msg)
-            self.inverter_clipping = None
-        t_clean[3] = time()
-        try:
-            self.score_data_set()
-        except:
-            msg = 'Data set summary scoring failed.'
-            self._error_msg += '\n' + msg
-            if verbose:
-                print(msg)
-            self.data_quality_score = None
-            self.data_clearness_score = None
-        t_clean[4] = time()
-        try:
-            self.capacity_clustering()
-        except TypeError:
-            self.capacity_changes = None
-        t_clean[5] = time()
-        ######################################################################
-        # Fix Time Shifts
-        ######################################################################
-        t[3] = time()
-        if fix_shifts:
-            try:
-                self.auto_fix_time_shifts(c1=c1, c2=c2,
-                                          estimator=solar_noon_estimator,
-                                          threshold=daytime_threshold,
-                                          periodic_detector=False)
-            except Exception as e:
-                msg = 'Fix time shift algorithm failed.'
-                self._error_msg += '\n' + msg
-                if verbose:
-                    print(msg)
-                    print('Error message:', e)
-                    print('\n')
-                self.time_shifts = None
-        ######################################################################
+
         # Update daytime detection based on cleaned up data
-        ######################################################################
         # self.daytime_analysis.run_optimizer(self.filled_data_matrix, plot=False)
-        self.daytime_analysis.calculate_times(self.filled_data_matrix)
+        # CVXPY
+        self.daytime_analysis.calculate_times(self.filled_data_matrix,
+                                              solver=solver)
         self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
         ######################################################################
         # Process Extra columns
@@ -624,8 +636,8 @@ class DataHandler():
         )
         return
 
-    def get_daily_scores(self, threshold=0.2):
-        self.get_density_scores(threshold=threshold)
+    def get_daily_scores(self, threshold=0.2, solver=None):
+        self.get_density_scores(threshold=threshold, solver=solver) # CVXPY
         self.get_linearity_scores()
         return
 
@@ -659,17 +671,17 @@ class DataHandler():
         self.__linearity_threshold = linearity_threshold
         self.daily_scores.quality_clustering = db.labels_
 
-    def get_density_scores(self, threshold=0.2):
+    def get_density_scores(self, threshold=0.2, solver=None):
         if self.raw_data_matrix is None:
             print('Generate a raw data matrix first.')
             return
-        self.daily_scores.density, self.daily_signals.density, self.daily_signals.seasonal_density_fit\
-            = daily_missing_data_advanced(
-            self.raw_data_matrix,
-            threshold=threshold,
-            return_density_signal=True,
-            return_fit=True
+        s1, s2, s3 = daily_missing_data_advanced(
+            self.raw_data_matrix, threshold=threshold,
+            return_density_signal=True, return_fit=True, solver=solver
         )
+        self.daily_scores.density = s1
+        self.daily_signals.density = s2
+        self.daily_signals.seasonal_density_fit = s3
         return
 
     def get_linearity_scores(self):
@@ -715,89 +727,34 @@ class DataHandler():
             self.data_clearness_score = None
         return
 
-    def clipping_check(self):
-        max_value = np.max(self.filled_data_matrix)
-        daily_max_val = np.max(self.filled_data_matrix, axis=0)
-        # 1st clipping statistic: ratio of the max value on each day to overall max value
-        clip_stat_1 = daily_max_val / max_value
-        # 2nd clipping statistic: fraction of energy generated each day at or
-        # near that day's max value
-        with np.errstate(divide='ignore', invalid='ignore'):
-            temp = self.filled_data_matrix / daily_max_val
-            temp_msk = temp > 0.995
-            temp2 = np.zeros_like(temp)
-            temp2[temp_msk] = temp[temp_msk]
-            clip_stat_2 = np.sum(temp2, axis=0) / np.sum(temp, axis=0)
-        clip_stat_2[np.isnan(clip_stat_2)] = 0
-        # Identify which days have clipping
-        clipped_days = np.logical_and(
-            clip_stat_1 > 0.05,
-            clip_stat_2 > 0.1
+    def clipping_check(self, solver=None):
+        if self.clipping_analysis is None:
+            self.clipping_analysis = ClippingDetection()
+        self.clipping_analysis.check_clipping(
+            self.filled_data_matrix, no_error_flag=self.daily_flags.no_errors,
+            solver=solver
         )
-        clipped_days = np.logical_and(
-            self.daily_flags.no_errors,
-            clipped_days
-        )
-        # clipped days must also be near a peak in the distribution of the
-        # 1st clipping statistic that shows the characteristic, strongly skewed
-        # peak shape
-        point_masses = self.__analyze_distribution(clip_stat_1)
-        try:
-            if len(point_masses) == 0:
-                clipped_days[:] = False
-            else:
-                clipped_days[clipped_days] = np.any(
-                    np.array([np.abs(clip_stat_1[clipped_days] - x0) < .02 for x0 in
-                              point_masses]), axis=0
-                )
-        except IndexError:
-            self.inverter_clipping = False
-            self.num_clip_points = 0
-            return
-        self.daily_scores.clipping_1 = clip_stat_1
-        self.daily_scores.clipping_2 = clip_stat_2
-        self.daily_flags.inverter_clipped = clipped_days
-        if np.sum(clipped_days) > 0.01 * self.num_days:
-            self.inverter_clipping = True
-            self.num_clip_points = len(point_masses)
-        else:
-            self.inverter_clipping = False
-            self.num_clip_points = 0
-        return
+        self.inverter_clipping = self.clipping_analysis.inverter_clipping
+        self.num_clip_points = self.clipping_analysis.num_clip_points
+        self.daily_scores.clipping_1 = self.clipping_analysis.clip_stat_1
+        self.daily_scores.clipping_2 = self.clipping_analysis.clip_stat_2
+        self.daily_flags.inverter_clipped = self.clipping_analysis.clipped_days
 
     def find_clipped_times(self):
-        if self.inverter_clipping:
-            max_value = np.max(self.filled_data_matrix)
-            clip_stat_1 = self.daily_scores.clipping_1      #daily_max_val / max_value
-            point_masses = self.__analyze_distribution(clip_stat_1)
-            mat_normed = self.filled_data_matrix / max_value
-            masks = np.stack([np.abs(mat_normed - x0) < 0.01
-                              for x0 in point_masses])
-            clipped_time_mask = np.any(masks, axis=0)
-            daily_max_val = np.max(self.filled_data_matrix, axis=0)
-            mat_normed = np.zeros_like(self.filled_data_matrix)
-            msk = daily_max_val != 0
-            mat_normed[:, msk] = self.filled_data_matrix[:, msk] /  daily_max_val[msk]
-            clipped_time_mask = np.logical_and(
-                clipped_time_mask,
-                mat_normed >= 0.98
-            )
-            # clipped_days = self.daily_flags.inverter_clipped
-            # clipped_time_mask[:, ~clipped_days] = False
-            self.boolean_masks.clipped_times = clipped_time_mask
-        else:
-            self.boolean_masks.clipped_times = np.zeros_like(
-                self.filled_data_matrix, dtype=np.bool
-            )
+        if self.clipping_analysis is None:
+            self.clipping_check()
+        self.clipping_analysis.find_clipped_times()
+        self.boolean_masks.clipped_times = self.clipping_analysis.clipping_mask
 
-    def capacity_clustering(self, plot=False, figsize=(8, 6),
+    def capacity_clustering(self, solver=None, plot=False, figsize=(8, 6),
                             show_clusters=True):
         if self.capacity_analysis is None:
             self.capacity_analysis = CapacityChange()
             self.capacity_analysis.run(
                 self.filled_data_matrix, filter=self.daily_flags.no_errors,
                 quantile=1.00, c1=15, c2=100, c3=300, reweight_eps=0.5,
-                reweight_niter=5, dbscan_eps=.02, dbscan_min_samples='auto'
+                reweight_niter=5, dbscan_eps=.02, dbscan_min_samples='auto',
+                solver=solver
             )
         if len(set(self.capacity_analysis.labels)) > 1: #np.max(db.labels_) > 0:
             self.capacity_changes = True
@@ -840,40 +797,32 @@ class DataHandler():
 
 
     def auto_fix_time_shifts(self, c1=5., c2=500., estimator='com',
-                             threshold=0.1, periodic_detector=False):
+                             threshold=0.1, periodic_detector=False,
+                             solver=None):
         self.time_shift_analysis = TimeShift()
-        if self.data_clearness_score > 0.1 and self.num_days > 365 * 2:
-            use_ixs = self.daily_flags.clear
-        else:
-            use_ixs = self.daily_flags.no_errors
+        use_ixs = self.daily_flags.clear
         self.time_shift_analysis.run(
             self.filled_data_matrix, use_ixs=use_ixs,
             c1=c1, c2=c2, solar_noon_estimator=estimator, threshold=threshold,
-            periodic_detector=periodic_detector
+            periodic_detector=periodic_detector, solver=solver
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
             self.time_shifts = False
         else:
             self.time_shifts = True
-        # self.filled_data_matrix, shift_ixs = fix_time_shifts(
-        #     self.filled_data_matrix, solar_noon_estimator=estimator, c1=c1, c2=c2,
-        #     return_ixs=True, verbose=False, use_ixs=None, threshold=threshold
-        # )
-        # if len(shift_ixs) == 0:
-        #     self.time_shifts = False
-        # else:
-        #     self.time_shifts = True
 
-    def detect_clear_days(self, smoothness_threshold=0.9, energy_threshold=0.8):
+    def detect_clear_days(self, smoothness_threshold=0.9, energy_threshold=0.8,
+                          solver=None):
         if self.filled_data_matrix is None:
             print('Generate a filled data matrix first.')
             return
         clear_days = find_clear_days(self.filled_data_matrix,
                                      smoothness_threshold=smoothness_threshold,
-                                     energy_threshold=energy_threshold)
+                                     energy_threshold=energy_threshold,
+                                     solver=solver)
         ### Remove days that are marginally low density, but otherwise pass
-        # the clearness test. Occaisonally, we find an early morning or late
+        # the clearness test. Occasionally, we find an early morning or late
         # afternoon inverter outage on a clear day is still detected as clear.
         # Added July 2020 --BM
         clear_days = np.logical_and(
@@ -1195,34 +1144,16 @@ class DataHandler():
         return fig
 
     def plot_daily_max_pdf(self, figsize=(8, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='pdf', figsize=figsize)
-        plt.title('Distribution of normalized daily maximum values')
-        plt.xlabel('Normalized daily max power')
-        plt.ylabel('Count')
-        plt.legend()
-        return fig
+        return self.clipping_analysis.plot_pdf(figsize=figsize)
 
     def plot_daily_max_cdf(self, figsize=(10, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='cdf', figsize=figsize)
-        plt.title('Cumulative density function of\nnormalized daily maximum values')
-        plt.xlabel('Normalized daily max power')
-        plt.ylabel('Cumulative occurance probability')
-        plt.legend()
-        ax = plt.gca()
-        ax.set_aspect('equal')
-        return fig
+        return self.clipping_analysis.plot_cdf(figsize=figsize)
 
     def plot_daily_max_cdf_and_pdf(self, figsize=(10, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='both', figsize=figsize)
-        return fig
+        return self.clipping_analysis.plot_both(figsize=figsize)
 
     def plot_cdf_analysis(self, figsize=(12, 6)):
-        fig = self.__analyze_distribution(self.daily_scores.clipping_1,
-                                          plot='diffs', figsize=figsize)
-        return fig
+        return self.clipping_analysis.plot_diffs(figsize=figsize)
 
     def plot_capacity_change_analysis(self, figsize=(8, 6), show_clusters=True):
         fig = self.capacity_clustering(plot=True, figsize=figsize,
@@ -1293,155 +1224,6 @@ class DataHandler():
         ax.set_title(title)
         # print(np.sum(circ_hist[0] <= 1))
         return fig
-
-
-    def __analyze_distribution(self, data, plot=None, figsize=(8, 6)):
-        # Calculate empirical CDF
-        x = np.sort(np.copy(data))
-        x = x[x > 0]
-        x = np.concatenate([[0.], x, [1.]])
-        y = np.linspace(0, 1, len(x))
-        # Resample the CDF to get an even spacing of points along the x-axis
-        f = interp1d(x, y)
-        x_rs = np.linspace(0, 1, 5000)
-        y_rs = f(x_rs)
-        # Fit statistical model to resampled CDF that has sparse 2nd order difference
-        y_hat = cvx.Variable(len(y_rs))
-        mu = cvx.Parameter(nonneg=True)
-        mu.value = 1e1
-        error = cvx.sum_squares(y_rs - y_hat)
-        reg = cvx.norm(cvx.diff(y_hat, k=2), p=1)
-        objective = cvx.Minimize(error + mu * reg)
-        constraints = [
-            y_rs[0] == y_hat[0],
-            y[-1] == y_hat[-1]
-        ]
-        problem = cvx.Problem(objective, constraints)
-        problem.solve(solver='MOSEK')
-        # Look for outliers in the 2nd order difference to identify point masses from clipping
-        local_curv = cvx.diff(y_hat, k=2).value
-        ref_slope = cvx.diff(y_hat, k=1).value[:-1]
-        threshold = -0.35
-        # metric = local_curv / ref_slope
-        metric = np.min([
-            local_curv / ref_slope,
-            np.concatenate([
-                (local_curv[:-1] + local_curv[1:]) / ref_slope[:-1],
-                [local_curv[-1] / ref_slope[-1]]
-            ]),
-            np.concatenate([
-                (local_curv[:-2] + local_curv[1:-1] + local_curv[2:]) / ref_slope[:-2],
-                [local_curv[-2:] / ref_slope[-2:]]
-            ], axis=None)
-        ], axis=0)
-        point_masses = np.concatenate(
-            [[False], np.logical_and(metric <= threshold, ref_slope > 3e-4), # looking for drops of more than 65%
-             [False]])
-        # Catch if the PDF ends in a point mass at the high value
-        if np.logical_or(cvx.diff(y_hat, k=1).value[-1] > 1e-3,
-                         np.allclose(cvx.diff(y_hat, k=1).value[-1],
-                                     np.max(cvx.diff(y_hat, k=1).value))):
-            point_masses[-2] = True
-        # Reduce clusters of detected points to single points
-        pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
-        for ix in range(len(point_masses) - 1):
-            if ~point_masses[ix] and point_masses[ix + 1]:
-                begin_cluster = ix + 1
-            elif point_masses[ix] and ~point_masses[ix + 1]:
-                end_cluster = ix
-                try:
-                    ix_select = np.argmax(metric[begin_cluster:end_cluster + 1])
-                except ValueError:
-                    pm_reduce[begin_cluster] = True
-                else:
-                    pm_reduce[begin_cluster + ix_select] = True
-        point_masses = pm_reduce
-        point_mass_values = x_rs[point_masses]
-
-        if plot is None:
-            return point_mass_values
-        elif plot == 'pdf':
-            fig = plt.figure(figsize=figsize)
-            plt.hist(data[data > 0], bins=100, alpha=0.5, label='histogram')
-            scale = np.histogram(data[data > 0], bins=100)[0].max() \
-                    / cvx.diff(y_hat, k=1).value.max()
-            plt.plot(x_rs[:-1], scale * cvx.diff(y_hat, k=1).value,
-                     color='orange', linewidth=1, label='piecewise constant PDF estimate')
-            for count, val in enumerate(point_mass_values):
-                if count == 0:
-                    plt.axvline(val, linewidth=1, linestyle=':',
-                                color='green', label='detected point mass')
-                else:
-                    plt.axvline(val, linewidth=1, linestyle=':',
-                                color='green')
-            return fig
-        elif plot == 'cdf':
-            fig = plt.figure(figsize=figsize)
-            plt.plot(x_rs, y_rs, linewidth=1, label='empirical CDF')
-            plt.plot(x_rs, y_hat.value, linewidth=3, color='orange', alpha=0.57,
-                     label='estimated CDF')
-            if len(point_mass_values) > 0:
-                plt.scatter(x_rs[point_masses], y_rs[point_masses],
-                            color='red', marker='o',
-                            label='detected point mass')
-            return fig
-        elif plot == 'diffs':
-            fig, ax = plt.subplots(nrows=2, sharex=True, figsize=figsize)
-            y1 = cvx.diff(y_hat, k=1).value
-            y2 = metric
-            ax[0].plot(x_rs[:-1], y1)
-            ax[1].plot(x_rs[1:-1], y2)
-            ax[1].axhline(threshold, linewidth=1, color='r', ls=':',
-                          label='decision boundary')
-            if len(point_mass_values) > 0:
-                ax[0].scatter(x_rs[point_masses],
-                              y1[point_masses[1:]],
-                              color='red', marker='o',
-                              label='detected point mass')
-                ax[1].scatter(x_rs[point_masses],
-                              y2[point_masses[1:-1]],
-                              color='red', marker='o',
-                              label='detected point mass')
-            ax[0].set_title('1st order difference of CDF fit')
-            ax[1].set_title('2nd order difference of CDF fit')
-            ax[1].legend()
-            plt.tight_layout()
-            return fig
-        elif plot == 'both':
-            fig = plt.figure(figsize=figsize)
-            gs = fig.add_gridspec(nrows=1, ncols=2, width_ratios=[2, 1])
-            ax1 = fig.add_subplot(gs[0, 0])
-            ax1.plot(y_rs, x_rs, linewidth=1, label='empirical CDF')
-            ax1.plot(y_hat.value, x_rs, linewidth=3, color='orange', alpha=0.57,
-                     label='estimated CDF')
-            if len(point_mass_values) > 0:
-                ax1.scatter(y_rs[point_masses], x_rs[point_masses],
-                            color='red', marker='o',
-                            label='detected point mass')
-            ax1.set_title(
-                'Cumulative density function of\nnormalized daily maximum values')
-            ax1.set_ylabel('Normalized daily max power')
-            ax1.set_xlabel('Cumulative occurance probability')
-            ax1.legend()
-            ax2 = fig.add_subplot(gs[0, 1])
-            ax2.hist(data[data > 0], bins=100, alpha=0.5, label='histogram',
-                     orientation='horizontal')
-            scale = np.histogram(data[data > 0], bins=100)[0].max() \
-                    / cvx.diff(y_hat, k=1).value.max()
-            ax2.plot(scale * cvx.diff(y_hat, k=1).value, x_rs[:-1],
-                     color='orange', linewidth=1, label='piecewise constant fit')
-            for count, val in enumerate(point_mass_values):
-                if count == 0:
-                    plt.axhline(val, linewidth=1, linestyle=':',
-                                color='green', label='detected point mass')
-                else:
-                    plt.axhline(val, linewidth=1, linestyle=':',
-                                color='green')
-            ax2.set_title('Distribution of normalized\ndaily maximum values')
-            # ax2.set_ylabel('Normalized daily max power')
-            ax2.set_xlabel('Count')
-            ax2.legend(loc=(.15, .02))  #-0.4
-            return fig
 
 
 

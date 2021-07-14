@@ -7,3 +7,4 @@ from solardatatools.dataio import get_pvdaq_data
 from solardatatools.dataio import load_pvo_data
 from solardatatools.plotting import plot_2d
 from solardatatools.data_handler import DataHandler
+from solardatatools.polar_transform import PolarTransform
