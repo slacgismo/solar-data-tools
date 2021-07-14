@@ -4,7 +4,7 @@ import numpy as np
 from solardatatools.algorithms.soiling import soiling_seperation
 
 
-class TestDataFilling(unittest.TestCase):
+class TestSoilingSeperation(unittest.TestCase):
 
     def test_soiling_seperation(self):
         # inputs for soiling seperation
