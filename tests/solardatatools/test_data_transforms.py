@@ -51,3 +51,7 @@ class TestMake2D(unittest.TestCase):
         key = data.columns[0]
         actual_output = make_2d(data, key=key, trim_start=True, trim_end=True)
         np.testing.assert_array_almost_equal(expected_output, actual_output)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -48,19 +48,12 @@
         </a>
     </td>
 </tr>
-<tr>
-    <td>Publications</td>
-    <td>
-        <a href="https://zenodo.org/badge/latestdoi/171066536">
-            <img src="https://zenodo.org/badge/171066536.svg" alt="DOI">
-        </a>
-    </td>
-</tr>
+<!-- add Publications here -->
 <tr>
     <td>PyPI Downloads</td>
     <td>
         <a href="https://pepy.tech/project/solar-data-tools">
-            <img src="https://img.shields.io/pypi/dm/solar-data-tools" alt="PyPI downloads" />
+            <img src="https://static.pepy.tech/badge/solar-data-tools" alt="PyPI downloads" />
         </a>
     </td>
 </tr>
@@ -83,69 +76,68 @@ There is close integration between this repository and the [Statistical Clear Sk
 
 See [notebooks](/notebooks) folder for examples.
 
-## Install & Setup
+## Setup
 
-### 2 ways of setting up either approach works:
+### Recommended: Set up `conda` environment with provided `.yml` file
 
-#### 1) Recommended: Set up `conda` environment with provided `.yml` file
+_Updated March 2021_
 
 We recommend setting up a fresh Python virtual environment in which to use `solar-data-tools`. We recommend using the [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) package management system, and creating an environment with the environment configuration file named `pvi-user.yml`, provided in the top level of this repository. This will install the `statistical-clear-sky` package as well.
 
-Creating the env:
-
-```bash
-$ conda env create -f pvi-user.yml
-```
-
-Starting the env:
-
-```bash
-$ conda activate pvi_user
-```
-
-Stopping the env
-
-```bash
-$ conda deactivate
-```
-
 Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
 
+Please see the Conda documentation page, "[Creating an environment from an environment.yml file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)" for more information.
 
-#### 2) PIP Package
+### Installing this project as PIP package
 
 ```sh
 $ pip install solar-data-tools
 ```
 
-Alternative: Clone repo from GitHub
-
-Mimic the pip package by setting up locally.
-
-```bash
-$ pip install -e path/to/root/folder
+As of March 6, 2019, it fails because scs package installed as a dependency of cxvpy expects numpy to be already installed.
+[scs issue 85](https://github.com/cvxgrp/scs/issues/85) says, it is fixed.
+However, it doesn't seem to be reflected in its pip package.
+Also, cvxpy doesn't work with numpy version less than 1.16.
+As a work around, install numpy separatly first and then install this package.
+i.e.
+```sh
+$ pip install 'numpy>=1.16'
+$ pip install statistical-clear-sky
 ```
 
-<!-- #### 3) Anaconda Package
+#### Solvers
+
+
+Currently, this sofware package requires the use of a commercial software package called MOSEK. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
+
+* [mosek](https://www.mosek.com/resources/getting-started/)stall -f https://download.mosek.com/stable/wheel/index.html Mosek
+    ```
+
+### Installing this project as Anaconda package
 
 ```sh
 $ conda install -c slacgismo solar-data-tools
-``` -->
+```
 
-### Solvers
+If you are using Anaconda, the problem described in the section for PIP package above doesn't occur since numpy is already installed. And during solar-data-tools installation, numpy is upgraded above 1.16.
 
-#### ECOS
+#### Solvers
 
 By default, ECOS solver is used, which is supported by cvxpy because it is Open Source.
+
 However, it is found that Mosek solver is more stable. Thus, we encourage you to install it separately as below and obtain the license on your own.
 
-#### MOSEK
-
- MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
-
-* [mosek](https://www.mosek.com/resources/getting-started/)
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
+
+### Using this project by cloning this GIT repository
+
+From a fresh `python` environment, run the following from the base project folder:
+
+```bash
+$ pip install -r requirements.txt
+```
+
 
 ## Usage
 
@@ -176,12 +168,6 @@ Filtering/Summarizing      1.53s
     Capacity change detect 0.91s
 ```
 
-## Test Coverage
-In order to view the current test coverage metrics, run:
-```
-coverage run --source solardatatools -m unittest discover && coverage html
-open htmlcov/index.html
-```
 
 ## Versioning
 
