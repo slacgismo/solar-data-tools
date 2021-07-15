@@ -85,7 +85,7 @@ See [notebooks](/notebooks) folder for examples.
 
 ## Install & Setup
 
-### 2 ways of setting up either approach works:
+### 3 ways of setting up either approach works:
 
 #### 1) Recommended: Set up `conda` environment with provided `.yml` file
 
@@ -126,11 +126,11 @@ Mimic the pip package by setting up locally.
 $ pip install -e path/to/root/folder
 ```
 
-<!-- #### 3) Anaconda Package
+#### 3) Anaconda Package
 
 ```sh
 $ conda install -c slacgismo solar-data-tools
-``` -->
+```
 
 ### Solvers
 
@@ -177,6 +177,7 @@ Filtering/Summarizing      1.53s
 ```
 
 ## Test Coverage
+
 In order to view the current test coverage metrics, run:
 ```
 coverage run --source solardatatools -m unittest discover && coverage html
