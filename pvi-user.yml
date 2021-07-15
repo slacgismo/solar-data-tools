@@ -28,6 +28,7 @@ dependencies:
   - mosek
   - cvxpy
   - scs
+  - pvlib-python
   - pip:
     - dill
     - future
