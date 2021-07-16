@@ -6,6 +6,7 @@ jupyter
 matplotlib
 seaborn
 requests
+pvlib
 cvxpy>=1.1.0
 # I suggest using the MOSEK convex solver with cvxpy, if possible. For additional information about setting up MOSEK,
 # see here: https://docs.mosek.com/8.1/pythonapi/install-interface.html. A license is required to use this software.
