@@ -5,9 +5,9 @@ https://github.com/pypa/sampleproject
 """
 
 # Always prefer setuptools over distutils
-import os
 import subprocess
 from setuptools import setup, find_packages
+from pathlib import Path
 
 # io.open is needed for projects that support Python 2.7
 # It ensures open() defaults to text mode with universal newlines,
@@ -15,10 +15,10 @@ from setuptools import setup, find_packages
 # Python 3 only projects can skip this import
 from io import open
 
-here = os.path.abspath(os.path.dirname(__file__))
+here = Path().resolve()
 
 # Get the long description from the README file
-with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+with open((here / 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 # get all the git tags from the cmd line that follow our versioning pattern
@@ -29,7 +29,12 @@ git_tags.stdout.close()
 latest_version = latest_git_tag.communicate()[0]
 
 # PEP 440 won't accept the v in front, so here we remove it, strip the new line and decode the byte stream
-VERSION_FROM_GIT_TAG = latest_version[1:].strip().decode("utf-8") 
+VERSION_FROM_GIT_TAG = latest_version[1:].strip().decode("utf-8")
+
+with open((here / 'requirements.txt'), encoding='utf-8') as f:
+        install_requires = f.read().splitlines()
+# removes comments in the requirements file
+dependencies = [ dependency for dependency in install_requires if (dependency[0] != "#")]
 
 setup(
     # This is the name of your project. The first time you publish this
@@ -156,7 +161,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['scipy', 'numpy>=1.16', 'pandas', 'sklearn', 'seaborn', 'requests', 'cvxpy>=1.0'],  # Optional
+    install_requires=dependencies,  # Optional
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
