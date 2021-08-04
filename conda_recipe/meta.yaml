@@ -27,6 +27,9 @@ requirements:
     - pandas
     - seaborn
     - requests
+    - cvxpy
+    - scikit-learn
+    - pvlib-python
 
 about:
   home: https://github.com/bmeyers/solar-data-tools
