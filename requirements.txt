@@ -12,7 +12,4 @@ cvxpy>=1.1.0
 # see here: https://docs.mosek.com/8.1/pythonapi/install-interface.html. A license is required to use this software.
 # Academic license info: https://www.mosek.com/products/academic-licenses/
 # Trial commercial license info: https://www.mosek.com/products/trial/
-# Note: PIP package is not installed if you don't specify the path to
-# the archive in a separate line before the name of the PIP package:
--f https://download.mosek.com/stable/wheel/index.html
 Mosek
