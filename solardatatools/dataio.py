@@ -56,7 +56,9 @@ def get_pvdaq_data(sysid=2, api_key='DEMO_KEY', year=2011, delim=',',
     # concatenate the list of yearly data frames
     df = pd.concat(df_list, axis=0, sort=True)
     if standardize:
-        df = standardize_time_axis(df, datetimekey='Date-Time', timeindex=False)
+        print('\n')
+        df, _ = standardize_time_axis(df, datetimekey='Date-Time',
+                                      timeindex=False)
     return df
 
 
