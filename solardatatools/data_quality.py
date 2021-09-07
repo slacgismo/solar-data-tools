@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-''' Data Quality Checking Module
+""" Data Quality Checking Module
 
 This module contains functions for identifying corrupt or bad quality data.
 
-'''
+"""
 
 import numpy as np
 from solardatatools.signal_decompositions import tl1_l2d2p365
 
-def daily_missing_data_simple(data_matrix, threshold=0.2,
-                              return_density_signal=False):
+
+def daily_missing_data_simple(data_matrix, threshold=0.2, return_density_signal=False):
     """
     This function takes a PV power data matrix and returns a boolean array,
     identifying good days. The good days are the ones that are not missing a
@@ -26,7 +26,7 @@ def daily_missing_data_simple(data_matrix, threshold=0.2,
     nans = np.isnan(data_matrix)
     capacity_est = np.quantile(data_matrix[~nans], 0.95)
     data_copy = np.copy(data_matrix)
-    data_copy[nans] = 0.
+    data_copy[nans] = 0.0
     foo = data_copy > 0.005 * capacity_est
     bar = np.sum(foo, axis=0) / data_matrix.shape[0]
     good_days = bar > threshold
@@ -35,24 +35,22 @@ def daily_missing_data_simple(data_matrix, threshold=0.2,
     else:
         return good_days
 
-def daily_missing_data_advanced(data_matrix, threshold=0.2,
-                                return_density_signal=False,
-                                return_fit=False, solver=None):
+
+def daily_missing_data_advanced(
+    data_matrix,
+    threshold=0.2,
+    return_density_signal=False,
+    return_fit=False,
+    solver=None,
+):
     nans = np.isnan(data_matrix)
     capacity_est = np.quantile(data_matrix[~nans], 0.95)
     data_copy = np.copy(data_matrix)
-    data_copy[nans] = 0.
+    data_copy[nans] = 0.0
     foo = data_copy > 0.02 * capacity_est
     density_signal = np.sum(foo, axis=0) / data_matrix.shape[0]
-    use_days = np.logical_and(
-        density_signal > threshold, density_signal < 0.8
-    )
-    fit_signal = tl1_l2d2p365(
-        density_signal,
-        use_ixs=use_days,
-        tau=0.85,
-        solver=solver
-    )
+    use_days = np.logical_and(density_signal > threshold, density_signal < 0.8)
+    fit_signal = tl1_l2d2p365(density_signal, use_ixs=use_days, tau=0.85, solver=solver)
     scores = density_signal / fit_signal
     out = [scores]
     if return_density_signal:
@@ -65,8 +63,10 @@ def daily_missing_data_advanced(data_matrix, threshold=0.2,
         out = tuple(out)
     return out
 
-def dataset_quality_score(data_matrix, threshold=0.2, good_days=None,
-                          use_advanced=True):
+
+def dataset_quality_score(
+    data_matrix, threshold=0.2, good_days=None, use_advanced=True
+):
     """
     This function scores a complete data set. The score is the fraction of days
     in the data set that pass the missing data test. A score of 1 means all the

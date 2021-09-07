@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-'''Circular Statistics Module
+"""Circular Statistics Module
 
 This module contains functions performing circular statistics. As a general
 reference see:
 
 https://www.cambridge.org/core/books/statistical-analysis-of-circular-data/324A46F3941A5CD641ED0B0910B2C33F
 
-'''
+"""
 
 import numpy as np
+
 
 def rayleightest(data, axis=None, weights=None):
     """ Performs the Rayleigh test of uniformity.
@@ -63,13 +64,17 @@ def rayleightest(data, axis=None, weights=None):
 
     # see [3] and [4] for the formulae below
     tmp = 1.0
-    if(n < 50):
-        tmp = 1.0 + (2.0*z - z*z)/(4.0*n) - (24.0*z - 132.0*z**2.0 +
-                                             76.0*z**3.0 - 9.0*z**4.0)/(288.0 *
-                                                                        n * n)
+    if n < 50:
+        tmp = (
+            1.0
+            + (2.0 * z - z * z) / (4.0 * n)
+            - (24.0 * z - 132.0 * z ** 2.0 + 76.0 * z ** 3.0 - 9.0 * z ** 4.0)
+            / (288.0 * n * n)
+        )
 
     p_value = np.exp(-z) * tmp
     return p_value
+
 
 def _components(data, p=1, phi=0.0, axis=None, weights=None):
     # Utility function for computing the generalized rectangular components
@@ -79,12 +84,13 @@ def _components(data, p=1, phi=0.0, axis=None, weights=None):
     try:
         weights = np.broadcast_to(weights, data.shape)
     except ValueError:
-        raise ValueError('Weights and data have inconsistent shape.')
+        raise ValueError("Weights and data have inconsistent shape.")
 
-    C = np.sum(weights * np.cos(p * (data - phi)), axis)/np.sum(weights, axis)
-    S = np.sum(weights * np.sin(p * (data - phi)), axis)/np.sum(weights, axis)
+    C = np.sum(weights * np.cos(p * (data - phi)), axis) / np.sum(weights, axis)
+    S = np.sum(weights * np.sin(p * (data - phi)), axis) / np.sum(weights, axis)
 
     return C, S
+
 
 def _length(data, p=1, phi=0.0, axis=None, weights=None):
     # Utility function for computing the generalized sample length
