@@ -1,11 +1,12 @@
-''' Daytime Module
+""" Daytime Module
 
 This module contains a function for finding the daytime period of a power time
 series
 
-'''
+"""
 
 import numpy as np
+
 
 def find_daytime(data_matrix, threshold=0.01):
     """
@@ -36,6 +37,7 @@ def find_daytime(data_matrix, threshold=0.01):
     daytime_mask = mat_copy >= threshold
     return daytime_mask
 
+
 def detect_sun(data, threshold):
     scaled_mat = scale_data(data)
     bool_msk = np.zeros_like(scaled_mat, dtype=np.bool)
@@ -43,9 +45,10 @@ def detect_sun(data, threshold):
     bool_msk[slct] = scaled_mat[slct] > threshold
     return bool_msk
 
+
 def scale_data(data, return_metrics=False):
 
-    high_val = np.nanquantile(data, .99)
+    high_val = np.nanquantile(data, 0.99)
     low_val = max(np.nanmin(data), -0.005 * high_val)
     scaled_mat = (data - low_val) / high_val
     nan_mask = np.isnan(scaled_mat)

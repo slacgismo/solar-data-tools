@@ -184,6 +184,14 @@ coverage run --source solardatatools -m unittest discover && coverage html
 open htmlcov/index.html
 ```
 
+## Contributors
+
+Must enable pre-commit hook before pushing any contributions
+```
+pip install pre-commit
+pre-commit install
+```
+
 ## Versioning
 
 We use [Semantic Versioning](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/slacgismo/solar-data-tools/tags).

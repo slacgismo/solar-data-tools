@@ -1,4 +1,4 @@
-''' Time Shift Algorithm Module
+""" Time Shift Algorithm Module
 
 This module contains the algorithm for detecting time shifts in an unlabeled PV
 power production data sets. These occur because of the local clock on the data
@@ -13,7 +13,7 @@ The algorithm works as follows:
     - Use piecewise constance component to detect shift points in time and
       correction amounts
 
-'''
+"""
 
 import numpy as np
 from scipy.stats import mode
@@ -21,7 +21,8 @@ import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
 
-class TimeShift():
+
+class TimeShift:
     def __init__(self):
         self.metric = None
         self.s1 = None
@@ -37,12 +38,20 @@ class TimeShift():
         self.best_ix = None
         self.__recursion_depth = 0
 
-    def run(self, data, use_ixs=None, c1=None, c2=200.,
-            solar_noon_estimator='com', threshold=0.1, periodic_detector=False,
-            solver=None):
-        if solar_noon_estimator == 'com':
+    def run(
+        self,
+        data,
+        use_ixs=None,
+        c1=None,
+        c2=200.0,
+        solar_noon_estimator="com",
+        threshold=0.1,
+        periodic_detector=False,
+        solver=None,
+    ):
+        if solar_noon_estimator == "com":
             metric = energy_com(data)
-        elif solar_noon_estimator == 'srss':
+        elif solar_noon_estimator == "srss":
             metric = avg_sunrise_sunset(data, threshold=threshold)
         self.metric = metric
         if use_ixs is None:
@@ -79,8 +88,13 @@ class TimeShift():
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
         # print(len(index_set), len(index_set) / (len(metric) / 365))
         s1, s2 = self.estimate_components(
-            metric, best_c1, c2, use_ixs, periodic_detector,
-            transition_locs=index_set, solver=solver
+            metric,
+            best_c1,
+            c2,
+            use_ixs,
+            periodic_detector,
+            transition_locs=index_set,
+            solver=solver,
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
         cond1 = np.isclose(np.max(s2), 0.5)
@@ -91,14 +105,20 @@ class TimeShift():
             # than 5 time shifts per year. Try a different random sampling
             self.__recursion_depth += 1
             self.run(
-                data, use_ixs=use_ixs, c1=c1, c2=c2,
-                solar_noon_estimator=solar_noon_estimator, threshold=threshold,
-                periodic_detector=periodic_detector, solver=solver
+                data,
+                use_ixs=use_ixs,
+                c1=c1,
+                c2=c2,
+                solar_noon_estimator=solar_noon_estimator,
+                threshold=threshold,
+                periodic_detector=periodic_detector,
+                solver=solver,
             )
             return
         # Apply corrections
         roll_by_index = np.round(
-            (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0)
+            (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0
+        )
         correction_metric = np.average(np.abs(roll_by_index))
         if correction_metric < 0.01:
             roll_by_index[:] = 0
@@ -122,10 +142,9 @@ class TimeShift():
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
-    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector,
-                    solver=None):
+    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector, solver=None):
         n = np.sum(use_ixs)
-        select = np.random.uniform(size=n) <= 0.75 # random holdout selection
+        select = np.random.uniform(size=n) <= 0.75  # random holdout selection
         train = np.copy(use_ixs)
         test = np.copy(use_ixs)
         train[use_ixs] = select
@@ -136,8 +155,7 @@ class TimeShift():
         jpy = np.zeros_like(c1s)
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
-                metric, v, c2, train, periodic_detector, n_iter=5,
-                solver=solver
+                metric, v, c2, train, periodic_detector, n_iter=5, solver=solver
             )
             y = metric
             train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
@@ -156,21 +174,31 @@ class TimeShift():
         best_ix = ixs[slct][np.argmin(hn[slct])]
         return hn, rn, tv_metric, jpy, best_ix
 
-
-    def estimate_components(self, metric, c1, c2, use_ixs, periodic_detector,
-                            transition_locs=None, n_iter=5, solver=None):
+    def estimate_components(
+        self,
+        metric,
+        c1,
+        c2,
+        use_ixs,
+        periodic_detector,
+        transition_locs=None,
+        n_iter=5,
+        solver=None,
+    ):
         # Iterative reweighted L1 heuristic
         w = np.ones(len(metric) - 1)
         eps = 0.1
         for i in range(n_iter):
             s1, s2 = l2_l1d1_l2d2p365(
-                metric, c1=c1, c2=c2,
+                metric,
+                c1=c1,
+                c2=c2,
                 tv_weights=w,
                 use_ixs=use_ixs,
                 yearly_periodic=periodic_detector,
                 transition_locs=transition_locs,
-                seas_max = 0.5,
-                solver=solver
+                seas_max=0.5,
+                solver=solver,
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
@@ -182,30 +210,31 @@ class TimeShift():
             rn = self.normalized_train_error
             best_c1 = self.best_c1
             import matplotlib.pyplot as plt
-            plt.plot(c1s, hn, marker='.')
-            plt.axvline(best_c1, ls='--', color='red')
-            plt.xscale('log')
-            plt.title('holdout validation')
+
+            plt.plot(c1s, hn, marker=".")
+            plt.axvline(best_c1, ls="--", color="red")
+            plt.xscale("log")
+            plt.title("holdout validation")
             plt.show()
-            plt.plot(c1s, self.jumps_per_year, marker='.')
-            plt.axvline(best_c1, ls='--', color='red')
-            plt.xscale('log')
-            plt.title('jumps per year')
+            plt.plot(c1s, self.jumps_per_year, marker=".")
+            plt.axvline(best_c1, ls="--", color="red")
+            plt.xscale("log")
+            plt.title("jumps per year")
             plt.show()
-            plt.plot(c1s, rn, marker='.')
-            plt.axvline(best_c1, ls='--', color='red')
-            plt.xscale('log')
-            plt.title('training residuals')
+            plt.plot(c1s, rn, marker=".")
+            plt.axvline(best_c1, ls="--", color="red")
+            plt.xscale("log")
+            plt.title("training residuals")
             plt.show()
             # plt.plot(c1s, hn * rn, marker='.')
             # plt.axvline(best_c1, ls='--', color='red')
             # plt.xscale('log')
             # plt.title('holdout error times training error')
             # plt.show()
-            plt.plot(c1s, self.tv_metric, marker='.')
-            plt.axvline(best_c1, ls='--', color='red')
-            plt.xscale('log')
-            plt.title('Total variation metric')
+            plt.plot(c1s, self.tv_metric, marker=".")
+            plt.axvline(best_c1, ls="--", color="red")
+            plt.xscale("log")
+            plt.title("Total variation metric")
             plt.show()
 
     def apply_corrections(self, data):

@@ -20,7 +20,7 @@ trap 'error_trap "$0 line $LINENO"' ERR
 ########################################
 function push_release_tag  {
     local version
-    version=$LAST_RELEASE_TAG    
+    version=$LAST_RELEASE_TAG
     new_version=$(bump_version $version $BUMP_TYPE)
 
     start_section "Tagging master with v${new_version}"
@@ -30,17 +30,17 @@ function push_release_tag  {
 }
 
 ########################################
-# Release a new version of the code by 
-# tagging the latest commit in master with 
+# Release a new version of the code by
+# tagging the latest commit in master with
 # bump in major, minor or micro version
 ########################################
-function main {    
+function main {
     start_section "Validating SEMVER Cut"
     if [ "$#" == 0 ]; then
         echo "No version specified. Please specify the version bump with either major, minor or micro."
         exit
     fi
-    
+
     BUMP_TYPE=$(printf '%s\n' "$1" | awk '{ print toupper($0) }')
 
     if [ "$BUMP_TYPE" == "MAJOR" ]; then
