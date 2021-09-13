@@ -46,6 +46,7 @@ class DataHandler:
         no_future_dates=True,
         aggregate=None,
         how=lambda x: x.mean(),
+        gmt_offset=None
     ):
         if data_frame is not None:
             if convert_to_ts:
@@ -96,6 +97,7 @@ class DataHandler:
         else:
             self.num_days = None
             self.data_sampling = None
+        self.gmt_offset = gmt_offset
         self.filled_data_matrix = None
         self.use_column = None
         self.capacity_estimate = None
@@ -1033,28 +1035,35 @@ class DataHandler:
         )
         self.parameter_estimation = est
 
+    def __help_param_est(self):
+        success = True
+        if self.parameter_estimation is None:
+            if self.gmt_offset is not None:
+                self.setup_location_and_orientation_estimation(self.gmt_offset)
+            else:
+                m = 'Please run setup_location_and_orientation_estimation method first'
+                print(m)
+                success = False
+        return success
+
     def estimate_longitude(
             self,
             estimator='fit_l1',
             eot_calculation='duffie'
     ):
-        if self.parameter_estimation is None:
-            m = 'Please run setup_location_and_orientation_estimation method first'
-            print(m)
-            return
-        self.parameter_estimation.estimate_longitude(
-            estimator=estimator,
-            eot_calculation=eot_calculation
-        )
-        return self.parameter_estimation.longitude
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_longitude(
+                estimator=estimator,
+                eot_calculation=eot_calculation
+            )
+            return self.parameter_estimation.longitude
 
     def estimate_latitude(self):
-        if self.parameter_estimation is None:
-            m = 'Please run setup_location_and_orientation_estimation method first'
-            print(m)
-            return
-        self.parameter_estimation.estimate_latitude()
-        return self.parameter_estimation.latitude
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_latitude()
+            return self.parameter_estimation.latitude
 
     def estimate_orientation(
             self,
@@ -1066,22 +1075,20 @@ class DataHandler:
             x1=0.9,
             x2=0.9
     ):
-        if self.parameter_estimation is None:
-            m = 'Please run setup_location_and_orientation_estimation method first'
-            print(m)
-            return
-        self.parameter_estimation.estimate_orientation(
-            longitude=longitude,
-            latitude=latitude,
-            tilt=tilt,
-            azimuth=azimuth,
-            day_interval=day_interval,
-            x1=x1,
-            x2=x2
-        )
-        tilt = self.parameter_estimation.tilt
-        az = self.parameter_estimation.azimuth
-        return tilt, az
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_orientation(
+                longitude=longitude,
+                latitude=latitude,
+                tilt=tilt,
+                azimuth=azimuth,
+                day_interval=day_interval,
+                x1=x1,
+                x2=x2
+            )
+            tilt = self.parameter_estimation.tilt
+            az = self.parameter_estimation.azimuth
+            return tilt, az
 
     def estimate_location_and_orientation(
             self,
@@ -1089,20 +1096,18 @@ class DataHandler:
             x1=0.9,
             x2=0.9
     ):
-        if self.parameter_estimation is None:
-            m = 'Please run setup_location_and_orientation_estimation method first'
-            print(m)
-            return
-        self.parameter_estimation.estimate_all(
-            day_interval=day_interval,
-            x1=x1,
-            x2=x2
-        )
-        lat = self.parameter_estimation.latitude
-        lon = self.parameter_estimation.longitude
-        tilt = self.parameter_estimation.tilt
-        az = self.parameter_estimation.azimuth
-        return lat, lon, tilt, az
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_all(
+                day_interval=day_interval,
+                x1=x1,
+                x2=x2
+            )
+            lat = self.parameter_estimation.latitude
+            lon = self.parameter_estimation.longitude
+            tilt = self.parameter_estimation.tilt
+            az = self.parameter_estimation.azimuth
+            return lat, lon, tilt, az
 
     def plot_heatmap(
         self,
