@@ -22,6 +22,7 @@ dependencies:
   - s3fs
   - solar-data-tools
   - statistical-clear-sky
+  - pv-system-profiler
   - cassandra-driver
   - openblas
   - smart_open
