@@ -91,11 +91,7 @@ See [notebooks](/notebooks) folder for examples.
 
 ## Install & Setup
 
-<<<<<<< HEAD
 ### 3 ways of setting up, either approach works:
-=======
-### 3 ways of setting up either approach works:
->>>>>>> a437b9def99af562ea61546d5f1fdb58bada3d59
 
 #### 1) Recommended: Set up `conda` environment with provided `.yml` file
 
@@ -117,15 +113,12 @@ Stopping the env
 
 ```bash
 $ conda deactivate
-<<<<<<< HEAD
 ```
 
 Updating the env with latest
 
 ```bash
 $ conda env update -f pvi-user.yml
-=======
->>>>>>> a437b9def99af562ea61546d5f1fdb58bada3d59
 ```
 
 Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
