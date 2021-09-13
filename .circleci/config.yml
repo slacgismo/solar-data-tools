@@ -21,11 +21,11 @@ jobs:
             mkdir $HOME/mosek
             aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
             sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
-      
+
       - run:
           name: Run Unit Tests
           command: sudo coverage run -m unittest
-  
+
   deploy-pypi:
     <<: *368_config
     steps:
@@ -65,7 +65,7 @@ jobs:
             conda install anaconda-client
             conda config --set anaconda_upload no
             anaconda login --username $ANACONDA_CLOUD_USERNAME --password $ANACONDA_CLOUD_PASSWORD
-            VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . --numpy 1.16.4
+            VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge --numpy 1.16.4
 
       - run:
           name: Get the output path and upload the package
@@ -81,7 +81,7 @@ workflows:
   build-and-deploy:
     jobs:
       - build:
-          filters:  
+          filters:
             tags:
               only: /.*/
       - deploy-pypi:

@@ -28,7 +28,7 @@ function start_section {
 }
 
 ########################################
-# Makes sure things are equal or fail. 
+# Makes sure things are equal or fail.
 # It requires bash -e flag to cause exit on return
 ########################################
 function assert_equal {
@@ -73,7 +73,7 @@ function assert_version {
 }
 
 ########################################
-# Make sure that the second arg is a 
+# Make sure that the second arg is a
 # descendent of the first arg or GAME OVER
 ########################################
 function assert_merged {
