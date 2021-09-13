@@ -188,6 +188,14 @@ Filtering/Summarizing      1.53s
     Capacity change detect 0.91s
 ```
 
+## Contributors
+
+Must enable pre-commit hook before pushing any contributions
+```
+pip install pre-commit
+pre-commit install
+```
+
 ## Test Coverage
 
 In order to view the current test coverage metrics, run:
