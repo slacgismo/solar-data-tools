@@ -9,13 +9,10 @@ from datetime import timedelta
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from scipy.stats import mode, skew
+from scipy.stats import mode
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from pandas.plotting import register_matplotlib_converters
-
-register_matplotlib_converters()
 import traceback, sys
 from solardatatools.time_axis_manipulation import (
     make_time_series,
@@ -34,6 +31,9 @@ from solardatatools.algorithms import (
     SunriseSunset,
     ClippingDetection,
 )
+from pandas.plotting import register_matplotlib_converters
+
+register_matplotlib_converters()
 
 
 class DataHandler:
@@ -46,7 +46,7 @@ class DataHandler:
         no_future_dates=True,
         aggregate=None,
         how=lambda x: x.mean(),
-        gmt_offset=None
+        gmt_offset=None,
     ):
         if data_frame is not None:
             if convert_to_ts:
@@ -962,7 +962,6 @@ class DataHandler:
         )
         self.boolean_masks.clear_times = clear_times
 
-
     def fit_statistical_clear_sky_model(
         self,
         rank=6,
@@ -1011,13 +1010,13 @@ class DataHandler:
         return pi
 
     def setup_location_and_orientation_estimation(
-            self,
-            gmt_offset,
-            day_selection_method='all',
-            solar_noon_method='optimized_estimates',
-            daylight_method='optimized_estimates',
-            data_matrix='filled',
-            daytime_threshold=0.001
+        self,
+        gmt_offset,
+        day_selection_method="all",
+        solar_noon_method="optimized_estimates",
+        daylight_method="optimized_estimates",
+        data_matrix="filled",
+        daytime_threshold=0.001,
     ):
         try:
             from pvsystemprofiler.estimator import ConfigurationEstimator
@@ -1031,7 +1030,7 @@ class DataHandler:
             solar_noon_method=solar_noon_method,
             daylight_method=daylight_method,
             data_matrix=data_matrix,
-            daytime_threshold=daytime_threshold
+            daytime_threshold=daytime_threshold,
         )
         self.parameter_estimation = est
 
@@ -1041,21 +1040,17 @@ class DataHandler:
             if self.gmt_offset is not None:
                 self.setup_location_and_orientation_estimation(self.gmt_offset)
             else:
-                m = 'Please run setup_location_and_orientation_estimation method first'
+                m = "Please run setup_location_and_orientation_estimation\n"
+                m += "method and provide a GMT offset value first"
                 print(m)
                 success = False
         return success
 
-    def estimate_longitude(
-            self,
-            estimator='fit_l1',
-            eot_calculation='duffie'
-    ):
+    def estimate_longitude(self, estimator="fit_l1", eot_calculation="duffie"):
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_longitude(
-                estimator=estimator,
-                eot_calculation=eot_calculation
+                estimator=estimator, eot_calculation=eot_calculation
             )
             return self.parameter_estimation.longitude
 
@@ -1066,14 +1061,14 @@ class DataHandler:
             return self.parameter_estimation.latitude
 
     def estimate_orientation(
-            self,
-            longitude=None,
-            latitude=None,
-            tilt=None,
-            azimuth=None,
-            day_interval=None,
-            x1=0.9,
-            x2=0.9
+        self,
+        longitude=None,
+        latitude=None,
+        tilt=None,
+        azimuth=None,
+        day_interval=None,
+        x1=0.9,
+        x2=0.9,
     ):
         ready = self.__help_param_est()
         if ready:
@@ -1084,24 +1079,17 @@ class DataHandler:
                 azimuth=azimuth,
                 day_interval=day_interval,
                 x1=x1,
-                x2=x2
+                x2=x2,
             )
             tilt = self.parameter_estimation.tilt
             az = self.parameter_estimation.azimuth
             return tilt, az
 
-    def estimate_location_and_orientation(
-            self,
-            day_interval=None,
-            x1=0.9,
-            x2=0.9
-    ):
+    def estimate_location_and_orientation(self, day_interval=None, x1=0.9, x2=0.9):
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_all(
-                day_interval=day_interval,
-                x1=x1,
-                x2=x2
+                day_interval=day_interval, x1=x1, x2=x2
             )
             lat = self.parameter_estimation.latitude
             lon = self.parameter_estimation.longitude
