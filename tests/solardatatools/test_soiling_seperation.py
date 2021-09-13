@@ -36,15 +36,10 @@ class TestSoilingSeperation(unittest.TestCase):
         with open(expected_s3_path) as file:
             expected_s3 = np.genfromtxt(file, delimiter=",")
 
-        expected_output = [expected_s1, expected_s2, expected_s3]
         actual_s1, actual_s2, actual_s3 = soiling_seperation(
             pi, index_set=bix, iterations=1
         )
+
+        expected_output = [expected_s1, expected_s2, expected_s3]
         actual_output = [actual_s1, actual_s2, actual_s3]
-        np.testing.assert_array_almost_equal(actual_s1, expected_s1)
-        np.testing.assert_array_almost_equal(actual_s2, expected_s2)
-        np.testing.assert_array_almost_equal(actual_s3, expected_s3)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        np.testing.assert_array_almost_equal(actual_output, expected_output)
