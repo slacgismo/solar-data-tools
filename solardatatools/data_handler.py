@@ -1062,8 +1062,8 @@ class DataHandler:
 
     def estimate_orientation(
         self,
-        longitude=None,
         latitude=None,
+        longitude=None,
         tilt=None,
         azimuth=None,
         day_interval=None,
