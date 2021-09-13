@@ -141,6 +141,7 @@ class DataHandler:
         self.time_shift_analysis = None
         self.daytime_analysis = None
         self.clipping_analysis = None
+        self.parameter_estimation = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -959,6 +960,7 @@ class DataHandler:
         )
         self.boolean_masks.clear_times = clear_times
 
+
     def fit_statistical_clear_sky_model(
         self,
         rank=6,
@@ -1005,6 +1007,102 @@ class DataHandler:
         measured_energy = np.sum(self.filled_data_matrix, axis=0)
         pi = np.divide(measured_energy, clear_energy)
         return pi
+
+    def setup_location_and_orientation_estimation(
+            self,
+            gmt_offset,
+            day_selection_method='all',
+            solar_noon_method='optimized_estimates',
+            daylight_method='optimized_estimates',
+            data_matrix='filled',
+            daytime_threshold=0.001
+    ):
+        try:
+            from pvsystemprofiler.estimator import ConfigurationEstimator
+        except ImportError:
+            print("Please install pv-system-profiler package")
+            return
+        est = ConfigurationEstimator(
+            self,
+            gmt_offset,
+            day_selection_method=day_selection_method,
+            solar_noon_method=solar_noon_method,
+            daylight_method=daylight_method,
+            data_matrix=data_matrix,
+            daytime_threshold=daytime_threshold
+        )
+        self.parameter_estimation = est
+
+    def estimate_longitude(
+            self,
+            estimator='fit_l1',
+            eot_calculation='duffie'
+    ):
+        if self.parameter_estimation is None:
+            m = 'Please run setup_location_and_orientation_estimation method first'
+            print(m)
+            return
+        self.parameter_estimation.estimate_longitude(
+            estimator=estimator,
+            eot_calculation=eot_calculation
+        )
+        return self.parameter_estimation.longitude
+
+    def estimate_latitude(self):
+        if self.parameter_estimation is None:
+            m = 'Please run setup_location_and_orientation_estimation method first'
+            print(m)
+            return
+        self.parameter_estimation.estimate_latitude()
+        return self.parameter_estimation.latitude
+
+    def estimate_orientation(
+            self,
+            longitude=None,
+            latitude=None,
+            tilt=None,
+            azimuth=None,
+            day_interval=None,
+            x1=0.9,
+            x2=0.9
+    ):
+        if self.parameter_estimation is None:
+            m = 'Please run setup_location_and_orientation_estimation method first'
+            print(m)
+            return
+        self.parameter_estimation.estimate_orientation(
+            longitude=longitude,
+            latitude=latitude,
+            tilt=tilt,
+            azimuth=azimuth,
+            day_interval=day_interval,
+            x1=x1,
+            x2=x2
+        )
+        tilt = self.parameter_estimation.tilt
+        az = self.parameter_estimation.azimuth
+        return tilt, az
+
+    def estimate_location_and_orientation(
+            self,
+            day_interval=None,
+            x1=0.9,
+            x2=0.9
+    ):
+        if self.parameter_estimation is None:
+            m = 'Please run setup_location_and_orientation_estimation method first'
+            print(m)
+            return
+        self.parameter_estimation.estimate_all(
+            day_interval=day_interval,
+            x1=x1,
+            x2=x2
+        )
+        lat = self.parameter_estimation.latitude
+        lon = self.parameter_estimation.longitude
+        tilt = self.parameter_estimation.tilt
+        az = self.parameter_estimation.azimuth
+        return lat, lon, tilt, az
 
     def plot_heatmap(
         self,
