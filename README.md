@@ -72,6 +72,12 @@
         </a>
     </td>
 </tr>
+<tr>
+    <td>Test-Coverage</td>
+    <td>
+        <img src="https://img.shields.io/badge/test--coverage-45%25-yellowgreen" alt="test-coverage" />
+    </td>
+</tr>
 </table>
 
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in
@@ -85,7 +91,7 @@ See [notebooks](/notebooks) folder for examples.
 
 ## Install & Setup
 
-### 3 ways of setting up either approach works:
+### 3 ways of setting up, either approach works:
 
 #### 1) Recommended: Set up `conda` environment with provided `.yml` file
 
@@ -107,6 +113,12 @@ Stopping the env
 
 ```bash
 $ conda deactivate
+```
+
+Updating the env with latest
+
+```bash
+$ conda env update -f pvi-user.yml
 ```
 
 Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
@@ -176,20 +188,20 @@ Filtering/Summarizing      1.53s
     Capacity change detect 0.91s
 ```
 
-## Test Coverage
-
-In order to view the current test coverage metrics, run:
-```
-coverage run --source solardatatools -m unittest discover && coverage html
-open htmlcov/index.html
-```
-
 ## Contributors
 
 Must enable pre-commit hook before pushing any contributions
 ```
 pip install pre-commit
 pre-commit install
+```
+
+## Test Coverage
+
+In order to view the current test coverage metrics, run:
+```
+coverage run --source solardatatools -m unittest discover && coverage html
+open htmlcov/index.html
 ```
 
 ## Versioning
