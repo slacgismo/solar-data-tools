@@ -29,8 +29,10 @@ class TestSystemProfiler(unittest.TestCase):
         actual_orientation = dh.estimate_orientation(
             latitude=actual_latitude, longitude=actual_longitude
         )
+        print(estimate_latitude)
+        print(actual_latitude)
 
-        np.testing.assert_almost_equal(estimate_latitude, actual_latitude, decimal=0.5)
+        np.testing.assert_almost_equal(actual_latitude, estimate_latitude, decimal=0.5)
         np.testing.assert_almost_equal(
             estimate_longitude, actual_longitude, decimal=0.5
         )
