@@ -34,7 +34,7 @@ class TestSystemProfiler(unittest.TestCase):
         np.testing.assert_almost_equal(
             estimate_longitude, actual_longitude, decimal=0.5
         )
-        np.testing.assert_almost_equal(
+        np.testing.assert_array_almost_equal(
             estimate_orientation, actual_orientation, decimal=0.1
         )
 
