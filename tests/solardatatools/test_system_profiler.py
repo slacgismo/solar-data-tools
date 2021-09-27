@@ -12,6 +12,7 @@ class TestSystemProfiler(unittest.TestCase):
             filepath / "fixtures" / "system_profiler" / "data_handler_input.csv"
         )
         data = pd.read_csv(data_file_path, index_col=0, parse_dates=True)
+
         dh = DataHandler(data)
         dh.fix_dst()
         dh.run_pipeline(power_col="ac_power", fix_shifts=False, correct_tz=False)
@@ -34,10 +35,7 @@ class TestSystemProfiler(unittest.TestCase):
             estimate_longitude, actual_longitude, decimal=0.5
         )
         np.testing.assert_almost_equal(
-            estimate_orientation[0], actual_orientation[0], decimal=0.1
-        )
-        np.testing.assert_almost_equal(
-            estimate_orientation[1], actual_orientation[1], decimal=0.1
+            estimate_orientation, actual_orientation, decimal=0.1
         )
 
 
