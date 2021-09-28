@@ -17,6 +17,7 @@ The algorithm works as follows:
 
 import numpy as np
 from scipy.stats import mode
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
@@ -143,21 +144,26 @@ class TimeShift:
         self.__recursion_depth = 0
 
     def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector, solver=None):
-        n = np.sum(use_ixs)
-        select = np.random.uniform(size=n) <= 0.75  # random holdout selection
-        train = np.copy(use_ixs)
-        test = np.copy(use_ixs)
-        train[use_ixs] = select
-        test[use_ixs] = ~select
+        # set up train/test split with sklearn
+        ixs = np.arange(len(metric))
+        ixs = ixs[use_ixs]
+        train_ixs, test_ixs = train_test_split(ixs, test_size=0.75)
+        train = np.zeros(len(metric), dtype=bool)
+        test = np.zeros(len(metric), dtype=bool)
+        train[train_ixs] = True
+        test[test_ixs] = True
+        # initialize results objects
         train_r = np.zeros_like(c1s)
         test_r = np.zeros_like(c1s)
         tv_metric = np.zeros_like(c1s)
         jpy = np.zeros_like(c1s)
+        # iterate over possible values of c1 parameter
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
                 metric, v, c2, train, periodic_detector, n_iter=5, solver=solver
             )
             y = metric
+            # collect results
             train_r[i] = np.average(np.power((y - s1 - s2)[train], 2))
             test_r[i] = np.average(np.power((y - s1 - s2)[test], 2))
             tv_metric[i] = np.average(np.abs(np.diff(s1, n=1)))
@@ -165,7 +171,7 @@ class TimeShift:
             jumps_per_year = count_jumps / (len(metric) / 365)
             jpy[i] = jumps_per_year
         zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
-        hn = zero_one_scale(test_r)
+        hn = zero_one_scale(test_r) # holdout error metrix
         rn = zero_one_scale(train_r)
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
