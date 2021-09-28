@@ -98,12 +98,12 @@ class TimeShift:
             solver=solver,
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
-        cond1 = np.isclose(np.max(s2), 0.5)
+        cond1 = jumps_per_year >= 5
         cond2 = c1 is None
         cond3 = self.__recursion_depth < 2
         if cond1 and cond2 and cond3:
-            # Unlikely that constraint should be active or that there are more
-            # than 5 time shifts per year. Try a different random sampling
+            # Unlikely that  there are more than 5 time shifts per year. Try a
+            # different random sampling
             self.__recursion_depth += 1
             self.run(
                 data,
@@ -176,8 +176,11 @@ class TimeShift:
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
-        slct = jpy <= 5
-        best_ix = ixs[slct][np.argmin(hn[slct])]
+        slct = np.logical_and(
+            jpy <= 5,
+            hn <= 0.02
+        )
+        best_ix = np.nanmax(ixs[slct])
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
@@ -203,7 +206,7 @@ class TimeShift:
                 use_ixs=use_ixs,
                 yearly_periodic=periodic_detector,
                 transition_locs=transition_locs,
-                seas_max=0.5,
+                seas_max=None,
                 solver=solver,
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))

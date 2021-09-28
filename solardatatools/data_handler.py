@@ -169,7 +169,7 @@ class DataHandler:
         end_day_ix=None,
         c1=None,
         c2=500.0,
-        solar_noon_estimator="com",
+        solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
         daytime_threshold=0.1,
