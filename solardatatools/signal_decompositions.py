@@ -161,7 +161,7 @@ def tl1_l2d2p365(
     :return: median fit with seasonal baseline removed
     """
     if use_ixs is None:
-        use_ixs = np.arange(len(signal))
+        use_ixs = ~np.isnan(signal)
     x = cvx.Variable(len(signal))
     r = signal[use_ixs] - x[use_ixs]
     objective = cvx.Minimize(
