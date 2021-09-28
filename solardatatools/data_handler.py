@@ -905,7 +905,10 @@ class DataHandler:
         solver=None,
     ):
         self.time_shift_analysis = TimeShift()
-        use_ixs = self.daily_flags.clear
+        if self.data_clearness_score >= .1:
+            use_ixs = self.daily_flags.clear
+        else:
+            use_ixs = self.daily_flags.no_errors
         self.time_shift_analysis.run(
             self.filled_data_matrix,
             use_ixs=use_ixs,
