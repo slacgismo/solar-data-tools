@@ -209,39 +209,29 @@ class TimeShift:
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
 
-    def plot_optimization(self):
+    def plot_optimization(self, figsize=None):
         if self.best_ix is not None:
             c1s = self.c1_vals
             hn = self.normalized_holdout_error
             rn = self.normalized_train_error
             best_c1 = self.best_c1
             import matplotlib.pyplot as plt
-
-            plt.plot(c1s, hn, marker=".")
-            plt.axvline(best_c1, ls="--", color="red")
-            plt.xscale("log")
-            plt.title("holdout validation")
-            plt.show()
-            plt.plot(c1s, self.jumps_per_year, marker=".")
-            plt.axvline(best_c1, ls="--", color="red")
-            plt.xscale("log")
-            plt.title("jumps per year")
-            plt.show()
-            plt.plot(c1s, rn, marker=".")
-            plt.axvline(best_c1, ls="--", color="red")
-            plt.xscale("log")
-            plt.title("training residuals")
-            plt.show()
-            # plt.plot(c1s, hn * rn, marker='.')
-            # plt.axvline(best_c1, ls='--', color='red')
-            # plt.xscale('log')
-            # plt.title('holdout error times training error')
-            # plt.show()
-            plt.plot(c1s, self.tv_metric, marker=".")
-            plt.axvline(best_c1, ls="--", color="red")
-            plt.xscale("log")
-            plt.title("Total variation metric")
-            plt.show()
+            fig, ax = plt.subplots(nrows=4, sharex=True, figsize=figsize)
+            ax[0].plot(c1s, hn, marker=".")
+            ax[0].axvline(best_c1, ls="--", color="red")
+            ax[0].set_title("holdout validation")
+            ax[1].plot(c1s, self.jumps_per_year, marker=".")
+            ax[1].axvline(best_c1, ls="--", color="red")
+            ax[1].set_title("jumps per year")
+            ax[2].plot(c1s, rn, marker=".")
+            ax[2].axvline(best_c1, ls="--", color="red")
+            ax[2].set_title("training residuals")
+            ax[3].plot(c1s, self.tv_metric, marker=".")
+            ax[3].axvline(best_c1, ls="--", color="red")
+            ax[3].set_xscale("log")
+            ax[3].set_title("Total variation metric")
+            plt.tight_layout()
+            return fig
 
     def apply_corrections(self, data):
         roll_by_index = self.roll_by_index
