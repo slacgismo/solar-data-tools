@@ -1180,51 +1180,61 @@ class DataHandler:
             xs = np.arange(len(self.daily_signals.density))
         plt.plot(xs, self.daily_signals.density, linewidth=1)
         title = "Daily signal density"
-        if flag == "density":
+        if isinstance(flag, str):
+            if flag == "density":
+                plt.plot(
+                    xs[~self.daily_flags.density],
+                    self.daily_signals.density[~self.daily_flags.density],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", density outlier days flagged"
+            if flag == "good":
+                plt.plot(
+                    xs[self.daily_flags.no_errors],
+                    self.daily_signals.density[self.daily_flags.no_errors],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", good days flagged"
+            elif flag == "bad":
+                plt.plot(
+                    xs[~self.daily_flags.no_errors],
+                    self.daily_signals.density[~self.daily_flags.no_errors],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", bad days flagged"
+            elif flag in ["clear", "sunny"]:
+                plt.plot(
+                    xs[self.daily_flags.clear],
+                    self.daily_signals.density[self.daily_flags.clear],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", clear days flagged"
+            elif flag == "cloudy":
+                plt.plot(
+                    xs[self.daily_flags.cloudy],
+                    self.daily_signals.density[self.daily_flags.cloudy],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", cloudy days flagged"
+        else:
             plt.plot(
-                xs[~self.daily_flags.density],
-                self.daily_signals.density[~self.daily_flags.density],
+                xs[flag],
+                self.daily_signals.density[flag],
                 ls="none",
                 marker=".",
                 color="red",
             )
-            title += ", density outlier days flagged"
-        if flag == "good":
-            plt.plot(
-                xs[self.daily_flags.no_errors],
-                self.daily_signals.density[self.daily_flags.no_errors],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", good days flagged"
-        elif flag == "bad":
-            plt.plot(
-                xs[~self.daily_flags.no_errors],
-                self.daily_signals.density[~self.daily_flags.no_errors],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", bad days flagged"
-        elif flag in ["clear", "sunny"]:
-            plt.plot(
-                xs[self.daily_flags.clear],
-                self.daily_signals.density[self.daily_flags.clear],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", clear days flagged"
-        elif flag == "cloudy":
-            plt.plot(
-                xs[self.daily_flags.cloudy],
-                self.daily_signals.density[self.daily_flags.cloudy],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", cloudy days flagged"
+            title += ", days flagged"
         if np.logical_and(
             show_fit, self.daily_signals.seasonal_density_fit is not None
         ):
