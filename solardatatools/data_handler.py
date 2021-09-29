@@ -9,7 +9,7 @@ from datetime import timedelta
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from scipy.stats import mode, skew
+from scipy.stats import mode
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -22,7 +22,11 @@ from solardatatools.time_axis_manipulation import (
     standardize_time_axis,
 )
 from solardatatools.matrix_embedding import make_2d
-from solardatatools.data_quality import daily_missing_data_advanced
+from solardatatools.data_quality import (
+    make_density_scores,
+    make_linearity_scores,
+    make_quality_flags
+)
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
@@ -718,13 +722,18 @@ class DataHandler:
         density_upper_threshold=1.05,
         linearity_threshold=0.1,
     ):
-        self.daily_flags.density = np.logical_and(
-            self.daily_scores.density > density_lower_threshold,
-            self.daily_scores.density < density_upper_threshold,
+        df, lf = make_quality_flags(
+            self.daily_scores.density,
+            self.daily_scores.linearity,
+            density_lower_threshold=density_lower_threshold,
+            density_upper_threshold=density_upper_threshold,
+            linearity_threshold=linearity_threshold
         )
-        self.daily_flags.linearity = self.daily_scores.linearity < linearity_threshold
+        self.daily_flags.density = df
+        self.daily_flags.linearity = lf
         self.daily_flags.flag_no_errors()
-
+        # scores should typically cluster within threshold values, if they
+        # don't, we mark normal_quality_scores as false
         scores = np.c_[self.daily_scores.density, self.daily_scores.linearity]
         db = DBSCAN(eps=0.03, min_samples=max(0.01 * scores.shape[0], 3)).fit(scores)
         # Count the number of days that cluster to the main group but fall
@@ -756,7 +765,7 @@ class DataHandler:
         if self.raw_data_matrix is None:
             print("Generate a raw data matrix first.")
             return
-        s1, s2, s3 = daily_missing_data_advanced(
+        s1, s2, s3 = make_density_scores(
             self.raw_data_matrix,
             threshold=threshold,
             return_density_signal=True,
@@ -774,34 +783,13 @@ class DataHandler:
         if self.daily_signals.seasonal_density_fit is None:
             print("Run the density check first")
             return
-        temp_mat = np.copy(self.filled_data_matrix)
-        temp_mat[temp_mat < 0.005 * self.capacity_estimate] = np.nan
-        difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
-        modes, counts = mode(difference_mat, axis=0, nan_policy="omit")
-        n = self.filled_data_matrix.shape[0] - 1
-        self.daily_scores.linearity = counts.data.squeeze() / (
-            n * self.daily_signals.seasonal_density_fit
+        ls, im = make_linearity_scores(
+            self.filled_data_matrix,
+            self.capacity_estimate,
+            self.daily_signals.seasonal_density_fit
         )
-        # Label detected infill points with a boolean mask
-        infill = np.zeros_like(self.raw_data_matrix, dtype=np.bool)
-        slct = self.daily_scores.linearity >= 0.1
-        reference_diffs = np.tile(modes[0][slct], (self.filled_data_matrix.shape[0], 1))
-        found_infill = np.logical_or(
-            np.isclose(
-                np.r_[np.zeros(self.num_days).reshape((1, -1)), difference_mat][
-                    :, slct
-                ],
-                reference_diffs,
-            ),
-            np.isclose(
-                np.r_[difference_mat, np.zeros(self.num_days).reshape((1, -1))][
-                    :, slct
-                ],
-                reference_diffs,
-            ),
-        )
-        infill[:, slct] = found_infill
-        self.boolean_masks.infill = infill
+        self.daily_scores.linearity = ls
+        self.boolean_masks.infill = im
         return
 
     def score_data_set(self):
