@@ -14,8 +14,12 @@ import seaborn as sns
 my_round = lambda x, c: c * np.round(x / c, 0)
 
 class ShadeAnalysis:
-    def __init__(self, data_handler):
+    def __init__(self, data_handler, matrix=None):
         self.dh = data_handler
+        if matrix is None:
+            self.data = self.dh.filled_data_matrix
+        else:
+            self.data = matrix
         self.data_normalized = None
         self.data_transformed = None
         self.osd_problem = None
@@ -65,7 +69,7 @@ class ShadeAnalysis:
                            ) * scale,
                            bounds_error=False, fill_value="extrapolate")
 
-        avg_energy = pd.DataFrame(data=np.sum(self.dh.filled_data_matrix,
+        avg_energy = pd.DataFrame(data=np.sum(self.data,
                                               axis=0),
                                   index=self.dh.day_index)
         avg_energy['doy'] = avg_energy.index.day_of_year
@@ -153,7 +157,7 @@ class ShadeAnalysis:
 
     def transform_data(self, power):
         normalized = batch_process(
-            self.dh.filled_data_matrix,
+            self.data,
             self.dh.boolean_masks.daytime,
             power=power
         )
