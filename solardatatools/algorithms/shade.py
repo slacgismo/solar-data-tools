@@ -9,7 +9,9 @@ import pandas as pd
 import cvxpy as cvx
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import seaborn as sns
 
+my_round = lambda x, c: c * np.round(x / c, 0)
 
 class ShadeAnalysis:
     def __init__(self, data_handler):
@@ -17,6 +19,9 @@ class ShadeAnalysis:
         self.data_normalized = None
         self.data_transformed = None
         self.osd_problem = None
+        self.residual_component = None
+        self.clear_sky_component = None
+        self.shade_component = None
         self.daily_shade_loss = None
         self.daily_clear_energy = None
         self.avg_energy = None
@@ -40,6 +45,7 @@ class ShadeAnalysis:
         variable_dict = {v.name():v for v in self.osd_problem.variables()}
         self.clear_sky_component = variable_dict['clear-sky'].value
         self.shade_component = variable_dict['shade'].value
+        self.residual_component = variable_dict['residual'].value
 
     def analyze_yearly_energy(self):
         if not self.has_run:
@@ -87,13 +93,70 @@ class ShadeAnalysis:
         plt.legend()
         return fig
 
+    def plot_transformed_data(self, yticks=True, figsize=(10,4)):
+        plt.figure(figsize=figsize)
+        sns.heatmap(self.data_transformed, cmap='plasma')
+        plt.xticks(np.arange(0, 257, 16), np.round(np.linspace(0, 1, 17), 1))
+        plt.xlabel('fraction of daylight hours')
+        if not yticks:
+            plt.yticks([])
+        return plt.gcf()
+
+    def plot_annotated_heatmap(self, figsize=(12, 6)):
+        M = self.data_transformed.shape[1]
+        unrolled = np.zeros((M, self.dh.num_days))
+        metric = np.zeros_like(self.shade_component)
+        cond = ~np.isclose(self.clear_sky_component, 0)
+        metric[cond] = (self.shade_component[cond]
+                        / self.clear_sky_component[cond])
+        for ix, d in enumerate(
+                my_round(delta_cooper(self.dh.day_index.dayofyear.values), 1)):
+            slct = self.data_transformed.index == d
+            unrolled[:, ix] = metric[slct, :]
+
+        fig = self.dh.plot_heatmap(matrix='filled', figsize=figsize)
+        annotate = undo_batch_process(unrolled,
+                                      self.dh.boolean_masks.daytime) >= .25
+        annotate = np.asarray(annotate, dtype=float)
+        annotate[annotate == 0] = np.nan
+        with sns.axes_style('white'):
+            plt.imshow(annotate, aspect='auto', cmap='Wistia', alpha=.5)
+            plt.scatter(0, 0, color='tan', alpha=0.5, label='detected shade')
+            plt.legend()
+        plt.title('Measured power with shade loss >25% marked')
+        return fig
+
+    def plot_component(self, component, figsize=(10,4)):
+        if component == 'clear':
+            data = self.clear_sky_component
+            title = 'clear sky component'
+        elif component == 'shade':
+            data = self.shade_component
+            title = 'shade loss component'
+        elif component == 'residual':
+            data = self.residual_component
+            title = 'residual component'
+        else:
+            m = "component arg must be one of ['clear', 'shade', 'residual']"
+            print(m)
+            return
+        fig = plt.figure(figsize=figsize)
+        with sns.axes_style('white'):
+            plt.imshow(data, aspect='auto', cmap='plasma')
+            plt.colorbar()
+            plt.title(title)
+            plt.xticks([])
+            plt.yticks([])
+            plt.xlabel('fraction daylight hours')
+            plt.ylabel('azimuth at sunrise')
+        return fig
+
     def transform_data(self, power):
         normalized = batch_process(
             self.dh.filled_data_matrix,
             self.dh.boolean_masks.daytime,
             power=power
         )
-        my_round = lambda x, c: c * np.round(x / c, 0)
         agg_by_azimuth = pd.DataFrame(data=normalized.T,
                                       index=np.arange(normalized.shape[1]),
                                       columns=np.linspace(0, 1, 2 ** power))
