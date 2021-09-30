@@ -38,6 +38,7 @@ from solardatatools.algorithms import (
     SunriseSunset,
     ClippingDetection,
 )
+from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:
@@ -145,6 +146,7 @@ class DataHandler:
         self.time_shift_analysis = None
         self.daytime_analysis = None
         self.clipping_analysis = None
+        self.polar_transform = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -1496,6 +1498,35 @@ class DataHandler:
         ax.set_title(title)
         # print(np.sum(circ_hist[0] <= 1))
         return fig
+
+    def plot_polar_transform(
+        self,
+        lat,
+        lon,
+        tz_offset,
+        elevation_round=1,
+        azimuth_round=2
+    ):
+        if self.polar_transform is None:
+            self.augment_data_frame(self.daily_flags.clear, 'clear-day')
+            pt = PolarTransform(self.data_frame[self.use_column],
+                                lat,
+                                lon,
+                                tz_offset=tz_offset,
+                                boolean_selection=self.data_frame['clear-day'])
+            self.polar_transform = pt
+        has_changed = np.logical_or(
+            elevation_round != self.polar_transform._er,
+            azimuth_round != self.polar_transform._ar
+        )
+        if has_changed:
+            self.polar_transform.transform(
+                agg_func=np.nanmean,
+                elevation_round=elevation_round,
+                azimuth_round=azimuth_round
+            )
+        return self.polar_transform.plot_transformation()
+
 
 
 class DailyScores:
