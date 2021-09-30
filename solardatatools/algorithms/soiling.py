@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """ Soiling Module
 
-This module is for analyzing soiling trends in performance index (PI) data/
+This module is for analyzing soiling trends in performance index (PI) data
+and daily energy data.
 
 """
 
