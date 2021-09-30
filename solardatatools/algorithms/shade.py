@@ -194,7 +194,7 @@ class ShadeAnalysis:
         ]
 
         objective = cvx.Minimize(
-            20 * phi1 + 1e1 * phi2 + 1e2 * phi3 + 8e-1 * phi4)
+            20 * phi1 + 1e1 * phi2 + 5e2 * phi3 + 8e-1 * phi4)
         problem = cvx.Problem(objective, constraints)
         return problem
 
