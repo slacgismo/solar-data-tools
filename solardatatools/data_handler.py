@@ -1397,7 +1397,11 @@ class DataHandler:
         )
         return fig
 
-    def plot_time_shift_analysis_results(self, figsize=(8, 6)):
+    def plot_time_shift_analysis_results(
+        self,
+        figsize=(8, 6),
+        show_filter=True
+    ):
         if self.time_shift_analysis is not None:
             use_ixs = self.time_shift_analysis.use_ixs
             plt.figure(figsize=figsize)
@@ -1408,16 +1412,17 @@ class DataHandler:
                 alpha=0.6,
                 label="daily solar noon",
             )
-            plt.plot(
-                self.day_index[use_ixs],
-                self.time_shift_analysis.metric[use_ixs],
-                linewidth=1,
-                alpha=0.6,
-                color="orange",
-                marker=".",
-                ls="none",
-                label="filtered days",
-            )
+            if show_filter:
+                plt.plot(
+                    self.day_index[use_ixs],
+                    self.time_shift_analysis.metric[use_ixs],
+                    linewidth=1,
+                    alpha=0.6,
+                    color="orange",
+                    marker=".",
+                    ls="none",
+                    label="filtered days",
+                )
             plt.plot(
                 self.day_index,
                 self.time_shift_analysis.s1,
