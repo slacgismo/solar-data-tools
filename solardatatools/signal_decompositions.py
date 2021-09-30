@@ -247,7 +247,7 @@ def tl1_l1d1_l2d2p365(
     return s_hat.value, s_seas.value[:n]
 
 
-def make_l2_ll1d1(y, weight=1e1):
+def make_l2_l1d2(y, weight=1e1):
     y_hat = cvx.Variable(len(y))
     y_param = cvx.Parameter(len(y), value=y)
     mu = cvx.Parameter(nonneg=True)
