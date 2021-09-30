@@ -188,6 +188,14 @@ Filtering/Summarizing      1.53s
     Capacity change detect 0.91s
 ```
 
+## Contributors
+
+Must enable pre-commit hook before pushing any contributions
+```
+pip install pre-commit
+pre-commit install
+```
+
 ## Test Coverage
 
 In order to view the current test coverage metrics, run:
@@ -198,7 +206,7 @@ open htmlcov/index.html
 
 ## Versioning
 
-We use [Semantic Versioning](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/bmeyers/solar-data-tools/tags).
+We use [Semantic Versioning](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/slacgismo/solar-data-tools/tags).
 
 ## Authors
 

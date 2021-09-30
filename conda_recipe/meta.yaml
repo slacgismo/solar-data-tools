@@ -21,15 +21,18 @@ requirements:
     - pandas
     - seaborn
     - requests
+
   run:
     - scipy
     - numpy >=1.16
     - pandas
     - seaborn
     - requests
-    - cvxpy
     - scikit-learn
     - pvlib-python
+    - cvxpy
+    - statistical-clear-sky
+    - pv-system-profiler
 
 about:
   home: https://github.com/bmeyers/solar-data-tools
@@ -43,3 +46,4 @@ about:
 extra:
   recipe-maintainers:
     - bmeyers
+    - derins

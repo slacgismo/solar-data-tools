@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-''' Soiling Module
+""" Soiling Module
 
 This module is for analyzing soiling trends in performance index (PI) data/
 
-'''
+"""
 
 import numpy as np
 import cvxpy as cvx
+
 
 
 def soiling_seperation(observed, index_set=None, degradation_term=False,
