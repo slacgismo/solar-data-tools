@@ -4,3 +4,4 @@ from solardatatools.algorithms.sunrise_sunset_estimation import SunriseSunset
 from solardatatools.algorithms.soiling import soiling_seperation
 from solardatatools.algorithms.clipping import ClippingDetection
 from solardatatools.algorithms.shade import ShadeAnalysis
+from solardatatools.algorithms.soiling import SoilingAnalysis

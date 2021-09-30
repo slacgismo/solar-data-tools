@@ -9,6 +9,44 @@ and daily energy data.
 import numpy as np
 import cvxpy as cvx
 
+DEFAULT = {
+    'degradation_term': True,
+    'tau': 0.85,
+    'iterations': 5,
+    'w1': 2,
+    'w2': 3e-2,
+    'w3': 2e-1,
+    'w4': 5e2,
+}
+
+class SoilingAnalysis:
+    def __init__(self, data_handler):
+        self.dh = data_handler
+        e1 = np.nansum(self.dh.raw_data_matrix, axis=0)
+        self.soiling_signal = e1 / np.nanquantile(e1, .98)
+        self.soiling_component = None
+        self.seasonal_component = None
+        self.degradation_component = None
+        self.residual_component = None
+        self.corr_raw_matrix = None
+        self.corr_filled_data_matrix = None
+
+    def run(self, **config):
+        if len(config) == 0:
+            config = DEFAULT
+        s1e, s2e, s3e, sre = soiling_seperation_v2(
+            self.soiling_signal,
+            index_set=self.dh.daily_flags.no_errors,
+            **config
+        )
+        self.soiling_component = s1e
+        self.seasonal_component = s2e
+        self.degradation_component = sre
+        self.residual_component = s3e
+        self.correction_factor = 1 + s1e
+        self.corr_raw_matrix = self.dh.raw_data_matrix / self.correction_factor
+        self.corr_filled_data_matrix = (self.dh.filled_data_matrix
+                                        / self.correction_factor)
 
 
 def soiling_seperation(observed, index_set=None, degradation_term=False,
