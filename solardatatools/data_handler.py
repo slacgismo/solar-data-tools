@@ -954,6 +954,7 @@ class DataHandler:
 
     def fit_statistical_clear_sky_model(
         self,
+        data_matrix=None,
         rank=6,
         mu_l=None,
         mu_r=None,
@@ -973,7 +974,8 @@ class DataHandler:
         except ImportError:
             print("Please install statistical-clear-sky package")
             return
-        scsf = SCSF(data_handler_obj=self, rank_k=rank, solver_type=solver_type)
+        scsf = SCSF(data_handler_obj=self, data_matrix=data_matrix,
+                    rank_k=rank, solver_type=solver_type)
         scsf.execute(
             mu_l=mu_l,
             mu_r=mu_r,
