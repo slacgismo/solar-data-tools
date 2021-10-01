@@ -124,10 +124,10 @@ class ShadeAnalysis:
         annotate = np.asarray(annotate, dtype=float)
         annotate[annotate == 0] = np.nan
         with sns.axes_style('white'):
-            plt.imshow(annotate, aspect='auto', cmap='Wistia', alpha=.5)
-            plt.scatter(0, 0, color='tan', alpha=0.5, label='detected shade')
+            plt.imshow(annotate, aspect='auto', cmap='Wistia', alpha=.35)
+            plt.scatter(0, 0, color='tan', alpha=0.35, label='detected shade')
             plt.legend()
-        plt.title('Measured power with shade loss >25% marked')
+        plt.title('Measured power with shaded periods marked')
         return fig
 
     def plot_component(self, component, figsize=(10,4)):
