@@ -29,6 +29,7 @@ class ShadeAnalysis:
         self.daily_shade_loss = None
         self.daily_clear_energy = None
         self.avg_energy = None
+        self.scale_factor = 1 / self.dh.capacity_estimate
 
     @property
     def has_run(self):
@@ -47,9 +48,9 @@ class ShadeAnalysis:
             self.osd_problem = self.make_osd_problem()
             self.osd_problem.solve(solver=solver, verbose=verbose)
         variable_dict = {v.name():v for v in self.osd_problem.variables()}
-        self.clear_sky_component = variable_dict['clear-sky'].value
-        self.shade_component = variable_dict['shade'].value
-        self.residual_component = variable_dict['residual'].value
+        self.clear_sky_component = variable_dict['clear-sky'].value / self.scale_factor
+        self.shade_component = variable_dict['shade'].value / self.scale_factor
+        self.residual_component = variable_dict['residual'].value / self.scale_factor
 
     def analyze_yearly_energy(self):
         if not self.has_run:
@@ -155,11 +156,12 @@ class ShadeAnalysis:
             plt.ylabel('azimuth at sunrise')
         return fig
 
-    def transform_data(self, power):
+    def transform_data(self, power=8):
         normalized = batch_process(
             self.data,
             self.dh.boolean_masks.daytime,
-            power=power
+            power=power,
+            scale=self.scale_factor
         )
         agg_by_azimuth = pd.DataFrame(data=normalized.T,
                                       index=np.arange(normalized.shape[1]),
@@ -203,15 +205,17 @@ class ShadeAnalysis:
         return problem
 
 
-def batch_process(data, mask, power=8):
+def batch_process(data, mask, power=8, scale=None):
     """ Process an entire PV power matrix at once
     :return:
     """
+    if scale is None:
+        scale = 1
     N = 2 ** power
     output = np.zeros((N, data.shape[1]))
     xs_new = np.linspace(0, 1, N)
     for col_ix in range(data.shape[1]):
-        y = data[:, col_ix]
+        y = data[:, col_ix] * scale
         energy = np.sum(y)
         msk = mask[:, col_ix]
         xs = np.linspace(0, 1, int(np.sum(msk)))
@@ -224,13 +228,15 @@ def batch_process(data, mask, power=8):
             output[:, col_ix] = 0
     return output
 
-def undo_batch_process(data, mask):
+def undo_batch_process(data, mask, scale=None):
+    if scale is None:
+        scale = 1
     output = np.zeros_like(mask, dtype=float)
     xs_old = np.linspace(0, 1, data.shape[0])
     for col_ix in range(data.shape[1]):
         n_pts = np.sum(mask[:, col_ix])
         xs_new = np.linspace(0, 1, n_pts)
-        interp_f = interp1d(xs_old, data[:, col_ix])
+        interp_f = interp1d(xs_old, data[:, col_ix] / scale)
         resampled_signal = interp_f(xs_new)
         output[mask[:, col_ix], col_ix] = resampled_signal
     return output
