@@ -10,8 +10,12 @@ import cvxpy as cvx
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pathlib import Path
 
 my_round = lambda x, c: c * np.round(x / c, 0)
+
+FP = Path(__file__).parent.parent
+BASIS = np.loadtxt(FP / 'fixtures' / 'clear_PCA.txt')
 
 class ShadeAnalysis:
     def __init__(self, data_handler, matrix=None):
