@@ -41,6 +41,8 @@ class PolarTransform:
                 e += " match length of data series"
                 raise Exception(e)
         self.tranformed_data = None
+        self._er = None
+        self._ar = None
 
     def normalize_days(self):
         series = self.data
@@ -95,6 +97,8 @@ class PolarTransform:
         # reverse the first axis
         estimates = estimates.iloc[::-1]
         self.tranformed_data = estimates
+        self._er = elevation_round
+        self._ar = azimuth_round
 
     def plot_transformation(self, figsize=(10, 6)):
         plt.figure(figsize=figsize)

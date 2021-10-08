@@ -22,12 +22,14 @@ dependencies:
   - s3fs
   - solar-data-tools
   - statistical-clear-sky
+  - pv-system-profiler
   - cassandra-driver
   - openblas
   - smart_open
   - mosek
   - cvxpy
   - scs
+  - pvlib-python
   - pip:
     - dill
     - future

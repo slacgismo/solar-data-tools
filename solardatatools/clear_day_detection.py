@@ -41,7 +41,7 @@ def find_clear_days(
     # Shift this metric so the median is at zero
     # tc = np.percentile(tc, 50) - tc
     # Normalize such that the maximum value is equal to one
-    tc /= np.max(tc)
+    tc /= np.nanmax(tc)
     tc = 1 - tc
     # Seasonal renormalization: estimate a "baseline smoothness" based on local
     # 90th percentile of smoothness signal. This has the effect of increasing

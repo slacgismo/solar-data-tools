@@ -19,7 +19,11 @@ from solardatatools.time_axis_manipulation import (
     standardize_time_axis,
 )
 from solardatatools.matrix_embedding import make_2d
-from solardatatools.data_quality import daily_missing_data_advanced
+from solardatatools.data_quality import (
+    make_density_scores,
+    make_linearity_scores,
+    make_quality_flags
+)
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import find_clear_days
 from solardatatools.plotting import plot_2d
@@ -32,8 +36,8 @@ from solardatatools.algorithms import (
     ClippingDetection,
 )
 from pandas.plotting import register_matplotlib_converters
-
 register_matplotlib_converters()
+from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:
@@ -144,6 +148,7 @@ class DataHandler:
         self.daytime_analysis = None
         self.clipping_analysis = None
         self.parameter_estimation = None
+        self.polar_transform = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -172,7 +177,7 @@ class DataHandler:
         end_day_ix=None,
         c1=None,
         c2=500.0,
-        solar_noon_estimator="com",
+        solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
         daytime_threshold=0.1,
@@ -721,13 +726,18 @@ class DataHandler:
         density_upper_threshold=1.05,
         linearity_threshold=0.1,
     ):
-        self.daily_flags.density = np.logical_and(
-            self.daily_scores.density > density_lower_threshold,
-            self.daily_scores.density < density_upper_threshold,
+        df, lf = make_quality_flags(
+            self.daily_scores.density,
+            self.daily_scores.linearity,
+            density_lower_threshold=density_lower_threshold,
+            density_upper_threshold=density_upper_threshold,
+            linearity_threshold=linearity_threshold
         )
-        self.daily_flags.linearity = self.daily_scores.linearity < linearity_threshold
+        self.daily_flags.density = df
+        self.daily_flags.linearity = lf
         self.daily_flags.flag_no_errors()
-
+        # scores should typically cluster within threshold values, if they
+        # don't, we mark normal_quality_scores as false
         scores = np.c_[self.daily_scores.density, self.daily_scores.linearity]
         db = DBSCAN(eps=0.03, min_samples=max(0.01 * scores.shape[0], 3)).fit(scores)
         # Count the number of days that cluster to the main group but fall
@@ -759,7 +769,7 @@ class DataHandler:
         if self.raw_data_matrix is None:
             print("Generate a raw data matrix first.")
             return
-        s1, s2, s3 = daily_missing_data_advanced(
+        s1, s2, s3 = make_density_scores(
             self.raw_data_matrix,
             threshold=threshold,
             return_density_signal=True,
@@ -777,34 +787,13 @@ class DataHandler:
         if self.daily_signals.seasonal_density_fit is None:
             print("Run the density check first")
             return
-        temp_mat = np.copy(self.filled_data_matrix)
-        temp_mat[temp_mat < 0.005 * self.capacity_estimate] = np.nan
-        difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
-        modes, counts = mode(difference_mat, axis=0, nan_policy="omit")
-        n = self.filled_data_matrix.shape[0] - 1
-        self.daily_scores.linearity = counts.data.squeeze() / (
-            n * self.daily_signals.seasonal_density_fit
+        ls, im = make_linearity_scores(
+            self.filled_data_matrix,
+            self.capacity_estimate,
+            self.daily_signals.seasonal_density_fit
         )
-        # Label detected infill points with a boolean mask
-        infill = np.zeros_like(self.raw_data_matrix, dtype=np.bool)
-        slct = self.daily_scores.linearity >= 0.1
-        reference_diffs = np.tile(modes[0][slct], (self.filled_data_matrix.shape[0], 1))
-        found_infill = np.logical_or(
-            np.isclose(
-                np.r_[np.zeros(self.num_days).reshape((1, -1)), difference_mat][
-                    :, slct
-                ],
-                reference_diffs,
-            ),
-            np.isclose(
-                np.r_[difference_mat, np.zeros(self.num_days).reshape((1, -1))][
-                    :, slct
-                ],
-                reference_diffs,
-            ),
-        )
-        infill[:, slct] = found_infill
-        self.boolean_masks.infill = infill
+        self.daily_scores.linearity = ls
+        self.boolean_masks.infill = im
         return
 
     def score_data_set(self):
@@ -908,7 +897,10 @@ class DataHandler:
         solver=None,
     ):
         self.time_shift_analysis = TimeShift()
-        use_ixs = self.daily_flags.clear
+        if self.data_clearness_score >= .1:
+            use_ixs = self.daily_flags.clear
+        else:
+            use_ixs = self.daily_flags.no_errors
         self.time_shift_analysis.run(
             self.filled_data_matrix,
             use_ixs=use_ixs,
@@ -964,6 +956,7 @@ class DataHandler:
 
     def fit_statistical_clear_sky_model(
         self,
+        data_matrix=None,
         rank=6,
         mu_l=None,
         mu_r=None,
@@ -983,7 +976,8 @@ class DataHandler:
         except ImportError:
             print("Please install statistical-clear-sky package")
             return
-        scsf = SCSF(data_handler_obj=self, rank_k=rank, solver_type=solver_type)
+        scsf = SCSF(data_handler_obj=self, data_matrix=data_matrix,
+                    rank_k=rank, solver_type=solver_type)
         scsf.execute(
             mu_l=mu_l,
             mu_r=mu_r,
@@ -1497,7 +1491,11 @@ class DataHandler:
         )
         return fig
 
-    def plot_time_shift_analysis_results(self, figsize=(8, 6)):
+    def plot_time_shift_analysis_results(
+        self,
+        figsize=(8, 6),
+        show_filter=True
+    ):
         if self.time_shift_analysis is not None:
             use_ixs = self.time_shift_analysis.use_ixs
             plt.figure(figsize=figsize)
@@ -1508,16 +1506,17 @@ class DataHandler:
                 alpha=0.6,
                 label="daily solar noon",
             )
-            plt.plot(
-                self.day_index[use_ixs],
-                self.time_shift_analysis.metric[use_ixs],
-                linewidth=1,
-                alpha=0.6,
-                color="orange",
-                marker=".",
-                ls="none",
-                label="filtered days",
-            )
+            if show_filter:
+                plt.plot(
+                    self.day_index[use_ixs],
+                    self.time_shift_analysis.metric[use_ixs],
+                    linewidth=1,
+                    alpha=0.6,
+                    color="orange",
+                    marker=".",
+                    ls="none",
+                    label="filtered days",
+                )
             plt.plot(
                 self.day_index,
                 self.time_shift_analysis.s1,
@@ -1591,6 +1590,35 @@ class DataHandler:
         ax.set_title(title)
         # print(np.sum(circ_hist[0] <= 1))
         return fig
+
+    def plot_polar_transform(
+        self,
+        lat,
+        lon,
+        tz_offset,
+        elevation_round=1,
+        azimuth_round=2
+    ):
+        if self.polar_transform is None:
+            self.augment_data_frame(self.daily_flags.clear, 'clear-day')
+            pt = PolarTransform(self.data_frame[self.use_column],
+                                lat,
+                                lon,
+                                tz_offset=tz_offset,
+                                boolean_selection=self.data_frame['clear-day'])
+            self.polar_transform = pt
+        has_changed = np.logical_or(
+            elevation_round != self.polar_transform._er,
+            azimuth_round != self.polar_transform._ar
+        )
+        if has_changed:
+            self.polar_transform.transform(
+                agg_func=np.nanmean,
+                elevation_round=elevation_round,
+                azimuth_round=azimuth_round
+            )
+        return self.polar_transform.plot_transformation()
+
 
 
 class DailyScores:
