@@ -602,6 +602,10 @@ class DataHandler:
         if boolean_index is None:
             print("No mask available for " + column_name)
             return
+        if column_name in self.data_frame_raw.columns:
+            del self.data_frame_raw[column_name]
+        if column_name in self.data_frame.columns:
+            del self.data_frame[column_name]
         m, n = self.raw_data_matrix.shape
         index_shape = boolean_index.shape
         cond1 = index_shape == (m, n)
@@ -1597,7 +1601,8 @@ class DataHandler:
         lon,
         tz_offset,
         elevation_round=1,
-        azimuth_round=2
+        azimuth_round=2,
+        alpha=1.0
     ):
         if self.polar_transform is None:
             self.augment_data_frame(self.daily_flags.clear, 'clear-day')
@@ -1617,7 +1622,7 @@ class DataHandler:
                 elevation_round=elevation_round,
                 azimuth_round=azimuth_round
             )
-        return self.polar_transform.plot_transformation()
+        return self.polar_transform.plot_transformation(alpha=alpha)
 
 
 
