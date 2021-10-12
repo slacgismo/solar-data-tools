@@ -12,10 +12,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
+from solardatatools.polar_transform import PolarTransform
+
 my_round = lambda x, c: c * np.round(x / c, 0)
 
 FP = Path(__file__).parent.parent
 BASIS = np.loadtxt(FP / 'fixtures' / 'clear_PCA.txt')
+Q = np.loadtxt(FP / 'fixtures' / 'Q.txt')
+RANK = 6
+Qr = Q[:, :RANK]
+LAMBD = np.loadtxt(FP / 'fixtures' / 'eigvals.txt')
+LAMBDr = LAMBD[:RANK]
+MU = np.loadtxt(FP / 'fixtures' / 'mu.txt')
+DATA_CORPUS = pd.read_csv(
+    FP / 'fixtures' / 'transformed_data_corpus.zip', index_col=np.arange(4)
+)
 
 class ShadeAnalysis:
     def __init__(self, data_handler, matrix=None):
@@ -34,6 +45,8 @@ class ShadeAnalysis:
         self.daily_clear_energy = None
         self.avg_energy = None
         self.scale_factor = 1 / self.dh.capacity_estimate
+        self.unrolled_shade = None
+        self._pt1 = None
 
     @property
     def has_run(self):
@@ -44,12 +57,22 @@ class ShadeAnalysis:
         ])
         return state
 
-    def run(self, power=8, solver='MOSEK', verbose=False):
+    def run(
+        self,
+        power=8,
+        solver='MOSEK',
+        verbose=False,
+        mu=None,
+        lambd=None,
+        q_mat=None
+    ):
         if not self.has_run:
             dn, dt = self.transform_data(power)
             self.data_normalized = dn
             self.data_transformed = dt
-            self.osd_problem = self.make_osd_problem()
+            self.osd_problem = self.make_osd_problem(
+                mu=mu, lambd=lambd, q_mat=q_mat
+            )
             self.osd_problem.solve(solver=solver, verbose=verbose)
         variable_dict = {v.name():v for v in self.osd_problem.variables()}
         self.clear_sky_component = variable_dict['clear-sky'].value / self.scale_factor
@@ -111,26 +134,85 @@ class ShadeAnalysis:
             plt.yticks([])
         return plt.gcf()
 
-    def plot_annotated_heatmap(self, figsize=(12, 6)):
+    def _unroll_normalized_shade_loss(self):
         M = self.data_transformed.shape[1]
         unrolled = np.zeros((M, self.dh.num_days))
         metric = np.zeros_like(self.shade_component)
-        cond = ~np.isclose(self.clear_sky_component, 0)
+        # cond = ~np.isclose(self.clear_sky_component, 0)
+        cond = self.clear_sky_component >= 0.02 * np.nanquantile(
+            self.clear_sky_component, 0.98
+        )
         metric[cond] = (self.shade_component[cond]
                         / self.clear_sky_component[cond])
         for ix, d in enumerate(
                 my_round(delta_cooper(self.dh.day_index.dayofyear.values), 1)):
             slct = self.data_transformed.index == d
             unrolled[:, ix] = metric[slct, :]
+        self.unrolled_shade = unrolled
 
+    def plot_annotated_polar(
+        self,
+        lat,
+        lon,
+        tz_offset,
+        elevation_round=1,
+        azimuth_round=2,
+        t=0.25,
+        figsize=(10, 6)
+    ):
+        # print('starting')
+        if self.unrolled_shade is None:
+            self._unroll_normalized_shade_loss()
+        unrolled = self.unrolled_shade
+        # print('1')
+        bool_mask = undo_batch_process(unrolled,
+                                       self.dh.boolean_masks.daytime) >= t
+        # print('2')
+        self.dh.augment_data_frame(bool_mask, 'shade_detect')
+        # print('3')
+        fig = self.dh.plot_polar_transform(
+            lat=lat, lon=lon, tz_offset=tz_offset,
+            elevation_round=elevation_round, azimuth_round=azimuth_round,
+            alpha=1
+        )
+        ax = fig.axes[0]
+        # print('4')
+        pt2 = PolarTransform(self.dh.data_frame['shade_detect'].astype(float),
+                            lat,
+                            lon,
+                            tz_offset=tz_offset,
+                            boolean_selection=self.dh.data_frame['clear-day'],
+                            normalize_data=False)
+
+        # print('5')
+        pt2.transform(
+            agg_func=np.nanmean,
+            elevation_round=elevation_round,
+            azimuth_round=azimuth_round)
+        # print('6')
+        pt2.transformed_data = pt2.transformed_data.round()
+        pt2.transformed_data[np.isclose(pt2.transformed_data, 0)] = np.nan
+        # print('7')
+        fig = pt2.plot_transformation(
+            ax=ax, cmap='Set1', alpha=.40, cbar=False
+        )
+        plt.scatter(0, 0, color='red', alpha=0.55, label='detected shade',
+                    marker='s')
+        plt.legend()
+        return fig
+
+    def plot_annotated_heatmap(self, t=0.25, figsize=(12, 6)):
+        if self.unrolled_shade is None:
+            self._unroll_normalized_shade_loss()
+        unrolled = self.unrolled_shade
         fig = self.dh.plot_heatmap(matrix='filled', figsize=figsize)
         annotate = undo_batch_process(unrolled,
-                                      self.dh.boolean_masks.daytime) >= .25
+                                      self.dh.boolean_masks.daytime) >= t
         annotate = np.asarray(annotate, dtype=float)
         annotate[annotate == 0] = np.nan
         with sns.axes_style('white'):
-            plt.imshow(annotate, aspect='auto', cmap='Wistia', alpha=.35)
-            plt.scatter(0, 0, color='tan', alpha=0.35, label='detected shade')
+            plt.imshow(annotate, aspect='auto', cmap='Set1', alpha=.35)
+            plt.scatter(0, 0, color='red', alpha=0.45, label='detected shade')
             plt.legend()
         plt.title('Measured power with shaded periods marked')
         return fig
@@ -176,19 +258,46 @@ class ShadeAnalysis:
         agg_by_azimuth = agg_by_azimuth.iloc[self.dh.daily_flags.clear]
         agg_by_azimuth = agg_by_azimuth.groupby('delta').mean()
         agg_by_azimuth = agg_by_azimuth.iloc[::-1]
+        agg_by_azimuth.columns = np.round(
+            np.asarray(agg_by_azimuth.columns, dtype=float), 4)
         return normalized, agg_by_azimuth
 
-    def make_osd_problem(self):
+    def make_osd_problem(self, mu=None, lambd=None, q_mat=None):
+        if mu is None:
+            mu = MU
+        if lambd is None:
+            lambd = LAMBDr
+        if q_mat is None:
+            q_mat = Qr
+        rank = q_mat.shape[1]
         y = self.data_transformed.values
         x1 = cvx.Variable(y.shape, name='residual')
         x2 = cvx.Variable(y.shape, name='clear-sky')
         x3 = cvx.Variable(y.shape, name='shade')
-        t = 0.85
+        t = 0.95
+
+        # z2 = cvx.Variable((y.shape[0], BASIS.shape[0]), name='clear-sky-basis')
+        z2 = cvx.Variable((rank, y.shape[0]), name='clear-sky-basis')
+        M = cvx.Parameter(
+            (y.shape[1], rank),
+            value=np.block(
+                [[np.diag(np.sqrt(np.divide(1., lambd)))],
+                [np.zeros((y.shape[1] - rank, rank))]]
+            )
+        )
 
         # phi1 = cvx.sum_squares(x1)
         phi1 = cvx.sum(0.5 * cvx.abs(x1) + (t - 0.5) * x1)
-        phi2 = cvx.sum_squares(cvx.diff(x2, k=2, axis=0)) \
-               + cvx.sum_squares(cvx.diff(x2, k=2, axis=1))
+        #### Original formulation based on smoothness
+        # phi2 = cvx.sum_squares(cvx.diff(x2, k=2, axis=1))
+        #### Simple basis constraint formulation---incorrect because it
+        # doesn't include the power spectrum
+        # phi2 = cvx.sum_squares(z2 @ BASIS - x2)
+        #### Truncated covariance matrix class
+        phi2 = 0.5 * cvx.sum_squares(M @ z2)
+        #### add smoothness along vertical axis
+        phi2 += 1e3 * cvx.sum_squares(cvx.diff(x2, k=2, axis=0))
+
         phi3 = cvx.sum_squares(cvx.diff(x3, k=2, axis=0)) \
                + cvx.sum_squares(cvx.diff(x3, k=2, axis=1))
         phi4 = cvx.sum(x3)
@@ -198,13 +307,15 @@ class ShadeAnalysis:
             x2 >= 0,
             x2[:, 0] == 0,
             x2[:, -1] == 0,
-            cvx.diff(x2, k=4, axis=1) <= 0,
+            # cvx.diff(x2, k=4, axis=1) <= 0,
+            x2 - np.tile(mu, (y.shape[0], 1)) == (q_mat @ z2).T,
+            x2 >= 0,
             cvx.diff(x2, k=2, axis=0) <= 0,
             x3 >= 0
         ]
 
         objective = cvx.Minimize(
-            20 * phi1 + 1e1 * phi2 + 5e2 * phi3 + 8e-1 * phi4)
+            20 * phi1 + 1e0 * phi2 + 5e2 * phi3 + 3e-1 * phi4)
         problem = cvx.Problem(objective, constraints)
         return problem
 
@@ -253,3 +364,34 @@ def delta_cooper(day_of_year):
     """
     delta_1 = 23.45 * np.sin(np.deg2rad(360 * (284 + day_of_year) / 365))
     return delta_1
+
+def make_class_parameters(
+    az_max=None,
+    az_min=None,
+    tl_max=None,
+    tl_min=None,
+    rank=6
+):
+    query = []
+    if az_max is not None:
+        query.append('az <= {}'.format(az_max))
+    if az_min is not None:
+        query.append('az >= {}'.format(az_min))
+    if tl_max is not None:
+        query.append('tl <= {}'.format(tl_max))
+    if tl_min is not None:
+        query.append('tl >= {}'.format(tl_min))
+    if len(query) == 0:
+        data = DATA_CORPUS.values
+    else:
+        query = ' & '.join(query)
+        data = DATA_CORPUS.query(query).values
+    mu = np.average(data, axis=0)
+    data_tilde = data - mu
+    cov = data_tilde.T @ data_tilde / data_tilde.shape[0]
+    evals, evecs = np.linalg.eigh(cov)
+    evals = evals[::-1]
+    lambd = evals[:rank]
+    evecs = evecs[:, ::-1]
+    q_mat = evecs[:, :rank]
+    return {'mu': mu, 'lambd': lambd, 'q_mat': q_mat}
