@@ -145,16 +145,22 @@ def standardize_time_axis(
         avg_day -= np.min(avg_day)
         # find sunrise and sunset times
         idxs = np.arange(len(avg_day))
-        sr_loc = idxs[
-            np.r_[[False], np.diff((avg_day.values >= thresh).astype(float)) == 1]
-        ]
-        ss_loc = idxs[
-            np.r_[np.diff((avg_day.values >= thresh).astype(float)) == -1, [False]]
-        ]
+        if avg_day[0]>= thresh:
+            sr_loc = [idxs[0]]
+        else:
+            sr_loc = idxs[
+                np.r_[[False], np.diff((avg_day.values >= thresh).astype(float)) == 1]
+            ]
+        if avg_day[-1] >= thresh:
+            ss_loc = [idxs[-1]]
+        else:
+            ss_loc = idxs[
+                np.r_[np.diff((avg_day.values >= thresh).astype(float)) == -1, [False]]
+            ]
         sunrise = avg_day.index.values[sr_loc]
-        sunrise = sunrise[0].hour + sunrise[0].minute / 60
+        sunrise = sunrise[0].hour + sunrise[0].minute / 60 # first index
         sunset = avg_day.index.values[ss_loc]
-        sunset = sunset[0].hour + sunset[0].minute / 60
+        sunset = sunset[-1].hour + sunset[-1].minute / 60 # last index
         # calculate solar noon of average day
         if sunrise < sunset:
             sn = np.average([sunrise, sunset])
