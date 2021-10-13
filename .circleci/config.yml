@@ -24,7 +24,9 @@ jobs:
 
       - run:
           name: Run Unit Tests
-          command: sudo coverage run -m unittest
+          command: |
+            sudo pip uninstall solardatatools
+            sudo coverage run -m unittest
 
   deploy-pypi:
     <<: *368_config
