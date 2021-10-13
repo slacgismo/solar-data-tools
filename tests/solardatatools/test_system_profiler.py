@@ -12,9 +12,7 @@ class TestSystemProfiler(unittest.TestCase):
             filepath / "fixtures" / "system_profiler" / "data_handler_input.csv"
         )
         data = pd.read_csv(data_file_path, index_col=0, parse_dates=True)
-        print(data)
-        dh = DataHandler(data)
-        print(dh)
+        dh = DataHandler(data, datetime_col="Date-Time")
         dh.fix_dst()
         dh.run_pipeline(power_col="ac_power", fix_shifts=False, correct_tz=False)
         dh.setup_location_and_orientation_estimation(-5)
@@ -30,8 +28,6 @@ class TestSystemProfiler(unittest.TestCase):
         actual_orientation = dh.estimate_orientation(
             latitude=actual_latitude, longitude=actual_longitude
         )
-        print(estimate_latitude)
-        print(actual_latitude)
 
         np.testing.assert_almost_equal(actual_latitude, estimate_latitude, decimal=0.5)
         np.testing.assert_almost_equal(
