@@ -14,11 +14,14 @@ jobs:
           command: |
             wget https://repo.anaconda.com/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh -O miniconda.sh
             bash miniconda.sh -b -p "$HOME"/miniconda
-            sudo conda env create -f pvi-user.yml -y
-            sudo conda activate pvi-user
+            conda activate base
+            conda config --set always_yes yes --set auto_update_conda false
+            conda update conda
+            conda env create -f pvi-user.yml -y
+            conda activate pvi-user
             sudo pip install awscli coverage
-            sudo conda uninstall solardatatools
-            sudo conda list
+            conda uninstall solardatatools
+            conda list
       - run:
           name: Setup Mosek License File
           command: |
