@@ -16,6 +16,7 @@ jobs:
             sudo pip install awscli coverage
             sudo pip uninstall solar-data-tools -y
             sudo pip list
+            sudo ls
       - run:
           name: Setup Mosek License File
           command: |
