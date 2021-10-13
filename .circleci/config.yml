@@ -14,9 +14,7 @@ jobs:
           command: |
             wget https://repo.anaconda.com/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh -O miniconda.sh
             bash miniconda.sh -b -p "$HOME"/miniconda
-            conda activate base
-            conda config --set always_yes yes --set auto_update_conda false
-            conda update conda
+            source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda env create -f pvi-user.yml -y
             conda activate pvi-user
             sudo pip install awscli coverage
