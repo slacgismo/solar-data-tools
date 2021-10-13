@@ -12,14 +12,10 @@ jobs:
       - run:
           name: Install Dependencies
           command: |
-            wget https://repo.anaconda.com/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh -O miniconda.sh
-            bash miniconda.sh -b -p "$HOME"/miniconda
-            source /home/circleci/miniconda/etc/profile.d/conda.sh
-            conda env create -f pvi-user.yml
-            conda activate pvi-user
-            pip install awscli coverage
-            conda uninstall solardatatools
-            conda list
+            sudo pip install -r requirements.txt
+            sudo pip install awscli coverage
+            sudo pip uninstall solar-data-tools -y
+            sudo pip list
       - run:
           name: Setup Mosek License File
           command: |
