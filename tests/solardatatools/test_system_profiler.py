@@ -29,9 +29,11 @@ class TestSystemProfiler(unittest.TestCase):
             latitude=actual_latitude, longitude=actual_longitude
         )
 
-        np.testing.assert_almost_equal(actual_latitude, estimate_latitude, decimal=0.5)
         np.testing.assert_almost_equal(
-            estimate_longitude, actual_longitude, decimal=0.5
+            actual_latitude, estimate_latitude, decimal=0.1
+        )
+        np.testing.assert_almost_equal(
+            estimate_longitude, actual_longitude, decimal=0.1
         )
         np.testing.assert_array_almost_equal(
             estimate_orientation, actual_orientation, decimal=0.1
