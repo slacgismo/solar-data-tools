@@ -602,6 +602,9 @@ class DataHandler:
         if boolean_index is None:
             print("No mask available for " + column_name)
             return
+        if isinstance(self.data_frame.columns, pd.MultiIndex):
+            num_levels = len(self.data_frame.columns.levels)
+            column_name = tuple([column_name] * num_levels)
         if column_name in self.data_frame_raw.columns:
             del self.data_frame_raw[column_name]
         if column_name in self.data_frame.columns:
@@ -634,9 +637,19 @@ class DataHandler:
         if column_name in self.data_frame_raw.columns:
             del self.data_frame_raw[column_name]
         temp = (self.data_frame[[column_name, self.seq_index_key]]).copy()
+
         temp = temp.dropna()
+        old_index = self.data_frame_raw.index
+        old_col = self.data_frame_raw[self.seq_index_key]
+        self.data_frame_raw = self.data_frame_raw.set_index(self.seq_index_key)
         temp = temp.set_index(self.seq_index_key)
-        self.data_frame_raw = self.data_frame_raw.join(temp, on=self.seq_index_key)
+        self.data_frame_raw = pd.merge(
+            self.data_frame_raw, temp, left_index=True, right_index=True,
+            how='left'
+        )
+        self.data_frame_raw.index = old_index
+        self.data_frame_raw[self.seq_index_key] = old_col
+
 
     def fix_dst(self):
         """
