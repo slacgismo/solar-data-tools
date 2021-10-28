@@ -1,15 +1,16 @@
-''' Utilities Module
+""" Utilities Module
 
 This module contains utility functions used by other modules.
 
-'''
+"""
 
 import sys
 import numpy as np
 import cvxpy as cvx
 
+
 def basic_outlier_filter(x, outlier_constant=1.5):
-    '''
+    """
     Applies an outlier filter based on the interquartile range definition:
         any data point more than 1.5 interquartile ranges (IQRs) below the
         first quartile or above the third quartile
@@ -20,19 +21,17 @@ def basic_outlier_filter(x, outlier_constant=1.5):
     :param x: ndarray
     :param outlier_constant: float, multiplier constant on IQR
     :return: boolean mask
-    '''
+    """
     a = np.array(x)
     upper_quartile = np.percentile(a, 75)
     lower_quartile = np.percentile(a, 25)
     iqr = (upper_quartile - lower_quartile) * outlier_constant
     quartile_set = (lower_quartile - iqr, upper_quartile + iqr)
-    mask = np.logical_and(
-        a >= quartile_set[0],
-        a <= quartile_set[1]
-    )
+    mask = np.logical_and(a >= quartile_set[0], a <= quartile_set[1])
     return mask
 
-def progress(count, total, status='', bar_length=60):
+
+def progress(count, total, status="", bar_length=60):
     """
     Python command line progress bar in less than 10 lines of code. · GitHub
     https://gist.github.com/vladignatyev/06860ec2040cb497f0f3
@@ -45,10 +44,11 @@ def progress(count, total, status='', bar_length=60):
     filled_len = int(round(bar_len * count / float(total)))
 
     percents = round(100.0 * count / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+    bar = "=" * filled_len + "-" * (bar_len - filled_len)
 
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.write("[%s] %s%s ...%s\r" % (bar, percents, "%", status))
     sys.stdout.flush()
+
 
 def find_runs(x):
     """Find runs of consecutive items in an array.
@@ -57,7 +57,7 @@ def find_runs(x):
     # ensure array
     x = np.asanyarray(x)
     if x.ndim != 1:
-        raise ValueError('only 1D array supported')
+        raise ValueError("only 1D array supported")
     n = x.shape[0]
 
     # handle empty array

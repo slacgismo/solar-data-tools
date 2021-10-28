@@ -13,3 +13,5 @@ cvxpy>=1.1.0
 # Academic license info: https://www.mosek.com/products/academic-licenses/
 # Trial commercial license info: https://www.mosek.com/products/trial/
 Mosek
+statistical-clear-sky
+pv-system-profiler
