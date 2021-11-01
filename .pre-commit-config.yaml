@@ -1,12 +1,11 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v4.0.1
     hooks:
-    -   id: end-of-file-fixer
     -   id: trailing-whitespace
-    -   id: flake8
+    -   id: end-of-file-fixer
+    -   id: check-added-large-files
 -   repo: https://github.com/psf/black
-    rev: 19.3b0
+    rev: stable
     hooks:
     -   id: black
-        args: [--target-version, py37]

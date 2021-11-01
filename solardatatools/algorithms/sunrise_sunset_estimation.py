@@ -205,7 +205,8 @@ class SunriseSunset:
                 for run in range(num_trials):
                     np.random.shuffle(use_set_sr)
                     np.random.shuffle(use_set_ss)
-                    split_at_sr = int(len(use_set_sr) * 0.8)  # 80-20 train test split
+                    # 80-20 train test split
+                    split_at_sr = int(len(use_set_sr) * 0.8)
                     split_at_ss = int(len(use_set_ss) * 0.8)
                     train_sr = use_set_sr[:split_at_sr]
                     train_ss = use_set_ss[:split_at_ss]
@@ -228,13 +229,13 @@ class SunriseSunset:
                     r1 = (sunrises - sr_smoothed)[test_msk_sr]
                     r2 = (sunsets - ss_smoothed)[test_msk_ss]
                     ho_resid = np.r_[r1, r2]
-                    #### TESTING
+                    # TESTING
                     # print(th)
                     # plt.plot(ho_resid)
                     # plt.show()
                     #####
 
-                    ### 7/30/20:
+                    # 7/30/20:
                     # Some sites can have "consistent" fit (low holdout error)
                     # that is not the correct estimate. We impose the restriction
                     # that the range of sunrise times and sunset times must be
@@ -243,7 +244,7 @@ class SunriseSunset:
                     cond1 = np.max(sr_smoothed) - np.min(sr_smoothed) > 0.25
                     cond2 = np.max(ss_smoothed) - np.min(ss_smoothed) > 0.25
                     if cond1 and cond2:
-                        ### L1-loss instead of L2
+                        # L1-loss instead of L2
                         # L1-loss is better proxy for goodness of fit when using
                         # quantile loss function
                         ###
@@ -336,9 +337,10 @@ class SunriseSunset:
             self.sunset_measurements - self.sunrise_measurements
         )
         r_dh_e = (ss_true - sr_true) - (self.sunset_estimates - self.sunrise_estimates)
-        rmse = lambda residual: np.sqrt(
-            np.mean(np.power(residual[~np.isnan(residual)], 2))
-        )
+
+        def rmse(residual):
+            return np.sqrt(np.mean(np.power(residual[~np.isnan(residual)], 2)))
+
         results_array = np.array(
             [
                 [rmse(r_sr_m), rmse(r_sr_e)],
@@ -452,7 +454,8 @@ class SunriseSunset_v1:
             ):
                 np.random.shuffle(use_set_sr)
                 np.random.shuffle(use_set_ss)
-                split_at_sr = int(len(use_set_sr) * 0.8)  # 80-20 train test split
+                # 80-20 train test split
+                split_at_sr = int(len(use_set_sr) * 0.8)
                 split_at_ss = int(len(use_set_ss) * 0.8)
                 train_sr = use_set_sr[:split_at_sr]
                 train_ss = use_set_ss[:split_at_ss]
