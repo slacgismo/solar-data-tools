@@ -13,10 +13,10 @@ import pandas as pd
 def find_start_end(arr):
     n = len(arr)
     for i in range(n):
-        if arr[i] == False:
+        if arr[i] is False:
             break
     for j in range(-1, -(n + 1), -1):
-        if arr[j] == False:
+        if arr[j] is False:
             break
     j += 1
     if j == 0:

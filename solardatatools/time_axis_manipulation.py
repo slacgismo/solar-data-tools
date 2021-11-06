@@ -51,9 +51,6 @@ def make_time_series(
     # Make sure that the timestamps are monotonically increasing. There may be
     # missing or repeated time stamps
     df.sort_values(timestamp_key, inplace=True)
-    # Determine the start and end times
-    start = df.iloc[0][timestamp_key]
-    end = df.iloc[-1][timestamp_key]
     time_index = pd.to_datetime(df[timestamp_key].sort_values())
     time_index = time_index[~time_index.duplicated(keep="first")]
     output = pd.DataFrame(index=time_index)
