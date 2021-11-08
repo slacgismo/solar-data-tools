@@ -654,7 +654,7 @@ class DataHandler:
         df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
-        self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
+        self.raw_data_matrix, day_index = make_2d(df, key=use_col, eturn_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
         if self.raw_data_matrix.shape[0] <= 1400:
