@@ -170,16 +170,16 @@ class TimeShift:
             count_jumps = np.sum(~np.isclose(np.diff(s1), 0, atol=1e-4))
             jumps_per_year = count_jumps / (len(metric) / 365)
             jpy[i] = jumps_per_year
-        zero_one_scale = lambda x: (x - np.min(x)) / (np.max(x) - np.min(x))
-        hn = zero_one_scale(test_r) # holdout error metrix
+
+        def zero_one_scale(x):
+            return (x - np.min(x)) / (np.max(x) - np.min(x))
+
+        hn = zero_one_scale(test_r)  # holdout error metrix
         rn = zero_one_scale(train_r)
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
-        slct = np.logical_and(
-            jpy <= 5,
-            hn <= 0.02
-        )
+        slct = np.logical_and(jpy <= 5, hn <= 0.02)
         best_ix = np.nanmax(ixs[slct])
         return hn, rn, tv_metric, jpy, best_ix
 
@@ -219,6 +219,7 @@ class TimeShift:
             rn = self.normalized_train_error
             best_c1 = self.best_c1
             import matplotlib.pyplot as plt
+
             fig, ax = plt.subplots(nrows=4, sharex=True, figsize=figsize)
             ax[0].plot(c1s, hn, marker=".")
             ax[0].axvline(best_c1, ls="--", color="red")
