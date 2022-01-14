@@ -4,6 +4,25 @@
 This module contains a class for managing a data processing pipeline
 
 """
+import sys
+import traceback
+from solardatatools.algorithms import (
+    CapacityChange,
+    TimeShift,
+    SunriseSunset,
+    ClippingDetection,
+)
+from solardatatools.solar_noon import avg_sunrise_sunset
+from solardatatools.clear_time_labeling import find_clear_times
+from solardatatools.plotting import plot_2d
+from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.data_filling import zero_nighttime, interp_missing
+from solardatatools.data_quality import daily_missing_data_advanced
+from solardatatools.matrix_embedding import make_2d
+from solardatatools.time_axis_manipulation import (
+    make_time_series,
+    standardize_time_axis,
+)
 from time import time
 from datetime import timedelta
 from datetime import datetime
@@ -16,24 +35,6 @@ import matplotlib.cm as cm
 from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
-import traceback, sys
-from solardatatools.time_axis_manipulation import (
-    make_time_series,
-    standardize_time_axis,
-)
-from solardatatools.matrix_embedding import make_2d
-from solardatatools.data_quality import daily_missing_data_advanced
-from solardatatools.data_filling import zero_nighttime, interp_missing
-from solardatatools.clear_day_detection import find_clear_days
-from solardatatools.plotting import plot_2d
-from solardatatools.clear_time_labeling import find_clear_times
-from solardatatools.solar_noon import avg_sunrise_sunset
-from solardatatools.algorithms import (
-    CapacityChange,
-    TimeShift,
-    SunriseSunset,
-    ClippingDetection,
-)
 
 
 class DataHandler:
@@ -109,26 +110,26 @@ class DataHandler:
         )  # Relative quality: fraction of non-NaN values in column during daylight time periods, as defined by the main power columns
         # Scores for the entire data set
         self.data_quality_score = (
-            None
-        )  # Fraction of days without data acquisition errors
+            None  # Fraction of days without data acquisition errors
+        )
         self.data_clearness_score = (
-            None
-        )  # Fraction of days that are approximately clear/sunny
+            None  # Fraction of days that are approximately clear/sunny
+        )
         # Flags for the entire data set
         self.inverter_clipping = (
-            None
-        )  # True if there is inverter clipping, false otherwise
+            None  # True if there is inverter clipping, false otherwise
+        )
         self.num_clip_points = None  # If clipping, the number of clipping set points
         self.capacity_changes = (
-            None
-        )  # True if the apparent capacity seems to change over the data set
-        self.normal_quality_scores = (
-            None
-        )  # True if clustering of data quality scores are within decision boundaries
+            None  # True if the apparent capacity seems to change over the data set
+        )
+        # True if clustering of data quality scores are within decision boundaries
+        self.normal_quality_scores = None
         self.time_shifts = (
-            None
-        )  # True if time shifts detected and corrected in data set
-        self.tz_correction = 0  # TZ correction factor (determined during pipeline run)
+            None  # True if time shifts detected and corrected in data set
+        )
+        # TZ correction factor (determined during pipeline run)
+        self.tz_correction = 0
         # Daily scores (floats), flags (booleans), and boolean masks
         self.daily_scores = DailyScores()  # 1D arrays of floats
         self.daily_flags = DailyFlags()  # 1D arrays of Booleans
@@ -854,7 +855,8 @@ class DataHandler:
                 dbscan_min_samples="auto",
                 solver=solver,
             )
-        if len(set(self.capacity_analysis.labels)) > 1:  # np.max(db.labels_) > 0:
+        # np.max(db.labels_) > 0:
+        if len(set(self.capacity_analysis.labels)) > 1:
             self.capacity_changes = True
             self.daily_flags.capacity_cluster = self.capacity_analysis.labels
         else:
@@ -934,7 +936,7 @@ class DataHandler:
             energy_threshold=energy_threshold,
             solver=solver,
         )
-        ### Remove days that are marginally low density, but otherwise pass
+        # Remove days that are marginally low density, but otherwise pass
         # the clearness test. Occasionally, we find an early morning or late
         # afternoon inverter outage on a clear day is still detected as clear.
         # Added July 2020 --BM

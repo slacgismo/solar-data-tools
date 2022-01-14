@@ -196,6 +196,11 @@ pip install pre-commit
 pre-commit install
 ```
 
+Run pre-commit hook on all files
+```
+pre-commit run --all-files
+```
+
 ## Test Coverage
 
 In order to view the current test coverage metrics, run:

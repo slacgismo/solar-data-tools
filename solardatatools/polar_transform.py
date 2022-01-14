@@ -77,7 +77,10 @@ class PolarTransform:
         # cut off all the entries corresponding to the sun below the horizon
         triples = triples[triples["apparent_elevation"] >= 0]
         # a function for rounding to the nearest integer c (e.g. 2, 5, 10...)
-        my_round = lambda x, c: c * np.round(x / c, 0)
+
+        def my_round(x, c):
+            return c * np.round(x / c, 0)
+
         # create elevation and azimuth bins
         triples["elevation_angle"] = my_round(
             triples["apparent_elevation"], elevation_round
