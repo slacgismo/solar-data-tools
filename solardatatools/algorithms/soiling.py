@@ -60,8 +60,9 @@ def soiling_seperation(
     w3=2e-1,
     w4=5e2,
     iterations=5,
-    solver="MOSEK",
+    solver=None,
     period=365,
+    verbose=False,
 ):
     """
     Apply signal decomposition framework to Performance Index soiling estimation
@@ -132,7 +133,7 @@ def soiling_seperation(
         constraints.append(s2 == 0)
     problem = cvx.Problem(objective, constraints)
     for i in range(iterations):
-        problem.solve(solver=solver)
+        problem.solve(solver=solver, verbose=verbose)
         w.value = 1 / (
             eps + 1e2 * np.abs(cvx.diff(s1, k=2).value)
         )  # Reweight the L1 penalty
