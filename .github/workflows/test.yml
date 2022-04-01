@@ -14,15 +14,15 @@ jobs:
 
           - name: Install Dependenciess
             run: | 
-            sudo pip install -r requirements.txt
-            sudo pip install awscli coverage
+              sudo pip install -r requirements.txt
+              sudo pip install awscli coverage
 
           - name: Setup Mosek License File
             run: |
-            sudo mkdir /root/mosek
-            mkdir $HOME/mosek
-            aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
-            sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
+              sudo mkdir /root/mosek
+              mkdir $HOME/mosek
+              aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
+              sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
 
           - name: Run Unit Tests
             run: sudo coverage run -m unittests
