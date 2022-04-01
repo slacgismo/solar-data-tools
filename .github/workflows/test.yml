@@ -2,24 +2,24 @@ name: test build
 on: [push]
 jobs:
     build:
-        name: Test
-        runs-on: ubuntu-latest
+      name: Test
+      runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v3
+          - uses: actions/checkout@v3
 
-        - uses: actions/setup-python@v3
-          with:
-            python-version: '3.7'
+          - uses: actions/setup-python@v3
+            with:
+              python-version: '3.7'
 
-        - name: Install Dependencies
-          run: sudo pip install -r requirements.txt
-          run: sudo pip install awscli coverage
+          - name: Install Dependencies
+            run: sudo pip install -r requirements.txt
+            run: sudo pip install awscli coverage
 
-        - name: Setup Mosek License File
-          run: sudo mkdir /root/mosek
-          run: mkdir $HOME/mosek
-          run: aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
-          run: sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
+          - name: Setup Mosek License File
+            run: sudo mkdir /root/mosek
+            run: mkdir $HOME/mosek
+            run: aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
+            run: sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
 
-        - name: Run Unit Tests
-          run: sudo coverage run -m unittest
+          - name: Run Unit Tests
+            run: sudo coverage run -m unittests
