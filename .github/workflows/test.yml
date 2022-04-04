@@ -58,7 +58,7 @@ jobs:
             run: sudo twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
 
     deploy-conda:
-        needs: [build, deploy-pypi]
+        needs: build
         runs-on: ubuntu-latest
         environment: deployment
         steps:
