@@ -86,7 +86,7 @@ jobs:
               conda install anaconda-client
               conda install anaconda-client
               conda config --set anaconda_upload no
-              yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }} -y
+              yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
               VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge --numpy 1.16.4
 
           - name: Get the output path and upload the package
