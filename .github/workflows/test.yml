@@ -34,3 +34,20 @@ jobs:
 
           - name: Run Unit Tests
             run: sudo coverage run -m unittest
+
+    deploy-pypi:
+        needs: build
+        runs-on: ubuntu-latest
+        environment: deployment
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+
+          - name: Install Twine
+            run: sudo pip install twine
+
+          - name: Create the distribution
+            run: sudo python setup.py sdist bdist_wheel
+
+          - name: Push to PyPI
+            run: sudo twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
