@@ -70,7 +70,7 @@ jobs:
               wget https://repo.anaconda.com/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh -O miniconda.sh
               bash miniconda.sh -b -p "$HOME"/miniconda
               ls
-              source /home/miniconda/etc/profile.d/conda.sh
+              source /home/runner/miniconda/etc/profile.d/conda.sh
               conda activate base
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
@@ -78,7 +78,7 @@ jobs:
 
           - name: Build the Anaconda Package
             run: |
-              source /home/miniconda/etc/profile.d/conda.sh
+              source /home/runner/miniconda/etc/profile.d/conda.sh
               conda activate base
               conda install anaconda-client
               conda config --set anaconda_upload no
@@ -87,7 +87,7 @@ jobs:
 
           - name: Get the output path and upload the package
             run: |
-              source /home/miniconda/etc/profile.d/conda.sh
+              source /home/runner/miniconda/etc/profile.d/conda.sh
               conda activate base
               VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`
-              anaconda upload -u slacgismo  /home/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
+              anaconda upload -u slacgismo  /home/runner/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
