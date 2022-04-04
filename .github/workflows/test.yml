@@ -73,6 +73,8 @@ jobs:
               conda activate base
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
+              conda info
+              conda config --show-sources
               conda install conda-build
 
           - name: Build the Anaconda Package
