@@ -7,12 +7,20 @@ jobs:
           - name: Checkout Repository
             uses: actions/checkout@v3
 
+          - name: Configure AWS Credentials
+            uses: aws-actions/configure-aws-credentials@v1
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+              aws-region: us-west-1
+
           - name: Install Python
             uses: actions/setup-python@v3
             with:
               python-version: '3.7'
 
-          - name: Install Dependenciess
+          - name: Install Dependencies
             run: | 
               sudo pip install -r requirements.txt
               sudo pip install awscli coverage
