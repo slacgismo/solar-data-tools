@@ -60,6 +60,9 @@ jobs:
     deploy-conda:
         needs: build
         runs-on: ubuntu-latest
+        defaults:
+          run:
+            shell: bash -l {0}
         environment: deployment
         steps:
           - name: Checkout Repository
@@ -74,14 +77,12 @@ jobs:
 
           - name: Install the Conda Dependencies
             run: | 
-              source /usr/share/miniconda3/etc/profile.d/conda.sh
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
               conda install conda-build
 
           - name: Build the Anaconda Package
             run: |
-              source /usr/share/miniconda3/etc/profile.d/conda.sh
               conda install anaconda-client
               conda config --set anaconda_upload no
               anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }} -y
@@ -89,6 +90,5 @@ jobs:
 
           - name: Get the output path and upload the package
             run: |
-              source /usr/share/miniconda3/etc/profile.d/conda.sh
               VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`
               anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
