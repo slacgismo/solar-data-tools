@@ -43,6 +43,11 @@ jobs:
           - name: Checkout Repository
             uses: actions/checkout@v3
 
+          - name: Install Python
+            uses: actions/setup-python@v3
+            with:
+              python-version: '3.7'
+
           - name: Install Twine
             run: sudo pip install twine
 
@@ -51,3 +56,38 @@ jobs:
 
           - name: Push to PyPI
             run: sudo twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
+
+    deploy-conda:
+        needs: [build, deploy-pypi]
+        runs-on: ubuntu-latest
+        environment: deployment
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+
+          - name: Install the Conda Dependencies
+            run: | 
+              wget https://repo.anaconda.com/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh -O miniconda.sh
+              bash miniconda.sh -b -p "$HOME"/miniconda
+              ls
+              source /home/miniconda/etc/profile.d/conda.sh
+              conda activate base
+              conda config --set always_yes yes --set auto_update_conda false
+              conda update conda
+              conda install conda-build
+
+          - name: Build the Anaconda Package
+            run: |
+              source /home/miniconda/etc/profile.d/conda.sh
+              conda activate base
+              conda install anaconda-client
+              conda config --set anaconda_upload no
+              anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
+              VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge --numpy 1.16.4
+
+          - name: Get the output path and upload the package
+            run: |
+              source /home/miniconda/etc/profile.d/conda.sh
+              conda activate base
+              VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`
+              anaconda upload -u slacgismo  /home/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
