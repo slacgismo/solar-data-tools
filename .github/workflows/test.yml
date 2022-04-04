@@ -74,6 +74,7 @@ jobs:
 
           - name: Install the Conda Dependencies
             run: | 
+              source /usr/share/miniconda3/etc/profile.d/conda.sh
               conda activate base
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
@@ -83,6 +84,7 @@ jobs:
 
           - name: Build the Anaconda Package
             run: |
+              source /usr/share/miniconda3/etc/profile.d/conda.sh
               conda activate base
               conda install anaconda-client
               conda config --set anaconda_upload no
@@ -91,6 +93,7 @@ jobs:
 
           - name: Get the output path and upload the package
             run: |
+              source /usr/share/miniconda3/etc/profile.d/conda.sh
               conda activate base
               VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`
-              anaconda upload -u slacgismo  /home/runner/miniconda/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
+              anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
