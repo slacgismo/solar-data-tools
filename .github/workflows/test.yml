@@ -33,4 +33,4 @@ jobs:
               sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
 
           - name: Run Unit Tests
-            run: sudo coverage run -m unittests
+            run: sudo coverage run -m unittest
