@@ -70,7 +70,7 @@ jobs:
             with:
               auto-activate-base: true
               activate-environment: ""
-              miniconda-version: "4.7.10"
+              miniconda-version: "latest"
 
           - name: Install the Conda Dependencies
             run: | 
