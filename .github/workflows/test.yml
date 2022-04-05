@@ -60,7 +60,7 @@ jobs:
             run: sudo twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
 
     deploy-conda:
-        needs: build
+#        needs: build
         runs-on: ubuntu-latest
 # sets default shell to remove need for source to run the conda shell
         defaults:
