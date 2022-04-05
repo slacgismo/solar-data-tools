@@ -86,16 +86,15 @@ jobs:
               conda install conda-build
 
 # run install twice due to client-size to ensure all files downloaded
-# logout before login to prevent anaconda bug breaking automation
+# echo yes before login to prevent anaconda bug breaking automation
           - name: Build the Anaconda Package
             run: |
               conda install anaconda-client
               conda install anaconda-client
               conda config --set anaconda_upload no
-              anaconda logout
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
               VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c conda-forge -c slacgismo --numpy 1.16.4
-              echo "VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)"
+              echo "VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`"
               echo $VERSION_FROM_GIT_TAG
               echo ${{ env.VERSION_FROM_GIT_TAG }}
               echo "HMMMMM"
