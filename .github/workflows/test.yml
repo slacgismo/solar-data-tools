@@ -94,13 +94,17 @@ jobs:
               conda install anaconda-client
               conda config --set anaconda_upload no
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
-              VERSION_FROM_GIT_TAG=$(`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`) conda build . -c conda-forge -c slacgismo --numpy 1.16.4
+#              VERSION_FROM_GIT_TAG=$(`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`) conda build . -c conda-forge -c slacgismo --numpy 1.16.4
               echo "version_from_git_tag=git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-" >> $GITHUB_ENV
               var=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)
               echo "Hmmm $var"
+              echo '::set-output name=gitversion::{git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-}'
+              echo '::set-output name=SELECTED_COLOR::green'
 
           - name: Upload the Anaconda Package
             id: condaload
             run: |
               echo "${{ env.version_from_git_tag }}"
+              echo "${{ steps.condabuild.outputs.gitversion }}"
+              echo "The selected color is ${{ steps.condabuild.outputs.SELECTED_COLOR }}"
               anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
