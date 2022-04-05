@@ -60,7 +60,7 @@ jobs:
             run: sudo twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
 
     deploy-conda:
-#        needs: build
+        needs: build
         runs-on: ubuntu-latest
 # sets default shell to remove need for source to run the conda shell
         defaults:
@@ -94,9 +94,5 @@ jobs:
               conda config --set anaconda_upload no
               anaconda logout
               anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
-              echo "VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`" >> $GITHUB_ENV
-              conda build . -c conda-forge -c slacgismo --numpy 1.16.4
-
-          - name: Get the output path and upload the package
-            run: |
+              VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge -c slacgismo --numpy 1.16.4
               anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ env.VERSION_FROM_GIT_TAG }}-*.tar.bz2
