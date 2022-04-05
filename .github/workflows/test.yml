@@ -94,5 +94,7 @@ jobs:
               conda config --set anaconda_upload no
               anaconda logout
               anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
-              VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge -c slacgismo --numpy 1.16.4
+              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c conda-forge -c slacgismo --numpy 1.16.4
+              echo "HMMMMM"
+              echo "${VERSION_FROM_GIT_TAG}"
               anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
