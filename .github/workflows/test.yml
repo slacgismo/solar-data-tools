@@ -96,11 +96,10 @@ jobs:
               conda config --set anaconda_upload no
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
               echo "version_from_git_tag=git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-" >> $GITHUB_ENV
-              var=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)
-              echo "Hmmm $var"
+              echo "Hmmm"
               echo '::set-output name=gitversion::$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)'
               echo '::set-output name=SELECTED_COLOR::green'
-              git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-
+              echo $(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)
 
           - name: Upload the Anaconda Package
             id: condaload
