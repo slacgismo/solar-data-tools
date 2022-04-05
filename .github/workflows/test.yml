@@ -88,7 +88,7 @@ jobs:
               conda config --set anaconda_upload no
 
           - name: Login to Anaconda
-            run: yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
+            run: anaconda login -y --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
 
           - name: Complete the build
             run: VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge -c slacgismo --numpy 1.16.4
