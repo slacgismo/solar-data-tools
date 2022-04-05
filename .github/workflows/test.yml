@@ -91,5 +91,5 @@ jobs:
 
           - name: Get the output path and upload the package
             env:
-              VERSION_FROM_GIT_TAG: `git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`
+              VERSION_FROM_GIT_TAG: git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-
             run: anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
