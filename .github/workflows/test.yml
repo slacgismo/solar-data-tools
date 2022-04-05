@@ -8,6 +8,7 @@ jobs:
           - name: Checkout Repository
             uses: actions/checkout@v3
 
+# Necessary action when needing to use AWS credentials.
           - name: Configure AWS Credentials
             uses: aws-actions/configure-aws-credentials@v1
             with:
@@ -32,6 +33,7 @@ jobs:
               aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
               sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
 
+# Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
             run: sudo coverage run -m unittest
 
@@ -60,6 +62,7 @@ jobs:
     deploy-conda:
         needs: build
         runs-on: ubuntu-latest
+# sets default shell to remove need for source to run the conda shell
         defaults:
           run:
             shell: bash -l {0}
@@ -68,6 +71,7 @@ jobs:
           - name: Checkout Repository
             uses: actions/checkout@v3
 
+# Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
           - name: Install Miniconda
             uses: conda-incubator/setup-miniconda@v2
             with:
@@ -81,6 +85,8 @@ jobs:
               conda update conda
               conda install conda-build
 
+# run install twice due to client-size to ensure all files downloaded
+# logout before login to prevent anaconda bug breaking automation
           - name: Build the Anaconda Package
             run: |
               conda install anaconda-client
@@ -91,6 +97,6 @@ jobs:
               VERSION_FROM_GIT_TAG=`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge -c slacgismo --numpy 1.16.4
 
           - name: Get the output path and upload the package
-            env:
-              VERSION_FROM_GIT_TAG: git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-
-            run: anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
+            run: |
+              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)
+              anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
