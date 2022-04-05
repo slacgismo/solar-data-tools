@@ -99,7 +99,7 @@ jobs:
               echo $VERSION_FROM_GIT_TAG
               echo ${{ env.VERSION_FROM_GIT_TAG }}
               echo "HMMMMM"
-              echo "::set-output name=gitversion::$(`git tag --list 'v*[0-9]' --sort=version:refname | tail -1 | cut -c 2-`)"
+              echo "NEXT"
               echo "::set-output name=gitversiontwo::$(git tag --list 'v*[0-9]' --sort=version:refname | tail -1 | cut -c 2-)"
               echo "::set-output name=gitversionthree::$(git tag --list "v*[0-9]"" --sort=version:refname | tail -1 | cut -c 2-)"
               echo "::set-output name=gitversionfour::$(`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`)"
