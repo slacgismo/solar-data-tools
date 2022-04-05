@@ -94,13 +94,11 @@ jobs:
               conda install anaconda-client
               conda config --set anaconda_upload no
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
-              VERSION_FROM_GIT_TAG=$(`git tag --list 'v*[0-9]' --sort=version:refname | tail -1 | cut -c 2-`) conda build . -c conda-forge -c slacgismo --numpy 1.16.4
-              echo "VERSION_FROM_GIT_TAG=`git tag --list 'v*[0-9]' --sort=version:refname | tail -1 | cut -c 2-`" >> $GITHUB_ENV
-              echo "version_from_git_tag=`git tag --list 'v*[0-9]' --sort=version:refname | tail -1 | cut -c 2-`" >> $GITHUB_ENV
+              echo "version_from_git_tag=`git tag --list 'v*[0-9]' --sort=version:refname | tail -1 | cut -c 2-` conda build . -c conda-forge -c slacgismo --numpy 1.16.4" >> $GITHUB_ENV
 
           - name: Upload the Anaconda Package
             id: condaload
             run: |
-              echo "${{ env.VERSION_FROM_GIT_TAG }}"
               echo "${{ env.version_from_git_tag }}"
+              print %ENV
               anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-$VERSION_FROM_GIT_TAG-*.tar.bz2
