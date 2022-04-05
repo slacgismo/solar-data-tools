@@ -101,7 +101,7 @@ jobs:
               echo "HMMMMM"
               echo "NEXT"
               echo "NEXT"
-              echo "::set-output name=gitversionthree::$(git tag --list "v*[0-9]"" --sort=version:refname | tail -1 | cut -c 2-)"
+              echo "LAST"
               echo "::set-output name=gitversionfour::$(`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`)"
               echo "${{ steps.condabuild.outputs.gitversion }}"
               echo "${{ steps.condabuild.outputs.gitversiontwo }}"
