@@ -87,7 +87,8 @@ jobs:
 
 # run install twice due to client-size to ensure all files downloaded
 # echo yes before login to prevent anaconda bug breaking automation
-#              VERSION_FROM_GIT_TAG=$(`git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-`) conda build . -c conda-forge -c slacgismo --numpy 1.16.4
+# git tags MUST be fetched otherwise output will be blank
+# bash variables cannot be used in github actions, must use actions specific syntax and methods
           - name: Build the Anaconda Package
             id: condabuild
             run: |
@@ -98,10 +99,8 @@ jobs:
               git fetch --prune --unshallow --tags
               VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c conda-forge -c slacgismo --numpy 1.16.4
               echo '::set-output name=gitversion::$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)'
-              echo $VERSION_FROM_GIT_TAG
 
           - name: Upload the Anaconda Package
             id: condaload
             run: |
-              echo "${{ steps.condabuild.outputs.gitversion }}"
               anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2
