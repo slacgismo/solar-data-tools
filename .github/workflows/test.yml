@@ -1,7 +1,7 @@
 name: Test Push
 on: [push]
 jobs:
-    build:
+    test-build:
         runs-on: ubuntu-latest
         environment: deployment
         steps:
