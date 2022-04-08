@@ -1,12 +1,12 @@
-name: Deploy Main
+name: Test Deployment
 on: 
   push:
     branches:
-      - master
+      - '!master'
 jobs:
     deploy-pypi:
         runs-on: ubuntu-latest
-        environment: deployment
+        environment: test-deployment
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v3
@@ -25,7 +25,7 @@ jobs:
               sudo python setup.py sdist bdist_wheel
 
           - name: Push to PyPI
-            run: sudo twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
+            run: sudo twine upload -u ${{ secrets.PYPI_TEST_USERNAME }} -p ${{ secrets.PYPI_TEST_PASSWORD }} testpypi dist/*
 
     deploy-conda:
         runs-on: ubuntu-latest
@@ -33,7 +33,7 @@ jobs:
         defaults:
           run:
             shell: bash -l {0}
-        environment: deployment
+        environment: test-deployment
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v3
@@ -70,4 +70,4 @@ jobs:
           - name: Upload the Anaconda Package
             id: condaload
             run: |
-              anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2
+              anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2 --label test
