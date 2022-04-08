@@ -1,8 +1,8 @@
 name: Test Deployment
 on: 
   push:
-    branches:
-      - '!master'
+    branches-ignore:
+      - master
 jobs:
     deploy-pypi:
         runs-on: ubuntu-latest
