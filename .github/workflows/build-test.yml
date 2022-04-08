@@ -24,9 +24,6 @@ jobs:
               git fetch --prune --unshallow --tags
               sudo python setup.py sdist bdist_wheel
 
-          - name: Push to PyPI
-            run: sudo twine upload -r testpypi -u ${{ secrets.PYPI_TEST_USERNAME }} -p ${{ secrets.PYPI_TEST_PASSWORD }} dist/*
-
     deploy-conda:
         runs-on: ubuntu-latest
 # sets default shell to remove need for source to run the conda shell
