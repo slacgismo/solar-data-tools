@@ -15,7 +15,7 @@ from pathlib import Path
 # Python 3 only projects can skip this import
 from io import open
 
-here = Path().resolve()
+here = Path()
 
 # Get the long description from the README file
 with open((here / "README.md"), encoding="utf-8") as f:
@@ -39,7 +39,7 @@ latest_version = latest_git_tag.communicate()[0]
 # PEP 440 won't accept the v in front, so here we remove it, strip the new line and decode the byte stream
 VERSION_FROM_GIT_TAG = latest_version[1:].strip().decode("utf-8")
 
-with open(os.path.join(here, "requirements.txt"), encoding="utf-8") as f:
+with open((here / "requirements.txt"), encoding="utf-8") as f:
     install_requires = f.read().splitlines()
 # removes comments in the requirements file
 dependencies = [dependency for dependency in install_requires if (dependency[0] != "#")]
