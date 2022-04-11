@@ -1,4 +1,4 @@
-name: Test Push
+name: Tests
 on: [push]
 jobs:
     test-build:
