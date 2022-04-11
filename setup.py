@@ -6,7 +6,6 @@ https://github.com/pypa/sampleproject
 
 # Always prefer setuptools over distutils
 import subprocess
-import os
 from setuptools import setup, find_packages
 from pathlib import Path
 
