@@ -103,9 +103,8 @@ def soiling_seperation(
 
     # cvx.norm(cvx.multiply(s3, weights), p=2) \
 
-    cost = (
-        cvx.sum(tau * cvx.pos(sr) + (1 - tau) * cvx.neg(sr))
-        + w4 * cvx.norm(cvx.diff(s2[:n], k=2), p=2)
+    cost = (1 / n) * cvx.sum(tau * cvx.pos(sr) + (1 - tau) * cvx.neg(sr)) + n * (
+        w4 * cvx.norm(cvx.diff(s2[:n], k=2), p=2)
         + w1 * cvx.norm(cvx.multiply(w, cvx.diff(s1, k=2)), p=1)
         + w2 * cvx.sum(-s1)
         + w3

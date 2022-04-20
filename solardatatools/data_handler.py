@@ -10,6 +10,7 @@ from datetime import timedelta
 from datetime import datetime
 import numpy as np
 import pandas as pd
+import cvxpy as cvx
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -182,6 +183,17 @@ class DataHandler:
         units="W",
         solver=None,
     ):
+        try:
+            x = cvx.Variable()
+            prob = cvx.Problem(cvx.Minimize(cvx.sum_squares(x)))
+            prob.solve(solver="MOSEK")
+        except Exception as e:
+            print("VALID MOSEK LICENSE NOT AVAILABLE")
+            print(
+                "please check that your license file is in [HOME]/mosek and is current\n"
+            )
+            print("error msg:", e)
+            return
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
