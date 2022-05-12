@@ -45,6 +45,7 @@ class ShadeAnalysis:
         self.residual_estimate = None
         self.clear_sky_estimate = None
         self.shade_estimate = None
+        self.power_estimate = None
         self.daily_shade_loss = None
         self.daily_clear_energy = None
         self.avg_energy = None
