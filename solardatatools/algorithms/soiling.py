@@ -55,8 +55,8 @@ def soiling_seperation(
     index_set=None,
     degradation_term=True,
     tau=0.85,
-    w1=2,
-    w2=3e-2,
+    w1=1,
+    w2=1e-2,
     w3=2e-1,
     w4=5e2,
     iterations=5,
@@ -81,7 +81,8 @@ def soiling_seperation(
     :param tau:
     :param w1: PWL weight - soiling term
     :param w2: sparseness weight - soiling term
-    :param w3: smoothness weight - seasonal term
+    :param w3: asymmetric slopes - soiling term
+    :param w4: smoothness weight - seasonal term
     :param iterations:
     """
     if index_set is None:
@@ -103,16 +104,20 @@ def soiling_seperation(
 
     # cvx.norm(cvx.multiply(s3, weights), p=2) \
 
+    length_scale_factor = 1  # len(observed) / 3653
     cost = (
         cvx.sum(tau * cvx.pos(sr) + (1 - tau) * cvx.neg(sr))
         + w4 * cvx.norm(cvx.diff(s2[:n], k=2), p=2)
-        + w1 * cvx.norm(cvx.multiply(w, cvx.diff(s1, k=2)), p=1)
-        + w2 * cvx.sum(-s1)
-        + w3
+        + length_scale_factor
         * (
-            cvx.sum(
-                0.9 * cvx.pos(cvx.diff(s1, k=1))
-                + (1 - 0.1) * cvx.neg(cvx.diff(s1, k=1))
+            w1 * cvx.norm(cvx.multiply(w, cvx.diff(s1, k=2)), p=1)
+            + w2 * cvx.sum(-s1)
+            + w3
+            * (
+                cvx.sum(
+                    0.9 * cvx.pos(cvx.diff(s1, k=1))
+                    + (1 - 0.1) * cvx.neg(cvx.diff(s1, k=1))
+                )
             )
         )
     )

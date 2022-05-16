@@ -177,6 +177,7 @@ class ShadeAnalysis:
         for ix, d in enumerate(
             my_round(delta_cooper(self.dh.day_index.dayofyear.values), 1)
         ):
+            # print('unrolling, delta =', d)
             slct = self.data_transformed.index == d
             unrolled[:, ix] = estimate[slct, :]
         return unrolled
@@ -296,6 +297,10 @@ class ShadeAnalysis:
         agg_by_azimuth.columns = np.round(
             np.asarray(agg_by_azimuth.columns, dtype=float), 4
         )
+        new_index = np.arange(
+            np.min(agg_by_azimuth.index), np.max(agg_by_azimuth.index) + 1
+        )[::-1]
+        agg_by_azimuth = agg_by_azimuth.reindex(new_index)
         return normalized, agg_by_azimuth
 
     def make_osd_problem(self, mu=None, lambd=None, q_mat=None):
@@ -307,6 +312,7 @@ class ShadeAnalysis:
             q_mat = Qr
         rank = q_mat.shape[1]
         y = self.data_transformed.values
+        use_set = ~np.isnan(y)
         x1 = cvx.Variable(y.shape, name="residual")
         x2 = cvx.Variable(y.shape, name="clear-sky")
         x3 = cvx.Variable(y.shape, name="shade")
@@ -342,7 +348,7 @@ class ShadeAnalysis:
         phi4 = cvx.sum(x3)
 
         constraints = [
-            y == x1 + x2 - x3,
+            y[use_set] == (x1 + x2 - x3)[use_set],
             x2 >= 0,
             x2[:, 0] == 0,
             x2[:, -1] == 0,
