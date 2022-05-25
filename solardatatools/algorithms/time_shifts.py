@@ -147,7 +147,7 @@ class TimeShift:
         # set up train/test split with sklearn
         ixs = np.arange(len(metric))
         ixs = ixs[use_ixs]
-        train_ixs, test_ixs = train_test_split(ixs, test_size=0.75)
+        train_ixs, test_ixs = train_test_split(ixs, test_size=0.85)
         train = np.zeros(len(metric), dtype=bool)
         test = np.zeros(len(metric), dtype=bool)
         train[train_ixs] = True
@@ -180,6 +180,7 @@ class TimeShift:
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
         slct = np.logical_and(jpy <= 5, hn <= 0.02)
+        # slct = np.logical_and(slct, rn < 0.9)
         best_ix = np.nanmax(ixs[slct])
         return hn, rn, tv_metric, jpy, best_ix
 
@@ -211,6 +212,19 @@ class TimeShift:
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
+
+    def plot_analysis(self, figsize=None):
+        if self.metric is not None:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure(figsize=figsize)
+            plt.plot(self.metric, linewidth=1, label="metric")
+            plt.plot(self.s1, label="shift detector")
+            plt.plot(self.s1 + self.s2, ls="--", label="SD model")
+            plt.legend()
+            plt.xlabel("day number")
+            plt.ylabel("solar noon [hours]")
+            return fig
 
     def plot_optimization(self, figsize=None):
         if self.best_ix is not None:
