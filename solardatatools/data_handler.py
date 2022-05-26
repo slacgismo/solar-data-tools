@@ -104,6 +104,9 @@ class DataHandler:
             self.num_days = None
             self.data_sampling = None
         self.gmt_offset = gmt_offset
+        self._initialize_attributes()
+
+    def _initialize_attributes(self):
         self.filled_data_matrix = None
         self.use_column = None
         self.capacity_estimate = None
@@ -165,7 +168,7 @@ class DataHandler:
         max_val=None,
         zero_night=True,
         interp_day=True,
-        fix_shifts=True,
+        fix_shifts=False,
         density_lower_threshold=0.6,
         density_upper_threshold=1.05,
         linearity_threshold=0.1,
@@ -182,6 +185,7 @@ class DataHandler:
         daytime_threshold=0.1,
         units="W",
         solver=None,
+        reset=True,
     ):
         try:
             x = cvx.Variable()
@@ -194,6 +198,8 @@ class DataHandler:
             )
             print("error msg:", e)
             return
+        if reset:
+            self._initialize_attributes()
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
