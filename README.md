@@ -28,7 +28,7 @@
     <a href="https://solar-data-tools.readthedocs.io/en/stable/">
         <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
     </a>
-        <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/main-test.yml/badge.svg?branch=master&event=workflow_run">
+        <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/main-test.yml/badge.svg">
         <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/main-test.yml" alt="Actions build status" />
     </a>
     <!-- switch below from tadatoshi to gismo -->
