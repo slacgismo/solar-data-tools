@@ -1,8 +1,8 @@
 name: Deploy Main
 on: 
   push:
-    branches:
-      - master
+    tags:
+      - v*.*.*
 jobs:
     deploy-pypi:
         runs-on: ubuntu-latest
