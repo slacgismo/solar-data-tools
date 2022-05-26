@@ -1,7 +1,7 @@
-name: Tests
+name: Main Test
 on: 
   push:
-    branches-ignore:
+    branches:
       - master
 jobs:
     test-build:
