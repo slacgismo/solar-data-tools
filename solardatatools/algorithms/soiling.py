@@ -49,17 +49,42 @@ class SoilingAnalysis:
             self.dh.filled_data_matrix / self.correction_factor
         )
 
+    def plot_analysis(self, figsize=None):
+        import matplotlib.pyplot as plt
+
+        fig, ax = plt.subplots(nrows=2, sharex=True, figsize=figsize)
+        ax[0].plot(self.dh.day_index, self.soiling_signal, label="signal", linewidth=1)
+        ax[0].plot(
+            self.dh.day_index,
+            self.seasonal_component
+            + self.degradation_component
+            + self.soiling_component,
+            label="SD denoised model",
+            linewidth=1,
+        )
+        ax[0].plot(
+            self.dh.day_index,
+            self.seasonal_component + self.degradation_component,
+            label="SD baseline",
+            linewidth=1,
+        )
+        ax[0].legend()
+        ax[0].set_title("signal and SD model")
+        ax[1].plot(self.dh.day_index, self.soiling_component, linewidth=1)
+        ax[1].set_title("soiling component")
+        return fig
+
 
 def soiling_seperation(
     observed,
     index_set=None,
-    degradation_term=True,
-    tau=0.85,
-    w1=1,
-    w2=1e-2,
-    w3=2e-1,
-    w4=5e2,
-    iterations=5,
+    degradation_term=DEFAULT["degradation_term"],
+    tau=DEFAULT["tau"],
+    w1=DEFAULT["w1"],
+    w2=DEFAULT["w2"],
+    w3=DEFAULT["w3"],
+    w4=DEFAULT["w4"],
+    iterations=DEFAULT["iterations"],
     solver=None,
     period=365,
     verbose=False,
