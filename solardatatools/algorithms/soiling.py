@@ -36,14 +36,14 @@ class SoilingAnalysis:
     def run(self, **config):
         if len(config) == 0:
             config = DEFAULT
-        s1e, s2e, s3e, sre = soiling_seperation(
+        out = soiling_seperation(
             self.soiling_signal, index_set=self.dh.daily_flags.no_errors, **config
         )
-        self.soiling_component = s1e
-        self.seasonal_component = s2e
-        self.degradation_component = s3e
-        self.residual_component = sre
-        self.correction_factor = 1 + s1e
+        self.soiling_component = out["soiling"]
+        self.seasonal_component = out["seasonal"]
+        self.degradation_component = out["trend"]
+        self.residual_component = out["residual"]
+        self.correction_factor = 1 + self.soiling_component
         self.corr_raw_matrix = self.dh.raw_data_matrix / self.correction_factor
         self.corr_filled_data_matrix = (
             self.dh.filled_data_matrix / self.correction_factor
@@ -143,7 +143,14 @@ def soiling_seperation(
             eps + 1e2 * np.abs(cvx.diff(s1, k=2).value)
         )  # Reweight the L1 penalty
         # zero_set = np.abs(cvx.diff(s1, k=1).value) <= 5e-5     # Make nearly flat regions exactly flat (sparse 1st diff)
-    return s1.value, s2.value[:n], s3.value, sr.value
+    out = {
+        "soiling": s1.value,
+        "seasonal": s2.value[:n],
+        "trend": s3.value,
+        "residual": sr.value,
+        "denoised": s1.value + s2.value[:n] + s3.value,
+    }
+    return out
 
 
 def soiling_seperation_old(
