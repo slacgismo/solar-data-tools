@@ -121,7 +121,8 @@ class ShadeAnalysis:
         sl = f_loss(delta_cooper(np.arange(365) + 1))
         cs = f_clear(delta_cooper(np.arange(365) + 1))
         self.year_analysis_df = pd.DataFrame(
-            data={"shade loss": sl, "clear sky": cs, "SD model": cs - sl}
+            data={"shade loss": sl, "clear sky": cs, "SD model": cs - sl},
+            index=np.arange(365) + 1,
         )
         self.year_analysis_df = self.year_analysis_df.join(avg_energy)
 
