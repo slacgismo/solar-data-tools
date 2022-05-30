@@ -46,9 +46,7 @@ class ShadeAnalysis:
         self.clear_sky_estimate = None
         self.shade_estimate = None
         self.power_estimate = None
-        self.daily_shade_loss = None
-        self.daily_clear_energy = None
-        self.avg_energy = None
+        self.year_analysis_df = None
         self.scale_factor = 1 / self.dh.capacity_estimate
         self.unrolled_shade = None
         self._pt1 = None
@@ -119,20 +117,22 @@ class ShadeAnalysis:
         avg_energy["doy"] = avg_energy.index.day_of_year
         avg_energy = avg_energy.loc[self.dh.daily_flags.clear]
         avg_energy = avg_energy.groupby("doy").mean() * scale
-
-        self.daily_shade_loss = f_loss(delta_cooper(np.arange(365) + 1))
-        self.daily_clear_energy = f_clear(delta_cooper(np.arange(365) + 1))
-        self.daily_modeled_energy = self.daily_clear_energy - self.daily_shade_loss
-        self.avg_energy = avg_energy
+        avg_energy.columns = ["empirical"]
+        sl = f_loss(delta_cooper(np.arange(365) + 1))
+        cs = f_clear(delta_cooper(np.arange(365) + 1))
+        self.year_analysis_df = pd.DataFrame(
+            data={"shade loss": sl, "clear sky": cs, "SD model": cs - sl}
+        )
+        self.year_analysis_df = self.year_analysis_df.join(avg_energy)
 
     def plot_yearly_energy_analysis(self, figsize=None):
         fig = plt.figure(figsize=figsize)
-        plt.plot(self.daily_shade_loss, label="shade loss")
-        plt.plot(self.daily_clear_energy, label="predicted no shade")
-        plt.plot(self.daily_clear_energy - self.daily_shade_loss, label="modeled")
+        plt.plot(self.year_analysis_df["shade loss"], label="shade loss")
+        plt.plot(self.year_analysis_df["clear sky"], label="predicted no shade")
+        plt.plot(self.year_analysis_df["SD model"], label="modeled")
         plt.plot(
-            self.avg_energy.index,
-            self.avg_energy.values,
+            self.year_analysis_df.index,
+            self.year_analysis_df["empirical"],
             label="empirical",
             linewidth=0.75,
         )
@@ -142,13 +142,34 @@ class ShadeAnalysis:
         plt.legend()
         return fig
 
-    def plot_transformed_data(self, yticks=True, figsize=(10, 4)):
+    def plot_transformed_data(
+        self,
+        yticks=True,
+        figsize=(10, 4),
+        cmap="plasma",
+        interpolation="none",
+        aspect="auto",
+    ):
         plt.figure(figsize=figsize)
-        sns.heatmap(self.data_transformed, cmap="plasma")
-        plt.xticks(np.arange(0, 257, 16), np.round(np.linspace(0, 1, 17), 1))
+        ax = plt.gca()
+        foo = ax.imshow(
+            self.data_transformed.values,
+            cmap=cmap,
+            interpolation=interpolation,
+            aspect=aspect,
+        )
+        plt.colorbar(foo, ax=ax, label="norm. power")
+        # sns.heatmap(self.data_transformed, cmap="plasma")
+        plt.xticks(np.linspace(0, 256, 11), np.round(np.linspace(0, 1, 11), 1))
         plt.xlabel("fraction of daylight hours")
         if not yticks:
             plt.yticks([])
+        else:
+            num_y = self.data_transformed.values.shape[0]
+            max_d = np.max(self.data_transformed.index)
+            plt.yticks(
+                np.linspace(0, num_y, 9), np.round(np.linspace(-max_d, max_d, 9), 1)
+            )
         return plt.gcf()
 
     def _unroll_normalized_shade_loss(self):
@@ -244,18 +265,18 @@ class ShadeAnalysis:
         annotate = np.asarray(annotate, dtype=float)
         annotate[annotate == 0] = np.nan
         with sns.axes_style("white"):
-            plt.imshow(annotate, aspect="auto", cmap="Set1", alpha=0.35)
+            plt.imshow(annotate, aspect="auto", cmap="Set1", alpha=0.5)
             plt.scatter(0, 0, color="red", alpha=0.45, label="detected shade")
             plt.legend()
         plt.title("Measured power with shaded periods marked")
         return fig
 
-    def plot_component(self, component, figsize=(10, 4)):
+    def plot_component(self, component, figsize=(10, 4), ax=None, cmap="plasma"):
         if component == "clear":
             data = self.clear_sky_component
             title = "clear sky component"
         elif component == "shade":
-            data = self.shade_component
+            data = -self.shade_component
             title = "shade loss component"
         elif component == "residual":
             data = self.residual_component
@@ -264,15 +285,23 @@ class ShadeAnalysis:
             m = "component arg must be one of ['clear', 'shade', 'residual']"
             print(m)
             return
-        fig = plt.figure(figsize=figsize)
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = plt.gca()
+        else:
+            fig = None
         with sns.axes_style("white"):
-            plt.imshow(data, aspect="auto", cmap="plasma")
-            plt.colorbar()
-            plt.title(title)
-            plt.xticks([])
-            plt.yticks([])
-            plt.xlabel("fraction daylight hours")
-            plt.ylabel("azimuth at sunrise")
+            if not component == "residual":
+                foo = ax.imshow(data, aspect="auto", cmap=cmap)
+            else:
+                val = max(np.max(data), np.max(-1 * data))
+                foo = ax.imshow(data, aspect="auto", cmap=cmap, vmin=-val, vmax=val)
+            plt.colorbar(foo, ax=ax)
+            ax.set_title(title)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_xlabel("fraction daylight hours")
+            ax.set_ylabel("azimuth at sunrise")
         return fig
 
     def transform_data(self, power=8):
@@ -350,12 +379,11 @@ class ShadeAnalysis:
         constraints = [
             y[use_set] == (x1 + x2 - x3)[use_set],
             x2 >= 0,
+            cvx.diff(x2, k=2, axis=0) <= 0,
             x2[:, 0] == 0,
             x2[:, -1] == 0,
             # cvx.diff(x2, k=4, axis=1) <= 0,
             x2 - np.tile(mu, (y.shape[0], 1)) == (q_mat @ z2).T,
-            x2 >= 0,
-            cvx.diff(x2, k=2, axis=0) <= 0,
             x3 >= 0,
         ]
 
