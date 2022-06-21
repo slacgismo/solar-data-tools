@@ -14,7 +14,9 @@ class TestSystemProfiler(unittest.TestCase):
         data = pd.read_csv(data_file_path, index_col=0, parse_dates=True)
         dh = DataHandler(data, datetime_col="Date-Time")
         dh.fix_dst()
-        dh.run_pipeline(power_col="ac_power", fix_shifts=False, correct_tz=False)
+        dh.run_pipeline(
+            power_col="ac_power", fix_shifts=False, correct_tz=False, verbose=False
+        )
         dh.setup_location_and_orientation_estimation(-5)
 
         estimate_latitude = dh.estimate_latitude()
@@ -29,9 +31,7 @@ class TestSystemProfiler(unittest.TestCase):
             latitude=actual_latitude, longitude=actual_longitude
         )
 
-        np.testing.assert_almost_equal(
-            actual_latitude, estimate_latitude, decimal=0.1
-        )
+        np.testing.assert_almost_equal(actual_latitude, estimate_latitude, decimal=0.1)
         np.testing.assert_almost_equal(
             estimate_longitude, actual_longitude, decimal=0.1
         )
