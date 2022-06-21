@@ -36,6 +36,7 @@ class SunriseSunset:
         self.sunup_mask_estimated = None
         self.threshold = None
         self.total_rmse = None
+        self.true_times = None
 
     def calculate_times(
         self,
@@ -43,7 +44,6 @@ class SunriseSunset:
         threshold=None,
         plot=False,
         figsize=(12, 10),
-        groundtruth=None,
         zoom_fit=False,
         solver=None,
     ):
@@ -54,9 +54,9 @@ class SunriseSunset:
             else:
                 print("Please run optimizer or provide a threshold")
                 return
-        if groundtruth is not None:
-            sr_true = groundtruth[0]
-            ss_true = groundtruth[1]
+        if self.true_times is not None:
+            sr_true = self.true_times["sunrise times"].values
+            ss_true = self.true_times["sunset times"].values
         else:
             sr_true = None
             ss_true = None
@@ -95,7 +95,7 @@ class SunriseSunset:
                 color="green",
             )
             ax[0].plot(self.sunrise_estimates, label="estimated", ls="--", color="blue")
-            if groundtruth is not None:
+            if self.true_times is not None:
                 ax[0].plot(sr_true, label="true", color="orange")
             ax[1].set_title("Sunset Times")
             ax[1].plot(self.sunset_estimates, ls="--", color="blue")
@@ -109,7 +109,7 @@ class SunriseSunset:
                 color="green",
             )
             ax[1].plot(self.sunset_estimates, label="estimated", ls="--", color="blue")
-            if groundtruth is not None:
+            if self.true_times is not None:
                 ax[1].plot(ss_true, label="true", color="orange")
             ax[2].set_title("Solar Noon")
             ax[2].plot(
@@ -134,7 +134,7 @@ class SunriseSunset:
                 ls="--",
                 color="blue",
             )
-            if groundtruth is not None:
+            if self.true_times is not None:
                 ax[2].plot(
                     np.average([sr_true, ss_true], axis=0), label="true", color="orange"
                 )
@@ -157,17 +157,24 @@ class SunriseSunset:
                 ls="--",
                 color="blue",
             )
-            if groundtruth is not None:
+            if self.true_times is not None:
                 ax[3].plot(ss_true - sr_true, label="true", color="orange")
             for i in range(4):
                 ax[i].legend(loc=1)
             if zoom_fit:
                 for ax_it, ylim_it in zip(ax, ylims):
-                    ax_it.set_ylim(ylim_it)
+                    ax_it.set_ylim(0.97 * ylim_it[0], 1.03 * ylim_it[1])
             # plt.tight_layout()
             return fig
         else:
             return
+
+    def calculate_true(self, dh, lat, lon, tz_offset):
+        outtab = sunrise_sunset_times(
+            lat, lon, dh.day_index.dayofyear.values, tz_offset
+        )
+        outtab.index = dh.day_index
+        self.true_times = outtab
 
     def run_optimizer(
         self,
@@ -176,12 +183,11 @@ class SunriseSunset:
         search_pts=21,
         plot=False,
         figsize=(8, 6),
-        groundtruth=None,
         solver=None,
     ):
-        if groundtruth is not None:
-            sr_true = groundtruth[0]
-            ss_true = groundtruth[1]
+        if self.true_times is not None:
+            sr_true = self.true_times["sunrise times"].values
+            ss_true = self.true_times["sunset times"].values
         else:
             sr_true = None
             ss_true = None
@@ -252,7 +258,7 @@ class SunriseSunset:
                     else:
                         run_ho_errors.append(1e2)
                 ho_error.append(np.average(run_ho_errors))
-                if groundtruth is not None:
+                if self.true_times is not None:
                     full_fit = rise_set_smoothed(
                         measured, sunrise_tau=0.05, sunset_tau=0.95
                     )
@@ -286,7 +292,7 @@ class SunriseSunset:
             mat >= sr_broadcast, mat < ss_broadcast
         )
         self.threshold = selected_th
-        if groundtruth is not None:
+        if self.true_times is not None:
             sr_residual = sr_true - self.sunrise_estimates
             ss_residual = ss_true - self.sunset_estimates
             total_rmse = np.sqrt(np.mean(np.r_[sr_residual, ss_residual] ** 2))
@@ -304,7 +310,7 @@ class SunriseSunset:
                 ths[slct_vals], ho_error[slct_vals], marker=".", ls="none", color="red"
             )
             plt.axvline(selected_th, color="blue", ls="--", label="optimized parameter")
-            if groundtruth is not None:
+            if self.true_times is not None:
                 best_th = ths[np.argmin(full_error)]
                 plt.plot(
                     ths, full_error, marker=".", color="orange", label="true error"
@@ -315,11 +321,12 @@ class SunriseSunset:
         else:
             return
 
-    def calculate_errors(self, groundtruth=None):
-        if groundtruth is not None:
-            sr_true = groundtruth[0]
-            ss_true = groundtruth[1]
+    def calculate_errors(self):
+        if self.true_times is not None:
+            sr_true = self.true_times["sunrise times"].values
+            ss_true = self.true_times["sunset times"].values
         else:
+            print("please run .calculate_true() first")
             return
         r_sr_m = sr_true - self.sunrise_measurements
         r_ss_m = ss_true - self.sunset_measurements
@@ -358,136 +365,112 @@ class SunriseSunset:
         return table
 
 
-class SunriseSunset_v2:
-    def __init__(self):
-        self.sunrise_estimates = None
-        self.sunset_estimates = None
-        self.sunrise_measurements = None
-        self.sunset_measurements = None
-        self.sunup_mask = None
-        self.threshold = None
-
-    def run(self, data, random_seed=None):
-        ths = np.logspace(-5, -1, 31)
-        ho_error = []
-        for th in ths:
-            bool_msk = detect_sun(data, th)
-            measured = rise_set_rough(bool_msk)
-            sunrises = measured["sunrises"]
-            sunsets = measured["sunsets"]
-            # np.random.seed(random_seed)
-            use_set_sr = np.arange(len(sunrises))[~np.isnan(sunrises)]
-            use_set_ss = np.arange(len(sunsets))[~np.isnan(sunsets)]
-            if (
-                len(use_set_sr) / len(sunrises) > 0.6
-                and len(use_set_ss) / len(sunsets) > 0.6
-            ):
-                selected_th = th
-                break
-            else:
-                selected_th = None
-            #     np.random.shuffle(use_set_sr)
-            #     np.random.shuffle(use_set_ss)
-            #     split_at_sr = int(len(use_set_sr) * .8)     # 80-20 train test split
-            #     split_at_ss = int(len(use_set_ss) * .8)
-            #     train_sr = use_set_sr[:split_at_sr]
-            #     train_ss = use_set_ss[:split_at_ss]
-            #     test_sr = use_set_sr[split_at_sr:]
-            #     test_ss = use_set_ss[split_at_ss:]
-            #     train_msk_sr = np.zeros_like(sunrises, dtype=np.bool)
-            #     train_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
-            #     train_msk_sr[train_sr] = True
-            #     train_msk_ss[train_ss] = True
-            #     test_msk_sr = np.zeros_like(sunrises, dtype=np.bool)
-            #     test_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
-            #     test_msk_sr[test_sr] = True
-            #     test_msk_ss[test_ss] = True
-            #     sr_smoothed = local_quantile_regression_with_seasonal(sunrises,
-            #                                                           train_msk_sr,
-            #                                                           tau=0.05,
-            #                                                           solver='MOSEK')
-            #     ss_smoothed = local_quantile_regression_with_seasonal(sunsets,
-            #                                                           train_msk_ss,
-            #                                                           tau=0.95,
-            #                                                           solver='MOSEK')
-            #     r1 = (sunrises - sr_smoothed)[test_msk_sr]
-            #     r2 = (sunsets - ss_smoothed)[test_msk_ss]
-            #     ho_resid = np.r_[r1, r2]
-            #     ho_error.append(np.sqrt(np.mean(ho_resid ** 2)))
-            # else:
-            #     ho_error.append(1e6)
-            # selected_th = ths[np.argmin(ho_error)]
-        bool_msk = detect_sun(data, selected_th)
-        measured = rise_set_rough(bool_msk)
-        smoothed = rise_set_smoothed(measured, sunrise_tau=0.05, sunset_tau=0.95)
-        self.sunrise_estimates = smoothed["sunrises"]
-        self.sunset_estimates = smoothed["sunsets"]
-        self.sunrise_measurements = measured["sunrises"]
-        self.sunset_measurements = measured["sunsets"]
-        self.sunup_mask = bool_msk
-        self.threshold = selected_th
+def sunset_hour_angle(doy, lat):
+    b = np.deg2rad((360 / 365) * (doy - 1))
+    delta = (
+        0.006918
+        - 0.399912 * np.cos(b)
+        + 0.070257 * np.sin(b)
+        - 0.006758 * np.cos(2 * b)
+        + 0.000907 * np.sin(2 * b)
+        - 0.002697 * np.cos(3 * b)
+        + 0.00148 * np.sin(3 * b)
+    )
+    sunset_hour_angle = np.arccos(-np.tan(np.deg2rad(lat)) * np.tan(delta))
+    return np.rad2deg(sunset_hour_angle)
 
 
-class SunriseSunset_v1:
-    def __init__(self):
-        self.sunrise_estimates = None
-        self.sunset_estimates = None
-        self.sunrise_measurements = None
-        self.sunset_measurements = None
-        self.sunup_mask = None
-        self.threshold = None
+def num_daylight_hours(doy, lat):
+    return (2 / 15) * sunset_hour_angle(doy, lat)
 
-    def run(self, data, random_seed=None):
-        ths = np.logspace(-5, -1, 31)
-        ho_error = []
-        for th in ths:
-            bool_msk = detect_sun(data, th)
-            measured = rise_set_rough(bool_msk)
-            sunrises = measured["sunrises"]
-            sunsets = measured["sunsets"]
-            np.random.seed(random_seed)
-            use_set_sr = np.arange(len(sunrises))[~np.isnan(sunrises)]
-            use_set_ss = np.arange(len(sunsets))[~np.isnan(sunsets)]
-            if (
-                len(use_set_sr) / len(sunrises) > 0.6
-                and len(use_set_ss) / len(sunsets) > 0.6
-            ):
-                np.random.shuffle(use_set_sr)
-                np.random.shuffle(use_set_ss)
-                # 80-20 train test split
-                split_at_sr = int(len(use_set_sr) * 0.8)
-                split_at_ss = int(len(use_set_ss) * 0.8)
-                train_sr = use_set_sr[:split_at_sr]
-                train_ss = use_set_ss[:split_at_ss]
-                test_sr = use_set_sr[split_at_sr:]
-                test_ss = use_set_ss[split_at_ss:]
-                train_msk_sr = np.zeros_like(sunrises, dtype=np.bool)
-                train_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
-                train_msk_sr[train_sr] = True
-                train_msk_ss[train_ss] = True
-                test_msk_sr = np.zeros_like(sunrises, dtype=np.bool)
-                test_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
-                test_msk_sr[test_sr] = True
-                test_msk_ss[test_ss] = True
-                sr_smoothed = tl1_l2d2p365(
-                    sunrises, train_msk_sr, tau=0.05, solver="MOSEK"
-                )
-                ss_smoothed = tl1_l2d2p365(
-                    sunsets, train_msk_ss, tau=0.95, solver="MOSEK"
-                )
-                r1 = (sunrises - sr_smoothed)[test_msk_sr]
-                r2 = (sunsets - ss_smoothed)[test_msk_ss]
-                ho_resid = np.r_[r1, r2]
-                ho_error.append(np.sqrt(np.mean(ho_resid ** 2)))
-            else:
-                ho_error.append(1e6)
-        selected_th = ths[np.argmin(ho_error)]
-        bool_msk = detect_sun(data, selected_th)
-        measured = rise_set_rough(bool_msk)
-        smoothed = rise_set_smoothed(measured, sunrise_tau=0.05, sunset_tau=0.95)
-        self.sunrise_estimates = smoothed["sunrises"]
-        self.sunset_estimates = smoothed["sunsets"]
-        self.sunrise_measurements = measured["sunrises"]
-        self.sunset_measurements = measured["sunsets"]
-        self.sunup_mask = bool_msk
-        self.threshold = selected_th
+
+def sunrise_sunset_times(lat, lon, doy, gmt_offset, eot="duffie"):
+    ss_ha = sunset_hour_angle(doy, lat)
+    ss_st = 12 + ss_ha / 15
+    sr_st = 12 - ss_ha / 15
+    ss_st *= 60
+    sr_st *= 60
+    ss_ct = solar_to_clock(ss_st, lon, doy, gmt_offset, eot)
+    sr_ct = solar_to_clock(sr_st, lon, doy, gmt_offset, eot)
+    ss_ct /= 60
+    sr_ct /= 60
+    output_table = pd.DataFrame(
+        data={"day of year": doy, "sunrise times": sr_ct, "sunset times": ss_ct}
+    )
+    return output_table
+
+
+def solar_to_clock(solar_time, lon, doy, gmt_offset, eot="duffie"):
+    """
+    :param solar_time: solar time in minutes since midnight (float or array)
+    :param lon: longitude (float)
+    :param doy: day of year (float or array)
+    :param gmt_offset: local timezone offset in hours from UTC/GMT (float or int)
+    :param eot: string specifying which equation of time formulation to use
+    :return:
+    """
+    if eot.lower() in ("duffie", "d"):
+        eot = eot_duffie(doy)
+    elif eot.lower() in ("da_rosa", "dr"):
+        eot = eot_da_rosa(doy)
+    else:
+        print("Please select either Duffie or Da Rosa for the equation of time")
+        return
+    st = solar_time
+    ct = st - eot - 4 * (lon - 15 * gmt_offset)
+    return ct
+
+
+def clock_to_solar(clock_time, lon, doy, gmt_offset, eot="duffie"):
+    if eot.lower() in ("duffie", "d"):
+        eot = eot_duffie(doy)
+    elif eot.lower() in ("da_rosa", "dr"):
+        eot = eot_da_rosa(doy)
+    else:
+        print("Please select either Duffie or Da Rosa for the equation of time")
+        return
+    ct = clock_time
+    st = ct + eot + 4 * (lon - 15 * gmt_offset)
+    return st
+
+
+def eot_da_rosa(day_of_year):
+    """
+    The equation of time as defined in:
+        Haghdadi, Navid, et al. "A method to estimate the location and
+        orientation of distributed photovoltaic systems from their generation
+        output data." Renewable Energy 108 (2017): 390-400.
+    These are equations (7) and (8) in the paper.
+    :param day_of_year: the day of year, can be int, float, or numpy array
+    :return: the difference between clock time and solar time for a given day of year
+    """
+    b = np.deg2rad((360 / 365) * (day_of_year - 81))
+    eot = 9.87 * np.sin(2 * b) - 7.53 * np.cos(b) - 1.5 * np.sin(b)
+    try:
+        return eot.values
+    except AttributeError:
+        return eot
+
+
+def eot_duffie(day_of_year):
+    """
+    The equation of time as defined in:
+        Duffie, John A., and William A. Beckman. Solar engineering of thermal
+        processes. New York: Wiley, 1991.
+    These are equations (1.4.2) and (1.5.3) in the book
+    :param day_of_year: the day of year, can be int, float, or numpy array
+    :return: the difference between clock time and solar time for a given day of year
+    """
+    b = np.deg2rad((360 / 365) * (day_of_year - 1))
+    A = 1440 / (2 * np.pi)  # book uses approximation of 229.2
+    eot = A * (
+        0.000075
+        + 0.001868 * np.cos(b)
+        - 0.032077 * np.sin(b)
+        - 0.014615 * np.cos(2 * b)
+        - 0.04089 * np.sin(2 * b)
+    )
+    try:
+        return eot.values
+    except AttributeError:
+        return eot
