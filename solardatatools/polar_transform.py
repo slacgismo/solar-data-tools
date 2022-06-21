@@ -79,7 +79,10 @@ class PolarTransform:
         # cut off all the entries corresponding to the sun below the horizon
         triples = triples[triples["apparent_elevation"] >= 0]
         # a function for rounding to the nearest integer c (e.g. 2, 5, 10...)
-        my_round = lambda x, c: c * np.round(x / c, 0)
+
+        def my_round(x, c):
+            return c * np.round(x / c, 0)
+
         # create elevation and azimuth bins
         triples["elevation_angle"] = my_round(
             triples["apparent_elevation"], elevation_round
@@ -100,11 +103,11 @@ class PolarTransform:
         self._er = elevation_round
         self._ar = azimuth_round
 
-    def plot_transformation(self, figsize=(10, 6), ax=None, alpha=1.0,
-                            cmap="plasma", cbar=True):
+    def plot_transformation(
+        self, figsize=(10, 6), ax=None, alpha=1.0, cmap="plasma", cbar=True
+    ):
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
-        sns.heatmap(self.transformed_data, ax=ax, cbar=cbar, cmap=cmap,
-                    alpha=alpha)
+        sns.heatmap(self.transformed_data, ax=ax, cbar=cbar, cmap=cmap, alpha=alpha)
         return plt.gcf()

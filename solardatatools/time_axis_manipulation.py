@@ -51,9 +51,6 @@ def make_time_series(
     # Make sure that the timestamps are monotonically increasing. There may be
     # missing or repeated time stamps
     df.sort_values(timestamp_key, inplace=True)
-    # Determine the start and end times
-    start = df.iloc[0][timestamp_key]
-    end = df.iloc[-1][timestamp_key]
     time_index = pd.to_datetime(df[timestamp_key].sort_values())
     time_index = time_index[~time_index.duplicated(keep="first")]
     output = pd.DataFrame(index=time_index)
@@ -145,7 +142,7 @@ def standardize_time_axis(
         avg_day -= np.min(avg_day)
         # find sunrise and sunset times
         idxs = np.arange(len(avg_day))
-        if avg_day[0]>= thresh:
+        if avg_day[0] >= thresh:
             sr_loc = [idxs[0]]
         else:
             sr_loc = idxs[
@@ -158,9 +155,9 @@ def standardize_time_axis(
                 np.r_[np.diff((avg_day.values >= thresh).astype(float)) == -1, [False]]
             ]
         sunrise = avg_day.index.values[sr_loc]
-        sunrise = sunrise[0].hour + sunrise[0].minute / 60 # first index
+        sunrise = sunrise[0].hour + sunrise[0].minute / 60  # first index
         sunset = avg_day.index.values[ss_loc]
-        sunset = sunset[-1].hour + sunset[-1].minute / 60 # last index
+        sunset = sunset[-1].hour + sunset[-1].minute / 60  # last index
         # calculate solar noon of average day
         if sunrise < sunset:
             sn = np.average([sunrise, sunset])

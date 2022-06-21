@@ -15,7 +15,7 @@ from pathlib import Path
 # Python 3 only projects can skip this import
 from io import open
 
-here = Path().resolve()
+here = Path()
 
 # Get the long description from the README file
 with open((here / "README.md"), encoding="utf-8") as f:
@@ -28,7 +28,7 @@ git_tags = subprocess.Popen(
 )
 
 gt_decoded = git_tags.communicate()[0].decode()
-tag_list = gt_decoded.split('\n')
+tag_list = gt_decoded.split("\n")
 tag_list.sort()
 
 VERSION_FROM_GIT_TAG = tag_list[-1][1:]
@@ -111,11 +111,11 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         # These classifiers are *not* checked by 'pip install'. See instead
         # 'python_requires' below.
-        #'Programming Language :: Python :: 2',
-        #'Programming Language :: Python :: 2.7',
+        # 'Programming Language :: Python :: 2',
+        # 'Programming Language :: Python :: 2.7',
         "Programming Language :: Python :: 3",
-        #'Programming Language :: Python :: 3.4',
-        #'Programming Language :: Python :: 3.5',
+        # 'Programming Language :: Python :: 3.4',
+        # 'Programming Language :: Python :: 3.5',
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],

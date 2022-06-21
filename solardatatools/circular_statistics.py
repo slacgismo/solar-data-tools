@@ -12,7 +12,7 @@ import numpy as np
 
 
 def rayleightest(data, axis=None, weights=None):
-    """ Performs the Rayleigh test of uniformity.
+    """Performs the Rayleigh test of uniformity.
 
     From https://docs.astropy.org/en/stable/_modules/astropy/stats/circstats.html#rayleightest
     (distributed under BSD-3 open-source license)

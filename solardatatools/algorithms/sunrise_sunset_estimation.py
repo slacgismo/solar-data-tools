@@ -55,8 +55,8 @@ class SunriseSunset:
                 print("Please run optimizer or provide a threshold")
                 return
         if self.true_times is not None:
-            sr_true = self.true_times['sunrise times'].values
-            ss_true = self.true_times['sunset times'].values
+            sr_true = self.true_times["sunrise times"].values
+            ss_true = self.true_times["sunset times"].values
         else:
             sr_true = None
             ss_true = None
@@ -176,7 +176,6 @@ class SunriseSunset:
         outtab.index = dh.day_index
         self.true_times = outtab
 
-
     def run_optimizer(
         self,
         data,
@@ -187,8 +186,8 @@ class SunriseSunset:
         solver=None,
     ):
         if self.true_times is not None:
-            sr_true = self.true_times['sunrise times'].values
-            ss_true = self.true_times['sunset times'].values
+            sr_true = self.true_times["sunrise times"].values
+            ss_true = self.true_times["sunset times"].values
         else:
             sr_true = None
             ss_true = None
@@ -212,7 +211,8 @@ class SunriseSunset:
                 for run in range(num_trials):
                     np.random.shuffle(use_set_sr)
                     np.random.shuffle(use_set_ss)
-                    split_at_sr = int(len(use_set_sr) * 0.8)  # 80-20 train test split
+                    # 80-20 train test split
+                    split_at_sr = int(len(use_set_sr) * 0.8)
                     split_at_ss = int(len(use_set_ss) * 0.8)
                     train_sr = use_set_sr[:split_at_sr]
                     train_ss = use_set_ss[:split_at_ss]
@@ -235,13 +235,13 @@ class SunriseSunset:
                     r1 = (sunrises - sr_smoothed)[test_msk_sr]
                     r2 = (sunsets - ss_smoothed)[test_msk_ss]
                     ho_resid = np.r_[r1, r2]
-                    #### TESTING
+                    # TESTING
                     # print(th)
                     # plt.plot(ho_resid)
                     # plt.show()
                     #####
 
-                    ### 7/30/20:
+                    # 7/30/20:
                     # Some sites can have "consistent" fit (low holdout error)
                     # that is not the correct estimate. We impose the restriction
                     # that the range of sunrise times and sunset times must be
@@ -250,7 +250,7 @@ class SunriseSunset:
                     cond1 = np.max(sr_smoothed) - np.min(sr_smoothed) > 0.25
                     cond2 = np.max(ss_smoothed) - np.min(ss_smoothed) > 0.25
                     if cond1 and cond2:
-                        ### L1-loss instead of L2
+                        # L1-loss instead of L2
                         # L1-loss is better proxy for goodness of fit when using
                         # quantile loss function
                         ###
@@ -323,10 +323,10 @@ class SunriseSunset:
 
     def calculate_errors(self):
         if self.true_times is not None:
-            sr_true = self.true_times['sunrise times'].values
-            ss_true = self.true_times['sunset times'].values
+            sr_true = self.true_times["sunrise times"].values
+            ss_true = self.true_times["sunset times"].values
         else:
-            print('please run .calculate_true() first')
+            print("please run .calculate_true() first")
             return
         r_sr_m = sr_true - self.sunrise_measurements
         r_ss_m = ss_true - self.sunset_measurements
@@ -344,9 +344,10 @@ class SunriseSunset:
             self.sunset_measurements - self.sunrise_measurements
         )
         r_dh_e = (ss_true - sr_true) - (self.sunset_estimates - self.sunrise_estimates)
-        rmse = lambda residual: np.sqrt(
-            np.mean(np.power(residual[~np.isnan(residual)], 2))
-        )
+
+        def rmse(residual):
+            return np.sqrt(np.mean(np.power(residual[~np.isnan(residual)], 2)))
+
         results_array = np.array(
             [
                 [rmse(r_sr_m), rmse(r_sr_e)],
@@ -366,12 +367,16 @@ class SunriseSunset:
 
 def sunset_hour_angle(doy, lat):
     b = np.deg2rad((360 / 365) * (doy - 1))
-    delta = (0.006918 - 0.399912 * np.cos(b) + 0.070257 * np.sin(b) -
-             0.006758 * np.cos(2 * b) + 0.000907 * np.sin(2 * b) -
-             0.002697 * np.cos(3 * b) + 0.00148 * np.sin(3 * b))
-    sunset_hour_angle = np.arccos(
-        -np.tan(np.deg2rad(lat)) * np.tan(delta)
+    delta = (
+        0.006918
+        - 0.399912 * np.cos(b)
+        + 0.070257 * np.sin(b)
+        - 0.006758 * np.cos(2 * b)
+        + 0.000907 * np.sin(2 * b)
+        - 0.002697 * np.cos(3 * b)
+        + 0.00148 * np.sin(3 * b)
     )
+    sunset_hour_angle = np.arccos(-np.tan(np.deg2rad(lat)) * np.tan(delta))
     return np.rad2deg(sunset_hour_angle)
 
 
@@ -379,7 +384,7 @@ def num_daylight_hours(doy, lat):
     return (2 / 15) * sunset_hour_angle(doy, lat)
 
 
-def sunrise_sunset_times(lat, lon, doy, gmt_offset, eot='duffie'):
+def sunrise_sunset_times(lat, lon, doy, gmt_offset, eot="duffie"):
     ss_ha = sunset_hour_angle(doy, lat)
     ss_st = 12 + ss_ha / 15
     sr_st = 12 - ss_ha / 15
@@ -389,14 +394,13 @@ def sunrise_sunset_times(lat, lon, doy, gmt_offset, eot='duffie'):
     sr_ct = solar_to_clock(sr_st, lon, doy, gmt_offset, eot)
     ss_ct /= 60
     sr_ct /= 60
-    output_table = pd.DataFrame(data={
-        'day of year': doy,
-        'sunrise times': sr_ct,
-        'sunset times': ss_ct
-    })
+    output_table = pd.DataFrame(
+        data={"day of year": doy, "sunrise times": sr_ct, "sunset times": ss_ct}
+    )
     return output_table
 
-def solar_to_clock(solar_time, lon, doy, gmt_offset, eot='duffie'):
+
+def solar_to_clock(solar_time, lon, doy, gmt_offset, eot="duffie"):
     """
     :param solar_time: solar time in minutes since midnight (float or array)
     :param lon: longitude (float)
@@ -405,29 +409,30 @@ def solar_to_clock(solar_time, lon, doy, gmt_offset, eot='duffie'):
     :param eot: string specifying which equation of time formulation to use
     :return:
     """
-    if eot.lower() in ('duffie', 'd'):
+    if eot.lower() in ("duffie", "d"):
         eot = eot_duffie(doy)
-    elif eot.lower() in ('da_rosa', 'dr'):
+    elif eot.lower() in ("da_rosa", "dr"):
         eot = eot_da_rosa(doy)
     else:
-        print('Please select either Duffie or Da Rosa for the equation of time')
+        print("Please select either Duffie or Da Rosa for the equation of time")
         return
     st = solar_time
     ct = st - eot - 4 * (lon - 15 * gmt_offset)
     return ct
 
 
-def clock_to_solar(clock_time, lon, doy, gmt_offset, eot='duffie'):
-    if eot.lower() in ('duffie', 'd'):
+def clock_to_solar(clock_time, lon, doy, gmt_offset, eot="duffie"):
+    if eot.lower() in ("duffie", "d"):
         eot = eot_duffie(doy)
-    elif eot.lower() in ('da_rosa', 'dr'):
+    elif eot.lower() in ("da_rosa", "dr"):
         eot = eot_da_rosa(doy)
     else:
-        print('Please select either Duffie or Da Rosa for the equation of time')
+        print("Please select either Duffie or Da Rosa for the equation of time")
         return
     ct = clock_time
     st = ct + eot + 4 * (lon - 15 * gmt_offset)
     return st
+
 
 def eot_da_rosa(day_of_year):
     """
@@ -458,8 +463,13 @@ def eot_duffie(day_of_year):
     """
     b = np.deg2rad((360 / 365) * (day_of_year - 1))
     A = 1440 / (2 * np.pi)  # book uses approximation of 229.2
-    eot = A * (0.000075 + 0.001868 * np.cos(b) - 0.032077 * np.sin(b)
-               - 0.014615 * np.cos(2 * b) - 0.04089 * np.sin(2 * b))
+    eot = A * (
+        0.000075
+        + 0.001868 * np.cos(b)
+        - 0.032077 * np.sin(b)
+        - 0.014615 * np.cos(2 * b)
+        - 0.04089 * np.sin(2 * b)
+    )
     try:
         return eot.values
     except AttributeError:

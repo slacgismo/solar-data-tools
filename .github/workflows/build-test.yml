@@ -1,0 +1,70 @@
+name: Test Deployment
+on:
+  push:
+    branches-ignore:
+      - master
+jobs:
+    deploy-pypi:
+        runs-on: ubuntu-latest
+        environment: test-deployment
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+
+          - name: Install Python
+            uses: actions/setup-python@v3
+            with:
+              python-version: '3.7'
+
+          - name: Install Twine
+            run: sudo pip install twine
+
+          - name: Create the distribution
+            run: |
+              git fetch --prune --unshallow --tags
+              sudo python setup.py sdist bdist_wheel
+
+    deploy-conda:
+        runs-on: ubuntu-latest
+# sets default shell to remove need for source to run the conda shell
+        defaults:
+          run:
+            shell: bash -l {0}
+        environment: test-deployment
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+
+# Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
+          - name: Install Miniconda
+            uses: conda-incubator/setup-miniconda@v2
+            with:
+              auto-activate-base: true
+              activate-environment: ""
+              miniconda-version: "latest"
+
+          - name: Install the Conda Dependencies
+            run: |
+              conda config --set always_yes yes --set auto_update_conda false
+              conda update conda
+              conda install conda-build
+
+# run install twice due to client-size to ensure all files downloaded
+# echo yes before login to prevent anaconda bug breaking automation
+# git tags MUST be fetched otherwise output will be blank
+# bash variables cannot be used in github actions, must use actions specific syntax and methods
+          - name: Build the Anaconda Package
+            id: condabuild
+            run: |
+              conda install anaconda-client
+              conda install anaconda-client
+              conda config --set anaconda_upload no
+              echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
+              git fetch --prune --unshallow --tags
+              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c conda-forge -c slacgismo --numpy 1.16.4
+              echo '::set-output name=gitversion::$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)'
+
+          - name: Upload the Anaconda Package
+            id: condaload
+            run: |
+              anaconda upload --force -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}test-*.tar.bz2 --label test
