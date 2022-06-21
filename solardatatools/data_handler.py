@@ -775,7 +775,9 @@ class DataHandler:
         # scores should typically cluster within threshold values, if they
         # don't, we mark normal_quality_scores as false
         scores = np.c_[self.daily_scores.density, self.daily_scores.linearity]
-        db = DBSCAN(eps=0.03, min_samples=max(0.01 * scores.shape[0], 3)).fit(scores)
+        db = DBSCAN(eps=0.03, min_samples=int(max(0.01 * scores.shape[0], 3))).fit(
+            scores
+        )
         # Count the number of days that cluster to the main group but fall
         # outside the decision boundaries
         day_counts = [
