@@ -1,5 +1,5 @@
 name: Deploy Main
-on: 
+on:
   push:
     branches:
       - master
@@ -47,7 +47,7 @@ jobs:
               miniconda-version: "latest"
 
           - name: Install the Conda Dependencies
-            run: | 
+            run: |
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
               conda install conda-build

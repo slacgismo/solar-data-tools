@@ -29,6 +29,7 @@ dependencies:
   - mosek
   - cvxpy
   - scs
+  - anaconda::h5py
   - pvlib-python
   - pip:
     - dill

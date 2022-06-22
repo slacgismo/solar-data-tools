@@ -260,14 +260,14 @@ class SunriseSunset:
                 ho_error.append(np.average(run_ho_errors))
                 if self.true_times is not None:
                     full_fit = rise_set_smoothed(
-                        measured, sunrise_tau=0.05, sunset_tau=0.95
+                        measured, sunrise_tau=0.05, sunset_tau=0.95, solver=solver
                     )
                     sr_full = full_fit["sunrises"]
                     ss_full = full_fit["sunsets"]
                     e1 = sr_true - sr_full
                     e2 = ss_true - ss_full
                     e_both = np.r_[e1, e2]
-                    full_error.append(np.sqrt(np.mean(e_both ** 2)))
+                    full_error.append(np.sqrt(np.mean(e_both**2)))
             else:
                 ho_error.append(1e2)
                 full_error.append(1e2)

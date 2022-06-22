@@ -8,10 +8,10 @@ seaborn
 requests
 pvlib
 cvxpy>=1.1.0
+pv-system-profiler
 # I suggest using the MOSEK convex solver with cvxpy, if possible. For additional information about setting up MOSEK,
 # see here: https://docs.mosek.com/8.1/pythonapi/install-interface.html. A license is required to use this software.
 # Academic license info: https://www.mosek.com/products/academic-licenses/
 # Trial commercial license info: https://www.mosek.com/products/trial/
 Mosek
 statistical-clear-sky
-pv-system-profiler
