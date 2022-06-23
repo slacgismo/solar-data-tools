@@ -12,8 +12,6 @@ jobs:
 
           - name: Install Python
             uses: actions/setup-python@v3
-            with:
-              python-version: '3.7'
 
           - name: Install Twine
             run: sudo pip install twine
