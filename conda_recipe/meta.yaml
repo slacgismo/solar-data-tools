@@ -17,14 +17,14 @@ requirements:
     - pip
     - python
     - scipy
-    - numpy >=1.16
+    - numpy >=1.22
     - pandas
     - seaborn
     - requests
 
   run:
     - scipy
-    - numpy >=1.16
+    - numpy >=1.22
     - pandas
     - seaborn
     - requests

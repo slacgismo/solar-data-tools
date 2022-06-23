@@ -42,7 +42,7 @@ class CapacityChange:
         solver=None,
     ):
         if filter is None:
-            filter = np.ones(data.shape[1], dtype=np.bool)
+            filter = np.ones(data.shape[1], dtype=bool)
         if np.sum(filter) > 0:
             metric = np.nanquantile(data, q=quantile, axis=0)
             # metric = np.sum(data, axis=0)

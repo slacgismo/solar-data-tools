@@ -218,12 +218,12 @@ class SunriseSunset:
                     train_ss = use_set_ss[:split_at_ss]
                     test_sr = use_set_sr[split_at_sr:]
                     test_ss = use_set_ss[split_at_ss:]
-                    train_msk_sr = np.zeros_like(sunrises, dtype=np.bool)
-                    train_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
+                    train_msk_sr = np.zeros_like(sunrises, dtype=bool)
+                    train_msk_ss = np.zeros_like(sunsets, dtype=bool)
                     train_msk_sr[train_sr] = True
                     train_msk_ss[train_ss] = True
-                    test_msk_sr = np.zeros_like(sunrises, dtype=np.bool)
-                    test_msk_ss = np.zeros_like(sunsets, dtype=np.bool)
+                    test_msk_sr = np.zeros_like(sunrises, dtype=bool)
+                    test_msk_ss = np.zeros_like(sunsets, dtype=bool)
                     test_msk_sr[test_sr] = True
                     test_msk_ss[test_ss] = True
                     sr_smoothed = tl1_l2d2p365(

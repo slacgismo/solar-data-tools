@@ -1,7 +1,7 @@
 name: Tests
 on: [push]
 jobs:
-    test-build:
+    run-tests:
         runs-on: ubuntu-latest
         environment: test
         steps:
@@ -18,8 +18,6 @@ jobs:
 
           - name: Install Python
             uses: actions/setup-python@v3
-            with:
-              python-version: '3.7'
 
           - name: Install Dependencies
             run: |
@@ -36,3 +34,60 @@ jobs:
 # Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
             run: sudo coverage run -m unittest
+
+    build-pypi:
+        runs-on: ubuntu-latest
+        needs: run-tests
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+
+          - name: Install Python
+            uses: actions/setup-python@v3
+
+          - name: Install Twine
+            run: sudo pip install twine
+
+          - name: Create the distribution
+            run: |
+              git fetch --prune --unshallow --tags
+              sudo python setup.py sdist bdist_wheel
+
+    build-conda:
+        runs-on: ubuntu-latest
+        needs: run-tests
+# sets default shell to remove need for source to run the conda shell
+        defaults:
+          run:
+            shell: bash -l {0}
+        environment: test-deployment
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+
+# Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
+          - name: Install Miniconda
+            uses: conda-incubator/setup-miniconda@v2
+            with:
+              auto-activate-base: true
+              activate-environment: ""
+              miniconda-version: "latest"
+
+          - name: Install the Conda Dependencies
+            run: |
+              conda config --set always_yes yes --set auto_update_conda false
+              conda update conda
+              conda install conda-build
+
+# run install twice due to client-size to ensure all files downloaded
+# echo yes before login to prevent anaconda bug breaking automation
+# git tags MUST be fetched otherwise output will be blank
+# bash variables cannot be used in github actions, must use actions specific syntax and methods
+          - name: Build the Anaconda Package
+            id: condabuild
+            run: |
+              conda install anaconda-client
+              conda config --set anaconda_upload no
+              git fetch --prune --unshallow --tags
+              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c conda-forge -c slacgismo --numpy 1.22.0
+              echo '::set-output name=gitversion::$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)'

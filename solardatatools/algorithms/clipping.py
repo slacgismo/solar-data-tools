@@ -180,7 +180,7 @@ class ClippingDetection:
         ):
             point_masses[-2] = True
         # Reduce clusters of detected points to single points
-        pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
+        pm_reduce = np.zeros_like(point_masses, dtype=bool)
         for ix in range(len(point_masses) - 1):
             if ~point_masses[ix] and point_masses[ix + 1]:
                 begin_cluster = ix + 1

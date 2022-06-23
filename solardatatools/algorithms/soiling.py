@@ -114,7 +114,7 @@ def soiling_seperation(
         index_set = ~np.isnan(observed)
     else:
         index_set = np.logical_and(index_set, ~np.isnan(observed))
-    # zero_set = np.zeros(len(observed) - 1, dtype=np.bool)
+    # zero_set = np.zeros(len(observed) - 1, dtype=bool)
     eps = 0.01
     n = len(observed)
     s1 = cvx.Variable(n)  # soiling
@@ -215,7 +215,7 @@ def soiling_seperation_old(
         index_set = ~np.isnan(observed)
     else:
         index_set = np.logical_and(index_set, ~np.isnan(observed))
-    # zero_set = np.zeros(len(observed) - 1, dtype=np.bool)
+    # zero_set = np.zeros(len(observed) - 1, dtype=bool)
     eps = 0.01
     n = len(observed)
     s1 = cvx.Variable(n)  # soiling

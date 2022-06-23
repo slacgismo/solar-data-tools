@@ -40,7 +40,7 @@ def find_daytime(data_matrix, threshold=0.01):
 
 def detect_sun(data, threshold):
     scaled_mat = scale_data(data)
-    bool_msk = np.zeros_like(scaled_mat, dtype=np.bool)
+    bool_msk = np.zeros_like(scaled_mat, dtype=bool)
     slct = ~np.isnan(scaled_mat)
     bool_msk[slct] = scaled_mat[slct] > threshold
     return bool_msk

@@ -60,7 +60,7 @@ def make_linearity_scores(data_matrix, capacity, density_baseline):
             n * density_baseline
     )
     # Label detected infill points with a boolean mask
-    infill = np.zeros_like(data_matrix, dtype=np.bool)
+    infill = np.zeros_like(data_matrix, dtype=bool)
     slct = linearity_scores >= 0.1
     reference_diffs = np.tile(modes[0][slct], (data_matrix.shape[0], 1))
     found_infill = np.logical_or(

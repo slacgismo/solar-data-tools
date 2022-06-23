@@ -205,7 +205,7 @@ def tl1_l1d1_l2d2p365(
     if tv_weights is None:
         tv_weights = np.ones(len(signal) - 1)
     if use_ixs is None:
-        use_ixs = np.ones(n, dtype=np.bool)
+        use_ixs = np.ones(n, dtype=bool)
     # selected_days = np.arange(n)[index_set]
     # np.random.shuffle(selected_days)
     # ix = 2 * n // 3
