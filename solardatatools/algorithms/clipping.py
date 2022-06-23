@@ -8,7 +8,7 @@ import numpy as np
 import cvxpy as cvx
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from solardatatools.signal_decompositions import make_l2_ll1d1
+from solardatatools.signal_decompositions import make_l2_l1d2
 
 
 class ClippingDetection:
@@ -180,7 +180,7 @@ class ClippingDetection:
         ):
             point_masses[-2] = True
         # Reduce clusters of detected points to single points
-        pm_reduce = np.zeros_like(point_masses, dtype=np.bool)
+        pm_reduce = np.zeros_like(point_masses, dtype=bool)
         for ix in range(len(point_masses) - 1):
             if ~point_masses[ix] and point_masses[ix + 1]:
                 begin_cluster = ix + 1
@@ -371,7 +371,7 @@ class ClippingDetection:
         return x_rs, y_rs
 
     def make_problem(self, y, weight=1e1):
-        out = make_l2_ll1d1(y, weight=weight)
+        out = make_l2_l1d2(y, weight=weight)
 
         self.problem = out[0]
         self.y_param = out[1]

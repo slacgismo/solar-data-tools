@@ -4,37 +4,42 @@
 This module contains a class for managing a data processing pipeline
 
 """
-import sys
-import traceback
+
+from time import time
+from datetime import timedelta
+from datetime import datetime
+import numpy as np
+import pandas as pd
+import cvxpy as cvx
+from sklearn.cluster import DBSCAN
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import traceback, sys
+from solardatatools.time_axis_manipulation import (
+    make_time_series,
+    standardize_time_axis,
+)
+from solardatatools.matrix_embedding import make_2d
+from solardatatools.data_quality import (
+    make_density_scores,
+    make_linearity_scores,
+    make_quality_flags,
+)
+from solardatatools.data_filling import zero_nighttime, interp_missing
+from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.plotting import plot_2d
+from solardatatools.clear_time_labeling import find_clear_times
+from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.algorithms import (
     CapacityChange,
     TimeShift,
     SunriseSunset,
     ClippingDetection,
 )
-from solardatatools.solar_noon import avg_sunrise_sunset
-from solardatatools.clear_time_labeling import find_clear_times
-from solardatatools.plotting import plot_2d
-from solardatatools.clear_day_detection import find_clear_days
-from solardatatools.data_filling import zero_nighttime, interp_missing
-from solardatatools.data_quality import daily_missing_data_advanced
-from solardatatools.matrix_embedding import make_2d
-from solardatatools.time_axis_manipulation import (
-    make_time_series,
-    standardize_time_axis,
-)
-from time import time
-from datetime import timedelta
-from datetime import datetime
-import numpy as np
-import pandas as pd
-from scipy.stats import mode, skew
-from sklearn.cluster import DBSCAN
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
+from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:
@@ -47,6 +52,7 @@ class DataHandler:
         no_future_dates=True,
         aggregate=None,
         how=lambda x: x.mean(),
+        gmt_offset=None,
     ):
         if data_frame is not None:
             if convert_to_ts:
@@ -97,37 +103,38 @@ class DataHandler:
         else:
             self.num_days = None
             self.data_sampling = None
+        self.gmt_offset = gmt_offset
+        self._initialize_attributes()
+
+    def _initialize_attributes(self):
         self.filled_data_matrix = None
         self.use_column = None
         self.capacity_estimate = None
         self.start_doy = None
         self.day_index = None
         self.power_units = None
-        # "Extra" data, i.e. additional columns to process from the table
-        self.extra_matrices = {}  # Matrix views of extra columns
-        self.extra_quality_scores = (
-            {}
-        )  # Relative quality: fraction of non-NaN values in column during daylight time periods, as defined by the main power columns
-        # Scores for the entire data set
-        self.data_quality_score = (
-            None  # Fraction of days without data acquisition errors
-        )
-        self.data_clearness_score = (
-            None  # Fraction of days that are approximately clear/sunny
-        )
-        # Flags for the entire data set
-        self.inverter_clipping = (
-            None  # True if there is inverter clipping, false otherwise
-        )
-        self.num_clip_points = None  # If clipping, the number of clipping set points
-        self.capacity_changes = (
-            None  # True if the apparent capacity seems to change over the data set
-        )
+        ## "Extra" data, i.e. additional columns to process from the table ##
+        # Matrix views of extra columns
+        self.extra_matrices = {}
+        # Relative quality: fraction of non-NaN values in column during
+        # daylight time periods, as defined by the main power columns
+        self.extra_quality_scores = {}
+        ## Scores for the entire data set ##
+        # Fraction of days without data acquisition errors
+        self.data_quality_score = None
+        # Fraction of days that are approximately clear/sunny
+        self.data_clearness_score = None
+        ##  Flags for the entire data set ##
+        # True if there is inverter clipping, false otherwise
+        self.inverter_clipping = None
+        # If clipping, the number of clipping set points
+        self.num_clip_points = None
+        # True if the apparent capacity seems to change over the data set
+        self.capacity_changes = None
         # True if clustering of data quality scores are within decision boundaries
         self.normal_quality_scores = None
-        self.time_shifts = (
-            None  # True if time shifts detected and corrected in data set
-        )
+        # True if time shifts detected and corrected in data set
+        self.time_shifts = None
         # TZ correction factor (determined during pipeline run)
         self.tz_correction = 0
         # Daily scores (floats), flags (booleans), and boolean masks
@@ -142,6 +149,8 @@ class DataHandler:
         self.time_shift_analysis = None
         self.daytime_analysis = None
         self.clipping_analysis = None
+        self.parameter_estimation = None
+        self.polar_transform = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -159,7 +168,7 @@ class DataHandler:
         max_val=None,
         zero_night=True,
         interp_day=True,
-        fix_shifts=True,
+        fix_shifts=False,
         density_lower_threshold=0.6,
         density_upper_threshold=1.05,
         linearity_threshold=0.1,
@@ -170,13 +179,27 @@ class DataHandler:
         end_day_ix=None,
         c1=None,
         c2=500.0,
-        solar_noon_estimator="com",
+        solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
         daytime_threshold=0.1,
         units="W",
         solver=None,
+        reset=True,
     ):
+        try:
+            x = cvx.Variable()
+            prob = cvx.Problem(cvx.Minimize(cvx.sum_squares(x)))
+            prob.solve(solver="MOSEK")
+        except Exception as e:
+            print("VALID MOSEK LICENSE NOT AVAILABLE")
+            print(
+                "please check that your license file is in [HOME]/mosek and is current\n"
+            )
+            print("error msg:", e)
+            return
+        if reset:
+            self._initialize_attributes()
         self.daily_scores = DailyScores()
         self.daily_flags = DailyFlags()
         self.capacity_analysis = None
@@ -595,9 +618,20 @@ class DataHandler:
         if boolean_index is None:
             print("No mask available for " + column_name)
             return
+        if isinstance(self.data_frame.columns, pd.MultiIndex):
+            num_levels = len(self.data_frame.columns.levels)
+            column_name = tuple([column_name] * num_levels)
+        # If this column has been created previously, overwrite it
+        if column_name in self.data_frame_raw.columns:
+            del self.data_frame_raw[column_name]
+        if column_name in self.data_frame.columns:
+            del self.data_frame[column_name]
+        # Check if we have a daily bix or a sub-daily bix
         m, n = self.raw_data_matrix.shape
         index_shape = boolean_index.shape
+        # sub-daily
         cond1 = index_shape == (m, n)
+        # daily
         cond2 = index_shape == (n,)
         if not cond1 and not cond2:
             print("Boolean index shape does not match the data.")
@@ -620,12 +654,21 @@ class DataHandler:
             bix = np.isin(self.data_frame.index.date, slct_dates)
             self.data_frame[column_name] = False
             self.data_frame.loc[bix, column_name] = True
-        if column_name in self.data_frame_raw.columns:
-            del self.data_frame_raw[column_name]
+
         temp = (self.data_frame[[column_name, self.seq_index_key]]).copy()
         temp = temp.dropna()
+        old_index = self.data_frame_raw.index
+        old_col = self.data_frame_raw[self.seq_index_key]
+        self.data_frame_raw = self.data_frame_raw.set_index(self.seq_index_key)
         temp = temp.set_index(self.seq_index_key)
-        self.data_frame_raw = self.data_frame_raw.join(temp, on=self.seq_index_key)
+        self.data_frame_raw = pd.merge(
+            self.data_frame_raw, temp, left_index=True, right_index=True, how="left"
+        )
+        self.data_frame_raw = self.data_frame_raw[
+            ~self.data_frame_raw.index.duplicated()
+        ]
+        self.data_frame_raw.index = old_index
+        self.data_frame_raw[self.seq_index_key] = old_col
 
     def fix_dst(self):
         """
@@ -719,15 +762,22 @@ class DataHandler:
         density_upper_threshold=1.05,
         linearity_threshold=0.1,
     ):
-        self.daily_flags.density = np.logical_and(
-            self.daily_scores.density > density_lower_threshold,
-            self.daily_scores.density < density_upper_threshold,
+        df, lf = make_quality_flags(
+            self.daily_scores.density,
+            self.daily_scores.linearity,
+            density_lower_threshold=density_lower_threshold,
+            density_upper_threshold=density_upper_threshold,
+            linearity_threshold=linearity_threshold,
         )
-        self.daily_flags.linearity = self.daily_scores.linearity < linearity_threshold
+        self.daily_flags.density = df
+        self.daily_flags.linearity = lf
         self.daily_flags.flag_no_errors()
-
+        # scores should typically cluster within threshold values, if they
+        # don't, we mark normal_quality_scores as false
         scores = np.c_[self.daily_scores.density, self.daily_scores.linearity]
-        db = DBSCAN(eps=0.03, min_samples=max(0.01 * scores.shape[0], 3)).fit(scores)
+        db = DBSCAN(eps=0.03, min_samples=int(max(0.01 * scores.shape[0], 3))).fit(
+            scores
+        )
         # Count the number of days that cluster to the main group but fall
         # outside the decision boundaries
         day_counts = [
@@ -757,7 +807,7 @@ class DataHandler:
         if self.raw_data_matrix is None:
             print("Generate a raw data matrix first.")
             return
-        s1, s2, s3 = daily_missing_data_advanced(
+        s1, s2, s3 = make_density_scores(
             self.raw_data_matrix,
             threshold=threshold,
             return_density_signal=True,
@@ -775,34 +825,13 @@ class DataHandler:
         if self.daily_signals.seasonal_density_fit is None:
             print("Run the density check first")
             return
-        temp_mat = np.copy(self.filled_data_matrix)
-        temp_mat[temp_mat < 0.005 * self.capacity_estimate] = np.nan
-        difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
-        modes, counts = mode(difference_mat, axis=0, nan_policy="omit")
-        n = self.filled_data_matrix.shape[0] - 1
-        self.daily_scores.linearity = counts.data.squeeze() / (
-            n * self.daily_signals.seasonal_density_fit
+        ls, im = make_linearity_scores(
+            self.filled_data_matrix,
+            self.capacity_estimate,
+            self.daily_signals.seasonal_density_fit,
         )
-        # Label detected infill points with a boolean mask
-        infill = np.zeros_like(self.raw_data_matrix, dtype=np.bool)
-        slct = self.daily_scores.linearity >= 0.1
-        reference_diffs = np.tile(modes[0][slct], (self.filled_data_matrix.shape[0], 1))
-        found_infill = np.logical_or(
-            np.isclose(
-                np.r_[np.zeros(self.num_days).reshape((1, -1)), difference_mat][
-                    :, slct
-                ],
-                reference_diffs,
-            ),
-            np.isclose(
-                np.r_[difference_mat, np.zeros(self.num_days).reshape((1, -1))][
-                    :, slct
-                ],
-                reference_diffs,
-            ),
-        )
-        infill[:, slct] = found_infill
-        self.boolean_masks.infill = infill
+        self.daily_scores.linearity = ls
+        self.boolean_masks.infill = im
         return
 
     def score_data_set(self):
@@ -907,7 +936,10 @@ class DataHandler:
         solver=None,
     ):
         self.time_shift_analysis = TimeShift()
-        use_ixs = self.daily_flags.clear
+        if self.data_clearness_score >= 0.1:
+            use_ixs = self.daily_flags.clear
+        else:
+            use_ixs = self.daily_flags.no_errors
         self.time_shift_analysis.run(
             self.filled_data_matrix,
             use_ixs=use_ixs,
@@ -963,6 +995,7 @@ class DataHandler:
 
     def fit_statistical_clear_sky_model(
         self,
+        data_matrix=None,
         rank=6,
         mu_l=None,
         mu_r=None,
@@ -982,7 +1015,12 @@ class DataHandler:
         except ImportError:
             print("Please install statistical-clear-sky package")
             return
-        scsf = SCSF(data_handler_obj=self, rank_k=rank, solver_type=solver_type)
+        scsf = SCSF(
+            data_handler_obj=self,
+            data_matrix=data_matrix,
+            rank_k=rank,
+            solver_type=solver_type,
+        )
         scsf.execute(
             mu_l=mu_l,
             mu_r=mu_r,
@@ -1007,6 +1045,94 @@ class DataHandler:
         measured_energy = np.sum(self.filled_data_matrix, axis=0)
         pi = np.divide(measured_energy, clear_energy)
         return pi
+
+    def setup_location_and_orientation_estimation(
+        self,
+        gmt_offset,
+        day_selection_method="all",
+        solar_noon_method="optimized_estimates",
+        daylight_method="optimized_estimates",
+        data_matrix="filled",
+        daytime_threshold=0.001,
+    ):
+        try:
+            from pvsystemprofiler.estimator import ConfigurationEstimator
+        except ImportError:
+            print("Please install pv-system-profiler package")
+            return
+        est = ConfigurationEstimator(
+            self,
+            gmt_offset,
+            day_selection_method=day_selection_method,
+            solar_noon_method=solar_noon_method,
+            daylight_method=daylight_method,
+            data_matrix=data_matrix,
+            daytime_threshold=daytime_threshold,
+        )
+        self.parameter_estimation = est
+
+    def __help_param_est(self):
+        success = True
+        if self.parameter_estimation is None:
+            if self.gmt_offset is not None:
+                self.setup_location_and_orientation_estimation(self.gmt_offset)
+            else:
+                m = "Please run setup_location_and_orientation_estimation\n"
+                m += "method and provide a GMT offset value first"
+                print(m)
+                success = False
+        return success
+
+    def estimate_longitude(self, estimator="fit_l1", eot_calculation="duffie"):
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_longitude(
+                estimator=estimator, eot_calculation=eot_calculation
+            )
+            return self.parameter_estimation.longitude
+
+    def estimate_latitude(self):
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_latitude()
+            return self.parameter_estimation.latitude
+
+    def estimate_orientation(
+        self,
+        latitude=None,
+        longitude=None,
+        tilt=None,
+        azimuth=None,
+        day_interval=None,
+        x1=0.9,
+        x2=0.9,
+    ):
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_orientation(
+                longitude=longitude,
+                latitude=latitude,
+                tilt=tilt,
+                azimuth=azimuth,
+                day_interval=day_interval,
+                x1=x1,
+                x2=x2,
+            )
+            tilt = self.parameter_estimation.tilt
+            az = self.parameter_estimation.azimuth
+            return tilt, az
+
+    def estimate_location_and_orientation(self, day_interval=None, x1=0.9, x2=0.9):
+        ready = self.__help_param_est()
+        if ready:
+            self.parameter_estimation.estimate_all(
+                day_interval=day_interval, x1=x1, x2=x2
+            )
+            lat = self.parameter_estimation.latitude
+            lon = self.parameter_estimation.longitude
+            tilt = self.parameter_estimation.tilt
+            az = self.parameter_estimation.azimuth
+            return lat, lon, tilt, az
 
     def plot_heatmap(
         self,
@@ -1191,51 +1317,61 @@ class DataHandler:
             xs = np.arange(len(self.daily_signals.density))
         plt.plot(xs, self.daily_signals.density, linewidth=1)
         title = "Daily signal density"
-        if flag == "density":
+        if isinstance(flag, str):
+            if flag == "density":
+                plt.plot(
+                    xs[~self.daily_flags.density],
+                    self.daily_signals.density[~self.daily_flags.density],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", density outlier days flagged"
+            if flag == "good":
+                plt.plot(
+                    xs[self.daily_flags.no_errors],
+                    self.daily_signals.density[self.daily_flags.no_errors],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", good days flagged"
+            elif flag == "bad":
+                plt.plot(
+                    xs[~self.daily_flags.no_errors],
+                    self.daily_signals.density[~self.daily_flags.no_errors],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", bad days flagged"
+            elif flag in ["clear", "sunny"]:
+                plt.plot(
+                    xs[self.daily_flags.clear],
+                    self.daily_signals.density[self.daily_flags.clear],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", clear days flagged"
+            elif flag == "cloudy":
+                plt.plot(
+                    xs[self.daily_flags.cloudy],
+                    self.daily_signals.density[self.daily_flags.cloudy],
+                    ls="none",
+                    marker=".",
+                    color="red",
+                )
+                title += ", cloudy days flagged"
+        else:
             plt.plot(
-                xs[~self.daily_flags.density],
-                self.daily_signals.density[~self.daily_flags.density],
+                xs[flag],
+                self.daily_signals.density[flag],
                 ls="none",
                 marker=".",
                 color="red",
             )
-            title += ", density outlier days flagged"
-        if flag == "good":
-            plt.plot(
-                xs[self.daily_flags.no_errors],
-                self.daily_signals.density[self.daily_flags.no_errors],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", good days flagged"
-        elif flag == "bad":
-            plt.plot(
-                xs[~self.daily_flags.no_errors],
-                self.daily_signals.density[~self.daily_flags.no_errors],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", bad days flagged"
-        elif flag in ["clear", "sunny"]:
-            plt.plot(
-                xs[self.daily_flags.clear],
-                self.daily_signals.density[self.daily_flags.clear],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", clear days flagged"
-        elif flag == "cloudy":
-            plt.plot(
-                xs[self.daily_flags.cloudy],
-                self.daily_signals.density[self.daily_flags.cloudy],
-                ls="none",
-                marker=".",
-                color="red",
-            )
-            title += ", cloudy days flagged"
+            title += ", days flagged"
         if np.logical_and(
             show_fit, self.daily_signals.seasonal_density_fit is not None
         ):
@@ -1398,7 +1534,7 @@ class DataHandler:
         )
         return fig
 
-    def plot_time_shift_analysis_results(self, figsize=(8, 6)):
+    def plot_time_shift_analysis_results(self, figsize=(8, 6), show_filter=True):
         if self.time_shift_analysis is not None:
             use_ixs = self.time_shift_analysis.use_ixs
             plt.figure(figsize=figsize)
@@ -1409,16 +1545,17 @@ class DataHandler:
                 alpha=0.6,
                 label="daily solar noon",
             )
-            plt.plot(
-                self.day_index[use_ixs],
-                self.time_shift_analysis.metric[use_ixs],
-                linewidth=1,
-                alpha=0.6,
-                color="orange",
-                marker=".",
-                ls="none",
-                label="filtered days",
-            )
+            if show_filter:
+                plt.plot(
+                    self.day_index[use_ixs],
+                    self.time_shift_analysis.metric[use_ixs],
+                    linewidth=1,
+                    alpha=0.6,
+                    color="orange",
+                    marker=".",
+                    ls="none",
+                    label="filtered days",
+                )
             plt.plot(
                 self.day_index,
                 self.time_shift_analysis.s1,
@@ -1492,6 +1629,31 @@ class DataHandler:
         ax.set_title(title)
         # print(np.sum(circ_hist[0] <= 1))
         return fig
+
+    def plot_polar_transform(
+        self, lat, lon, tz_offset, elevation_round=1, azimuth_round=2, alpha=1.0
+    ):
+        if self.polar_transform is None:
+            self.augment_data_frame(self.daily_flags.clear, "clear-day")
+            pt = PolarTransform(
+                self.data_frame[self.use_column],
+                lat,
+                lon,
+                tz_offset=tz_offset,
+                boolean_selection=self.data_frame["clear-day"],
+            )
+            self.polar_transform = pt
+        has_changed = np.logical_or(
+            elevation_round != self.polar_transform._er,
+            azimuth_round != self.polar_transform._ar,
+        )
+        if has_changed:
+            self.polar_transform.transform(
+                agg_func=np.nanmean,
+                elevation_round=elevation_round,
+                azimuth_round=azimuth_round,
+            )
+        return self.polar_transform.plot_transformation(alpha=alpha)
 
 
 class DailyScores:

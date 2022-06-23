@@ -98,12 +98,12 @@ class TimeShift:
             solver=solver,
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
-        cond1 = np.isclose(np.max(s2), 0.5)
+        cond1 = jumps_per_year >= 5
         cond2 = c1 is None
         cond3 = self.__recursion_depth < 2
         if cond1 and cond2 and cond3:
-            # Unlikely that constraint should be active or that there are more
-            # than 5 time shifts per year. Try a different random sampling
+            # Unlikely that  there are more than 5 time shifts per year. Try a
+            # different random sampling
             self.__recursion_depth += 1
             self.run(
                 data,
@@ -147,7 +147,7 @@ class TimeShift:
         # set up train/test split with sklearn
         ixs = np.arange(len(metric))
         ixs = ixs[use_ixs]
-        train_ixs, test_ixs = train_test_split(ixs, test_size=0.75)
+        train_ixs, test_ixs = train_test_split(ixs, test_size=0.85)
         train = np.zeros(len(metric), dtype=bool)
         test = np.zeros(len(metric), dtype=bool)
         train[train_ixs] = True
@@ -179,8 +179,9 @@ class TimeShift:
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
-        slct = jpy <= 5
-        best_ix = ixs[slct][np.argmin(hn[slct])]
+        slct = np.logical_and(jpy <= 5, hn <= 0.02)
+        # slct = np.logical_and(slct, rn < 0.9)
+        best_ix = np.nanmax(ixs[slct])
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
@@ -206,11 +207,24 @@ class TimeShift:
                 use_ixs=use_ixs,
                 yearly_periodic=periodic_detector,
                 transition_locs=transition_locs,
-                seas_max=0.5,
+                seas_max=None,
                 solver=solver,
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
+
+    def plot_analysis(self, figsize=None):
+        if self.metric is not None:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure(figsize=figsize)
+            plt.plot(self.metric, linewidth=1, label="metric")
+            plt.plot(self.s1, label="shift detector")
+            plt.plot(self.s1 + self.s2, ls="--", label="SD model")
+            plt.legend()
+            plt.xlabel("day number")
+            plt.ylabel("solar noon [hours]")
+            return fig
 
     def plot_optimization(self, figsize=None):
         if self.best_ix is not None:

@@ -205,7 +205,7 @@ def tl1_l1d1_l2d2p365(
     if tv_weights is None:
         tv_weights = np.ones(len(signal) - 1)
     if use_ixs is None:
-        use_ixs = np.ones(n, dtype=np.bool)
+        use_ixs = np.ones(n, dtype=bool)
     # selected_days = np.arange(n)[index_set]
     # np.random.shuffle(selected_days)
     # ix = 2 * n // 3
@@ -247,7 +247,7 @@ def tl1_l1d1_l2d2p365(
     return s_hat.value, s_seas.value[:n]
 
 
-def make_l2_ll1d1(y, weight=1e1):
+def make_l2_l1d2(y, weight=1e1):
     y_hat = cvx.Variable(len(y))
     y_param = cvx.Parameter(len(y), value=y)
     mu = cvx.Parameter(nonneg=True)

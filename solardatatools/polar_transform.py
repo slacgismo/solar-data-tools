@@ -40,7 +40,9 @@ class PolarTransform:
                 e = "boolean index for data selection must"
                 e += " match length of data series"
                 raise Exception(e)
-        self.tranformed_data = None
+        self.transformed_data = None
+        self._er = None
+        self._ar = None
 
     def normalize_days(self):
         series = self.data
@@ -97,9 +99,15 @@ class PolarTransform:
         estimates = grouped.unstack().fillna(0).T
         # reverse the first axis
         estimates = estimates.iloc[::-1]
-        self.tranformed_data = estimates
+        self.transformed_data = estimates
+        self._er = elevation_round
+        self._ar = azimuth_round
 
-    def plot_transformation(self, figsize=(10, 6)):
-        plt.figure(figsize=figsize)
-        sns.heatmap(self.tranformed_data, ax=plt.gca(), cmap="plasma")
+    def plot_transformation(
+        self, figsize=(10, 6), ax=None, alpha=1.0, cmap="plasma", cbar=True
+    ):
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+        sns.heatmap(self.transformed_data, ax=ax, cbar=cbar, cmap=cmap, alpha=alpha)
         return plt.gcf()

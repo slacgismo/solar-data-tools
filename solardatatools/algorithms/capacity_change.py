@@ -42,7 +42,7 @@ class CapacityChange:
         solver=None,
     ):
         if filter is None:
-            filter = np.ones(data.shape[1], dtype=np.bool)
+            filter = np.ones(data.shape[1], dtype=bool)
         if np.sum(filter) > 0:
             metric = np.nanquantile(data, q=quantile, axis=0)
             # metric = np.sum(data, axis=0)
@@ -71,7 +71,7 @@ class CapacityChange:
             self.labels = None
         else:
             if dbscan_min_samples == "auto":
-                dbscan_min_samples = max(0.1 * len(s1), 3)
+                dbscan_min_samples = int(max(0.1 * len(s1), 3))
             db = DBSCAN(eps=dbscan_eps, min_samples=dbscan_min_samples).fit(
                 s1[:, np.newaxis]
             )
