@@ -1,8 +1,7 @@
 name: Deploy Main
-on: 
-  push:
-    tags:
-      - v*.*.*
+on:
+  release:
+    types: [published]
 jobs:
     deploy-pypi:
         runs-on: ubuntu-latest
@@ -59,7 +58,6 @@ jobs:
           - name: Build the Anaconda Package
             id: condabuild
             run: |
-              conda install anaconda-client
               conda install anaconda-client
               conda config --set anaconda_upload no
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
