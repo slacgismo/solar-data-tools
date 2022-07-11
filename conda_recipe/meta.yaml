@@ -31,7 +31,6 @@ requirements:
     - scikit-learn
     - pvlib
     - cvxpy
-    - statistical-clear-sky
     - pv-system-profiler
 
 about:
