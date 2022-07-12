@@ -21,10 +21,13 @@ jobs:
 
           - name: Install Dependencies
             run: |
-              sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
-              sudo $pythonLocation/bin/python3 -m pip install awscli coverage
-              sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
-              $pythonLocation/bin/python3 -m pip list
+              conda create --name pvi-test
+              conda activate pvi-test
+              conda install python
+              python3 -m pip install -r requirements.txt
+              python3 -m pip install awscli coverage
+              python3 -m pip install setuptools --upgrade
+              python3 -m pip list
 
           - name: Setup Mosek License File
             run: |
@@ -35,7 +38,9 @@ jobs:
 
 # Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
-            run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
+            run: |
+              conda activate pvi-test
+              python3 -m coverage run -m unittest
 
     build-pypi:
         runs-on: ubuntu-latest
