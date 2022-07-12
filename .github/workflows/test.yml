@@ -35,10 +35,10 @@ jobs:
           - name: Install Dependencies
             shell: bash -l {0}
             run: |
-              conda install python
+              conda update python
               python3 -m pip install -r requirements.txt
               python3 -m pip install awscli coverage
-              python3 -m pip install setuptools --upgrade
+              python --version
               python3 -m pip list
 
           - name: Setup Mosek License File
