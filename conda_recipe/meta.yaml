@@ -29,7 +29,7 @@ requirements:
     - seaborn
     - requests
     - scikit-learn
-    - pvlib-python
+    - pvlib
     - cvxpy
     - statistical-clear-sky
     - pv-system-profiler

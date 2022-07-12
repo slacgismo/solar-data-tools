@@ -315,7 +315,7 @@ class ShadeAnalysis:
         agg_by_azimuth = pd.DataFrame(
             data=normalized.T,
             index=np.arange(normalized.shape[1]),
-            columns=np.linspace(0, 1, 2 ** power),
+            columns=np.linspace(0, 1, 2**power),
         )
         agg_by_azimuth["delta"] = my_round(
             delta_cooper(self.dh.day_index.dayofyear.values), 1
@@ -399,7 +399,7 @@ def batch_process(data, mask, power=8, scale=None):
     """
     if scale is None:
         scale = 1
-    N = 2 ** power
+    N = 2**power
     output = np.zeros((N, data.shape[1]))
     xs_new = np.linspace(0, 1, N)
     for col_ix in range(data.shape[1]):
