@@ -2,7 +2,7 @@ name: Tests
 on: [push]
 jobs:
     run-tests:
-        runs-on: macos-latest
+        runs-on: ubuntu-latest
         environment: test
         steps:
           - name: Checkout Repository
@@ -19,38 +19,23 @@ jobs:
           - name: Install Python
             uses: actions/setup-python@v3
 
-          - name: Install Miniconda
-            uses: conda-incubator/setup-miniconda@v2
-            with:
-              auto-activate-base: true
-              activate-environment: ""
-              miniconda-version: "latest"
-
-          - name: Bash
-            shell: bash -l {0}
-            run: |
-              conda info
-              conda list
-
           - name: Install Dependencies
-            shell: bash -l {0}
             run: |
-              conda update python
-              python3 -m pip install -r requirements.txt
-              python3 -m pip install awscli coverage
-              python --version
-              python3 -m pip list
+              sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
+              sudo $pythonLocation/bin/python3 -m pip install awscli coverage
+              sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
+              $pythonLocation/bin/python3 -m pip list
 
           - name: Setup Mosek License File
             run: |
+              sudo mkdir /root/mosek
               mkdir $HOME/mosek
               aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
+              sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
 
 # Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
-            shell: bash -l {0}
-            run: |
-              python3 -m coverage run -m unittest
+            run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
 
     build-pypi:
         runs-on: ubuntu-latest

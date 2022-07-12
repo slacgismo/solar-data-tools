@@ -43,7 +43,7 @@ class TestFitAzimuth(unittest.TestCase):
         expected_output = 1.654457422429566
         func_customized, bounds = select_function(39.4856, None, None)     
         actual_output = run_curve_fit(func=func_customized, keys=['tilt', 'azimuth'], delta=delta_f, omega=omega_f, costheta=costheta_fit, boolean_filter=boolean_filter, init_values=[30, 30], fit_bounds=bounds)[1]
-        np.testing.assert_almost_equal(actual_output, expected_output)
+        np.testing.assert_almost_equal(actual_output, expected_output, decimal=4)
 
 if __name__ == '__main__':
     unittest.main()
