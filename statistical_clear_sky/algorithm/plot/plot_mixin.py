@@ -127,7 +127,7 @@ class PlotMixin(object):
         n = self._power_signals_d.shape[0]
         ax.set_xlim(0, n * (d2 - d1))
         ax.set_ylabel('kW')
-        ax.set_xticks(np.arange(0, n * num_days, 4 * 12))
+        ax.set_xticks(np.arange(0, n * num_days, 4 * n / 24))
         ax.set_xticklabels(np.tile(np.arange(0, 24, 4), num_days))
         ax.set_xlabel('Hour of Day')
         fig = ax.get_figure()
