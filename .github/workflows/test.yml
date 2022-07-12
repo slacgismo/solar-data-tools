@@ -90,5 +90,5 @@ jobs:
               conda install anaconda-client
               conda config --set anaconda_upload no
               git fetch --prune --unshallow --tags
-              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c anaconda --numpy 1.22.0
+              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c anaconda -c pvlib -c slacgismo -c conda-forge --numpy 1.22.0
               echo '::set-output name=gitversion::$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)'
