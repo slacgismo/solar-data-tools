@@ -60,7 +60,7 @@ jobs:
               conda config --set anaconda_upload no
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
               git fetch --prune --unshallow --tags
-              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c conda-forge -c slacgismo --numpy 1.22.0
+              VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c anaconda -c pvlib -c slacgismo -c conda-forge --numpy 1.22.0
               echo '::set-output name=gitversion::$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)'
 
           - name: Upload the Anaconda Package
