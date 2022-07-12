@@ -23,6 +23,7 @@ jobs:
             run: |
               sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
               sudo $pythonLocation/bin/python3 -m pip install awscli coverage
+              sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
               $pythonLocation/bin/python3 -m pip list
 
           - name: Setup Mosek License File
