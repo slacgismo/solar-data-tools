@@ -21,8 +21,9 @@ jobs:
 
           - name: Install Dependencies
             run: |
-              sudo pip install -r requirements.txt
-              sudo pip install awscli coverage
+              sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
+              sudo $pythonLocation/bin/python3 -m pip install awscli coverage
+              $pythonLocation/bin/python3 -m pip list
 
           - name: Setup Mosek License File
             run: |
@@ -33,7 +34,7 @@ jobs:
 
 # Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
-            run: sudo coverage run -m unittest
+            run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
 
     build-pypi:
         runs-on: ubuntu-latest
