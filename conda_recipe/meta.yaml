@@ -31,7 +31,7 @@ requirements:
     - scikit-learn
     - pvlib
     - cvxpy
-    - pv-system-profiler
+    - python
 
 about:
   home: https://github.com/bmeyers/solar-data-tools
@@ -47,3 +47,4 @@ extra:
     - bmeyers
     - derins
     - thistleman
+    - alejandro350
