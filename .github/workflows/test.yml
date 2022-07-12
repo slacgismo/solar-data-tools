@@ -19,10 +19,22 @@ jobs:
           - name: Install Python
             uses: actions/setup-python@v3
 
-          - name: Install Dependencies
+          - name: Install Miniconda
+            uses: conda-incubator/setup-miniconda@v2
+            with:
+              auto-activate-base: true
+              activate-environment: ""
+              miniconda-version: "latest"
+
+          - name: Bash
+            shell: bash -l {0}
             run: |
-              conda create --name pvi-test
-              conda activate pvi-test
+              conda info
+              conda list
+
+          - name: Install Dependencies
+            shell: bash -l {0}
+            run: |
               conda install python
               python3 -m pip install -r requirements.txt
               python3 -m pip install awscli coverage
@@ -38,8 +50,8 @@ jobs:
 
 # Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
+            shell: bash -l {0}
             run: |
-              conda activate pvi-test
               python3 -m coverage run -m unittest
 
     build-pypi:
