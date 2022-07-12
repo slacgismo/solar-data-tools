@@ -1,0 +1,2416 @@
+commit 5f51dfaef0bc103622f5da0f3b6227b130645228
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 12 08:29:07 2021 -0800
+
+    Added try-except block to account for empty locations on json file.
+
+commit 923a06a6f53813c8d18af4c53de0647a2bba147a
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 11 09:16:28 2021 -0800
+
+    Broaenened try except block for pipeline run..
+
+commit c693be9d89043973193b000860041db3674b526f
+Author: Londono <londonoh@pm.me>
+Date:   Wed Mar 10 09:56:35 2021 -0800
+
+    Added site_id from json file to the results table.
+
+commit 172ccca9122a494ae2d8916f9bf91ed8502d7186
+Author: Londono <londonoh@pm.me>
+Date:   Wed Mar 10 08:51:37 2021 -0800
+
+    Added fix time shifts as input arg, created string to boolean function.
+
+commit f6ddf836419f741805b122a3d400df3a6ab25e46
+Author: Londono <londonoh@pm.me>
+Date:   Tue Mar 9 13:27:28 2021 -0800
+
+    Added option to check json file for zip code, orientation and location
+    parameters.
+
+commit 87485e0ef4da225c47f91a4913353c1fd1db0a37
+Author: Londono <londonoh@pm.me>
+Date:   Mon Mar 8 14:40:50 2021 -0800
+
+    Entering file_label made optional.
+
+commit fdfd732d5783309a7ccc84a89c58972326ee7677
+Author: Londono <londonoh@pm.me>
+Date:   Mon Mar 8 12:20:59 2021 -0800
+
+    Added input parameter for pipeline tz correction.
+
+commit 5408fbf4175e9854e1af61f2e11f28cac4483bb5
+Author: Londono <londonoh@pm.me>
+Date:   Mon Mar 8 08:39:51 2021 -0800
+
+    Added option to read from input list.
+
+commit 3efa47d37d57324657faaf44f83355afb7270705
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 5 10:02:51 2021 -0800
+
+    Deleted unwanted keystrokes.
+
+commit 35748ece96e885dee8bab88ad9cac528c4a529a7
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 5 09:57:00 2021 -0800
+
+    Added input parameter to choose number of files to be read.
+
+commit 6ee482339e8f4e73abac2ae8ab61dcf484ed2e3c
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 5 09:25:03 2021 -0800
+
+    Edited text.
+
+commit 6d28be76bbf65d0c89e51023e07f26737852872e
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 5 09:23:04 2021 -0800
+
+    Changed order of input arguments.
+
+commit ab816af64a9c71fe114911a11ca27b626939395c
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 5 09:18:47 2021 -0800
+
+    Deleted print statements.
+
+commit efc84c360e475391d624c108280de847714f0a14
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 5 09:11:45 2021 -0800
+
+    Fixed siteid_to_filename.
+
+commit e3c222bf714120f551e53971a98d0c94959477f9
+Author: Londono <londonoh@pm.me>
+Date:   Fri Mar 5 08:59:07 2021 -0800
+
+    Simplified s3 related input parameters.
+
+commit 947dd02bd32f01350a529deb3ce454ba5112242b
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 4 16:23:45 2021 -0800
+
+    Deleted unsued input variable.
+
+commit b7e49a49d93f3a18f901b3558bcb4e8324a99ff1
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 4 16:15:25 2021 -0800
+
+    Updated restart function.
+
+commit aa93bb382a7eb1d9566d2d4e3cfbbb93bfc3ed33
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 4 11:02:19 2021 -0800
+
+    Created stand alone function to list  unreported files only.
+
+commit 1c1c8e8fe6c8bf332c74553e1cce7de94e4536d4
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 4 10:43:45 2021 -0800
+
+    Started implementation of resume function.
+
+commit f35a5ea26d67ede2cf221b22391a0fdc7d39a2c3
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 4 09:47:45 2021 -0800
+
+    Simplified loops, eliminated need for site_system_dict.
+
+commit 138ab20c333e08b614e200da1d23d9931e792d02
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 4 08:39:49 2021 -0800
+
+    Edited progress bar.
+
+commit cd5eccbd6a5833eec1ec9d544dbc106e956459b5
+Author: Londono <londonoh@pm.me>
+Date:   Thu Mar 4 08:19:13 2021 -0800
+
+    Renamed variable. included nrows kwarg.
+
+commit 8b729428fdc92953f72ccaadcc71f380afc9c3f6
+Author: Londono <londonoh@pm.me>
+Date:   Wed Mar 3 14:55:08 2021 -0800
+
+    Relocated lines.
+
+commit 0579bd9feda457d60892814a3662cd9437a40200
+Author: Londono <londonoh@pm.me>
+Date:   Tue Mar 2 17:38:46 2021 -0800
+
+    Removed test range in loop.
+
+commit 64d7fdae5177d6f34ae7b215b68e55c72f872f48
+Author: Londono <londonoh@pm.me>
+Date:   Tue Mar 2 17:19:06 2021 -0800
+
+    Cleaned redundat variables.
+
+commit a6b0903ac81f3521647ca6cf571d99636c1e3c5c
+Author: Londono <londonoh@pm.me>
+Date:   Tue Mar 2 14:06:26 2021 -0800
+
+    Added kwarg file label identifier to create_site_list.
+
+commit 28799771c9aac20398be6b943ee29240c34410b3
+Author: Londono <londonoh@pm.me>
+Date:   Tue Mar 2 13:03:49 2021 -0800
+
+    Removed constellation specific functions, restructured results table.
+
+commit 126e611ab324a2d8373aa185d612fb3727addc4b
+Author: Londono <londonoh@pm.me>
+Date:   Tue Mar 2 12:54:22 2021 -0800
+
+    Create generic site list generating function.
+
+commit 0254419bf4b0d11a17b7bd109bad650270e51a38
+Author: Londono <londonoh@pm.me>
+Date:   Mon Mar 1 12:56:39 2021 -0800
+
+    Added parameter definitions.
+
+commit 5f9829629a65807ba2dd09a02139fa8dbb7f4718
+Author: Londono <londonoh@pm.me>
+Date:   Mon Mar 1 11:15:03 2021 -0800
+
+    Corrected label name, added progress bars.
+
+commit c866d28bbcb1987c7203de11c1b33cf227603f59
+Author: Londono <londonoh@pm.me>
+Date:   Fri Feb 26 18:00:57 2021 -0800
+
+    Implemented site list generation option, Reorganized file structure.
+
+commit 8d57768790fbd5f6c1767cddf2ef0590bdb1bade
+Author: Londono <londonoh@pm.me>
+Date:   Thu Feb 25 16:09:16 2021 -0800
+
+    Added functions to compile site list from site report.
+
+commit 796a233b160863feb617d2591e25c5e5b9e7a430
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 24 11:51:34 2021 -0800
+
+    Made all input arguments explicit.
+
+commit c08db13109ef6904d2c0aa6ee2074442d7a31b61
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 24 11:19:29 2021 -0800
+
+    Moved loops out of if __name__, created functions.
+
+commit 91b02afb4ac02b9cafbd9fb07b9aad1521987160
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 23 13:30:16 2021 -0800
+
+    Removed unused variable.
+
+commit 195da3bf74c439ae97b39cd66c81d3de3c90bcf0
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 23 12:31:37 2021 -0800
+
+    Added explanatory text for input aarguments/
+
+commit 75d008de4e2fd788f1c6cf6e995759d8bf3e667c
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 23 11:39:53 2021 -0800
+
+    Removed hard coded variables.
+
+commit aacd0b9475209aa6e3c44b924d58d82589726f79
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 23 09:36:42 2021 -0800
+
+    Fixe incorrect index.
+
+commit beb0f45fac9829559bd93d3d4d715ffa3bbab599
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 23 09:35:46 2021 -0800
+
+    Fixed imports exetension.
+
+commit 960df3c538a00ba2bbb5f4b970ae4aa59a7e4d33
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 23 09:23:44 2021 -0800
+
+    Added function to get and compile external data.
+
+commit 70730d610e105908c3cf081761d4283539220cbe
+Author: Londono <londonoh@pm.me>
+Date:   Mon Feb 22 16:15:35 2021 -0800
+
+    Added function to check for when job finishes.
+
+commit 062a8ab9bdfe800f5a3357e2a618ff77f611c99e
+Author: Londono <londonoh@pm.me>
+Date:   Mon Feb 22 10:38:30 2021 -0800
+
+    Renamed files.
+
+commit fe1582498baa3292efcd6f7731e4e5c3a2cc4714
+Author: Londono <londonoh@pm.me>
+Date:   Mon Feb 22 10:36:37 2021 -0800
+
+    Removed reduntant variables, created global output variable.
+
+commit 59da5db4fba0d7345921a4d70a0fc3265d459183
+Author: Londono <londonoh@pm.me>
+Date:   Mon Feb 22 09:16:56 2021 -0800
+
+    Moved helper files to module, renamed files.
+
+commit 0e6cf9a51b3a67a7942d5a7e0fa2a9ad8d85c3ac
+Author: Londono <londonoh@pm.me>
+Date:   Fri Feb 19 15:15:23 2021 -0800
+
+    Modified dynamic file location.
+
+commit c04b69ca54dc8344dd3888fedb7e64f7a8f5e974
+Author: Londono <londonoh@pm.me>
+Date:   Fri Feb 19 14:21:44 2021 -0800
+
+    Corrected error in main loop, removed unused arguments.
+
+commit c383956a4c220511d0855b6cb5d5883379216765
+Author: Londono <londonoh@pm.me>
+Date:   Fri Feb 19 13:46:41 2021 -0800
+
+    Moved hard coded values to sys arguments.
+
+commit 479e0705af06c6125cf4b99e3942c197a213b276
+Author: Londono <londonoh@pm.me>
+Date:   Fri Feb 19 12:37:48 2021 -0800
+
+    Input run script is now an input argument.
+
+commit f3e0f053fe957fe9d3d53c37d987bb08469180c0
+Author: Londono <londonoh@pm.me>
+Date:   Fri Feb 19 11:49:29 2021 -0800
+
+    Restructured argument calling.
+
+commit 07a4613fa1916820aa4ec5461e34ee855674a3d4
+Author: Londono <londonoh@pm.me>
+Date:   Thu Feb 18 18:02:00 2021 -0800
+
+    local script now accessed directly from local github repository.
+
+commit 8335e2ef3e7094e2666dea0190fb25180c3e2f80
+Author: Londono <londonoh@pm.me>
+Date:   Thu Feb 18 13:45:54 2021 -0800
+
+    Modified to avoid hard coded locations.
+
+commit 355daf617af1386a5cb8257a5cc0bb6542b9cc9e
+Author: Londono <londonoh@pm.me>
+Date:   Thu Feb 18 10:06:14 2021 -0800
+
+    Implemented command line args, added config.
+
+commit b49f6dfad0782e3c6205ea755bfff9e344212d70
+Author: Londono <londonoh@pm.me>
+Date:   Thu Feb 18 09:05:22 2021 -0800
+
+    Implemented sys.arg input arguments.
+
+commit 483888c5fcf6fd85e11813e8ed7abe8a896174c0
+Author: Londono <londonoh@pm.me>
+Date:   Thu Feb 18 08:26:04 2021 -0800
+
+    Changed except error.
+
+commit 38368f0432254b48f63da6abc02e36d9b043b159
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 14:21:10 2021 -0800
+
+    Used if __name__ in longitude script, updated functions.
+
+commit af3023c515af4e24ce5701b329e34ae5a86032f1
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 14:12:20 2021 -0800
+
+    Removed run_pipeline.
+
+commit 99b73d2a845770b7694035a8aa41444adfddc089
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 13:40:42 2021 -0800
+
+    Moved run_pipeline to functions.
+
+commit ce3634c3bdfe849cd2ca54df9665c2cb0d0f35c4
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 13:31:00 2021 -0800
+
+    Updated functions.
+
+commit 7a6d1cc7bfde4af7d30b6e4eeb1e7896c74c9540
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 11:40:57 2021 -0800
+
+    Split and renamed functions.
+
+commit 31890c9408e6836499ac27e6c2fd03ab9e925b0f
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 11:07:05 2021 -0800
+
+    Renamed variables, fixed bugs in functions.
+
+commit 44c17c3c9d25b3ff0a01a5b7e887333796af1061
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 10:33:41 2021 -0800
+
+    Moved functions to separate file.
+
+commit e4a9fec7295fe1bf054747c6c567098b357e7ab8
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 10:15:51 2021 -0800
+
+    Moved some procedures to funtions.
+
+commit 3b3cbcf09b28ea942b9192fc141dab1d6595796b
+Author: Londono <londonoh@pm.me>
+Date:   Wed Feb 17 09:49:40 2021 -0800
+
+    Updated report script with if __name__ statement.
+
+commit 06d7ccc832b45d860d0cb71ca3c2d4bfb96fca7b
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 16 14:07:18 2021 -0800
+
+    Changed way to call longitude script.
+
+commit 8487b8d535b046990d0a37b43114163d3bf0938d
+Author: Londono <londonoh@pm.me>
+Date:   Tue Feb 16 11:18:59 2021 -0800
+
+    Added partitioning scripts to run in AWS.
+
+commit 2861762f7b827c19259b7f55c39f6f434d28f1f4
+Author: Londono <londonoh@pm.me>
+Date:   Mon Feb 8 14:33:01 2021 -0800
+
+    Added site_report, updated lon, lat scripts.
+
+commit 25fe0911099218db5703982589af5b9badbe3ea7
+Author: Londono <londonoh@pm.me>
+Date:   Tue Jan 26 13:03:24 2021 -0800
+
+    Added longitude and latitude scripts.
+
+commit 88b105eb273ae62b63d643c6a50ab2db1e27e260
+Merge: a81938b 973ead3
+Author: alejandro350 <londonoh@pm.me>
+Date:   Tue Oct 13 12:55:42 2020 -0700
+
+    Merge pull request #10 from slacgismo/draft
+    
+    Draft
+
+commit 973ead359fc31f1b29ea746c11d2191400d1d01b
+Author: alh <londonoh@pm.me>
+Date:   Tue Oct 13 10:56:14 2020 -0700
+
+    Consolidated reduntant variable.
+
+commit bf29d0e2ab7bff5ba4c0b9c86aaf4f9dd5e5ab72
+Author: alh <londonoh@pm.me>
+Date:   Thu Oct 8 07:59:12 2020 -0700
+
+    Renamed 'estimates' and 'measuerements' methods to 'optmized-estimates' and 'optimized-measuerements'.
+
+commit ce26c4584dfbcb58ff5e8343e7e99932baead65b
+Author: alh <londonoh@pm.me>
+Date:   Tue Oct 6 15:27:06 2020 -0700
+
+    Replaced 'Hag' and 'Haghdadi' by 'de_rosa'.
+
+commit 12d224c694d9a4e6f87aa7f55816853bf3d225be
+Author: alh <londonoh@pm.me>
+Date:   Tue Oct 6 08:55:19 2020 -0700
+
+    Implemented day selection in estimator.
+
+commit ac417dc19d1dc2465b460c3cb3586ab2654cfb9c
+Author: alh <londonoh@pm.me>
+Date:   Mon Oct 5 08:43:41 2020 -0700
+
+    Added error calculation in miles.
+
+commit 401b21530833f3381101e3948f9ad2e841e9b6c5
+Author: alh <londonoh@pm.me>
+Date:   Fri Oct 2 13:51:08 2020 -0700
+
+    Implemented day_selection_method for latitude estimation.
+
+commit 37b9f5db8fcba6849803c796ddb561d0bf7b05b6
+Author: alh <londonoh@pm.me>
+Date:   Fri Oct 2 13:26:39 2020 -0700
+
+    Introduced masks for day selection method.
+
+commit cb4a13889c74bae44e480b9b5971b1820c0b84a6
+Author: alh <londonoh@pm.me>
+Date:   Fri Oct 2 10:41:32 2020 -0700
+
+    Corrected capitalization.
+
+commit e33faa6dbcb30843ece8a9940b5b200234b6f0ae
+Author: alh <londonoh@pm.me>
+Date:   Thu Sep 24 12:38:28 2020 -0700
+
+    Added error calculation in miles.
+
+commit eb56ba63a65fa188c0afec7973b09d67f7eb5403
+Author: alh <londonoh@pm.me>
+Date:   Thu Sep 24 12:35:53 2020 -0700
+
+    Includer error in miles.
+
+commit b7ca7ac5709fb28e2331f1cb4c72ff91468bcce6
+Author: alh <londonoh@pm.me>
+Date:   Tue Sep 22 10:47:22 2020 -0700
+
+    Modified method to handle nan daylight_hours.
+
+commit 4723257d48ce31b2751ae91efc81c6a554f25b06
+Author: alh <londonoh@pm.me>
+Date:   Wed Sep 16 13:29:09 2020 -0700
+
+    Added underscore to data_matrix.
+
+commit cdb060589ddbe1f32b9578eda358e46819ff5500
+Author: alh <londonoh@pm.me>
+Date:   Thu Sep 10 13:57:12 2020 -0700
+
+    Notebook illustrating lon. and lat. calculation.
+
+commit c26fb2f58a85100fe283d8df86a2209b72fcd239
+Author: alh <londonoh@pm.me>
+Date:   Wed Sep 9 08:49:17 2020 -0700
+
+    Moved hours daylight calculation to algorithms.
+
+commit 8e2bcc6657b56a7ea85cec692f4c54d6b60f21b3
+Author: alh <londonoh@pm.me>
+Date:   Tue Sep 8 08:03:32 2020 -0700
+
+    Imported find_daytime.
+
+commit 0dc8fb5ebdf6ef4707f2e8d6ec0e168a7e8cd82b
+Author: alh <londonoh@pm.me>
+Date:   Fri Sep 4 14:49:43 2020 -0700
+
+    Replaced self.data_handler for local  variable dh.
+
+commit 6da9b52b194a43441e52cf6d97cd2bd7942878a2
+Author: alh <londonoh@pm.me>
+Date:   Fri Sep 4 14:45:17 2020 -0700
+
+    Added latitude helper function.
+
+commit 95aaa48eb7ad8cbc44e1d0ac8b356219a6e8c239
+Author: alh <londonoh@pm.me>
+Date:   Fri Sep 4 11:07:44 2020 -0700
+
+    Changed data handler reference to class variable.
+
+commit 20103ef5592a86f866e4d6d4cee7ec8052a13980
+Author: alh <londonoh@pm.me>
+Date:   Fri Sep 4 10:06:16 2020 -0700
+
+    Added raw and filled data matrix options.
+
+commit a81938babe619a71ef2a45c73751c7e83bbfd287
+Author: alh <londonoh@pm.me>
+Date:   Fri Sep 4 09:26:02 2020 -0700
+
+    Corrected np.nan bug in measurements calculation.
+
+commit 23f8aa88b044d65bb374c349c408e11eb632d658
+Merge: 9c42046 b962d9d
+Author: alejandro350 <londonoh@pm.me>
+Date:   Thu Sep 3 11:28:17 2020 -0700
+
+    Merge pull request #9 from slacgismo/draft
+    
+    Draft
+
+commit b962d9dcace52d0476be9c51fbd1ea0b5e95e639
+Author: alh <londonoh@pm.me>
+Date:   Thu Sep 3 11:12:58 2020 -0700
+
+    Corrected 'mean of empty slice' warning issue.
+
+commit 0b0f4cb97fe8e5e6252de1e666782b61695030dd
+Author: alh <londonoh@pm.me>
+Date:   Wed Sep 2 16:54:31 2020 -0700
+
+    Added periods to docstrings.
+
+commit fadca46dfc8bead6abd44a465b9d5e077a2b88c3
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 16:36:18 2020 -0700
+
+    Added periods in docstring.
+
+commit acb66d2b9638de33d44245d3b7c070a12f94b9f4
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 16:18:46 2020 -0700
+
+    Shortened input values to raw and filled.
+
+commit 4f3a718b34e918fb47b8aef0d118ed0efe2179c5
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 13:20:25 2020 -0700
+
+    Corrected spelling in notebook introduction.
+
+commit 3aabc98093b1c311ae49ef681c642db7cd88fb7a
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 13:07:44 2020 -0700
+
+    Renamed threshold_method input parameter.
+
+commit 3a5f1c2efb50bd8e0aa2e1b16ddd1a585fe688d2
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 13:05:12 2020 -0700
+
+    Added meassurements solar noon option.
+
+commit b76cb5b0a4345ae4acb5156f26bd1fe265a48648
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 11:49:08 2020 -0700
+
+    Added space.
+
+commit c95dd2afc3556b00bd5756e3a595336b3f838b6f
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 11:36:10 2020 -0700
+
+    Implemented calculation from raw and filled matrix.
+
+commit a9c5906516de3292d897a754b22755411304a774
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 11:23:01 2020 -0700
+
+    Added data matrix selection to results.
+
+commit 6db1a962e02e813a1a95daa27af83bbff836f9e5
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 11:19:52 2020 -0700
+
+    Added loop to calculate from raw and filled matrix.
+
+commit d980e2f3248cedd2a381cbbdf5b3d207df9ca4ee
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 11:00:54 2020 -0700
+
+    Simplified to a single optimized method.
+
+commit 4d4e9992a49b380fc025bc6e26a6bbc209c06009
+Merge: f5e2ac1 80c5869
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Sep 2 09:52:56 2020 -0700
+
+    Merge branch 'draft' of github.com:slacgismo/pv-system-profiler into draft
+
+commit f5e2ac1a3b275996db9d6e986d5b1c62d081cfc4
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue Sep 1 14:22:55 2020 -0700
+
+    Added filled and raw data matrix options to inputs.
+
+commit 80c5869ca40426b2bf3507d98fe00c1fd70e811b
+Merge: f7d3ac8 3aecce8
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Sep 1 13:25:14 2020 -0700
+
+    Merge pull request #8 from slacgismo/bennet
+    
+    Starting a user-facing tool for parameter estimation
+
+commit 3aecce8774eee51d657592d52e594f772b2945b1
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Sep 1 13:21:50 2020 -0700
+
+    all days uses no_errors flag
+
+commit 8392c064f347647fda405b77344559e87e28bfea
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Sep 1 12:06:33 2020 -0700
+
+    first example notebook
+
+commit 5fd3e8b681f527e7dbb5a595d4b1e58b2da696c6
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Sep 1 12:06:13 2020 -0700
+
+    stop ignoring notebooks
+
+commit b89fea98832ca826547302a4e4d22220416d78a9
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Sep 1 12:04:08 2020 -0700
+
+    all days should use no_errors flag
+
+commit 3b1634612e33df448a16d1287da6b3ffc242d3b2
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Sep 1 12:02:55 2020 -0700
+
+    ignoring pickle data files
+
+commit 6ad680068e7132f0e7a26867d645dee9d716329d
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Sep 1 10:37:07 2020 -0700
+
+    First commit of longitude estimation tool
+
+commit f7d3ac8fc1d066ecb99b5ee4e0b95ed32263c60f
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Aug 31 15:57:53 2020 -0700
+
+    Corrected nan results for measurements case.
+
+commit 5d4611470c82331d3ee2607aef1b9bef032dc829
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Aug 31 15:36:13 2020 -0700
+
+    Added optimized_raw and optimized_filled methods.
+
+commit 92c3adfbc5864388a82491b5c94542cebbb243d9
+Author: alh <a@alhs-air.lan>
+Date:   Tue Aug 25 15:42:41 2020 -0700
+
+    Deleted blank line.
+
+commit 2d55ecdc77babbfe1bf391f267e210913a8bdcbb
+Author: alh <a@alhs-air.lan>
+Date:   Tue Aug 25 13:10:52 2020 -0700
+
+    Deleted print statement.
+
+commit 74c2264cdc2287bc2d620721dfec8c5bdeb49147
+Author: alh <a@alhs-air.lan>
+Date:   Tue Aug 25 12:50:03 2020 -0700
+
+    Added meassurements daylight method.
+
+commit ba5df0f9e5ec47f0014d9566f9822ffee48f3c59
+Author: alh <a@alhs-air.lan>
+Date:   Tue Aug 25 09:53:31 2020 -0700
+
+    Included optimized threshold in table.
+
+commit e56a6e26e8f52a2a5c6f0c677b2050846e5faab3
+Author: alh <a@alhs-air.lan>
+Date:   Mon Aug 24 16:52:08 2020 -0700
+
+    Corrected elif bug.
+
+commit 9c42046d7b50d281fece2a12abd8980a27091299
+Merge: 5e629a5 55814f5
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Mon Aug 24 16:26:49 2020 -0700
+
+    Merge pull request #7 from slacgismo/feature
+    
+    Feature
+
+commit b36d008a745ee3b6969df89b71291093cde5f603
+Author: alh <a@alhs-air.lan>
+Date:   Mon Aug 24 14:29:36 2020 -0700
+
+    Replaced if by elif statements.
+
+commit edb60010f8365136ba7eb886aa5a7f07f2badf82
+Author: alh <a@alhs-air.lan>
+Date:   Mon Aug 24 07:42:34 2020 -0700
+
+    Added optimized method for daylight hours calculation.
+
+commit 2162e8cb171927398969ee0926776cee9e0e7a43
+Author: alh <a@alhs-air.lan>
+Date:   Fri Aug 21 10:44:07 2020 -0700
+
+    Created placeholder for optimized thres. method, updated docstrings.
+
+commit 2383e4845c5c818a2848d3c338d80a30735a839f
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Aug 20 12:48:13 2020 -0700
+
+    Implemented solar noon 'optimized' method algorithm.
+
+commit f95959a76cc7f1af3041db052c9cd42f92a9517a
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Aug 20 11:49:36 2020 -0700
+
+    Created solar noon method 'optimized' and place holder.
+
+commit 5e629a51cf21f616c6e704544c19db1edf01b875
+Merge: 6dd320c 6dbef8d
+Author: alejandro350 <63417450+alejandro350@users.noreply.github.com>
+Date:   Wed Aug 19 16:14:03 2020 -0700
+
+    Merge pull request #6 from slacgismo/draft
+    
+    Draft
+
+commit 6dbef8dfcf36d98366311b4f9c415f76f752b58a
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Aug 19 13:49:12 2020 -0700
+
+    Renamed function to name determine_keys.
+
+commit fb0ba28f645ba68be06981264d4a04ed33272fcf
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 19 13:12:39 2020 -0700
+
+    Introduced azimuth periodicity for estimate to be within bounds.
+
+commit 0f4639deb30b5f95d9f83c288b7fa90bcbc36073
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 19 13:10:41 2020 -0700
+
+    Changes method to calculate periodic azimuth value that is within bounds.
+
+commit 6262d751ba005257021d3fa4a0899e7c05461cda
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 19 09:08:39 2020 -0700
+
+    Moved functions selecting dynamic values to algorithms/.
+
+commit f6d19ccf2296f2837f07d5647687581ed22cbdfa
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 19 08:04:24 2020 -0700
+
+    Deleted commented line.
+
+commit 47a9e0528b6f9260c2d025ee166f75e9fcef32dc
+Author: alh <a@alhs-air.lan>
+Date:   Tue Aug 18 13:14:04 2020 -0700
+
+    Introduced while loop and redefined bounds to avoid azimuth locking on bound.
+
+commit 6dd320cfc34e2b0921d8c19c3b71fb208a6a285f
+Merge: 8191f60 8341c44
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Fri Aug 14 10:39:35 2020 -0700
+
+    Merge pull request #4 from slacgismo/draft
+    
+    Huge effort, thank you!
+
+commit 8341c44b8026e354ae5dcf37f656e9d194cccb3d
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Aug 13 14:49:55 2020 -0700
+
+    Condensed two functions into a single one.
+
+commit 9d64fdeafadc9799ad9b3f6e6443d93b12efd53a
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Aug 13 10:11:02 2020 -0700
+
+    Added space to docstring.
+
+commit 3c67ada6deceb552da845a347164c758cc51cab8
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Aug 13 10:05:53 2020 -0700
+
+    Changed docstring quotation marks.
+
+commit 518e1db96e1ec86e0c32822b9befab77d643d11e
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Aug 13 09:54:07 2020 -0700
+
+    Renamed nrandom_initial variable.
+
+commit 2326189ccaa007a0f640a29bfe512180de674163
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Aug 13 08:33:56 2020 -0700
+
+    Updated docstring.
+
+commit d35c143f0e615b9f4d6d56cd625605bacbb00b6c
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 12 15:46:20 2020 -0700
+
+    Added capability to input list of initial values.
+
+commit aa19eeec45b3d0afaa20bbfb48c469e3221f5e0d
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 12 12:54:52 2020 -0700
+
+    Changed labels in results table.
+
+commit 50ee999a51a65d30e4d15d013ffdee949dde5f1c
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 12 12:42:36 2020 -0700
+
+    Modified and added doctstrings.
+
+commit 9359bb6201d8c4a23f5e57d3adc226bca424528b
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 12 12:38:45 2020 -0700
+
+    Modified docstring.
+
+commit b712e1c1b11bfb89effe4f4ef72048f219924469
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 12 12:33:22 2020 -0700
+
+    Updated doctstring.
+
+commit 3e42334aa3d5ec3b38a9a9258b99a105ffcbb92d
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 12 12:31:25 2020 -0700
+
+    Eliminated newline.
+
+commit 2a65625084b6d9cf649d119e53c5c41ff5252853
+Author: alh <a@alhs-air.lan>
+Date:   Wed Aug 12 10:54:58 2020 -0700
+
+    Added initial values to results table.
+
+commit d85344b6bfed808108a0a1da8ba2e25f34e7b9d3
+Author: alh <a@alhs-air.lan>
+Date:   Tue Aug 11 14:09:01 2020 -0700
+
+    Introduced loop for multiple calculations with different lta initial values.
+
+commit 8c442f2c450ad48a391c7096d00c7d91dae19706
+Author: alh <a@alhs-air.lan>
+Date:   Mon Aug 10 10:40:25 2020 -0700
+
+    Added option to calculate random or default initial values.
+
+commit b61e06fa367cc341bf420a81c5369647b8943aa5
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 28 10:55:39 2020 -0700
+
+    Added capability to perform fitting using randonly generated init_values.
+
+commit 66b02d9d834e397b74888e30370c0fed273c59f7
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 28 09:02:00 2020 -0700
+
+    Moved init_values selection out of lambda_functions.
+
+commit 62f78990b6ad5d735fc3739a882047c4060c11be
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 27 10:42:17 2020 -0700
+
+    Corrected indentation.
+
+commit 2bba4372723191c50db28341a9ce1f6160bb9a1f
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jul 24 10:33:14 2020 -0700
+
+    Created stand alone function to determine unknowns. Simplified lambda_functions.
+
+commit 373192ae498c97ea086e470f6cd8a94932e191a5
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 22 11:17:15 2020 -0700
+
+    Added Try and Except statement to handle curve_fit errors.
+
+commit 939cc14b2bb3a5ab68dd27ec85d4d9430880d620
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 21 10:55:28 2020 -0700
+
+    Corrected bug in conversion to Degrees and docstring typo.
+
+commit 346276741a0a7c438d38c1c88040c40480444a57
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 21 08:28:55 2020 -0700
+
+    Converted delta from Degrees to Radians for lat calculation.
+
+commit a6bcdeb59fa4b8723f4eee7faa50de77b3408238
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 14:13:15 2020 -0700
+
+    Added "in Degrees" to docstrings for input in Degrees.
+
+commit 48a7e607427ddaa68ee06af4ac278a1a9147d545
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 12:53:59 2020 -0700
+
+    Simplified calculate_costheta.
+
+commit 6676dcaa3b09db3d4e37d83c9fbbe51fec5a8fa3
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 10:37:01 2020 -0700
+
+    Delet calculation output now in degrees.
+
+commit 658f6242223cef5304698dc6d8a2bf6151928118
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 10:26:48 2020 -0700
+
+    Omega calculation output now in degrees.
+
+commit 893437e8ec48c6aa6b542f7814cdd7f5161ffbf4
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 10:18:58 2020 -0700
+
+    Deleted accidentally characters.
+
+commit 431220ef682e2f2fd85b52296c7606f6f3d1d9c5
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 09:38:54 2020 -0700
+
+    Introduced division assignment.
+
+commit bfefe343c042d0a38226e775bb3ebf3d2b9dfb38
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 09:32:55 2020 -0700
+
+    Rephrased warning message.
+
+commit 2dd82e09681e51899334dc186ccaa7f8e42d3453
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 09:18:43 2020 -0700
+
+    Renamed find_omega to calculate_omega.
+
+commit dbf60a73f6fa296a667b5fdcde69521733504e98
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 09:10:29 2020 -0700
+
+    Inroduced np.pi, added comment about tilt bound to docstring.
+
+commit ee4700df454383e6386b7d130c5ffbc4d3a8f29f
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 08:28:32 2020 -0700
+
+    Moved run_ruve_fit to algorithms/angle_of_incidence/curve_fitting.py.
+
+commit be8f7ba9e66b825eccda58168133ba30a6e7ea82
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 20 08:16:23 2020 -0700
+
+    Moved find_fit_costheta to algorithms/performance....estimation.py.
+
+commit a989f8d9592cbed07acf5c2a4182e579432bf9a5
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 15 09:40:40 2020 -0700
+
+    Added spaces.
+
+commit ba4fdb3a4fda1efe5d39c84004c0d9d487577a93
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 15 09:35:47 2020 -0700
+
+    Deleted repeated variable assigment, renamed phi to latitude_true_value.
+
+commit e7fd4fe9f2c1b32bfce23f4c615defa4d69b6d30
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 15 09:29:27 2020 -0700
+
+    Deleted spaces.
+
+commit cf28d594bdb1a68798214101b2a68d928705df7c
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 15 09:04:20 2020 -0700
+
+    Renamed phi, beta and gamma to latitude, tilt and azimuth for true_value variables.
+
+commit 0405119910abfde0be4410a49d423cba398b5dfd
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 15 08:53:36 2020 -0700
+
+    Simplified calculate_costheta.
+
+commit a67bd3c982ece23ccbb42ff7e087d25e724a117c
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 13 11:49:21 2020 -0700
+
+    Renamed variables for clarity.
+
+commit 4d88c98e4fceb1d6b7b8452e84b48d0ead433c1e
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jul 13 11:41:46 2020 -0700
+
+    deleted space.
+
+commit e534af774b744dcefe914cf3f8cd29f37d0e826b
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 13 10:19:52 2020 -0700
+
+    deleted '(degrees)' from docstrings, formating, spacing.
+
+commit 372ddb33a09b51dc28c0449d14bb6195ae4a7f91
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jul 13 09:58:52 2020 -0700
+
+    Modified ground truth calculation input method,  added docstring.
+
+commit 36b2690f8d203c1e40a04bd6d5e9f93240f131fb
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jul 13 09:23:36 2020 -0700
+
+    added docstrings.
+
+commit 8b7a8bfeac4d8431664c2638954a30ac89befc04
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jul 13 08:30:39 2020 -0700
+
+    added None default value to input variables.
+
+commit d93ede9a376660dc62290f7298034f1d8b6c2975
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jul 13 08:26:49 2020 -0700
+
+    added docstring.
+
+commit a7a7d22590ee867b341d8d7d8686c070a8d9db47
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jul 13 08:16:53 2020 -0700
+
+    added and relocated docstrings.
+
+commit 0d2410c626afdfb02d4a8004ddf9851b24d013c9
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Fri Jul 10 13:14:30 2020 -0700
+
+    added comment on theoretical angle boundaries.
+
+commit 992ec72f6685ee99363dbe2399065c4ee414c48e
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Fri Jul 10 09:32:09 2020 -0700
+
+    condensed bound selection algorithm.
+
+commit a56879eabfa89efae3cfd896021a635ed0e3f34d
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Fri Jul 10 08:29:10 2020 -0700
+
+    included day range in results table.
+
+commit e758f83a873d00198b82dd16bcf71549e13fc061
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 13:37:23 2020 -0700
+
+    included residuals in results table.
+
+commit b9713fc8fc2ffa6d303ba7bd2418d33f6b378f18
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 11:50:18 2020 -0700
+
+    moved results table creation to function.
+
+commit 7cd353ed09bb444b7107ee0c0778fbc7d8343b25
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 11:45:07 2020 -0700
+
+    deleted debug variables and print statement.
+
+commit 2a502bd1ef1a0ef41d67bf6e5ac3fe2d9192cebc
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 11:43:21 2020 -0700
+
+    upgraded results DataFrame.
+
+commit 160606c0f39f52a37f354d4d503ec399da59af9d
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 11:38:30 2020 -0700
+
+    deleted space.
+
+commit f5f4b06bfc87225e9bbbe9bc72f8fb6dd149b712
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 10:52:55 2020 -0700
+
+    moved conditionals from ground truth calculation to calculate_costheta.
+
+commit 1156860c6a82e257472a14c6dcd4f0edde3f010d
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 10:37:53 2020 -0700
+
+    modified calculate_costheta to allow ground truth calculation.
+
+commit 94fdedab0ca23cbc9db308235af74abb08962c65
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 09:48:23 2020 -0700
+
+    modified calculate_costheta to account for changing inputs.
+
+commit 5584dd9bb128f0f62f2b2b3980ab24c0b41ab801
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 09:20:35 2020 -0700
+
+    deleted self.bounds, upgraded handling of init_values.
+
+commit 0dd3adcd074881b5b2480404f14ba3e33cad6724
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 9 08:56:06 2020 -0700
+
+    added 5 remaining lambda cases, changed init_values calculation.
+
+commit 176a0036980d3b894fc2fa2b6447e489dca8f431
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 8 13:46:14 2020 -0700
+
+    added second lambda case and ability to adjust to answer size.
+
+commit 86df4fade2f1b3b5e69dbfe3b62aff5372c025f5
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 8 12:43:48 2020 -0700
+
+    modified select function to output init_values and bounds.
+
+commit 95c91f384bfcbeefad7cda46a1e163f88f8dec42
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 8 12:30:52 2020 -0700
+
+    created bounds class variable.
+
+commit 9a1ccae1610ad916cd2597b9d83a323d5b03260f
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 8 12:29:21 2020 -0700
+
+    transformed curve_fit bounds into input parameter.
+
+commit 441ca025fe3f79cab6d66b0f4c588e5471c80c6f
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 8 09:05:30 2020 -0700
+
+    moved lambda calculation to algorithms/angle_of_incidence/lambda_functions.py.
+
+commit e9178cc3e570729846874301f5df5d00dc1cb5ba
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 8 08:46:32 2020 -0700
+
+    moved lambda calculation to a function
+
+commit ff70a20f9da3c79be7c971329e5e4ecaead83ff5
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jul 8 08:35:12 2020 -0700
+
+    created precalculated lon, lat, tilt and azim input variables to set lambda function
+
+commit e0d3cddf29297444f285b72315228e60926a0a2e
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 13:52:50 2020 -0700
+
+    renamed variable for customized function.
+
+commit 3b662bd2dc43793822e2733e1c4fa1f2989f1bcb
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 13:48:57 2020 -0700
+
+    moved func_costheta to pvsystemprofiler/utilities/angle_of_incidence_function.py
+
+commit 9c014ec9f365b045725f180c8d159403bce31139
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 13:38:11 2020 -0700
+
+    moved calculate_costheta to algorithms/angle_of_incidence/calculation.py
+
+commit d4577b1690e11eae2fec77c15074c0f92aebe82e
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 13:21:04 2020 -0700
+
+    moved find_fit_costheta to algorithms/angle_of_incidence/calculation.py.
+
+commit 8a2ebe51804a20b445f998aa4ac1b8ded4456805
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 13:11:13 2020 -0700
+
+    renamed algorithms/azimuth to algorithms/angle_of_incidence
+
+commit 29d065c3a642dae307452b2894246a5faeab766b
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 11:57:54 2020 -0700
+
+    renamed func to func_costheta
+
+commit af76ccb0a546eb538ae8c1c70428c5100b849d14
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 11:52:37 2020 -0700
+
+    deleted comented line.
+
+commit 7ed6f0b07c5d45c1e5f47f79f3d2545c3888c61e
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 11:49:27 2020 -0700
+
+    moved run_curve_fit to algorithms/azimuth.
+
+commit 8d64a1e11ab1ebe5aecdd561e09494af127c85d6
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 10:57:26 2020 -0700
+
+    modified calculate_costheta function to account for lambda use.
+
+commit cdcd856bdef4c6f4f235eb11fbe00cccbf2b9ccc
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 10:38:14 2020 -0700
+
+    introduced lambda function, modified curve_fit and func to account for it.
+
+commit 8c12a708a28fe6eb7750fa0ae385663de5d151b6
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jul 7 10:16:40 2020 -0700
+
+    deleted unused functions
+
+commit 1efe5aa08fd9941ff9bb8d60575c40d06862dc04
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jul 6 09:00:39 2020 -0700
+
+    corrected omega equation to make calculation in solar time
+
+commit cf1ad281713ab90e9d8226f7dfb298154763e4b4
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu Jul 2 14:00:22 2020 -0700
+
+    included longitude and gmt_offset in input variables
+
+commit 8c0a796358b4d18fb254a966f4690b90301a2580
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 29 13:27:54 2020 -0700
+
+    renamed declination_equations.py to declination_equation.py
+
+commit cb764c1421ecaede7bd10166463b46639a0d9d47
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 29 13:24:47 2020 -0700
+
+    deleted commented line
+
+commit 744573e97fcd9158894868e0baea28bad8f723e4
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 29 13:22:02 2020 -0700
+
+    changed np.empty to np.zeros, update to handle upgraded datahandler
+
+commit 835a3d8c1cb0a2ede027602ffb4010ee3cf908b3
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 29 13:20:44 2020 -0700
+
+    ignoring two old files for comparison
+
+commit 075ba16325c8013f5e85147339a44476fdeda7b7
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 26 08:08:48 2020 -0700
+
+    changed results df column order
+
+commit 8fe962d3f40bdc767fcd1a502f89be8b4fba4d29
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 26 07:54:21 2020 -0700
+
+    changed warning message
+
+commit 061b98a696e21378966c5c13078ce140a77ad85b
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 26 07:45:50 2020 -0700
+
+    replaced self.tilt_estimate and self.azimuth estimate by local variables
+
+commit 9feccdcda9bf1dbada49679bff69b4b87744be8f
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 26 07:35:05 2020 -0700
+
+    combined day_range functions, added return statements
+
+commit e495b8f23dc9467c43124ffde88ef80d850324a8
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 16:21:58 2020 -0700
+
+    referred costheta_fit and scale_factor_costheta to class variable
+
+commit 7945cc627397bb5d8a08f59a57e706c8466e85e6
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 16:07:54 2020 -0700
+
+    made delta_f and omega_f local variables, moved calculation to run
+
+commit ef3b2632e724206de940869627a6004e1c500ebd
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 15:58:05 2020 -0700
+
+    removed  self.scsf from variables and from conditional
+
+commit 0d9e38c259bb88584b0041ebb0bec559b3eb139c
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 15:52:34 2020 -0700
+
+    made all values in run_curve_fit explicit
+
+commit 88f3246a3d23be4cfde13a5ea0f30edc51f5836d
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 15:26:24 2020 -0700
+
+    deleted self.costheta_fit_f
+
+commit b9cb70a989e5bcd96d33e9cfe4358e422fe11c41
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 15:20:03 2020 -0700
+
+    eliminated ground_truth_costheta consolidated costheta calculations in calculate_costheta
+
+commit e6efa02dfbbce1ae14c4b72614b3988c051b95b8
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 15:09:22 2020 -0700
+
+    removed commented lines
+
+commit 3f4b49a2b9c435db2c7a22833b32c846c87ee158
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 15:04:15 2020 -0700
+
+    renamed estimate_costheta function, and costheta variable
+
+commit 9f37b82b9cf7de73500a12180588862dbf4c12bd
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 14:58:44 2020 -0700
+
+    corrected ')) bug, formating and indentation. Modified estimate_costheta to return a value.
+
+commit 2a6277a5bf87c417b74398f4eefb21d57b500f48
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 14:36:56 2020 -0700
+
+    made variable calls explicit in find_fit_costheta, run_curve_fit and estimate_costheta
+
+commit 2ceff6d5c3d7f51b92310b3b9a6f01c77c3d489d
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 14:06:08 2020 -0700
+
+    deleted return statement
+
+commit 6a1053ca93115b25314795ed0673874808e1e7a1
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 13:20:46 2020 -0700
+
+    added init module for algorihtms latitude
+
+commit 75c5f2c2c37dc5452cb703c0d52a42ddb763f917
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 13:19:18 2020 -0700
+
+    introduced capability to calculate delta with 2 different methods
+
+commit a0734363478bc687563dc48d16fcc5d8cf7c8896
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 12:03:28 2020 -0700
+
+    declination now calculated from utilites.declination.equations
+
+commit 209699cd290cd6f575946e54935c1c56b6441811
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 10:54:38 2020 -0700
+
+    added atleast_1d to delta_method
+
+commit 53e1f15e7dbbe05b6bdfd74dbfcd214a504d60b7
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 10:41:23 2020 -0700
+
+    added capability to calculate tilt and azimuth for default day ranges
+
+commit f20007505bab670145be0c05d759b64c50bdaab8
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 25 08:17:58 2020 -0700
+
+    moved omega equation to utilites/hour_angle_equation.py
+
+commit 15b3e80b9794abe938623df67d14756e9aa79d3b
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 14:51:49 2020 -0700
+
+    changed book reference for omega
+
+commit 239d5ca1eb826f6bb6e584e321daf40cf6dbcdd6
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 14:39:43 2020 -0700
+
+    removed latitude_estimate variable
+
+commit cb9d4d3038d7775009d761e5747308b8d8adc78e
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 14:34:50 2020 -0700
+
+    moved the direct latitude equation to algorithms/latitude
+
+commit 40db2788f25281bed96ad0c52d2d59c3dfbf2ebc
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 14:28:27 2020 -0700
+
+    deleted redundant variable assignment
+
+commit 78e29dbe49e8c5917221aef50f0cda81f220b4d1
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 14:27:52 2020 -0700
+
+    deleted if none conditional
+
+commit aefa08eb79572f1462f3c7e8a9b9d89eca7f831d
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 14:01:39 2020 -0700
+
+    added an extra step for clarity
+
+commit fc6142f63426ebf9dc596646d20947dc8b5aed73
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 13:37:12 2020 -0700
+
+    moved declination equations to utilities
+
+commit 8503d186ebf22457c5e2c5507c569839cb849ef4
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Jun 24 13:12:30 2020 -0700
+
+    added if is None conditionals and  created self.threshold
+
+commit 0b2e449cd33cb87473117f9b8da7a0544e96a6f0
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Jun 24 13:03:38 2020 -0700
+
+    mofied conditional to suppres variable assignment
+
+commit 57f5521c2e43d2732adace0e4314fd2d82e305f0
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Jun 24 10:46:42 2020 -0700
+
+    changed to is None in conditional
+
+commit 8a4327dd9438f9d61113ae3f4ca18c617bd79706
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 10:16:03 2020 -0700
+
+    udated results table, fixed angle conversion bug
+
+commit 63a01408539dd1576dc837ef851c4268ac494618
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 09:06:51 2020 -0700
+
+    added second equation to calculate delta
+
+commit 2a061bafadda3ff5be7c97295570e0c374d4b537
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 07:51:25 2020 -0700
+
+    moved docstring to estimate_latitude function
+
+commit cd7bc1641e78f0bf0c7fd4f6b3552292b15e3ad3
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 07:41:12 2020 -0700
+
+    deleted np.zeros statement
+
+commit 5bc06b25478703730448508f410a4ee8fdbb6abd
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 24 07:32:51 2020 -0700
+
+    delete space in results label
+
+commit 55814f54292f81a28158c75497fd47a03a337249
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Jun 23 15:41:44 2020 -0700
+
+    theoretical equations for sunrise and sunset
+
+commit de2b1df116a9f6033b48e1b1627fb8ce33920946
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Jun 23 15:41:30 2020 -0700
+
+    allow for pandas series or numpy arrays
+
+commit 13976dea994fe22477c01d70e24800573ce72ceb
+Merge: 1f7f073 db8aff2
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue Jun 23 14:02:00 2020 -0700
+
+    Merge branch 'draft' of github.com:slacgismo/pv-system-profiler into draft
+
+commit db8aff27ca4e0458012f5c0ebba96e4f6c8cb422
+Merge: 7030e1a 8ebd639
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Jun 23 14:00:16 2020 -0700
+
+    Merge pull request #5 from slacgismo/bennet
+    
+    converting to/from solar time
+
+commit 8ebd63950dc6f9a3fe3a02e5521db5d1423f126f
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Jun 23 13:49:06 2020 -0700
+
+    converting to/from solar time
+
+commit 1f7f073db72fba16d09a91b67d4278a7d8ab0f81
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jun 23 10:47:52 2020 -0700
+
+    added variable definitons and day calculation column to results
+
+commit 7030e1a0bfdc4eb46fcf987949b3bbb28ba0849f
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jun 23 09:53:25 2020 -0700
+
+    added raw daylight calculation option
+
+commit e0ad343abd327c50a70d0afca1934c56544270cf
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jun 23 08:00:53 2020 -0700
+
+    modified threshold default value generation, removed if indentation
+
+commit b58573bbb1dc5c4f7717f11d0e83db43792aa392
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 22 12:55:21 2020 -0700
+
+    moved daytime_threshold to run() procedure
+
+commit 8c597c30b2beb717b8450e33d5f636748899135c
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 22 12:34:57 2020 -0700
+
+    added flexibility on threshold input parameter
+
+commit c66baaf40b3830d8d23638fe9f2dd8ab9baff339
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 22 11:39:50 2020 -0700
+
+    added residual to results table
+
+commit 5189aa0b9ba7c3be53323318deb8ba0fef1b2812
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jun 22 10:22:23 2020 -0700
+
+    modified estimated latitude to return latitude directly, modified results
+
+commit 556fe98c1fe75ff7deb23f007c2ff0cd31b60721
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jun 22 09:13:16 2020 -0700
+
+    elimninated raw estimation of hours daylight
+
+commit 777df0174b0a9e454b114f75f504d7e7574fbeb6
+Author: alh <a@alhs-air.lan>
+Date:   Mon Jun 22 08:47:56 2020 -0700
+
+    added missing contraint to cvx conditional
+
+commit 167174df3850db7bb6c152d683c31157f0972084
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 19 15:28:33 2020 -0700
+
+    moved default threshold array from class call to variable definition
+
+commit e341f0eae97f53f40b9e5aad9de7d86a65d9ebc2
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 19 15:19:30 2020 -0700
+
+    moved default init_values array from class input variables
+
+commit 8640e393bdafb14bebfd0d6e58f40770686f6de9
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 19 15:11:52 2020 -0700
+
+    renamed guess_values to init_values
+
+commit 29856b6d54bfa72dc484355b5a46a5ccfca97e81
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 19 15:07:04 2020 -0700
+
+    simplified expression for boolean_daytime calculation
+
+commit 7096ca909fae00e9bce7db7dc1d53cc78383d079
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 19 14:59:09 2020 -0700
+
+    modified code to ensure all inputs and outputs are in degrees
+
+commit c77f08c5245c3aa5a943500d64a086b5e8fdb6ae
+Author: alh <a@alhs-air.lan>
+Date:   Fri Jun 19 13:05:08 2020 -0700
+
+    added capability to calculate uncoupled tilt and azimuth with other variables fixed
+
+commit ceca2e2df55f7a92268e310be214d874e17b4168
+Author: alh <a@alhs-air.lan>
+Date:   Tue Jun 9 08:46:51 2020 -0700
+
+    changed fuction name to calculate_hours_daylight
+
+commit 440cb76e93a9a58e7125d91fd4776db9139c8344
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 8 16:24:33 2020 -0700
+
+    fixed bug  d = np.cos(d).... Renamed variables for clarity..
+
+commit 5f46ab64ef5e9ca8f68dc99e90ee9b8570b350ca
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 8 08:42:30 2020 -0700
+
+    introduced np.any, changed quotation marks
+
+commit dd55dc26f42a7073f333bfcf95a90b9e8faafea2
+Author: alh <a@alhs-air.lan>
+Date:   Thu Jun 4 08:56:56 2020 -0700
+
+    changed default value for daytime_threshold, corrected docstring
+
+commit 955c58c6919a9bf00f4cb951f4e79b0e9762b308
+Author: alh <a@alhs-air.lan>
+Date:   Wed Jun 3 11:36:04 2020 -0700
+
+    reverted to "is not None" in conditionals
+
+commit faf174ab5fd2ec431a1344f86a926ccb220f96d7
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Jun 3 07:46:16 2020 -0700
+
+    condensed 'if' and 'is not None' statements
+
+commit 1d7f1f70ec584e1708758c51dec7bdc75c6e6cce
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed Jun 3 07:31:31 2020 -0700
+
+    formatting corrections and renamed variable
+
+commit 927065e40824d4d82ce670cf1373b56fb5156d26
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue Jun 2 13:31:19 2020 -0700
+
+    added references to source equations
+
+commit 8ce225cdf19bc3844e94e47eb541e1114d727aee
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue Jun 2 13:29:15 2020 -0700
+
+    corrected source latitude equation number
+
+commit 208dafb01cf9f5ee735ec1f49874a9cfe27e39bf
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 1 14:03:48 2020 -0700
+
+    deleted func2, al calculations of costheta are now calculated using func
+
+commit 5154fbad74b5e8b1b8b8a4a7d8b7cabe1207ae7a
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon Jun 1 09:03:21 2020 -0700
+
+    integrated latitude calculations in a single loop
+
+commit 3a8e0e4660b08d1038dd11ce571d3d3311427fb9
+Author: alh <a@alhs-air.lan>
+Date:   Fri May 29 09:33:22 2020 -0700
+
+    edited variable definitions, eliminated set_day_range variable
+
+commit 2bbc082e0e82048eded9e25895524959768ee652
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed May 27 12:59:38 2020 -0700
+
+    renamed latitude variables for consistency with tilt and azimuth, improved variable definition
+
+commit 9d4b9f0988ca68bbd1111caaff78b383f5a29f50
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed May 27 12:43:55 2020 -0700
+
+    renamed init_values, improved input variable definition
+
+commit 7cab80fd25111c296dba2a89e264771c4fe21695
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed May 27 10:35:03 2020 -0700
+
+    added a conditional to account for all False boolean_daytime_range resulting in a fit_1 error
+
+commit 84c609856174f5627d8d4ebd739728917b60613f
+Author: alh <a@alhs-air.lan>
+Date:   Wed May 27 08:55:35 2020 -0700
+
+    renamed range_curve_fit variable
+
+commit b93e34e6a56386ec6751a107e476e07c742655f6
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue May 26 14:11:10 2020 -0700
+
+    added Try and Except to account for a day range is not entered
+
+commit fe4d366bdfbfa905bb951f82d90c0550c1716b4f
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue May 26 13:17:57 2020 -0700
+
+    renamed ground_* variables to *true_value
+
+commit e1774898b36a58287a2fe342b2c787a35268bf99
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue May 26 13:02:50 2020 -0700
+
+    added conditionals to allow true_value to be an optional input
+
+commit 2602954f7a9aff0f762658b7256e25e75c86539f
+Author: alh <a@alhs-air.lan>
+Date:   Tue May 26 09:53:17 2020 -0700
+
+    Added class reference and parameter definition
+
+commit 570e606e742e7fb464d16601d9868b24773f2255
+Author: alh <a@alhs-air.lan>
+Date:   Fri May 22 14:21:23 2020 -0700
+
+    deleted dummy variable in find_boolean_daytime
+    replaced np.empty with np.zeros
+
+commit 2fec6274c6bb9ec2ed8a8da7fa3a7912c005a906
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Fri May 22 10:42:30 2020 -0700
+
+    deleted commented lines
+
+commit 5486ac658f4d962b7cca88074c02d24abdf445ff
+Author: alh <a@alhs-air.lan>
+Date:   Thu May 21 13:49:12 2020 -0700
+
+    deleted abs of residuals
+
+commit 0d998b8a9bcfe59cfd329dfe25c3d994533c8e5b
+Author: alh <a@alhs-air.lan>
+Date:   Thu May 21 10:41:42 2020 -0700
+
+    Changed select_range variable name, included new day_range input variable
+
+commit 43f526c4af3fad2b2e08d1f2959ef511da75a5d8
+Author: alh <a@alhs-air.lan>
+Date:   Wed May 20 14:37:27 2020 -0700
+
+    cleaned commented variables extra spaces
+
+commit 3b3f87ff8cf75a67c62e434613aca79c2f4bb762
+Author: alh <a@alhs-air.lan>
+Date:   Wed May 20 14:01:14 2020 -0700
+
+    added absolute values to tilt asimuth residuals
+
+commit a908490403c265cd440599c8617b42264711d66a
+Author: alh <a@alhs-air.lan>
+Date:   Wed May 20 13:59:42 2020 -0700
+
+    added estimated latitude values to the resuls Data Frame
+
+commit 8b6ad251f8f22ec923a7afca4af0c218f746eafc
+Author: alh <a@alhs-air.lan>
+Date:   Wed May 20 10:39:48 2020 -0700
+
+    All input angles are now entered in degrees
+
+commit d22faa148a9ab2f1668cb84a61ae9d27666a3a74
+Author: alh <a@alhs-air.lan>
+Date:   Wed May 20 10:35:23 2020 -0700
+
+    created results Data Frame
+
+commit 291dcb1de00e7a2a4fc3c97864c1822e81625749
+Author: alh <a@alhs-air.lan>
+Date:   Wed May 20 09:40:12 2020 -0700
+
+    reverted variable diferentiation between 'ground' and 'real' values
+
+commit 024ca560969be1e900ffacbf564dbcc848f8eac6
+Author: alh <a@alhs-air.lan>
+Date:   Tue May 19 14:10:54 2020 -0700
+
+    renamed ground tilt and azimuth  variables
+
+commit 9a40baa68961848daf505fce2506a3361b617ae5
+Author: alh <a@alhs-air.lan>
+Date:   Tue May 19 14:00:44 2020 -0700
+
+    created find_boolean_daytime function
+
+commit d0a4ba121e48acf0613ab170df00624118c2af1c
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon May 18 15:18:12 2020 -0700
+
+    changed ground_ for real_ for tilt and azimuth variables
+
+commit c5e4dcb8d69f34fa2fcf48b4fd94ba5ac2a3a0fd
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon May 18 14:10:46 2020 -0700
+
+    deleted repeated select_days
+
+commit e16037b87b93ae8b46baff0076f2ac2311598364
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon May 18 13:49:02 2020 -0700
+
+    Combined boolean day_time calculations in a single call
+
+commit 8e99028e2a2868a962dea82a56a1416607465cdb
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Mon May 18 11:51:12 2020 -0700
+
+    Renamed some variables, deleted variables defined twice
+
+commit 7e3a04afd1665bc2a6e29a6cb62c05aece670618
+Author: alh <a@alhs-air.lan>
+Date:   Fri May 15 15:43:17 2020 -0700
+
+    Added select_days function, renamed variables
+
+commit c409a877ac4de82a93f0f3ef54cb0cf85bb245e5
+Author: alh <a@alhs-air.lan>
+Date:   Fri May 15 15:40:33 2020 -0700
+
+    Deleted select_days and variables, moved it to tilt_asymuth_study
+
+commit a4e99f2aad6675b9f45219e57ab52884b744d5a1
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Fri May 15 11:35:48 2020 -0700
+
+    modified daytime_thresshold to handle an array of four values
+
+commit e0ddafa6e4ee6a2d85b4f58056a3d68373ff6e68
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu May 14 14:09:40 2020 -0700
+
+    added select_days functions and variables to the class
+
+commit 2c26b7df9afb7ee79ad609079c6ea3782710b5c4
+Author: alh <a@alhs-air.lan>
+Date:   Mon May 11 16:52:02 2020 -0700
+
+    Modified estimate_latitute to calculate Boolean daytime from (1) raw matrix or (2) filled matrix using a (1) raw calculation or (2) solar noon approach.
+    Results are saved in the results data frame
+
+commit 1cefc2906796c49bc112e1e83b0de02826fd7b30
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu May 7 17:09:55 2020 -0700
+
+    Deleted unnecessary calls to existing variables
+
+commit 4778ecd06524ce6b949daca0b2cf5d1dfb887c96
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu May 7 13:25:32 2020 -0700
+
+    Initialized all variables in class
+    Removed capitalization
+
+commit e9f551eb400e7bb50a795cb470fdb9353dcb314a
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Thu May 7 12:46:34 2020 -0700
+
+    Removed unused variables and calls
+    Renamed some variables
+
+commit da8cbac7cd16b2e87deb652b3035b81835a8c6df
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed May 6 15:53:08 2020 -0700
+
+    Added run_curve_fit_1 and estimate_costheta functions
+    Added estimated latitute as input parameter
+
+commit 507fa237f920f99e779082de9dfa64e4ccee8c41
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed May 6 09:52:55 2020 -0700
+
+    Added find_power_threshold_quantile_seasonality and
+    select_days
+
+commit 85e41c3544ae9fc036c49d9a266037850dc71e08
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Wed May 6 08:44:00 2020 -0700
+
+    Added find_fit_costheta and ground_truth_costheta
+
+commit ff1f42837318a211b6769b5bcf58dd56668aba9a
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue May 5 16:15:30 2020 -0700
+
+    flag_clear_days now loads directly from Data Handler
+
+commit e642077c712af6f4ec69ccb058ed54bfc01248f0
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue May 5 14:26:58 2020 -0700
+
+    Created the independent TiltAzimuthStudy class based on the ModelEstimator class
+    This new class takes input data from the DataHandler instead of the power matrix
+    Introduced find_daytime
+
+commit da46e0d0a82921f8d8a4d2bced1f5aa4589bb3e1
+Author: alh <a@alhs-MacBook-Air.local>
+Date:   Tue May 5 11:30:31 2020 -0700
+
+    Replaced local dayltime calculations with calls to find_daytime
+    Deleted unused variables and code, renamed some variables
+
+commit c4fb253f74426e904ff9335a40404ae7ac8e8229
+Author: alh <a@alhs-air.lan>
+Date:   Mon May 4 17:11:29 2020 -0700
+
+    Created independent latitude_study class
+
+commit aef3646adc4482aee93d590344ec8068368e4a1e
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Fri May 1 15:23:43 2020 +0200
+
+    add lat tilt az initial file
+
+commit 8191f6091016f57f1311d88816a693bd96b836c4
+Merge: 984e838 bc36bac
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Wed Apr 29 12:22:39 2020 -0700
+
+    Merge pull request #3 from slacgismo/clean
+    
+    Code cleanup
+
+commit bc36bac451d54ffbb93073fd5f151de431b12972
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Wed Apr 22 10:47:58 2020 -0700
+
+    fixing GMT offset kwarg: set correct default value and remove capitalization.
+
+commit 9eafcc4f8647c8f9fd97ef51f37547bf7185d782
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Wed Apr 22 10:43:30 2020 -0700
+
+    control verbosity of study run
+
+commit 99ffd17409019e7adc4f1bdbfee4d25166ed61e6
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Wed Apr 22 00:37:11 2020 -0700
+
+    autosort results when ground truth is known
+
+commit ae54b84fe4993e13e8b89f8d3a5f01e642c152d3
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Wed Apr 22 00:23:01 2020 -0700
+
+    adding results and best_result attributes
+
+commit f9ee93d06abd91e0d89a891c13b6351ec47ecb7a
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Wed Apr 22 00:10:41 2020 -0700
+
+    cleanup
+
+commit 5af348e1f6448856264b9afcd1b5ece9cd48f924
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Wed Apr 22 00:08:33 2020 -0700
+
+    documentation
+
+commit c90c545cd4d9c4a797af55eb1a4b9cf7282e7c3c
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 23:53:06 2020 -0700
+
+    removing unused kwargs and attributes
+
+commit 785e8a4ff20119f04e7d6a07c4952ceebd3f52ed
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 23:46:02 2020 -0700
+
+    documentation
+
+commit bea3a3857c8d01ac9e0bc627ca9d11ca24e2114c
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 21:40:49 2020 -0700
+
+    add residual calculation when true value is known
+
+commit cf56b01a243bcae327e4f75c22da05ea260bd311
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 21:29:25 2020 -0700
+
+    expanded study procedure
+
+commit 1607117b9b88231539b89aefed07c783d20133bb
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 21:28:59 2020 -0700
+
+    progress bar
+
+commit c9542a2fa65f4f11451f2818dc6fe974882b74ef
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 18:44:03 2020 -0700
+
+    reorganizing output of run method and removing unused methods
+
+commit 43f65cf947ae277c6a8c4ebc77764e46f378ef8f
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 18:29:57 2020 -0700
+
+    adding single method for running fits
+
+commit 0bf4118a21d55069362fed7e51f57dcd3fd39efc
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 18:29:00 2020 -0700
+
+    extract numpy array from pandas index objects
+
+commit a1db82e4c2e31c02cf802911a7cfbf98cc531107
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 18:06:24 2020 -0700
+
+    removing data loading module which should be done with solar data tools
+
+commit caf7a906cea5d27eaec8d2627be43397ef6cfc3f
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 17:53:02 2020 -0700
+
+    using new simplified longitude calculation
+
+commit b2d9ca054f33fa897a98df25468cbbc3d7c36c47
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 17:52:14 2020 -0700
+
+    simplified module containing longitude direction calculation
+
+commit 4d8fb746f2a85c450f14d1bdac69388d0085addd
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 16:30:20 2020 -0700
+
+    add eot_ suffix to function names
+
+commit 8394b388345342c466a2cdeb62b43866528a788b
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 16:28:31 2020 -0700
+
+    move EoT module to utilities
+
+commit c39cd968f8c260a3f036403863abde3ed073053c
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 16:09:53 2020 -0700
+
+    bug fix in Duffie EoT
+
+commit f436957097233b687c43205f01f57406d8cbb2eb
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 16:09:38 2020 -0700
+
+    make longitude study reference new EoT module
+
+commit eb445f2b98b46b5fc76b63115c2e0fc28ed4fa1f
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 16:07:30 2020 -0700
+
+    update duffie eot
+
+commit 583bee2e949847bd1a62a788091d29cf5b0438ec
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 15:36:03 2020 -0700
+
+    Cleaned up EoT calculation in new module and double-checked against source materials
+
+commit 9f98d864dc2fa51d7b353669a8d000402a6a9a99
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 15:24:26 2020 -0700
+
+    structure for new equation of time module
+
+commit bb2e0ce7324a0ed699e834070bd5b9ae6d578736
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 15:03:13 2020 -0700
+
+    clean up day selection code
+
+commit 968f2c4a78f9e9798f2fc62918d984e39d3fc069
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 15:00:42 2020 -0700
+
+    remove config_solarnoon method
+
+commit 1d9b1888e14c48ad96bf95f3b47d5949e1bcb686
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 14:57:16 2020 -0700
+
+    integration with solar-data-tools DataHandler
+
+commit a7e4bd31fc25fdd404527ec84cae689469e22fad
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:51:53 2020 -0700
+
+    updated module docstring
+
+commit 2051ec731a1baf52c0a74fa2912fb21daf2a9126
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:45:37 2020 -0700
+
+    removing unused kwarg
+
+commit 9ae1a43c5fb64e6bf9be1a1cff9501bb5c1163a6
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:44:42 2020 -0700
+
+    renaming: model estimator --> longitude study
+
+commit b555f8042addd8a1b2f0b97b6dd841aa36e7b547
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:41:43 2020 -0700
+
+    commenting out print statements
+
+commit a277431b1128f3e16ab387db05dcdbedf48e724e
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:40:38 2020 -0700
+
+    removing commented lines and another unused import
+
+commit eb368d139a7a15cbbed10d88c7d13ce25315e46a
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:18:19 2020 -0700
+
+    removing unused imports
+
+commit 984e838982aa198abc8af197fd7e9d3c8ce63881
+Merge: 14037b1 a1ffec8
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:13:38 2020 -0700
+
+    Merge pull request #2 from slacgismo/development
+    
+    This will give us a stable starting point for future changes to this repository. There is code cleanup that needs to be done immediately, which I will start a new PR for.
+
+commit a1ffec8bb774e238abbafc1b74362c6158e7e41c
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 12:10:29 2020 -0700
+
+    adding some .idea files
+
+commit 5ee7c1c29fd6e5663c37aad7bb0a54990632fb9c
+Merge: de789b0 14037b1
+Author: Bennet Meyers <bennetm@stanford.edu>
+Date:   Tue Apr 21 11:47:59 2020 -0700
+
+    Merge branch 'master' into development
+    Fixing broken commit histories between master and developmnet.
+
+commit de789b09aa8d04035f97ebbec37294245bb7ff20
+Author: Elpiniki Apostolaki <elpiniki@slac.stanford.com>
+Date:   Tue Apr 21 15:27:28 2020 +0200
+
+    updating longitude estimation file
+
+commit 6bfb8854e7a72727df55804f5a93003bb6e23658
+Author: Elpiniki Apostolaki <elpiniki@slac.stanford.com>
+Date:   Mon Mar 30 16:52:43 2020 +0200
+
+    fixing comments on longitute estimation
+
+commit 91633f3971bd7186b408ae205b8bdb9bb2019eae
+Author: Elpiniki Apostolaki <elpiniki@slac.stanford.com>
+Date:   Sun Jan 12 22:27:57 2020 +0100
+
+    sequence method for tilt azimuth estimation
+
+commit af3f6293f4f9e6c9e6c00857fbe62755083cc26a
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Sun Jan 12 22:15:41 2020 +0100
+
+    new longitude estimation file
+
+commit 117fda2d87b0c0dac4554a1f943aa8bd065efc4d
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Fri Dec 20 12:56:57 2019 -0800
+
+    finalized changes
+
+commit a5137667237bb2a13eaa1ee3d02f5d436250bab2
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Dec 19 15:02:27 2019 -0800
+
+    fix bug of selected days at wrong position
+
+commit 56b4e896dff60fe563f5d3cc9abba7769c2e673e
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Wed Dec 18 17:24:26 2019 -0800
+
+    add quantile seasonality
+
+commit ec37901d479b86dd53c716d2b7711237cbd81430
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Wed Dec 18 12:04:40 2019 -0800
+
+    deleteing
+
+commit 503de5f84dfa319cbb09156335869216e30131d1
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Wed Dec 18 12:04:14 2019 -0800
+
+    improvements
+
+commit 9e8497296a1b679e092ac7e3f7588ed43395fe01
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Dec 12 11:45:24 2019 -0800
+
+    math to np
+
+commit 2d70945273e33771f310ca6714dc92fbc363c4db
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Dec 12 11:43:07 2019 -0800
+
+    debugging algorithm
+
+commit ad43b8116a0517511f33b9f7262ad7bda385d19d
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Dec 12 09:44:16 2019 -0800
+
+    fix ground truth module for processing one kml
+
+commit 216320eca0dd6b15604e0af9f37e4d89936ac0a8
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Wed Nov 13 17:28:00 2019 -0800
+
+    changing names and pushing updating code
+
+commit d4bbe1ad18f934047088049642a23a682b55da74
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Wed Oct 30 11:27:45 2019 -0700
+
+    add errors
+
+commit 8e6fd3ec2be7f9d7027031011ee95e6c62ccddb7
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Wed Oct 30 09:20:55 2019 -0700
+
+    ground truth estimator module edited
+
+commit 6b2f92cd07e4ca592a41f55805fa52a4c1cf6215
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Oct 29 14:17:14 2019 -0700
+
+    ground truth estimator module edited
+
+commit dbd5188e1110f903fbc712e672212a36b02c8ea7
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Oct 29 11:17:02 2019 -0700
+
+    ground truth estimator module added
+
+commit 3bf176759a0fcbb4ce3939c9dda04f80a62a2e43
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Fri Oct 11 21:02:27 2019 -0700
+
+    debugging
+
+commit 8b600b73afbf354cd4fa0ca13efda627e8967aba
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Oct 10 18:00:47 2019 -0700
+
+    add SCSF flag
+
+commit eb698833aa2f6bb842e2a1ad12ed1e782e974cae
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Oct 10 17:46:37 2019 -0700
+
+    add functions of ground truth and explorting scale factor for plots
+
+commit 4769f18818ca5657a2227a6f163d543d78125f70
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Oct 8 16:38:14 2019 -0700
+
+    fix tan totan2
+
+commit 218d0088dadd70f3bdb0c27f0e6cb2c0452e0124
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Oct 8 16:08:49 2019 -0700
+
+    add system parameter estimator module
+
+commit 8d5f96a16aeffcc1a1030185768093b651b1732e
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Aug 6 17:01:31 2019 -0700
+
+    adding config file
+
+commit 9953f228c5acff9ca1efa471b0e15ff208d34c40
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Jul 18 16:55:52 2019 -0700
+
+    correct bugs on fitting
+
+commit 86ef258e5e0edfb1ebdc157bd9a7c200ba180b85
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Jul 18 16:37:54 2019 -0700
+
+    fix calculating estimators class
+
+commit c86a0635add0bc9290084647ab8c9e8bf6974318
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Jul 18 15:39:29 2019 -0700
+
+    fix fitting estimators class
+
+commit eed40dc8d1dbd022e68ec2600eb722baae2ff7a9
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Thu Jul 18 08:47:37 2019 -0700
+
+    code class stracture
+
+commit 4c6c34e953415db9a2cfed6157f7fdd8660e6a6f
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Jul 16 17:15:48 2019 -0700
+
+    adding feature solarnoon method
+
+commit c88e0a203de83291826f3494acd944defd32f095
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Mon Jul 15 17:07:09 2019 -0700
+
+    adding classes
+
+commit e634b6cedfdaf583fb201bb369c2d16286c4af5f
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Sun Jul 14 15:02:25 2019 -0700
+
+    add longitude estimation algorithms
+
+commit 705bd192926d22e62340d2db81f359b2ce3e5b15
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Sun Jul 14 14:42:37 2019 -0700
+
+    the first commit
+
+commit 14037b1326e4eb82be71df0eeccdb4dcec3f38ad
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Sun Jul 14 14:10:43 2019 -0700
+
+    Update .gitignore
+
+commit 4de32f6cf553d17c2aafcb95b602b78a6108f9d2
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Sun Jul 14 14:03:31 2019 -0700
+
+    Update .gitignore
+
+commit 5e7b74b29cc2ad57646c5e995e2aece8d433bd97
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Wed May 29 13:22:21 2019 -0700
+
+    Update .gitignore
+
+commit 3e6760bf814a130eaf85befadae73b22bc3a7e3c
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Fri May 17 17:01:30 2019 -0700
+
+    Update .gitignore
+
+commit 976ef2b7713a5cc731c7f471b3ee3d1547eece42
+Author: elpiniki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Apr 23 12:04:35 2019 -0700
+
+    creating folder structure for data
+
+commit 3bddc9460cbaee89d3ad3fb2aad89156c7059839
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Apr 23 11:36:46 2019 -0700
+
+    Update .gitignore
+
+commit df3f485be87f97051fafcaabda677489d884788f
+Author: Elpiniki Apostolaki <elpiniki.apostolaki@gmail.com>
+Date:   Tue Apr 23 11:33:37 2019 -0700
+
+    Initial commit
