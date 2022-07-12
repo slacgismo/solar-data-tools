@@ -26,12 +26,13 @@ git_tags = subprocess.Popen(
     ["git", "tag", "--list", "v*[0-9]", "--sort=version:refname"],
     stdout=subprocess.PIPE,
 )
+tags = git_tags.stdout.read()
+git_tags.stdout.close()
+tags = tags.decode("utf-8").split("\n")
+tags.sort()
 
-gt_decoded = git_tags.communicate()[0].decode()
-tag_list = gt_decoded.split("\n")
-tag_list.sort()
-
-VERSION_FROM_GIT_TAG = tag_list[-1][1:]
+# PEP 440 won't accept the v in front, so here we remove it, strip the new line and decode the byte stream
+VERSION_FROM_GIT_TAG = tags[-1][1:]
 
 with open((here / "requirements.txt"), encoding="utf-8") as f:
     install_requires = f.read().splitlines()

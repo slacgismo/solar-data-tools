@@ -9,19 +9,21 @@ import numpy as np
 from scipy.stats import mode
 from solardatatools.signal_decompositions import tl1_l2d2p365
 
+
 def make_quality_flags(
     density_scores,
     linearity_scores,
     density_lower_threshold=0.6,
     density_upper_threshold=1.05,
-    linearity_threshold=0.1
+    linearity_threshold=0.1,
 ):
     density_flags = np.logical_and(
         density_scores > density_lower_threshold,
-        density_scores < density_upper_threshold
+        density_scores < density_upper_threshold,
     )
     linearity_flags = linearity_scores < linearity_threshold
     return density_flags, linearity_flags
+
 
 def make_density_scores(
     data_matrix,
@@ -50,34 +52,36 @@ def make_density_scores(
         out = tuple(out)
     return out
 
+
 def make_linearity_scores(data_matrix, capacity, density_baseline):
     temp_mat = np.copy(data_matrix)
     temp_mat[temp_mat < 0.005 * capacity] = np.nan
     difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
     modes, counts = mode(difference_mat, axis=0, nan_policy="omit")
     n = data_matrix.shape[0] - 1
-    linearity_scores = counts.data.squeeze() / (
-            n * density_baseline
-    )
+    linearity_scores = counts.data.squeeze() / (n * density_baseline)
     # Label detected infill points with a boolean mask
     infill = np.zeros_like(data_matrix, dtype=bool)
     slct = linearity_scores >= 0.1
     reference_diffs = np.tile(modes[0][slct], (data_matrix.shape[0], 1))
     found_infill = np.logical_or(
         np.isclose(
-            np.r_[np.zeros(data_matrix.shape[1]).reshape((1, -1)),
-                  difference_mat][:, slct],
+            np.r_[np.zeros(data_matrix.shape[1]).reshape((1, -1)), difference_mat][
+                :, slct
+            ],
             reference_diffs,
         ),
         np.isclose(
-            np.r_[difference_mat,
-                  np.zeros(data_matrix.shape[1]).reshape((1, -1))][:, slct],
+            np.r_[difference_mat, np.zeros(data_matrix.shape[1]).reshape((1, -1))][
+                :, slct
+            ],
             reference_diffs,
         ),
     )
     infill[:, slct] = found_infill
     infill_mask = infill
     return linearity_scores, infill_mask
+
 
 def daily_missing_data_simple(data_matrix, threshold=0.2, return_density_signal=False):
     """

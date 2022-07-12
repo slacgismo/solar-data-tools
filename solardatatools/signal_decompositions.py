@@ -233,7 +233,7 @@ def tl1_l1d1_l2d2p365(
         )
         + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
         + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-        + c3 * beta ** 2
+        + c3 * beta**2
     )
     constraints = [
         signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
