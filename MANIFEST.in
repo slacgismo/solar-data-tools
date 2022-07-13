@@ -1,1 +1,1 @@
-include solardatatools/fixtures
+include solardatatools/fixtures/*
