@@ -49,7 +49,6 @@ jobs:
               conda update conda
               conda install conda-build
 
-# run install twice due to client-size to ensure all files downloaded
 # echo yes before login to prevent anaconda bug breaking automation
 # git tags MUST be fetched otherwise output will be blank
 # bash variables cannot be used in github actions, must use actions specific syntax and methods

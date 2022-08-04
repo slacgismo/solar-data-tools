@@ -15,6 +15,7 @@
 *.tax2010
 *.vcf
 *.xml
+notebooks/*.pkl
 notebooks/data/*
 
 ### Database ###
