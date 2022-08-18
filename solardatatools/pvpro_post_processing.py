@@ -23,11 +23,16 @@ from solardatatools.utilities import progress
 
 class PVPROPostProcessor():
     
-    def __init__(self, file_name, period, index_col=0, dates=None, verbose=False, bp=True):
+    def __init__(self, file_name, period, index_col=0, dates=None, verbose=False, bp=True, 
+                 bounds='Default', est=False):
         # imports data and assigns index column and date columns - the optional dates entry
         # should be a list of column indices [i, j, k]
         # the verbose keyword argument indicates whether the % of points on the boundaries 
         # should be printed
+        # the bounds keyword arguments allows the user to input custom boundary values; input
+        # is a dictionary
+        # est should only be True when the input dataframe contains 'ref' and 'ref_est'
+        # columns
         
         if dates is None:
             dates = [0]
@@ -46,10 +51,13 @@ class PVPROPostProcessor():
         self.df_error = None
         self.df_error_avg = None
         
-        self.PVPROSystem = {'photocurrent_ref':[0.01, 10, 0.01], 
-                            'saturation_current_ref':[0, 1*10**(-6), 5*10**(-12)], 
-                            'resistance_series_ref':[0.1, 2, 0.05], 
-                            'resistance_shunt_ref':[100, 500, 1]}
+        if bounds is 'Default':
+            self.PVPROSystem = {'photocurrent_ref':[0.01, 10, 0.01], 
+                                'saturation_current_ref':[0, 1*10**(-6), 5*10**(-12)], 
+                                'resistance_series_ref':[0.1, 2, 0.05], 
+                                'resistance_shunt_ref':[100, 500, 1]}
+        else:
+            self.PVPROSystem = bounds
         
         def default_val():
             return 'no_entry'
@@ -58,7 +66,7 @@ class PVPROPostProcessor():
         self.DescaledData = defaultdict(default_val)
         
         # combines all of the preprocessing steps
-        self.data_setup()
+        self.data_setup(est=est)
         if bp==True:
             self.boundary_points(verbose=verbose)
             self.boundary_to_nan()
@@ -74,7 +82,7 @@ class PVPROPostProcessor():
     # Processing functions
     ############################################################################################################
     
-    def data_setup(self):
+    def data_setup(self, est=False):
         # adjusts time index so that there are equal intervals
         time_delta, count = mode(np.diff(self.df.index))
         freq = int(time_delta[0] / np.timedelta64(1, 's'))
@@ -82,9 +90,15 @@ class PVPROPostProcessor():
         self.df = self.df.reindex(index=new_index)
         
         # isolates columns of interest
-        cols = [c for c in self.df.columns if 'start' not in c and 'end' not in c and 'mean' not in c and 
-                'alpha' not in c and 'beta' not in c and 'nNsVth' not in c and 'diode' not in c and 'year' 
-                not in c and 'Unnamed' not in c]
+        if est is True:
+            cols = [c for c in self.df.columns if 'start' not in c and 'end' not in c and 'mean' not in c and 
+                    'alpha' not in c and 'beta' not in c and 'nNsVth' not in c and 'diode' not in c and 'year' 
+                    not in c and 'Unnamed' not in c and 'cells' not in c and 'est' in c]
+        else:
+            cols = [c for c in self.df.columns if 'start' not in c and 'end' not in c and 'mean' not in c and 
+                    'alpha' not in c and 'beta' not in c and 'nNsVth' not in c and 'diode' not in c and 'year' 
+                    not in c and 'Unnamed' not in c and 'cells' not in c]
+        
         df_ds = self.df.loc[:, cols]
         df_ds = df_ds.reindex(index=new_index)
         
@@ -94,9 +108,8 @@ class PVPROPostProcessor():
         # determines indices of points on the boundary to a tolerance (set in init)
         bounds = self.PVPROSystem
         indices = []
-        df = self.df_ds
-        bounded_params = ['photocurrent_ref', 'saturation_current_ref', 'resistance_series_ref', 
-                        'resistance_shunt_ref']
+        df = self.df
+        bounded_params = bounds.keys()
         
         for name in bounded_params:
             bpoints = np.arange(len(df[name]))[np.logical_or(df[name] >= bounds[name][1] - bounds[name][2], 
@@ -162,7 +175,7 @@ class PVPROPostProcessor():
         else:
             known = np.logical_and(known, ~np.isnan(y))
         
-        if label == 'resistance_series_ref':
+        if 'series' in label:
             decreasing = False
         else:
             decreasing = True
