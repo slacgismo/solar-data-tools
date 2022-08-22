@@ -279,19 +279,30 @@ class PVPROPostProcessor():
     ############################################################################################################
     
     def plot_df(self, df):
-        # plots columns of up to a 9 column dataframe
-        plt.figure(figsize=(7,len(df.columns)*2))
-        sp_counter = len(df.columns)*100 + 11
-        
-        for label, values in df.items():
-            plt.subplot(sp_counter)
-            plt.scatter(df.index, df[label])
-            plt.title(label)
-            plt.xticks(rotation=45)
-            sp_counter += 1
-        
-        plt.tight_layout()
-        plt.show()
+        # plots columns of a dataframe
+        if len(df.columns) < 10:
+            plt.figure(figsize=(7,len(df.columns)*2))
+            sp_counter = len(df.columns)*100 + 11
+
+            for label, values in df.items():
+                plt.subplot(sp_counter)
+                plt.scatter(df.index, df[label])
+                plt.title(label)
+                plt.xticks(rotation=45)
+                sp_counter += 1
+
+            plt.tight_layout()
+            plt.show()
+            
+        else:
+            for label, values in df.items():
+                plt.figure()
+                plt.scatter(df.index, df[label])
+                plt.title(label)
+                plt.xticks(rotation=45)
+                
+            plt.tight_layout()    
+            plt.show()
     
     def plot_sd_space(self, label, model, model_title=None):
         # plots the SD of one system parameter jn the scaled log space
