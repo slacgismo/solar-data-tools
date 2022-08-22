@@ -159,7 +159,7 @@ class PVPROPostProcessor():
     ############################################################################################################
     
     def optimize(self, label, lambda4, lambda5, model, lambda2=0.001, 
-                 lambda3=1, verbose=False, known=None, solver='Default'):    
+                 verbose=False, known=None, solver='Default'):    
         # runs an optimization problem to perform a 5-component signal decomposition
         # on one parameter of the PV system
         # lambda4 indicates the strength of smoothing on the periodic component
@@ -189,7 +189,6 @@ class PVPROPostProcessor():
         
         # weights
         lambda_2 = cp.Parameter(value=lambda2, nonneg=True)
-        lambda_3 = cp.Parameter(value=lambda3, nonneg=True)
         lambda_4 = cp.Parameter(value=lambda4, nonneg=True)
         lambda_5 = cp.Parameter(value=lambda5, nonneg=True)
         
@@ -398,7 +397,7 @@ class PVPROPostProcessor():
     # Error calculations 
     ############################################################################################################
     
-    def error_analysis(self, lambda4, lambda5, num_runs, lambda2=0.001, lambda3=1, solver='Default'):
+    def error_analysis(self, lambda4, lambda5, num_runs, lambda2=0.001, solver='Default'):
         # calculates the holdout error, looping over system parameters, models, cost function weights,
         # and number of repetitions
         # lambda4 and lambda5 inputs are arrays
@@ -406,12 +405,11 @@ class PVPROPostProcessor():
         ti = time()
         period = self.period
         lambda_2 = lambda2
-        lambda_3 = lambda3
         lambda_4_values = lambda4
         lambda_5_values = lambda5
         runs = np.arange(num_runs)
         models = ['linear', 'monotonic', 'smooth_monotonic', 'piecewise_linear']
-        cols = ['system_parameter', 'run_number', 'degradation_model', 'lambda_2_val', 'lambda_3_val', 
+        cols = ['system_parameter', 'run_number', 'degradation_model', 'lambda_2_val', 
                 'lambda_4_val', 'lambda_5_val', 'mean_sq_error']
         num_rows = (len(lambda_5_values) + 1)*len(lambda_4_values)*2*len(runs)*len(self.df_p.columns)
         df_error = pd.DataFrame(columns=cols, index=np.arange(num_rows))
@@ -446,17 +444,17 @@ class PVPROPostProcessor():
                         for l5_val in l5_iter:
                             if solver is 'Default':
                                 self.optimize(label, l4_val, l5_val, m_type, lambda2=lambda_2, 
-                                                       lambda3=lambda_3, solver=solver, known=train)
+                                              solver=solver, known=train)
                             else:
                                 self.optimize(label, l4_val, l5_val, m_type, lambda2=lambda_2, 
-                                                       lambda3=lambda_3, solver=solver, known=train)
+                                              solver=solver, known=train)
                                 
                             x_vals = self.ScaledData[label + '_' + m_type]
                             composed_sig = x_vals['composed_signal'].values
                             
                             mse = 1/len(test_data)*sum((composed_sig[test] - data.values[test])**2)
 
-                            row = [label, r, m_type, lambda_2, lambda_3, l4_val, l5_val, mse]
+                            row = [label, r, m_type, lambda_2, l4_val, l5_val, mse]
                             df_error.loc[counter] = row
                             counter += 1
 
@@ -467,7 +465,7 @@ class PVPROPostProcessor():
         self.df_error = df_error
         
         ti = time()
-        cols = ['system_parameter', 'degradation_model', 'lambda_2_val', 'lambda_3_val', 'lambda_4_val', 
+        cols = ['system_parameter', 'degradation_model', 'lambda_2_val', 'lambda_4_val', 
                 'lambda_5_val', 'mean_sq_error']
         num_rows_avg = len(lambda_4_values)*(len(lambda_5_values) + 1)*2*len(self.df_p.columns)
         df_error_avg = pd.DataFrame(columns=cols, index=np.arange(num_rows_avg))
@@ -489,7 +487,7 @@ class PVPROPostProcessor():
                         all_runs = ar3[ar3['lambda_5_val']==l5_val]
                         avg_mse = all_runs['mean_sq_error'].mean()
                         
-                        row = [label, m_type, lambda_2, lambda_3, l4_val, l5_val, avg_mse]
+                        row = [label, m_type, lambda_2, l4_val, l5_val, avg_mse]
                         df_error_avg.loc[counter] = row
                         counter += 1
                         
