@@ -131,7 +131,7 @@ class PVPROPostProcessor():
     
     def scale_max_1(self):
         # scales a dataframe to have max value 1, min value 0
-        scaler = MinMaxScaler()
+        scaler = MaxAbsScaler()
         df_scaled = scaler.fit_transform(self.df_ds.to_numpy())
         df_scaled = pd.DataFrame(df_scaled, columns=self.df_ds.columns, index=self.df_ds.index)
         
@@ -232,11 +232,11 @@ class PVPROPostProcessor():
         obj = cp.Minimize(cost)
         prob = cp.Problem(obj, constraints)
 
-        if solver is 'Default':
+        if solver is 'Default' or solver is 'OSQP':
             if verbose is True:
-                prob.solve(verbose=True)
+                prob.solve(verbose=True, eps_prim_inf=1*10**(-6), eps_dual_inf=1*10**(-6), eps_rel=1*10**(-6), eps_abs=1*10**(-6))
             else:
-                prob.solve()
+                prob.solve(eps_prim_inf=1*10**(-6), eps_dual_inf=1*10**(-6), eps_rel=1*10**(-6), eps_abs=1*10**(-6))
         else:
             if verbose is True:
                 prob.solve(solver=solver, verbose=True)
@@ -264,13 +264,11 @@ class PVPROPostProcessor():
         
         ind = self.df_ds.columns.get_loc(label)
         
-        max_val = self.scaler.data_max_[ind]
-        min_val = self.scaler.data_min_[ind]
-        coefficient = (max_val - min_val)
-        x3 = x3*coefficient
+        max_val = self.scaler.scale_[ind]
+        x3 = x3*max_val
         
         df_descaled = pd.DataFrame(index=self.df_ds.index, data={'x1':x1, 'x2':x2, 'x3':x3, 'x4':x4, 'x5':x5, 
-                                                            'composed_signal':(x3*x4*x5 + min_val)})
+                                                            'composed_signal':(x3*x4*x5)})
         
         self.DescaledData[label + '_' + model] = df_descaled
         
@@ -303,7 +301,7 @@ class PVPROPostProcessor():
                 
             plt.tight_layout()    
             plt.show()
-    
+
     def plot_sd_space(self, label, model, model_title=None):
         # plots the SD of one system parameter jn the scaled log space
         if self.ScaledData[label + '_' + model] is 'no_entry':
