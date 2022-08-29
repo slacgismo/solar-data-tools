@@ -36,7 +36,7 @@ class SoilingAnalysis:
     def run(self, **config):
         if len(config) == 0:
             config = DEFAULT
-        out = soiling_seperation(
+        out = soiling_separation(
             self.soiling_signal, index_set=self.dh.daily_flags.no_errors, **config
         )
         self.soiling_component = out["soiling"]
@@ -75,7 +75,7 @@ class SoilingAnalysis:
         return fig
 
 
-def soiling_seperation(
+def soiling_separation(
     observed,
     index_set=None,
     degradation_term=DEFAULT["degradation_term"],
@@ -178,7 +178,7 @@ def soiling_seperation(
     return out
 
 
-def soiling_seperation_old(
+def soiling_separation_old(
     observed,
     index_set=None,
     degradation_term=False,
