@@ -1,8 +1,8 @@
 """ PVPRO Post Processing Module
 
-This module contains a class that takes in the output dataframe of PVPRO and contains
-methods to process the dataset, perform signal decompositions to model degradation trends,
-analyze how well the models fit, and visualize the trends. 
+This module contains a class that takes in the output dataframe of PVPRO and 
+contains methods to process the dataset, perform signal decompositions to model 
+degradation trends, analyze how well the models fit, and visualize the trends. 
 
 """
 
@@ -16,88 +16,137 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from scipy.stats import mode
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MaxAbsScaler
 from time import time
 from solardatatools.utilities import progress
 
 
 class PVPROPostProcessor():
+    """ This is a class to process a dataset, perform signal decomposition to 
+    model degradation trends, and analyze and visualize the resulting trends. 
     
-    def __init__(self, file_name, period, index_col=0, dates=None, verbose=False, bp=True, 
-                 bounds='Default', est=False):
-        # imports data and assigns index column and date columns - the optional dates entry
-        # should be a list of column indices [i, j, k]
-        # the verbose keyword argument indicates whether the % of points on the boundaries 
-        # should be printed
-        # the bounds keyword arguments allows the user to input custom boundary values; input
-        # is a dictionary
-        # est should only be True when the input dataframe contains 'ref' and 'ref_est'
-        # columns
+    :param file_name: Name of the data file to be imported (must be .csv)
+    :type file_name: str
+    :param period: How many data points in the file make up a full year of data
+    (for instance, in 5-day interval data, the period is 73)
+    :type period: int
+    :param index_col: column in the input data to be used as the index
+    :type index_col: int, optional
+    :param dates: a list of integer column indices to be parsed as dates
+    :type dates: list, optional
+    :param df_prep: A T/F switch to determine whether the dataframe preparation
+    steps should be performed
+    :type df_prep: bool, optional
+    :param include: Input to include a key term in selected column names
+    :type include: str, optional
+    :param exclude: Input to exclude a key term from selected column names
+    :type exclude: str, optional
+    :param verbose: A T/F switch to show percentage of data points on the
+    boundaries
+    :type verbose: bool, optional
+    :param bp: A T/F switch to choose whether to look for data points on the
+    boundaries
+    "type bp: bool, optional
+    """
+    
+    def __init__(self, file_name, period, index_col=0, dates=None, df_prep=True,
+        include=None, exclude=None, verbose=False, bp=True):
+        """ Imports dats,  assigns index column and date columns, performs 
+        optional dataframe preparation steps, does preprocessing on the data 
+        frame, creates a 'preprocessed' data frame to be used in future 
+        analysis, and initializes other attributes of the class. 
+        """
+        
+        param_dict = {'photocurrent':(0.01, 10, 0.01), 
+              'saturation_current':(0, 1*10**(-6), 5*10**(-12)), 
+              'resistance_series':(0.1, 2, 0.05), 
+              'resistance_shunt':(100, 500, 1),
+              'i_sc':(-np.inf, np.inf, 1),
+              'v_oc':(-np.inf, np.inf, 1),
+              'i_mp':(-np.inf, np.inf, 1),
+              'v_mp':(-np.inf, np.inf, 1),
+              'p_mp':(-np.inf, np.inf, 1)
+                     }
         
         if dates is None:
             dates = [0]
         else:
             dates = dates
         
-        # attributes
-        self.df = pd.read_csv(file_name, index_col=index_col, parse_dates=dates)
-        self.period = period
-        self.df_p = None
-        self.df_ds = None
-        self.bound_indices = None
-        self.df_scaled = None
-        self.scaler = None
-        self.df_l = None
-        self.df_error = None
-        self.df_error_avg = None
-        
-        if bounds is 'Default':
-            self.PVPROSystem = {'photocurrent_ref':[0.01, 10, 0.01], 
-                                'saturation_current_ref':[0, 1*10**(-6), 5*10**(-12)], 
-                                'resistance_series_ref':[0.1, 2, 0.05], 
-                                'resistance_shunt_ref':[100, 500, 1]}
-        else:
-            self.PVPROSystem = bounds
-        
         def default_val():
             return 'no_entry'
         
-        self.ScaledData = defaultdict(default_val)
-        self.DescaledData = defaultdict(default_val)
+        self.df = pd.read_csv(file_name, index_col=index_col, parse_dates=dates)
+        self.period = period
         
-        # combines all of the preprocessing steps
-        self.data_setup(est=est)
+        # dataframe preparation (column selection, time index correction)
+        if df_prep is True:
+            self.data_setup(include=include, exclude=exclude)
+            self.df_ds = self.df_ds
+        else:
+            self.df_ds = self.df
+            
+        # processing steps
         if bp==True:
             self.boundary_points(verbose=verbose)
             self.boundary_to_nan()
-        else:
-            pass
-        self.scale_max_1()
-        self.ln_df()
-        df_p = self.df_l
+        df_scaled = self.scale_max_1()
+        df_p = self.ln_df()
         
+        # attributes
         self.df_p = df_p
+        self.df_error = None
+        self.df_error_avg = None
+        self.scaled_data = defaultdict(default_val)
+        self.descaled_data = defaultdict(default_val)
+        self.df_x1 = None
+        self.df_x2 = None
+        self.df_x3 = None
+        self.df_x4 = None
+        self.df_x5 = None
+        self.df_cs = None
     
-    ############################################################################################################
+    ###########################################################################
     # Processing functions
-    ############################################################################################################
+    ###########################################################################
     
-    def data_setup(self, est=False):
-        # adjusts time index so that there are equal intervals
+    def data_setup(self, include=None, exclude=None):
+        """ Adjusts time index so that there are equal intervals and isolates 
+        columns of interest. Creates dataframe self.df_ds with the selected 
+        columns and adjusted time index.
+        
+        :param include: Input to include a key term in selected column names
+        :type include: str, optional
+        :param exclude: Input to exclude a key term from selected column names
+        :type exclude: str, optional
+        """
+        
+        # adjusting the time series
         time_delta, count = mode(np.diff(self.df.index))
         freq = int(time_delta[0] / np.timedelta64(1, 's'))
-        new_index = pd.date_range(start=self.df.index[0], end=self.df.index[-1], freq='{}s'.format(freq))
+        new_index = pd.date_range(start=self.df.index[0], end=self.df.index[-1],
+            freq='{}s'.format(freq))
         self.df = self.df.reindex(index=new_index)
         
-        # isolates columns of interest
-        if est is True:
-            cols = [c for c in self.df.columns if 'start' not in c and 'end' not in c and 'mean' not in c and 
-                    'alpha' not in c and 'beta' not in c and 'nNsVth' not in c and 'diode' not in c and 'year' 
-                    not in c and 'Unnamed' not in c and 'cells' not in c and 'est' in c]
+        # column selection
+        rule1 = lambda x: ('photocurrent' in x or 'saturation' in x or 
+            'resistance' in x or 'i_sc' in x or 'v_oc' in x or 'mp' in x)
+        
+        if include is not None:
+            rule2 = lambda x: include in x
+            if exclude is not None:
+                rule3 = lambda x: exclude not in x
+                cols = [c for c in self.df.columns if rule1(c) and rule2(c) and
+                rule3(c)]
+            else: 
+                cols = [c for c in self.df.columns if rule1(c) and rule2(c)]
         else:
-            cols = [c for c in self.df.columns if 'start' not in c and 'end' not in c and 'mean' not in c and 
-                    'alpha' not in c and 'beta' not in c and 'nNsVth' not in c and 'diode' not in c and 'year' 
-                    not in c and 'Unnamed' not in c and 'cells' not in c]
+            if exclude is not None:
+                rule3 = lambda x: exclude not in x
+                cols = [c for c in self.df.columns if rule1(c) and rule3(c)]
+            else:
+                cols = [c for c in self.df.columns if rule1(c)]
+        
         
         df_ds = self.df.loc[:, cols]
         df_ds = df_ds.reindex(index=new_index)
@@ -105,71 +154,147 @@ class PVPROPostProcessor():
         self.df_ds = df_ds
     
     def boundary_points(self, verbose=False):
-        # determines indices of points on the boundary to a tolerance (set in init)
-        bounds = self.PVPROSystem
+        """ Determines indices of points on the boundary to a tolerance 
+        determined in param_dict. Creates a list of indices where data points 
+        are on the boundary in any of the system parameters.
+        
+        :param verbose: A T/F switch to show percentage of data points on the 
+        boundaries
+        :type verbose: bool, optional
+        """
+        
+        bounds = param_dict
         indices = []
-        df = self.df
-        bounded_params = bounds.keys()
+        df = self.df_ds
+        cond = ''.join(df.columns)
+        bounded_params = [k for k in bounds.keys() if k in cond]
         
         for name in bounded_params:
-            bpoints = np.arange(len(df[name]))[np.logical_or(df[name] >= bounds[name][1] - bounds[name][2], 
-                                                              df[name] <= bounds[name][0] + bounds[name][2])]
-            indices = np.concatenate((indices, bpoints))
+            label_selection = [c for c in df.columns if name in c]
+            label = label_selection[0]
+            
+            if bounds[name][0] is -np.inf:
+                lbpoints = []
+            else:
+                lbpoints = np.arange(len(df[label]))[df[label] <= 
+                bounds[name][0] + bounds[name][2]]
+            
+            if bounds[name][1] is np.inf:
+                ubpoints = []
+            else:
+                ubpoints = np.arange(len(df[label]))[df[label] >= 
+                bounds[name][1] - bounds[name][2]]
+                                    
+            indices = np.concatenate((indices, lbpoints, ubpoints))
         
         indices = np.unique(indices).astype(int)
         self.bound_indices = indices
         
         if verbose is True:
-            print('Percent on boundaries:', (100*(len(indices)/len(df.index))), '%')
+            print('Percent on boundaries:', (100*(len(indices)/len(df.index))),
+            '%')
         else:
             pass
     
     def boundary_to_nan(self):
-        # makes all points in the dataframe at boundary point
-        # indices be nan
+        """ Makes all points in the dataframe at boundary point indices be nan.
+        """
+        
         self.df_ds.iloc[self.bound_indices, :] = np.nan
     
     def scale_max_1(self):
-        # scales a dataframe to have max value 1, min value 0
+        """ Scales a dataframe to have max value 1.
+        
+        :return: self.scaler, which saves all of the values involved in scaling
+        the data frame
+        :rtype: array
+        """
+        
         scaler = MaxAbsScaler()
         df_scaled = scaler.fit_transform(self.df_ds.to_numpy())
-        df_scaled = pd.DataFrame(df_scaled, columns=self.df_ds.columns, index=self.df_ds.index)
+        df_scaled = pd.DataFrame(df_scaled, columns=self.df_ds.columns, 
+            index=self.df_ds.index)
         
-        self.df_scaled = df_scaled
         self.scaler = scaler
+        return df_scaled
     
     def ln_df(self):
-        # takes the natural log of the scaled dataframe and 
-        # makes all inf values nan
-        cond = self.df_scaled > 0
-        df_l = np.log(self.df_scaled[cond])
+        """ Takes the natural log of the scaled dataframe and makes all inf 
+        values nan.
         
-        self.df_l = df_l
+        :return: df_l, a scaled to max 1 data frame in log space
+        "rtype: Pandas DataFrame
+        """
+        
+        df_scaled = self.scale_max_1()
+        cond = df_scaled > 0
+        df_l = np.log(df_scaled[cond])
+        
+        return df_l
     
     def view_minmax(self, df):
-        # prints the minimum and maximum values for each column 
-        # in the dataframe
+        """ Prints the minimum and maximum values for each column in the 
+        dataframe.
+        """
+        
         for label, values in df.items():
             print(label)
             print(min(df[label]))
             print(max(df[label]))
     
-    ############################################################################################################
+    ###########################################################################
     # Signal decomposition
-    ############################################################################################################
+    ###########################################################################
     
     def optimize(self, label, lambda4, lambda5, model, lambda2=0.001, 
                  verbose=False, known=None, solver='Default'):    
-        # runs an optimization problem to perform a 5-component signal decomposition
-        # on one parameter of the PV system
-        # lambda4 indicates the strength of smoothing on the periodic component
-        # and lambda5 controls the weight of smoothing on the degradation component
+        """ Runs an optimization problem to perform a 5-component signal 
+        decomposition using cvxpy on one parameter of the PV system. Creates 
+        two data frames of the resulting components and a composed signal of 
+        the noiseless components. One data frame is in the scaled log space and
+        the other is in the original space. These resulting data frames can be 
+        accessed in the self.scaled_data and self.descaled_data dictionaries 
+        using the key (label + '_' + model).
         
+        :param label: Column name that indicates which system parameter is 
+        being optimized.
+        :type label: str
+        :param lambda4: Weight which determines the strength of smoothing on 
+        the periodic component
+        :type lambda4: float
+        :param lambda5: Weight which determines the strength of smoothing on 
+        the degradation component
+        :type lambda5: float
+        :param model: Names the model to use for the degradation component, can
+        be 'linear', 'monotonic',
+        'smooth_monotonic', or 'piecewise_linear'
+        :type model: str
+        :param lambda2: Weight on the Laplacian noise term
+        :type lambda2: float, optional
+        :param verbose: T/F switch to determine whether cvxpy prints a verbose 
+        output of the solve
+        :type verbose: bool, optional
+        :param known: Option to input a mask on the data inputted into the 
+        solver
+        :type known: bool mask, optional
+        :param solver: Indicates which solver cvxpy should call to perform the 
+        optimization problem
+        :type solver: str, optional
+        """
+        
+        acceptable_models = ['linear', 'monotonic', 'smooth_monotonic', 
+        'piecewise_linear']
+        
+        if model not in acceptable_models:
+            print('check model entry')
+        
+        # initializing data and characteristic values
         data = self.df_p[label]
         y = self.df_p[label].values
         T = len(y)
         p = self.period
         
+        # applying mask if applicable
         if known is None:
             known = ~np.isnan(y)
         else:
@@ -192,7 +317,9 @@ class PVPROPostProcessor():
         lambda_4 = cp.Parameter(value=lambda4, nonneg=True)
         lambda_5 = cp.Parameter(value=lambda5, nonneg=True)
         
-        cost = (1/T)*cp.sum_squares(x1) + lambda_2*cp.norm1(x2) + lambda_4*cp.sum_squares(cp.diff(x4, k=2))
+        # initial cost function to be minimized and initial constraints
+        cost = ((1/T)*cp.sum_squares(x1) + lambda_2*cp.norm1(x2) 
+            + lambda_4*cp.sum_squares(cp.diff(x4, k=2)))
         
         constraints = [y[known] == (x1 + x2 + x3 + x4 + x5)[known],
                            cp.diff(x3, k=1) == 0,
@@ -203,57 +330,38 @@ class PVPROPostProcessor():
         # additional costs and conditions for all the model types
         if model == 'linear':        
             constraints.append(cp.diff(x5, k=2) == 0)
-        
-        elif model == 'monotonic':        
-            if decreasing == True:
-                constraints.append(cp.diff(x5, k=1) <= 0)
-            else:
-                constraints.append(cp.diff(x5, k=1) >= 0)
-
-        elif model == 'smooth_monotonic':
-            cost += lambda_5*cp.sum_squares(cp.diff(x5, k=2))
-
-            if decreasing == True:
-                constraints.append(cp.diff(x5, k=1) <= 0)
-            else:
-                constraints.append(cp.diff(x5, k=1) >= 0)
-
-        elif model == 'piecewise_linear':
-            cost += lambda_5*cp.norm1(cp.diff(x5, k=2))
-
-            if decreasing == True:
-                constraints.append(cp.diff(x5, k=1) <= 0)
-            else:
-                constraints.append(cp.diff(x5, k=1) >= 0)
-        
         else:
-            print('No model', model)
-
+            if decreasing == True:
+                constraints.append(cp.diff(x5, k=1) <= 0)
+            else:
+                constraints.append(cp.diff(x5, k=1) >= 0)
+            
+            if model == 'smooth_monotonic':
+                cost += lambda_5*cp.sum_squares(cp.diff(x5, k=2))
+                
+            elif model == 'piecewise_linear':
+                cost += lambda_5*cp.norm1(cp.diff(x5, k=2))
+        
+        # setting up the problem
         obj = cp.Minimize(cost)
         prob = cp.Problem(obj, constraints)
+        if solver is 'Default':
+            solver = 'OSQP'
 
-        if solver is 'Default' or solver is 'OSQP':
-            if verbose is True:
-                prob.solve(verbose=True, eps_prim_inf=1*10**(-6), eps_dual_inf=1*10**(-6), eps_rel=1*10**(-6), eps_abs=1*10**(-6))
-            else:
-                prob.solve(eps_prim_inf=1*10**(-6), eps_dual_inf=1*10**(-6), eps_rel=1*10**(-6), eps_abs=1*10**(-6))
+        if solver is 'OSQP':
+            prob.solve(solver=solver, verbose=verbose, eps_prim_inf=1*10**(-6),
+                eps_dual_inf=1*10**(-6), 
+                       eps_rel=1*10**(-6), eps_abs=1*10**(-6))
         else:
-            if verbose is True:
-                prob.solve(solver=solver, verbose=True)
-            else:
-                prob.solve(solver=solver)
+            prob.solve(solver=solver, verbose=verbose)
         
-        df_components = pd.DataFrame(index=self.df_p.index, data={'x1':x1.value, 'x2':x2.value, 'x3':x3.value,
-                                                                  'x4':x4.value, 'x5':x5.value, 
-                                                                  'composed_signal':(x3.value + x4.value + x5.value)})
+        # resulting components
+        df_components = pd.DataFrame(index=self.df_p.index, data={'x1':x1.value,
+            'x2':x2.value, 'x3':x3.value, 'x4':x4.value, 'x5':x5.value, 
+            'composed_signal':(x3.value + x4.value + x5.value)})
         
-        def default_val():
-            return 'no_entry'
         
-        self.ScaledData = defaultdict(default_val)
-        self.DescaledData = defaultdict(default_val)
-        
-        self.ScaledData[label + '_' + model] = df_components
+        self.scaled_data[label + '_' + model] = df_components
         
         # exponentiating the components and undoing the scaling
         x1 = np.exp(df_components['x1'].values)
@@ -267,71 +375,164 @@ class PVPROPostProcessor():
         max_val = self.scaler.scale_[ind]
         x3 = x3*max_val
         
-        df_descaled = pd.DataFrame(index=self.df_ds.index, data={'x1':x1, 'x2':x2, 'x3':x3, 'x4':x4, 'x5':x5, 
-                                                            'composed_signal':(x3*x4*x5)})
+        df_descaled = pd.DataFrame(index=self.df_ds.index, data={'x1':x1, 
+            'x2':x2, 'x3':x3, 'x4':x4, 'x5':x5, 'composed_signal':(x3*x4*x5)})
         
-        self.DescaledData[label + '_' + model] = df_descaled
-        
-    ############################################################################################################
-    # Plotting functions
-    ############################################################################################################
+        self.descaled_data[label + '_' + model] = df_descaled
     
-    def plot_df(self, df):
-        # plots columns of a dataframe
-        if len(df.columns) < 10:
-            plt.figure(figsize=(7,len(df.columns)*2))
-            sp_counter = len(df.columns)*100 + 11
-
-            for label, values in df.items():
-                plt.subplot(sp_counter)
-                plt.scatter(df.index, df[label])
-                plt.title(label)
-                plt.xticks(rotation=45)
-                sp_counter += 1
-
-            plt.tight_layout()
-            plt.show()
+    def analyze(self, label, lambda2=0.001, lambda4=0.1, lambda5=1, 
+        model='smooth_monotonic', verbose=False, known=None, solver='Default'):
+        """ Performs optimize() with default values. All parameters and outputs
+        are the same as those in optimize().
+        
+        :param label: Column name that indicates which system parameter is 
+        being optimized.
+        :type label: str
+        :param lambda2: Weight on the Laplacian noise term
+        :type lambda2: float, optional
+        :param lambda4: Weight which determines the strength of smoothing on 
+        the periodic component
+        :type lambda4: float
+        :param lambda5: Weight which determines the strength of smoothing on 
+        the degradation component
+        :type lambda5: float
+        :param model: Names the model to use for the degradation component, can
+        be 'linear', 'monotonic',
+        'smooth_monotonic', or 'piecewise_linear'
+        :type model: str
+        :param verbose: T/F switch to determine whether cvxpy prints a verbose 
+        output of the solve
+        :type verbose: bool, optional
+        :param known: Option to input a mask on the data inputted into the 
+        solver
+        :type known: bool mask, optional
+        :param solver: Indicates which solver cvxpy should call to perform the 
+        optimization problem
+        :type solver: str, optional
+        """
+        
+        self.optimize(label, lambda4, lambda5, model, lambda2=lambda2, 
+            verbose=verbose, known=known, solver=solver)
+    
+    def sd_result_dfs(self, lambda2=0.001, lambda4=0.1, lambda5=1, 
+        model='smooth_monotonic', known=None, solver='Default'):
+        """ Creates six new data frames containing the six signal decomposition
+        components produced by performing optimize() with the indicated inputs 
+        over all system parameters. One data frame holds one component for all 
+        system parameters.
+        
+        :param lambda2: Weight on the Laplacian noise term
+        :type lambda2: float, optional
+        :param lambda4: Weight which determines the strength of smoothing on 
+        the periodic component
+        :type lambda4: float
+        :param lambda5: Weight which determines the strength of smoothing on 
+        the degradation component
+        :type lambda5: float
+        :param model: Names the model to use for the degradation component, can
+        be 'linear', 'monotonic',
+        'smooth_monotonic', or 'piecewise_linear'
+        :type model: str
+        :param known: Option to input a mask on the data inputted into the 
+        solver
+        :type known: bool mask, optional
+        :param solver: Indicates which solver cvxpy should call to perform the 
+        optimization problem
+        :type solver: str, optional
+        """
+        
+        # initializing data frames
+        df_x1 = pd.DataFrame()
+        df_x2 = pd.DataFrame()
+        df_x3 = pd.DataFrame()
+        df_x4 = pd.DataFrame()
+        df_x5 = pd.DataFrame()
+        df_cs = pd.DataFrame()
+        
+        # solving for all parameters and recording components in their 
+        respective data frames
+        for column in self.df_p.columns:
+            self.optimize(column, lambda4, lambda5, model, lambda2=lambda2, 
+                known=known, solver=solver)
             
-        else:
-            for label, values in df.items():
-                plt.figure()
-                plt.scatter(df.index, df[label])
-                plt.title(label)
-                plt.xticks(rotation=45)
-                
-            plt.tight_layout()    
-            plt.show()
-
-    def plot_sd_space(self, label, model, model_title=None):
-        # plots the SD of one system parameter jn the scaled log space
-        if self.ScaledData[label + '_' + model] is 'no_entry':
+            x1_data = pd.Series(data=self.descaled_data[column + '_' + model]
+                ['x1'], name=column)
+            x2_data = pd.Series(data=self.descaled_data[column + '_' + model]
+                ['x2'], name=column)
+            x3_data = pd.Series(data=self.descaled_data[column + '_' + model]
+                ['x3'], name=column)
+            x4_data = pd.Series(data=self.descaled_data[column + '_' + model]
+                ['x4'], name=column)
+            x5_data = pd.Series(data=self.descaled_data[column + '_' + model]
+                ['x5'], name=column)
+            cs_data = pd.Series(data=self.descaled_data[column + '_' + model]
+                ['composed_signal'], name=column)
+            
+            df_x1 = pd.concat([df_x1, x1_data], axis=1)
+            df_x2 = pd.concat([df_x2, x2_data], axis=1)
+            df_x3 = pd.concat([df_x3, x3_data], axis=1)
+            df_x4 = pd.concat([df_x4, x4_data], axis=1)
+            df_x5 = pd.concat([df_x5, x5_data], axis=1)
+            df_cs = pd.concat([df_cs, cs_data], axis=1)
+            
+        self.df_x1 = df_x1
+        self.df_x2 = df_x2
+        self.df_x3 = df_x3
+        self.df_x4 = df_x4
+        self.df_x5 = df_x5
+        self.df_cs = df_cs
+            
+        
+    ###########################################################################
+    # Plotting functions
+    ###########################################################################    
+    
+    def plot_sd_space(self, label, model='smooth_monotonic'):
+        """ Plots the SD of one system parameter in the scaled log space.
+        
+        :param label: Column name that indicates which system parameter is 
+        being optimized
+        :type label: str
+        :param model: Names the model to use for the degradation component, can
+        be 'linear', 'monotonic',
+        'smooth_monotonic', or 'piecewise_linear'
+        :type model: str, optional
+        :return: Plot of the SD in scaled log space
+        :rtype: figure
+        """
+        
+        if model is 'smooth_monotonic':
+            model_title = 'Smooth Monotonic'
+        if model is 'piecewise_linear':
+            model_title = 'Piecewise Linear'
+        if model is 'linear':
+            model_title = 'Linear'
+        if model is 'monotonic':
+            model_title = 'Monotonic'
+        
+        if self.scaled_data[label + '_' + model] is 'no_entry':
             opt = input('No data entry, would you like to run optimization? (y/n)\n')
             
-            if opt == 'y':
-                l4 = input('Enter your periodic weight value:\n')
-                l5 = input('Enter your degradation weight value:\n')
-                
-                print('Running optimize()')
-                self.optimize(label, float(l4), float(l5), model)
-                self.plot_sd_space(label, model, model_title=model_title)
+            if opt == 'y':                
+                self.analyse(label, model=model)
+                self.plot_sd_space(label, model=model)
                 
             if opt == 'n':
                 pass
+            
         else:        
-            components = self.ScaledData[label + '_' + model]
-            if model_title is None:
-                model_title = model
-            else:
-                pass
+            components = self.scaled_data[label + '_' + model]
 
-            titles = ['Residual', 'Laplacian Noise', 'Bias', 'Periodic', model_title, 'Composed Signal']
-
+            titles = ['Residual', 'Laplacian Noise', 'Bias', 'Periodic', 
+            model_title, 'Composed Signal']
+            
             plt.figure(figsize=(6,20))
             counter = 0
-
+            
             for col, values in components.items():
                 plt.subplot(611 + counter)
-                if titles[counter] == 'Residual' or titles[counter] == 'Laplacian Noise':
+                if titles[counter] == 'Residual' or titles[counter] == 
+                'Laplacian Noise':
                     plt.scatter(self.df_p.index, components[col])
                 elif titles[counter] == 'Composed Signal':
                     plt.scatter(self.df_p.index, self.df_p[label], c='orange')
@@ -343,38 +544,54 @@ class PVPROPostProcessor():
                               components[col][0] + 0.1*components[col][0]))
                 else:
                     plt.plot(self.df_p.index, components[col])
-
+                
                 plt.title(titles[counter])
                 plt.xticks(rotation=45)
-
+                
                 counter += 1
-
+                
             plt.tight_layout()
-            plt.show()
+            return plt.gcf()
     
-    def plot_original_space(self, label, model, model_title=None):
-        if self.DescaledData[label + '_' + model] is 'no_entry':
+    def plot_original_space(self, label, model='smooth_monotonic'):
+        """ Plots the SD of one system parameter in the original space.
+        
+        :param label: Column name that indicates which system parameter is 
+        being optimized
+        :type label: str
+        :param model: Names the model to use for the degradation component, can
+        be 'linear', 'monotonic',
+        'smooth_monotonic', or 'piecewise_linear'
+        :type model: str, optional
+        :return: Plot of the SD in original space
+        :rtype: figure
+        """
+        
+        if model is 'smooth_monotonic':
+            model_title = 'Smooth Monotonic'
+        if model is 'piecewise_linear':
+            model_title = 'Piecewise Linear'
+        if model is 'linear':
+            model_title = 'Linear'
+        if model is 'monotonic':
+            model_title = 'Monotonic'
+        
+        if self.descaled_data[label + '_' + model] is 'no_entry':
             opt = input('No data entry, would you like to run optimization? (y/n)\n')
             
             if opt == 'y':
-                l4 = input('Enter your periodic weight value:\n')
-                l5 = input('Enter your degradation weight value:\n')
-                
-                print('Running optimize()')
-                self.optimize(label, float(l4), float(l5), model)
-                self.plot_original_space(label, model, model_title=model_title)
+                self.analyse(label, model=model)
+                self.plot_sd_space(label, model=model)
                 
             if opt == 'n':
                 pass
+            
         else:        
             data = self.df_ds[label]
-            components = self.DescaledData[label + '_' + model]
-            if model_title is None:
-                model_title = model
-            else:
-                pass
+            components = self.descaled_data[label + '_' + model]
 
-            titles = ['Residual', 'Laplacian Noise', 'Bias', 'Periodic', model_title, 'Composed Signal']
+            titles = ['Residual', 'Laplacian Noise', 'Bias', 'Periodic', 
+            model_title, 'Composed Signal']
 
             plt.figure(figsize=(6,20))
             counter = 0
@@ -400,27 +617,46 @@ class PVPROPostProcessor():
                 counter += 1
 
             plt.tight_layout()
-            plt.show()
+            return plt.gcf()
     
-    ############################################################################################################
+    ###########################################################################
     # Error calculations 
-    ############################################################################################################
+    ###########################################################################
     
-    def error_analysis(self, lambda4, lambda5, num_runs, lambda2=0.001, solver='Default'):
-        # calculates the holdout error, looping over system parameters, models, cost function weights,
-        # and number of repetitions
-        # lambda4 and lambda5 inputs are arrays
+    def error_analysis(self, lambda4, lambda5, num_runs, lambda2=0.001, 
+        solver='Default'):
+        """ Calculates the holdout error, looping over system parameters, 
+        models, cost function weights, and 
+        number of repetitions. Creates a data frame with error results for each
+        iteration and another which averages
+        over all runs for each unique set of inputs. 
+        
+        :param lambda4: A list of periodic component weight values to loop over
+        :type lambda4: list
+        :param lambda5: A list of degradation component weight values to loop 
+        over
+        :type lambda5: list
+        :param num_runs: Number of runs to perform; more runs yields more 
+        generalizable results at the cost of time
+        :type num_runs: int
+        :param lambda2: Laplacian noise weight term value
+        :type lambda2: float, optional
+        :param solver: Indicates which solver cvxpy should call to perform the 
+        optimization problem
+        :type solver: str, optional
+        """
         
         ti = time()
         period = self.period
         lambda_2 = lambda2
-        lambda_4_values = lambda4
-        lambda_5_values = lambda5
+        lambda_4_values = np.atleast_1d(lambda4)
+        lambda_5_values = np.atleast_1d(lambda5)
         runs = np.arange(num_runs)
         models = ['linear', 'monotonic', 'smooth_monotonic', 'piecewise_linear']
-        cols = ['system_parameter', 'run_number', 'degradation_model', 'lambda_2_val', 
-                'lambda_4_val', 'lambda_5_val', 'mean_sq_error']
-        num_rows = (len(lambda_5_values) + 1)*len(lambda_4_values)*2*len(runs)*len(self.df_p.columns)
+        cols = ['system_parameter', 'run_number', 'degradation_model', 
+        'lambda_2_val', 'lambda_4_val', 'lambda_5_val', 'mean_sq_error']
+        num_rows = (len(lambda_5_values) + 1)*len(lambda_4_values)*2*len(runs)
+        *len(self.df_p.columns)
         df_error = pd.DataFrame(columns=cols, index=np.arange(num_rows))
         
         counter = 0
@@ -444,7 +680,8 @@ class PVPROPostProcessor():
                 
                 for m_type in models:
                     for l4_val in lambda_4_values:
-                        if m_type == 'smooth_monotonic' or m_type == 'piecewise_linear':
+                        if m_type == 'smooth_monotonic' or m_type == 
+                        'piecewise_linear':
                             l5_iter = lambda_5_values   
                             
                         else:
@@ -452,18 +689,22 @@ class PVPROPostProcessor():
                             
                         for l5_val in l5_iter:
                             if solver is 'Default':
-                                self.optimize(label, l4_val, l5_val, m_type, lambda2=lambda_2, 
-                                              solver=solver, known=train)
+                                self.optimize(label, l4_val, l5_val, m_type, 
+                                    lambda2=lambda_2, solver=solver, 
+                                    known=train)
                             else:
-                                self.optimize(label, l4_val, l5_val, m_type, lambda2=lambda_2, 
-                                              solver=solver, known=train)
+                                self.optimize(label, l4_val, l5_val, m_type, 
+                                    lambda2=lambda_2, solver=solver, 
+                                    known=train)
                                 
-                            x_vals = self.ScaledData[label + '_' + m_type]
+                            x_vals = self.scaled_data[label + '_' + m_type]
                             composed_sig = x_vals['composed_signal'].values
                             
-                            mse = 1/len(test_data)*sum((composed_sig[test] - data.values[test])**2)
+                            mse = 1/len(test_data)*sum((composed_sig[test] - 
+                                data.values[test])**2)
 
-                            row = [label, r, m_type, lambda_2, l4_val, l5_val, mse]
+                            row = [label, r, m_type, lambda_2, l4_val, l5_val, 
+                            mse]
                             df_error.loc[counter] = row
                             counter += 1
 
@@ -473,35 +714,9 @@ class PVPROPostProcessor():
                             
         self.df_error = df_error
         
-        ti = time()
-        cols = ['system_parameter', 'degradation_model', 'lambda_2_val', 'lambda_4_val', 
-                'lambda_5_val', 'mean_sq_error']
-        num_rows_avg = len(lambda_4_values)*(len(lambda_5_values) + 1)*2*len(self.df_p.columns)
-        df_error_avg = pd.DataFrame(columns=cols, index=np.arange(num_rows_avg))
-        counter = 0
-        progress(counter, num_rows_avg)
-        
-        for label, values in self.df_p.items():
-            for m_type in models:
-                for l4_val in lambda_4_values:
-                    if m_type == 'smooth_monotonic' or m_type == 'piecewise_linear':
-                        l5_iter = lambda_5_values     
-                    else:
-                        l5_iter = [1]
-                        
-                    for l5_val in l5_iter:
-                        ar1 = df_error[df_error['system_parameter']==label]
-                        ar2 = ar1[ar1['degradation_model']==m_type]
-                        ar3 = ar2[ar2['lambda_4_val']==l4_val]
-                        all_runs = ar3[ar3['lambda_5_val']==l5_val]
-                        avg_mse = all_runs['mean_sq_error'].mean()
-                        
-                        row = [label, m_type, lambda_2, l4_val, l5_val, avg_mse]
-                        df_error_avg.loc[counter] = row
-                        counter += 1
-                        
-                        t_progress = time()
-                        msg = "{:.2f} minutes".format((t_progress-ti)/60)
-                        progress(counter, num_rows_avg, status=msg)
+        # averaging over runs for each unique set of inputs 
+        grouped = self.df_error.groupby(['system_parameter', 
+            'degradation_model','lambda_2_val','lambda_4_val', 'lambda_5_val'])
+        df_error_avg = grouped.mean().reset_index().drop(['run_number'], axis=1)
         
         self.df_error_avg = df_error_avg
