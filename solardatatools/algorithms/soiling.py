@@ -7,7 +7,10 @@ and daily energy data.
 """
 
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 import cvxpy as cvx
+from gfosd import Problem
+from gfosd.components import *
 
 DEFAULT = {
     "degradation_term": True,
@@ -25,52 +28,101 @@ class SoilingAnalysis:
         self.dh = data_handler
         e1 = data_handler.daily_signals.energy
         self.scaling = np.nanquantile(e1, 0.98)
-        self.soiling_signal = e1 / self.scaling
-        self.soiling_component = None
-        self.seasonal_component = None
-        self.degradation_component = None
-        self.residual_component = None
-        self.corr_raw_matrix = None
-        self.corr_filled_data_matrix = None
+        self.soiling_signal = None
+        self.scaler_obj = None
+        self.sd_problem = None
+        self.soiling_decomposition = None
 
     def run(self, **config):
-        if len(config) == 0:
-            config = DEFAULT
-        out = soiling_seperation(
-            self.soiling_signal, index_set=self.dh.daily_flags.no_errors, **config
+        self.preprocess_data()
+        self.setup_sd_problem()
+        self.sd_problem.decompose(max_iter=6000)
+        out = self.undo_preprocess()
+        self.decomposition = {
+            "residual": out[0],
+            "baseline": out[1] * self.scaling,
+            "seasonal": out[2],
+            "degradation": out[3],
+            "soiling": out[4],
+        }
+        self.correction_factor = (
+            self.decomposition["degradation"] * self.decomposition["soiling"]
         )
-        self.soiling_component = out["soiling"]
-        self.seasonal_component = out["seasonal"]
-        self.degradation_component = out["trend"]
-        self.residual_component = out["residual"]
-        self.correction_factor = 1 + self.soiling_component
         self.corr_raw_matrix = self.dh.raw_data_matrix / self.correction_factor
         self.corr_filled_data_matrix = (
             self.dh.filled_data_matrix / self.correction_factor
         )
 
+    def preprocess_data(self):
+        e1 = self.dh.daily_signals.energy
+        y0 = e1 / self.scaling
+        # take log
+        y1 = np.log(y0)
+        # min-max scale t0 [0, 10]
+        self.scaler_obj = MinMaxScaler(feature_range=(0, 10))
+        y2 = np.ones_like(y1) * np.nan
+        k = ~np.isnan(y1)
+        y2[k] = self.scaler_obj.fit_transform(y1[k].reshape(-1, 1)).ravel()
+        self.soiling_signal = y2
+
+    def setup_sd_problem(self):
+        # residual
+        c1 = SumSquare(weight=1 / len(y))
+        # bias term
+        c2 = NoSlope()
+        # seasonal baseline
+        c3 = Aggregate(
+            [SumSquare(weight=5e0, diff=2), Periodic(365), AverageEqual(0, period=365)]
+        )
+        # long-term linear degradation term
+        c4 = Aggregate([NoCurvature(), FirstValEqual(0)])
+        # soiling term
+        c5 = Aggregate(
+            [
+                SumAbs(weight=1e-5),
+                SumAbs(weight=5e-3, diff=2),
+                Inequality(vmax=0),
+                SumQuantile(weight=1e-5, diff=1, tau=0.9),
+            ]
+        )
+
+        self.sd_problem = Problem(
+            data=self.soiling_signal, components=[c1, c2, c3, c4, c5]
+        )
+
+    def undo_preprocess(self):
+        X1 = np.zeros_like(self.sd_problem.decomposition)
+        X1[1] = self.scaler_obj.inverse_transform(
+            self.sd_problem.decomposition[1].reshape(-1, 1)
+        ).ravel()
+        X1[0] = self.sd_problem.decomposition[0] / self.scaler_obj.scale_
+        X1[2:] = self.sd_problem.decomposition[2:] / self.scaler_obj.scale_
+        X0 = np.exp(X1)
+        return X0
+
     def plot_analysis(self, figsize=None):
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots(nrows=2, sharex=True, figsize=figsize)
-        ax[0].plot(self.dh.day_index, self.soiling_signal, label="signal", linewidth=1)
+        ax[0].plot(
+            self.dh.day_index, self.dh.daily_signals.energy, label="signal", linewidth=1
+        )
+        d = self.decomposition
         ax[0].plot(
             self.dh.day_index,
-            self.seasonal_component
-            + self.degradation_component
-            + self.soiling_component,
+            d["baseline"] * d["seasonal"] * d["degradation"] * d["soiling"],
             label="SD denoised model",
             linewidth=1,
         )
         ax[0].plot(
             self.dh.day_index,
-            self.seasonal_component + self.degradation_component,
+            d["baseline"] * d["seasonal"] * d["degradation"],
             label="SD baseline",
             linewidth=1,
         )
         ax[0].legend()
         ax[0].set_title("signal and SD model")
-        ax[1].plot(self.dh.day_index, self.soiling_component, linewidth=1)
+        ax[1].plot(self.dh.day_index, d["soiling"], linewidth=1)
         ax[1].set_title("soiling component")
         return fig
 
