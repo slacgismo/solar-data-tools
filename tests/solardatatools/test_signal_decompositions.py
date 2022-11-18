@@ -4,12 +4,6 @@ import pandas as pd
 import numpy as np
 from solardatatools import signal_decompositions as sd
 
-# change c1 and c2?
-# pass weights x2 --> results same
-# transition_locs is None --> results same
-# yearly periodic F/T
-# len(signal)>365
-# pass seas_max (scalar)
 class TestSignalDecompositions(unittest.TestCase):
 
     def test_l2_l1d1_l2d2p365_defaults(self):
