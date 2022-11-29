@@ -1,6 +1,5 @@
 scipy
 numpy==1.22.0
-h5py==3.6.0
 pandas
 scikit-learn
 jupyter
