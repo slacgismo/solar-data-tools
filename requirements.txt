@@ -17,4 +17,4 @@ boto3
 # see here: https://docs.mosek.com/8.1/pythonapi/install-interface.html. A license is required to use this software.
 # Academic license info: https://www.mosek.com/products/academic-licenses/
 # Trial commercial license info: https://www.mosek.com/products/trial/
-#Mosek
+Mosek
