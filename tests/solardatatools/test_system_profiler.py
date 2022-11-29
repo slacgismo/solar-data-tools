@@ -6,6 +6,7 @@ from solardatatools import DataHandler
 
 
 class TestSystemProfiler(unittest.TestCase):
+
     def test_system_profiler(self):
         filepath = Path(__file__).parent.parent
         data_file_path = (
