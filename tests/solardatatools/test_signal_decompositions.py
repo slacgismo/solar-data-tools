@@ -13,24 +13,24 @@ class TestSignalDecompositions(unittest.TestCase):
         for a, b in zip(list1, list2):
             self.assertAlmostEqual(a, b, tol)
 
-    def test_l2_l1d1_l2d2p365_defaults(self):
+    def test_l2_l1d1_l2d2p365_default(self):
         """Test with default args"""
 
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK" # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_365.csv"
+            filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = test_data["test_signal"].array[:365]
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}"].array
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
 
         # Run test with default args
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(signal, solver=cvxpy_solver)
@@ -41,24 +41,24 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_tv_weights(self):
         """Test with TV weights"""
 
-        cvxpy_solver = "MOSEK"
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK" # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_365.csv"
+            filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = test_data["test_signal"].array[:365]
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_tvw"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_tvw"].array
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
 
         # Run test
-        rand_tv_weights = test_data["rand_tv_weights"].dropna() # len(signal)-1
+        rand_tv_weights = test_data["rand_tv_weights_365"].dropna() # len(signal)-1
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
             signal,
             solver=cvxpy_solver,
@@ -71,24 +71,24 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_residual_weights(self):
         """Test with residual weights"""
 
-        cvxpy_solver = "MOSEK"
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_365.csv"
+                filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = test_data["test_signal"].array[:365]
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_rw"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_rw"].array
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_rw_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_rw_365"].array.dropna()
 
         # Run test
-        rand_residual_weights = test_data["rand_residual_weights"]
+        rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
             signal,
             solver=cvxpy_solver,
@@ -101,22 +101,22 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_transition(self):
         """Test with non-default transition location"""
 
-        cvxpy_solver = "MOSEK"
         transition  = 100
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_365.csv"
+                filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = test_data["test_signal"].array[:365]
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_100"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_100"].array
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_100_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_100_365"].array.dropna()
 
         # Run test
         rand_weights = np.random.uniform(10, 200, len(signal)-1)
@@ -128,16 +128,16 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
 
-    def test_l2_l1d1_l2d2p365_defaults_long(self):
+    def test_l2_l1d1_l2d2p365_default_long(self):
         """Test with default args and signal with len >365"""
 
-        cvxpy_solver = "MOSEK"
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_600.csv"
+                filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
 
@@ -156,17 +156,18 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_idx_select(self):
         """Test with signal with select indices"""
 
-        cvxpy_solver = "MOSEK"
-        # Take first year of dataset
-        indices = list([True]*365) + list([False]*235)
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_600.csv"
+                filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
+
+        # Take first 300 days of dataset
+        indices = list([True] * 300) + list([False] * (730 - 300))
 
         # Raw signal
         signal = test_data["test_signal"].array
@@ -187,13 +188,15 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
-        cvxpy_solver = "MOSEK"
+        low_tolerance = 3  # is this reasonable?
+
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_600.csv"
+                filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
 
@@ -210,27 +213,27 @@ class TestSignalDecompositions(unittest.TestCase):
             yearly_periodic=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat), low_tolerance)
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas), low_tolerance)
 
     def test_l2_l1d1_l2d2p365_seas_max(self):
         """Test with signal with a max constraint on seas_max=0.5"""
 
-        cvxpy_solver = "MOSEK"
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
         data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" /
-            "noisy_sim_data_signal_decomposition_input_365.csv"
+                filepath / "fixtures" / "signal_decompositions" / fname
         )
         test_data = pd.read_csv(data_file_path)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = test_data["test_signal"].array[:365]
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_seas_max"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_seas_max"].array
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_seas_max_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_seas_max_365"].array.dropna()
 
         # Run test with default args
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
@@ -242,8 +245,35 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
 
-    # def test_l1_l2d2p365(self):
-    #     self.assertEqual(True, False)  # add assertion here
+    # def test_l1_l2d2p365_default(self):
+    #     """Test with default args"""
+    #
+    #     cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
+    #
+    #     # Test signal data; incl MOSEK and SCS expected solutions
+    #     filepath = Path(__file__).parent.parent
+    #     data_file_path = (
+    #             filepath / "fixtures" / "signal_decompositions" /
+    #             "noisy_sim_data_signal_decomposition_input_365.csv"
+    #     )
+    #     test_data = pd.read_csv(data_file_path)
+    #
+    #     # Raw signal
+    #     signal = test_data["test_signal"].array
+    #     # Expected output
+    #     expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}"].array
+    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}"].array
+    #
+    #     # Run test with default args
+    #     actual_s_hat, actual_s_seas = sd.l1_l2d2p365(signal, solver=cvxpy_solver)
+    #
+    #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
+    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+
+    # def test_l1_l2d2p365_default_long(self):
+    #     self.assertEqual(True, True)  # add assertion here
+    # def test_l1_l2d2p365_idx_select(self):
+    #     self.assertEqual(True, True)  # add assertion here
     #
     # def test_tl1_l2d2p365(self):
     #     self.assertEqual(True, False)  # add assertion here
