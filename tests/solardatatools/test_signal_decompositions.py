@@ -46,7 +46,7 @@ from solardatatools import signal_decompositions as sd
 
 class TestSignalDecompositions(unittest.TestCase):
     # Tolerance for difference between solutions
-    tolerance = 6  # higher tolerance will fail w/ this rounded data
+    tolerance = 7  # higher tolerance will fail w/ this rounded data
 
     def assertListAlmostEqual(self, list1, list2, tol=tolerance):
         self.assertEqual(len(list1), len(list2))
@@ -58,6 +58,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK" # scs is only other option for tests as of 11/28/22
+        c1 = 2
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
@@ -73,7 +74,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
 
         # Run test with default args
-        actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(signal, solver=cvxpy_solver)
+        actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(signal, c1=c1, solver=cvxpy_solver)
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
@@ -84,6 +85,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK" # scs is only other option for tests as of 11/28/22
+        c1 = 2.5
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
@@ -102,6 +104,7 @@ class TestSignalDecompositions(unittest.TestCase):
         rand_tv_weights = test_data["rand_tv_weights_365"].dropna() # len(signal)-1
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
             signal,
+            c1=c1,
             solver=cvxpy_solver,
             tv_weights=rand_tv_weights
         )
@@ -114,6 +117,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
+        c1 = 2.5
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
@@ -132,6 +136,7 @@ class TestSignalDecompositions(unittest.TestCase):
         rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
             signal,
+            c1=c1,
             solver=cvxpy_solver,
             residual_weights=rand_residual_weights
         )
@@ -142,7 +147,7 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_transition(self):
         """Test with non-default transition location"""
 
-        transition  = 100
+        transition  = [164, 328]
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
@@ -156,8 +161,8 @@ class TestSignalDecompositions(unittest.TestCase):
         # Raw signal
         signal = test_data["test_signal"].array[:365]
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_100_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_100_365"].array.dropna()
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_365"].array.dropna()
 
         # Run test
         rand_weights = np.random.uniform(10, 200, len(signal)-1)
@@ -174,6 +179,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
+        c1 = 2
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
@@ -189,7 +195,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}"].array
 
         # Run test with default args
-        actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(signal, solver=cvxpy_solver)
+        actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(signal, c1=c1, solver=cvxpy_solver)
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
@@ -199,6 +205,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
+        c1 = 2
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
@@ -219,6 +226,7 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
             signal,
+            c1=c1,
             solver=cvxpy_solver,
             use_ixs=indices
         )
@@ -231,6 +239,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
+        c1 = 1
 
         # Test signal data; incl MOSEK and SCS expected solutions
         filepath = Path(__file__).parent.parent
@@ -248,6 +257,7 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
             signal,
+            c1=c1,
             solver=cvxpy_solver,
             yearly_periodic=True
         )
