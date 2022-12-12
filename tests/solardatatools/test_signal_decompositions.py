@@ -7,7 +7,7 @@ from solardatatools import signal_decompositions as sd
 
 class TestSignalDecompositions(unittest.TestCase):
     # Tolerance for difference between solutions
-    tolerance = 7  # is this reasonable?
+    tolerance = 6  # is this reasonable?
 
     def assertListAlmostEqual(self, list1, list2, tol=tolerance):
         self.assertEqual(len(list1), len(list2))
