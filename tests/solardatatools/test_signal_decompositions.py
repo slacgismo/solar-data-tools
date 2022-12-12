@@ -4,9 +4,10 @@ import pandas as pd
 import numpy as np
 from solardatatools import signal_decompositions as sd
 
+
 class TestSignalDecompositions(unittest.TestCase):
     # Tolerance for difference between solutions
-    tolerance = 5 # is this reasonable?
+    tolerance = 7  # is this reasonable?
 
     def assertListAlmostEqual(self, list1, list2, tol=tolerance):
         self.assertEqual(len(list1), len(list2))
@@ -37,6 +38,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+
 
     def test_l2_l1d1_l2d2p365_tv_weights(self):
         """Test with TV weights"""
@@ -188,8 +190,6 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
-        low_tolerance = 3  # is this reasonable?
-
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
 
@@ -213,8 +213,8 @@ class TestSignalDecompositions(unittest.TestCase):
             yearly_periodic=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat), low_tolerance)
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas), low_tolerance)
+        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
 
     def test_l2_l1d1_l2d2p365_seas_max(self):
         """Test with signal with a max constraint on seas_max=0.5"""
