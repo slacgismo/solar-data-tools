@@ -11,6 +11,7 @@
     - test_l2_l1d1_l2d2p365_tv_weights
     - test_l2_l1d1_l2d2p365_residual_weights
     - test_l2_l1d1_l2d2p365_transition
+    - test_l2_l1d1_l2d2p365_transition_wrong
     - test_l2_l1d1_l2d2p365_default_long
     - test_l2_l1d1_l2d2p365_idx_select
     - test_l2_l1d1_l2d2p365_yearly_periodic
@@ -46,7 +47,7 @@ from solardatatools import signal_decompositions as sd
 
 class TestSignalDecompositions(unittest.TestCase):
     # Tolerance for difference between solutions
-    tolerance = 7  # higher tolerance will fail w/ this rounded data
+    tolerance = 6  # higher tolerance will fail w/ this rounded data
 
     def assertListAlmostEqual(self, list1, list2, tol=tolerance):
         self.assertEqual(len(list1), len(list2))
@@ -145,7 +146,7 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
 
     def test_l2_l1d1_l2d2p365_transition(self):
-        """Test with non-default transition location"""
+        """Test with piecewise fn transition location"""
 
         transition  = [164, 328]
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
@@ -163,6 +164,36 @@ class TestSignalDecompositions(unittest.TestCase):
         # Expected output
         expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_365"].array.dropna()
         expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_365"].array.dropna()
+
+        # Run test
+        rand_weights = np.random.uniform(10, 200, len(signal)-1)
+        actual_s_hat, actual_s_seas = sd.l2_l1d1_l2d2p365(
+            signal,
+            transition_locs=transition
+        )
+
+        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+
+    def test_l2_l1d1_l2d2p365_transition_wrong(self):
+        """Test with wrong (random) transition location"""
+
+        transition  = [100, 308]
+        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"  # scs is only other option for tests as of 11/28/22
+
+        # Test signal data; incl MOSEK and SCS expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+                filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array[:365]
+        # Expected output
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_wrong_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_wrong_365"].array.dropna()
 
         # Run test
         rand_weights = np.random.uniform(10, 200, len(signal)-1)
