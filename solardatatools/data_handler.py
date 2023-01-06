@@ -517,52 +517,26 @@ class DataHandler:
         self._ran_pipeline = True
         return
 
-    def report(self):
+    def report(self, verbose=True, return_values=False):
         try:
-            if self.num_days >= 365:
-                l1 = "Length:                {:.2f} years\n".format(self.num_days / 365)
-            else:
-                l1 = "Length:                {} days\n".format(self.num_days)
-            if self.power_units == "W":
-                l1_a = "Capacity estimate:     {:.2f} kW\n".format(
-                    self.capacity_estimate / 1000
-                )
-            elif self.power_units == "kW":
-                l1_a = "Capacity estimate:     {:.2f} kW\n".format(
+            report = {
+                "length": self.num_days / 365,
+                "capacity": (
                     self.capacity_estimate
-                )
-            else:
-                l1_a = "Capacity estimate:     {:.2f} ".format(self.capacity_estimate)
-                l1_a += self.power_units + "\n"
-            if self.raw_data_matrix.shape[0] <= 1440:
-                l2 = "Data sampling:         {} minute\n".format(self.data_sampling)
-            else:
-                l2 = "Data sampling:         {} second\n".format(
-                    int(self.data_sampling * 60)
-                )
-            l3 = "Data quality score:    {:.1f}%\n".format(
-                self.data_quality_score * 100
-            )
-            l4 = "Data clearness score:  {:.1f}%\n".format(
-                self.data_clearness_score * 100
-            )
-            l5 = "Inverter clipping:     {}\n".format(self.inverter_clipping)
-            l6 = "Time shifts corrected: {}\n".format(self.time_shifts)
-            if self.tz_correction != 0:
-                l7 = "Time zone correction:  {} hours".format(int(self.tz_correction))
-            else:
-                l7 = "Time zone correction:  None"
-            p_out = l1 + l1_a + l2 + l3 + l4 + l5 + l6 + l7
-            if self.capacity_changes:
-                p_out += "\nWARNING: Changes in system capacity detected!"
-            if self.num_clip_points > 1:
-                p_out += "\nWARNING: {} clipping set points detected!".format(
-                    self.num_clip_points
-                )
-            if not self.normal_quality_scores:
-                p_out += "\nWARNING: Abnormal clustering of data quality scores!"
-            print(p_out)
-            return
+                    if self.power_units == "kW"
+                    else self.capacity_estimate / 1000
+                ),
+                "sampling": self.data_sampling,
+                "quality score": self.data_quality_score,
+                "clearness score": self.data_clearness_score,
+                "inverter clipping": self.inverter_clipping,
+                "capacity change": self.capacity_changes,
+                "data quality warning": self.normal_quality_scores,
+                "time shift correction": (
+                    self.time_shifts if self.time_shifts is not None else False
+                ),
+                "time zone correction": self.tz_correction,
+            }
         except TypeError:
             if self._ran_pipeline:
                 m1 = "Pipeline failed, please check data set.\n"
@@ -595,8 +569,30 @@ class DataHandler:
                 p_out = m1 + m2 + l1 + l1_a + l2
                 print(p_out)
                 print("\nError messages captured from pipeline:" + self._error_msg)
+                return
             else:
                 print("Please run the pipeline first!")
+                return
+        if verbose:
+            pout = f"""
+-----------------
+DATA SET REPORT
+-----------------
+length               {report['length']:.2f} years
+capacity estimate    {report['capacity']:.2f} kW
+data sampling        {report['sampling']} minutes
+quality score        {report['quality score']:.2f}
+clearness score      {report['clearness score']:.2f}
+inverter clipping    {report['inverter clipping']}
+capacity changes     {report['capacity change']}
+data quality warning {report['data quality warning']}
+time shift errors    {report['time shift correction']}
+time zone errors     {report['time zone correction'] != 0}
+            """
+            print(pout)
+        if return_values:
+            return report
+        else:
             return
 
     def augment_data_frame(self, boolean_index, column_name):
