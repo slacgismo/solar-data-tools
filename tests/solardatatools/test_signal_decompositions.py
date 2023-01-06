@@ -3,7 +3,7 @@
 1) 'l2_l1d1_l2d2p365', components:
     - l2: gaussian noise, sum-of-squares small or l2-norm squared
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and seasoanl/365-periodic
+    - l2d2p365: small second order diffs (smooth) and 365-periodic
 
     TESTS
     -----
@@ -17,24 +17,25 @@
     - test_l2_l1d1_l2d2p365_yearly_periodic
     - test_l2_l1d1_l2d2p365_seas_max
 
-2) 'l1_l2d2p365': estimating a smooth, seasonal component with a laplacian
-noise model, fitting a local median instead of a local average
+2) 'tl1_l1d1_l2d2p365', components:
+    - tl1: 'tilted l1-norm,' also known as quantile cost function
+    - l1d1: piecewise constant heuristic, l1-norm of first order differences
+    - l2d2p365: small second order diffs (smooth) and 365-periodic
+
+    TESTS
+    -----
+    - test_tl1_l1d1_l2d2p365_default
+    - test_tl1_l1d1_l2d2p365_tv_weights
+    - test_tl1_l1d1_l2d2p365_residual_weights
+    - test_tl1_l1d1_l2d2p365_idx_select
+
+3) 'l1_l2d2p365', components:
     - l1: laplacian noise, sum-of-absolute values or l1-norm
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-3) 'tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
-an asymmetric laplacian noise model, fitting a local quantile instead of a
-local average
+
+4) 'tl1_l2d2p365', components:
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) 'tl1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
-of Gaussian residuals
-    - tl1: 'tilted l1-norm,' also known as quantile cost function
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-5) 'hu_l1d1': total variation denoising with Huber residual cost
-    - hu: Huber cost, a function that is quadratic below a cutoff point and
-    linear above the cutoff point
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
 
 """
 
