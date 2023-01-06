@@ -517,8 +517,26 @@ class DataHandler:
         self._ran_pipeline = True
         return
 
-    def report(self):
+    def report(self, verbose=True, return_values=False):
         try:
+            report = {
+                "length": self.num_days / 365,
+                "capacity": (
+                    self.capacity_estimate
+                    if self.power_units == "kW"
+                    else self.capacity_estimate / 1000
+                ),
+                "sampling": self.data_sampling,
+                "quality score": self.data_quality_score,
+                "clearness score": self.data_clearness_score,
+                "inverter clipping": self.inverter_clipping,
+                "capacity change": self.capacity_changes,
+                "data quality warning": self.normal_quality_scores,
+                "time shift correction": (
+                    self.time_shifts if self.time_shifts is not None else False
+                ),
+                "time zone correction": self.tz_correction,
+            }
             if self.num_days >= 365:
                 l1 = "Length:                {:.2f} years\n".format(self.num_days / 365)
             else:
@@ -561,8 +579,6 @@ class DataHandler:
                 )
             if not self.normal_quality_scores:
                 p_out += "\nWARNING: Abnormal clustering of data quality scores!"
-            print(p_out)
-            return
         except TypeError:
             if self._ran_pipeline:
                 m1 = "Pipeline failed, please check data set.\n"
@@ -595,8 +611,30 @@ class DataHandler:
                 p_out = m1 + m2 + l1 + l1_a + l2
                 print(p_out)
                 print("\nError messages captured from pipeline:" + self._error_msg)
+                return
             else:
                 print("Please run the pipeline first!")
+                return
+        if verbose:
+            pout = f"""
+-----------------
+DATA SET REPORT
+-----------------
+length               {report['length']:.2f} years
+capacity estimate    {report['capacity']:.2f} kW
+data sampling        {report['sampling']} minutes
+quality score        {report['quality score']:.2f}
+clearness score      {report['clearness score']:.2f}
+inverter clipping    {report['inverter clipping']}
+capacity changes     {report['capacity change']}
+data quality warning {report['data quality warning']}
+time shift errors    {report['time shift correction']}
+time zone errors     {report['time zone correction'] != 0}
+            """
+            print(pout)
+        if return_values:
+            return report
+        else:
             return
 
     def augment_data_frame(self, boolean_index, column_name):
