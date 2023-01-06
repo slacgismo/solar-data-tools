@@ -42,7 +42,7 @@ def osd_l2_l1d1_l2d2p365(
     final output signal
     :param w2: The regularization parameter to control the total variation in the
     seasonal signal
-    :return: OSD Problem object
+    :return: The three components as 1d numpy arrays
     """
     T = len(signal)
 
