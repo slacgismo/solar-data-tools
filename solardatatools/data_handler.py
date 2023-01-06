@@ -537,48 +537,6 @@ class DataHandler:
                 ),
                 "time zone correction": self.tz_correction,
             }
-            if self.num_days >= 365:
-                l1 = "Length:                {:.2f} years\n".format(self.num_days / 365)
-            else:
-                l1 = "Length:                {} days\n".format(self.num_days)
-            if self.power_units == "W":
-                l1_a = "Capacity estimate:     {:.2f} kW\n".format(
-                    self.capacity_estimate / 1000
-                )
-            elif self.power_units == "kW":
-                l1_a = "Capacity estimate:     {:.2f} kW\n".format(
-                    self.capacity_estimate
-                )
-            else:
-                l1_a = "Capacity estimate:     {:.2f} ".format(self.capacity_estimate)
-                l1_a += self.power_units + "\n"
-            if self.raw_data_matrix.shape[0] <= 1440:
-                l2 = "Data sampling:         {} minute\n".format(self.data_sampling)
-            else:
-                l2 = "Data sampling:         {} second\n".format(
-                    int(self.data_sampling * 60)
-                )
-            l3 = "Data quality score:    {:.1f}%\n".format(
-                self.data_quality_score * 100
-            )
-            l4 = "Data clearness score:  {:.1f}%\n".format(
-                self.data_clearness_score * 100
-            )
-            l5 = "Inverter clipping:     {}\n".format(self.inverter_clipping)
-            l6 = "Time shifts corrected: {}\n".format(self.time_shifts)
-            if self.tz_correction != 0:
-                l7 = "Time zone correction:  {} hours".format(int(self.tz_correction))
-            else:
-                l7 = "Time zone correction:  None"
-            p_out = l1 + l1_a + l2 + l3 + l4 + l5 + l6 + l7
-            if self.capacity_changes:
-                p_out += "\nWARNING: Changes in system capacity detected!"
-            if self.num_clip_points > 1:
-                p_out += "\nWARNING: {} clipping set points detected!".format(
-                    self.num_clip_points
-                )
-            if not self.normal_quality_scores:
-                p_out += "\nWARNING: Abnormal clustering of data quality scores!"
         except TypeError:
             if self._ran_pipeline:
                 m1 = "Pipeline failed, please check data set.\n"
