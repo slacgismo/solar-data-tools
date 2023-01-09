@@ -530,6 +530,10 @@ class DataHandler:
                 "quality score": self.data_quality_score,
                 "clearness score": self.data_clearness_score,
                 "inverter clipping": self.inverter_clipping,
+                "clipped fraction": (
+                    np.sum(self.daily_flags.inverter_clipped)
+                    / len(self.daily_flags.inverter_clipped)
+                ),
                 "capacity change": self.capacity_changes,
                 "data quality warning": self.normal_quality_scores,
                 "time shift correction": (
@@ -584,6 +588,7 @@ data sampling        {report['sampling']} minutes
 quality score        {report['quality score']:.2f}
 clearness score      {report['clearness score']:.2f}
 inverter clipping    {report['inverter clipping']}
+clipped fraction     {report['clipped fraction']:.2f}
 capacity changes     {report['capacity change']}
 data quality warning {report['data quality warning']}
 time shift errors    {report['time shift correction']}
