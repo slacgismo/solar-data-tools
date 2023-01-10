@@ -233,13 +233,12 @@ class ConfigurationEstimator:
         else:
             day_range = np.ones(self.day_of_year.shape, dtype=bool)
 
-        scale_factor_costheta, costheta_fit = find_fit_costheta(
-            self.data_matrix, self.days
+        doy = self.data_handler.day_index.day_of_year
+        normalized_data, costheta_est = find_fit_costheta(
+            self.data_matrix, self.days, doy
         )
 
-        boolean_filter = filter_data(
-            self.data_matrix, self.daytime_threshold, self.x1, self.x2
-        )
+        boolean_filter = normalized_data >= 0.85 * np.exp(costheta_est)
 
         boolean_filter = boolean_filter * self.days * day_range
 
@@ -269,7 +268,7 @@ class ConfigurationEstimator:
             keys=dict_keys,
             delta=delta_f,
             omega=omega_f,
-            costheta=costheta_fit,
+            costheta=normalized_data,
             boolean_filter=boolean_filter,
             init_values=init_values,
             fit_bounds=bounds,
