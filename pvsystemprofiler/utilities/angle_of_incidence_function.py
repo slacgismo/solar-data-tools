@@ -21,7 +21,9 @@ def func_costheta(x, phi, beta, gamma):
     return a - b + c + d + e
 
 
-def costheta_calc_helper(data_handler, tilt, azimuth, latitude, longitude, tz_offset):
+def costheta_calc_helper(
+    tilt, azimuth, latitude, longitude, tz_offset, data_handler=None, data_sampling=1
+):
     """Returns a numpy array with the same shape as the data matrix
     attribute on the input data handler. Each entry contains the the calculate
     cosine of the solar angle of incidence for that timestamp.
@@ -48,19 +50,25 @@ def costheta_calc_helper(data_handler, tilt, azimuth, latitude, longitude, tz_of
         local standard time (e.g. Pacific standard time is -8)
     :type tz_offset: integer
     """
-    dh = data_handler
-    delta = delta_cooper(dh.day_index.day_of_year, dh.filled_data_matrix.shape[0])
-    omega = calculate_omega(
-        dh.data_sampling, dh.num_days, longitude, dh.day_index.day_of_year, tz_offset
-    )
+    if data_handler is not None:
+        dh = data_handler
+        doy = dh.day_index.day_of_year
+        meas_per_day = dh.filled_data_matrix.shape[0]
+        data_sampling = dh.data_sampling
+    else:
+        doy = np.arange(365) + 1
+        meas_per_day = int(1440 / data_sampling)
+        data_sampling = data_sampling
+    delta = delta_cooper(doy, meas_per_day)
+    omega = calculate_omega(doy, data_sampling, longitude, tz_offset)
     # func_costheta uses the convention from Duffie and Beckman that zero is
     # due south, but the industry uses the 'meteorological' convention that
     # zero is north. This converts between the conventions
-    az = 180 - azimuth
+    az_duff = azimuth - 180
     costheta = func_costheta(
         (np.deg2rad(delta), np.deg2rad(omega)),
         np.deg2rad(latitude),
         np.deg2rad(tilt),
-        np.deg2rad(az),
+        np.deg2rad(az_duff),
     )
     return costheta

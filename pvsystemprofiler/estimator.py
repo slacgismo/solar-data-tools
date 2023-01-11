@@ -182,11 +182,7 @@ class ConfigurationEstimator:
         self.data_matrix = dh.filled_data_matrix
         self.num_days = dh.num_days
         self.omega = calculate_omega(
-            self.data_sampling,
-            self.num_days,
-            self.longitude,
-            self.day_of_year,
-            self.gmt_offset,
+            self.day_of_year, self.data_sampling, self.longitude, self.gmt_offset
         )
 
         self.tilt, self.azimuth = self._cal_orientation_helper()
@@ -216,11 +212,7 @@ class ConfigurationEstimator:
         est_lat.estimate_latitude()
         self.latitude = est_lat.latitude
         self.omega = calculate_omega(
-            self.data_sampling,
-            self.num_days,
-            self.longitude,
-            self.day_of_year,
-            self.gmt_offset,
+            self.day_of_year, self.data_sampling, self.longitude, self.gmt_offset
         )
 
         self.tilt, self.azimuth = self._cal_orientation_helper()
@@ -238,9 +230,15 @@ class ConfigurationEstimator:
             self.data_matrix, self.days, doy
         )
 
-        boolean_filter = normalized_data >= 0.85 * np.exp(costheta_est)
+        self.data_handler.find_clipped_times()
+        boolean_filter = normalized_data >= 0.15 * np.exp(costheta_est)
 
-        boolean_filter = boolean_filter * self.days * day_range
+        boolean_filter = (
+            boolean_filter
+            * ~self.data_handler.boolean_masks.clipped_times
+            * self.data_handler.daily_flags.clear
+            * day_range
+        )
 
         delta_f = self.delta[boolean_filter]
         omega_f = self.omega[boolean_filter]
