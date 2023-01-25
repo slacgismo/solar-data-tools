@@ -60,7 +60,7 @@ from solardatatools import signal_decompositions as sd
 
 class TestSignalDecompositions(unittest.TestCase):
     # Tolerance for difference between solutions
-    tolerance = 6  # higher tolerance will fail w/ this rounded data
+    tolerance = 5  # higher tolerance will fail w/ this rounded data
 
     def assertListAlmostEqual(self, list1, list2, tol=tolerance):
         self.assertEqual(len(list1), len(list2))
