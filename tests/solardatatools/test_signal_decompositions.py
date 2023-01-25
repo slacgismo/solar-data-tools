@@ -94,7 +94,12 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(signal, c1=c1, solver=cvxpy_solver)
+        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+            signal,
+            c1=c1,
+            solver=cvxpy_solver,
+            return_obj=True
+        )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
@@ -127,7 +132,8 @@ class TestSignalDecompositions(unittest.TestCase):
             signal,
             c1=c1,
             solver=cvxpy_solver,
-            tv_weights=rand_tv_weights
+            tv_weights=rand_tv_weights,
+            return_obj=True
         )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -161,7 +167,8 @@ class TestSignalDecompositions(unittest.TestCase):
             signal,
             c1=c1,
             solver=cvxpy_solver,
-            residual_weights=rand_residual_weights
+            residual_weights=rand_residual_weights,
+            return_obj=True
         )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -193,7 +200,8 @@ class TestSignalDecompositions(unittest.TestCase):
         rand_weights = np.random.uniform(10, 200, len(signal)-1)
         actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
-            transition_locs=transition
+            transition_locs=transition,
+            return_obj=True
         )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -225,7 +233,8 @@ class TestSignalDecompositions(unittest.TestCase):
         rand_weights = np.random.uniform(10, 200, len(signal)-1)
         actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
-            transition_locs=transition
+            transition_locs=transition,
+            return_obj=True
         )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -254,7 +263,12 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(signal, c1=c1, solver=cvxpy_solver)
+        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+            signal,
+            c1=c1,
+            solver=cvxpy_solver,
+            return_obj=True
+        )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
@@ -289,7 +303,8 @@ class TestSignalDecompositions(unittest.TestCase):
             signal,
             c1=c1,
             solver=cvxpy_solver,
-            use_ixs=indices
+            use_ixs=indices,
+            return_obj=True
         )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -322,7 +337,8 @@ class TestSignalDecompositions(unittest.TestCase):
             signal,
             c1=c1,
             solver=cvxpy_solver,
-            yearly_periodic=True
+            yearly_periodic=True,
+            return_obj=True
         )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -353,7 +369,8 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             solver=cvxpy_solver,
-            seas_max=0.5
+            seas_max=0.5,
+            return_obj=True
         )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -415,7 +432,7 @@ class TestSignalDecompositions(unittest.TestCase):
     #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
     #
     #     # Run test
-    #     actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices)
+    #     actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices, return_obj=True)
     #
     #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
     #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -441,7 +458,12 @@ class TestSignalDecompositions(unittest.TestCase):
     #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
     #
     #     # Run test with default args
-    #     actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=True)
+    #     actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+    #       signal,
+    #       solver=cvxpy_solver,
+    #       yearly_periodic=True,
+    #       return_obj=True
+    #      )
     #
     #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
     #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -472,7 +494,7 @@ class TestSignalDecompositions(unittest.TestCase):
     #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
     #
     #     # Run test with default args
-    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver)
+    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
     #
     #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
     #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -501,7 +523,7 @@ class TestSignalDecompositions(unittest.TestCase):
     #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
     #
     #     # Run test
-    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices)
+    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices, return_obj=True)
     #
     #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
     #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -527,7 +549,7 @@ class TestSignalDecompositions(unittest.TestCase):
     #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
     #
     #     # Run test with default args
-    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=True)
+    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=True, return_obj=True)
     #
     #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
     #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -559,7 +581,7 @@ class TestSignalDecompositions(unittest.TestCase):
     #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
     #
     #     # Run test with default args
-    #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(signal, solver=cvxpy_solver)
+    #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
     #
     #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
     #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
@@ -593,7 +615,8 @@ class TestSignalDecompositions(unittest.TestCase):
     #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
     #         signal,
     #         solver=cvxpy_solver,
-    #         use_ixs=indices
+    #         use_ixs=indices,
+    #         return_obj = True
     #     )
     #
     #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -625,7 +648,8 @@ class TestSignalDecompositions(unittest.TestCase):
     #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
     #         signal,
     #         solver=cvxpy_solver,
-    #         tv_weights=rand_tv_weights
+    #         tv_weights=rand_tv_weights,
+    #         return_obj = True
     #     )
     #
     #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
@@ -657,7 +681,8 @@ class TestSignalDecompositions(unittest.TestCase):
     #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
     #         signal,
     #         solver=cvxpy_solver,
-    #         residual_weights=rand_residual_weights
+    #         residual_weights=rand_residual_weights,
+    #         return_obj = True
     #     )
     #
     #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))

@@ -47,6 +47,7 @@ def l2_l1d1_l2d2p365(
     yearly_periodic=False,
     transition_locs=None,
     seas_max=None,
+    return_obj=False
 ):
     """
     This performs total variation filtering with the addition of a seasonal
@@ -114,10 +115,10 @@ def l2_l1d1_l2d2p365(
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
-    # now returning objective value as well for comparisongs to OSD
-    # TODO: remove objective value returned or update SDT dependents
-    return s_hat.value, s_seas.value, problem.objective.value
-
+    if return_obj:
+        # returning objective value as well for comparisongs to OS
+        return s_hat.value, s_seas.value, problem.objective.value
+    return s_hat.value, s_seas.value
 
 def l1_l2d2p365(
         signal,
@@ -125,7 +126,8 @@ def l1_l2d2p365(
         c1=1e3,
         yearly_periodic=True,
         solver=None,
-        verbose=False
+        verbose=False,
+        return_obj=False
 ):
     """
     for a list of available solvers, see:
@@ -151,9 +153,10 @@ def l1_l2d2p365(
     # Currently seems to work with SCS or MOSEK
     prob.solve(solver=solver, verbose=verbose)
 
-    # now returning objective value as well for comparisongs to OSD
-    # TODO: remove objective value returned or update SDT dependents
-    return x.value, problem.objective.value
+    if return_obj:
+        # returning objective value as well for comparisongs to OS
+        return x.value, problem.objective.value
+    return x.value
 
 
 def tl1_l2d2p365(
@@ -163,7 +166,8 @@ def tl1_l2d2p365(
     c1=1e3,
     solver=None,
     yearly_periodic=True,
-    verbose=False
+    verbose=False,
+    return_obj=False
 ):
     """
     https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
@@ -189,10 +193,10 @@ def tl1_l2d2p365(
     prob = cvx.Problem(objective, constraints=constraints)
     prob.solve(solver=solver, verbose=verbose)
 
-    # now returning objective value as well for comparisongs to OSD
-    # TODO: remove objective value returned or update SDT dependents
-    return x.value, problem.objective.value
-
+    if return_obj:
+        # returning objective value as well for comparisongs to OSD
+        return x.value, problem.objective.value
+    return x.value
 
 def tl1_l1d1_l2d2p365(
     signal,
@@ -205,6 +209,7 @@ def tl1_l1d1_l2d2p365(
     verbose=False,
     residual_weights=None,
     tv_weights=None,
+    return_obj=False
 ):
     """
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
@@ -263,9 +268,10 @@ def tl1_l1d1_l2d2p365(
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
-    # now returning objective value as well for comparisongs to OSD
-    # TODO: remove objective value returned or update SDT dependents
-    return s_hat.value, s_seas.value[:n], problem.objective.value
+    if return_obj:
+        # returning objective value as well for comparisongs to OSD
+        return s_hat.value, s_seas.value[:n], problem.objective.value
+    return s_hat.value, s_seas.value[:n]
 
 
 def make_l2_l1d2(y, weight=1e1):
