@@ -378,316 +378,321 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
 
 
-    # ##################
-    # # l1_l2d2p365
-    # ##################
-    #
-    # def test_l1_l2d2p365_default(self):
-    #     """Test with default args"""
-    #
-    #     fname = "test_l1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     #c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #         filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array[:365]
-    #     # Expected output
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
-    #
-    #     # Run test with default args
-    #     actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=cvxpy_solver)
-    #
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    # def test_l1_l2d2p365_idx_select(self):
-    #     """Test with select indices"""
-    #
-    #     fname = "test_l1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     #c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #         filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Take first 300 days of dataset
-    #     indices = list([True] * 300) + list([False] * (730 - 300))
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array
-    #     # Expected output
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
-    #
-    #     # Run test
-    #     actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices, return_obj=True)
-    #
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    # def test_l1_l2d2p365_long_yearly_periodic(self):
-    #     """Test with signal with len>365 and yearly_periodic set to True"""
-    #
-    #     fname = "test_l1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     # c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #             filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array
-    #     # Expected output
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_yearly_periodic"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
-    #
-    #     # Run test with default args
-    #     actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
-    #       signal,
-    #       solver=cvxpy_solver,
-    #       yearly_periodic=True,
-    #       return_obj=True
-    #      )
-    #
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    #
-    # ##############
-    # # tl1_l2d2p365
-    # ##############
-    #
-    # def test_tl1_l2d2p365_default(self):
-    #     """Test with default args"""
-    #
-    #     fname = "test_tl1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     #c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #         filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array[:365]
-    #     # Expected output
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
-    #
-    #     # Run test with default args
-    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
-    #
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    # def test_tl1_l2d2p365_idx_select(self):
-    #     """Test with select indices"""
-    #
-    #     fname = "test_tl1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     #c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #         filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Take first 300 days of dataset
-    #     indices = list([True] * 300) + list([False] * (730 - 300))
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array
-    #     # Expected output
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
-    #
-    #     # Run test
-    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices, return_obj=True)
-    #
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    # def test_tl1_l2d2p365_long_yearly_periodic(self):
-    #     """Test with signal with len>365 and yearly_periodic set to True"""
-    #
-    #     fname = "test_tl1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     # c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #             filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array
-    #     # Expected output
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_yearly_periodic"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
-    #
-    #     # Run test with default args
-    #     actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=True, return_obj=True)
-    #
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    #
-    # ###################
-    # # tl1_l1d1_l2d2p365
-    # ###################
-    #
-    # def test_tl1_l2d2p365_default(self):
-    #     """Test with default args"""
-    #
-    #     fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     # c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #             filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array[:365]
-    #     # Expected output
-    #     expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_365"].array.dropna()
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
-    #
-    #     # Run test with default args
-    #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
-    #
-    #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    # def test_tl1_l1d1_l2d2p365_idx_select(self):
-    #     """Test with select indices"""
-    #
-    #     fname = "test_tl1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #     # c1 = 2 # adjusted weight to get a reasonable decomposition
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #             filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Take first 300 days of dataset
-    #     indices = list([True] * 300) + list([False] * (730 - 300))
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array
-    #     # Expected output
-    #     expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_idx"].array.dropna()
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_idx"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_idx"][0]
-    #
-    #     # Run test
-    #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
-    #         signal,
-    #         solver=cvxpy_solver,
-    #         use_ixs=indices,
-    #         return_obj = True
-    #     )
-    #
-    #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    # def test_tl1_l1d1_l2d2p365_tv_weights(self):
-    #     """Test with TV weights"""
-    #
-    #     fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #             filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array[:365]
-    #     # Expected output
-    #     expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_tvw_365"][0]
-    #
-    #     # Run test
-    #     rand_tv_weights = test_data["rand_tv_weights_365"].dropna()  # len(signal)-1
-    #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
-    #         signal,
-    #         solver=cvxpy_solver,
-    #         tv_weights=rand_tv_weights,
-    #         return_obj = True
-    #     )
-    #
-    #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-    #
-    # def test_tl1_l1d1_l2d2p365_residual_weights(self):
-    #     """Test with residual weights"""
-    #
-    #     fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
-    #     cvxpy_solver = "MOSEK"
-    #
-    #     # Test signal data; incl MOSEK expected solutions
-    #     filepath = Path(__file__).parent.parent
-    #     data_file_path = (
-    #             filepath / "fixtures" / "signal_decompositions" / fname
-    #     )
-    #     test_data = pd.read_csv(data_file_path)
-    #
-    #     # Raw signal
-    #     signal = test_data["test_signal"].array[:365]
-    #     # Expected output
-    #     expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_rw_365"].array.dropna()
-    #     expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_rw_365"].array.dropna()
-    #     expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_rw_365"][0]
-    #
-    #     # Run test
-    #     rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
-    #     actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
-    #         signal,
-    #         solver=cvxpy_solver,
-    #         residual_weights=rand_residual_weights,
-    #         return_obj = True
-    #     )
-    #
-    #     self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-    #     self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-    #     self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+    ##################
+    # l1_l2d2p365
+    ##################
+
+    def test_l1_l2d2p365_default(self):
+        """Test with default args"""
+
+        fname = "test_l1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        #c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+            filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array[:365]
+        # Expected output
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
+
+        # Run test with default args
+        actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
+
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+    def test_l1_l2d2p365_idx_select(self):
+        """Test with select indices"""
+
+        fname = "test_l1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        #c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+            filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Take first 300 days of dataset
+        indices = list([True] * 300) + list([False] * (730 - 300))
+
+        # Raw signal
+        signal = test_data["test_signal"].array
+        # Expected output
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
+
+        # Run test
+        actual_s_seas, actual_obj_val = sd.l1_l2d2p365(
+            signal,
+            solver=cvxpy_solver,
+            use_ixs=indices,
+            return_obj=True
+        )
+
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+    def test_l1_l2d2p365_long_yearly_periodic(self):
+        """Test with signal with len>365 and yearly_periodic set to True"""
+
+        fname = "test_l1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        # c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+                filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array
+        # Expected output
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_yearly_periodic"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
+
+        # Run test with default args
+        actual_s_seas, actual_obj_val = sd.l1_l2d2p365(
+          signal,
+          solver=cvxpy_solver,
+          yearly_periodic=True,
+          return_obj=True
+         )
+
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+
+    ##############
+    # tl1_l2d2p365
+    ##############
+
+    def test_tl1_l2d2p365_default(self):
+        """Test with default args"""
+
+        fname = "test_tl1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        #c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+            filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array[:365]
+        # Expected output
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
+
+        # Run test with default args
+        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
+
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+    def test_tl1_l2d2p365_idx_select(self):
+        """Test with select indices"""
+
+        fname = "test_tl1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        #c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+            filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Take first 300 days of dataset
+        indices = list([True] * 300) + list([False] * (730 - 300))
+
+        # Raw signal
+        signal = test_data["test_signal"].array
+        # Expected output
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
+
+        # Run test
+        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices, return_obj=True)
+
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+    def test_tl1_l2d2p365_long_yearly_periodic(self):
+        """Test with signal with len>365 and yearly_periodic set to True"""
+
+        fname = "test_tl1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        # c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+                filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array
+        # Expected output
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_yearly_periodic"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
+
+        # Run test with default args
+        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=True, return_obj=True)
+
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+
+    ###################
+    # tl1_l1d1_l2d2p365
+    ###################
+
+    def test_tl1_l1d1_l2d2p365_default(self):
+        """Test with default args"""
+
+        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        # c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+                filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array[:365]
+        # Expected output
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
+
+        # Run test with default args
+        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
+
+        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+    def test_tl1_l1d1_l2d2p365_idx_select(self):
+        """Test with select indices"""
+
+        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+        # c1 = 2 # adjusted weight to get a reasonable decomposition
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+                filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Take first 300 days of dataset
+        indices = list([True] * 300) + list([False] * (730 - 300))
+
+        # Raw signal
+        signal = test_data["test_signal"].array
+        # Expected output
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_ixs"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
+
+        # Run test
+        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+            signal,
+            solver=cvxpy_solver,
+            use_ixs=indices,
+            return_obj = True
+        )
+
+        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+    def test_tl1_l1d1_l2d2p365_tv_weights(self):
+        """Test with TV weights"""
+
+        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+                filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array[:365]
+        # Expected output
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_tvw_365"][0]
+
+        # Run test
+        rand_tv_weights = test_data["rand_tv_weights_365"].dropna()  # len(signal)-1
+        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+            signal,
+            solver=cvxpy_solver,
+            tv_weights=rand_tv_weights,
+            return_obj = True
+        )
+
+        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+
+    def test_tl1_l1d1_l2d2p365_residual_weights(self):
+        """Test with residual weights"""
+
+        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
+        cvxpy_solver = "MOSEK"
+
+        # Test signal data; incl MOSEK expected solutions
+        filepath = Path(__file__).parent.parent
+        data_file_path = (
+                filepath / "fixtures" / "signal_decompositions" / fname
+        )
+        test_data = pd.read_csv(data_file_path)
+
+        # Raw signal
+        signal = test_data["test_signal"].array[:365]
+        # Expected output
+        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_rw_365"].array.dropna()
+        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_rw_365"].array.dropna()
+        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_rw_365"][0]
+
+        # Run test
+        rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
+        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+            signal,
+            solver=cvxpy_solver,
+            residual_weights=rand_residual_weights,
+            return_obj = True
+        )
+
+        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
+        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
 
 if __name__ == '__main__':
     unittest.main()

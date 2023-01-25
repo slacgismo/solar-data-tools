@@ -149,9 +149,9 @@ def l1_l2d2p365(
         constraints = [x[365:] == x[:-365]]
     else:
         constraints = []
-    prob = cvx.Problem(objective, constraints=constraints)
+    problem = cvx.Problem(objective, constraints=constraints)
     # Currently seems to work with SCS or MOSEK
-    prob.solve(solver=solver, verbose=verbose)
+    problem.solve(solver=solver, verbose=verbose)
 
     if return_obj:
         # returning objective value as well for comparisongs to OS
@@ -190,8 +190,8 @@ def tl1_l2d2p365(
         constraints = [x[365:] == x[:-365]]
     else:
         constraints = []
-    prob = cvx.Problem(objective, constraints=constraints)
-    prob.solve(solver=solver, verbose=verbose)
+    problem = cvx.Problem(objective, constraints=constraints)
+    problem.solve(solver=solver, verbose=verbose)
 
     if return_obj:
         # returning objective value as well for comparisongs to OSD
