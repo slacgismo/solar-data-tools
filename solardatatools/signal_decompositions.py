@@ -36,6 +36,7 @@ import cvxpy as cvx
 
 def l2_l1d1_l2d2p365(
     signal,
+    c0=10,
     c1=10,
     c2=500,
     solver=None,
@@ -73,23 +74,27 @@ def l2_l1d1_l2d2p365(
     s_hat = cvx.Variable(len(signal))
     s_seas = cvx.Variable(len(signal))
     s_error = cvx.Variable(len(signal))
+    c0 = cvx.Constant(value=c0)
     c1 = cvx.Constant(value=c1)
     c2 = cvx.Constant(value=c2)
     # w = len(signal) / np.sum(index_set)
-    if transition_locs is None:
+    if transition_locs is None: # this should be two separate sd problems
         objective = cvx.Minimize(
             # (365 * 3 / len(signal)) * w *
             # cvx.sum(cvx.huber(cvx.multiply(residual_weights, s_error)))
-            10 * cvx.norm(cvx.multiply(residual_weights, s_error))
+            c0 * cvx.norm(cvx.multiply(residual_weights, s_error))
             + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
             + c2 * cvx.norm(cvx.diff(s_seas, k=2))
             # + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
         )
     else:
+        # This part cannot yet be implemented with osd+qss.
+        # Removes l1d1 cost (l1d1 penalty), instead uses index locations.
         objective = cvx.Minimize(
             10 * cvx.norm(cvx.multiply(residual_weights, s_error))
             + c2 * cvx.norm(cvx.diff(s_seas, k=2))
         )
+    # Consistency constraints
     constraints = [
         signal[index_set] == s_hat[index_set] + s_seas[index_set] + s_error[index_set],
         cvx.sum(s_seas[:365]) == 0,
@@ -105,13 +110,22 @@ def l2_l1d1_l2d2p365(
         constraints.append(cvx.diff(s_hat, k=1)[loc_mask] == 0)
     if seas_max is not None:
         constraints.append(s_seas <= seas_max)
+
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
-    return s_hat.value, s_seas.value
+
+    # now returning objective value as well for comparisongs to OSD
+    # TODO: remove objective value returned or update SDT dependents
+    return s_hat.value, s_seas.value, problem.objective.value
 
 
 def l1_l2d2p365(
-    signal, use_ixs=None, c1=1e3, yearly_periodic=True, solver=None, verbose=False
+        signal,
+        use_ixs=None,
+        c1=1e3,
+        yearly_periodic=True,
+        solver=None,
+        verbose=False
 ):
     """
     for a list of available solvers, see:
@@ -136,7 +150,10 @@ def l1_l2d2p365(
     prob = cvx.Problem(objective, constraints=constraints)
     # Currently seems to work with SCS or MOSEK
     prob.solve(solver=solver, verbose=verbose)
-    return x.value
+
+    # now returning objective value as well for comparisongs to OSD
+    # TODO: remove objective value returned or update SDT dependents
+    return x.value, problem.objective.value
 
 
 def tl1_l2d2p365(
@@ -146,9 +163,7 @@ def tl1_l2d2p365(
     c1=1e3,
     solver=None,
     yearly_periodic=True,
-    verbose=False,
-    residual_weights=None,
-    tv_weights=None,
+    verbose=False
 ):
     """
     https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
@@ -173,7 +188,10 @@ def tl1_l2d2p365(
         constraints = []
     prob = cvx.Problem(objective, constraints=constraints)
     prob.solve(solver=solver, verbose=verbose)
-    return x.value
+
+    # now returning objective value as well for comparisongs to OSD
+    # TODO: remove objective value returned or update SDT dependents
+    return x.value, problem.objective.value
 
 
 def tl1_l1d1_l2d2p365(
@@ -244,10 +262,14 @@ def tl1_l1d1_l2d2p365(
         constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
-    return s_hat.value, s_seas.value[:n]
+
+    # now returning objective value as well for comparisongs to OSD
+    # TODO: remove objective value returned or update SDT dependents
+    return s_hat.value, s_seas.value[:n], problem.objective.value
 
 
 def make_l2_l1d2(y, weight=1e1):
+    """Used in solardatatools/algorithms/clipping.py"""
     y_hat = cvx.Variable(len(y))
     y_param = cvx.Parameter(len(y), value=y)
     mu = cvx.Parameter(nonneg=True)
