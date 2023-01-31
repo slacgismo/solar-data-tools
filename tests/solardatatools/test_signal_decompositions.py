@@ -25,7 +25,7 @@
     -----
     - test_l1_l2d2p365_default
     - test_l1_l2d2p365_idx_select
-    - test_l1_l2d2p365_long_yearly_periodic
+    - test_l1_l2d2p365_long_not_yearly_periodic
 
 3) 'tl1_l2d2p365', components:
     - tl1: 'tilted l1-norm,' also known as quantile cost function
@@ -35,7 +35,7 @@
     -----
     - test_tl1_l2d2p365_default
     - test_tl1_l2d2p365_idx_select
-    - test_tl1_l2d2p365_long_yearly_periodic
+    - test_tl1_l2d2p365_long_not_yearly_periodic
 
 4) 'tl1_l1d1_l2d2p365', components:
     - tl1: 'tilted l1-norm,' also known as quantile cost function
@@ -94,7 +94,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
             solver=cvxpy_solver,
@@ -128,7 +128,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         rand_tv_weights = test_data["rand_tv_weights_365"].dropna() # len(signal)-1
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
             solver=cvxpy_solver,
@@ -163,7 +163,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
             solver=cvxpy_solver,
@@ -178,7 +178,7 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_transition(self):
         """Test with piecewise fn transition location"""
 
-        transition  = [133, 266]
+        transition  = [182]
         fname = "test_l2_l1d1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"
 
@@ -198,7 +198,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         rand_weights = np.random.uniform(10, 200, len(signal)-1)
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             transition_locs=transition,
             return_obj=True
@@ -231,7 +231,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         rand_weights = np.random.uniform(10, 200, len(signal)-1)
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             transition_locs=transition,
             return_obj=True
@@ -263,7 +263,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
             solver=cvxpy_solver,
@@ -288,18 +288,19 @@ class TestSignalDecompositions(unittest.TestCase):
         )
         test_data = pd.read_csv(data_file_path)
 
-        # Take first 300 days of dataset
-        indices = list([True] * 300) + list([False] * (730 - 300))
-
         # Raw signal
         signal = test_data["test_signal"].array
+
+        # Take select indices
+        indices = test_data["indices"]
+
         # Expected output
         expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_ixs"].array
         expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
             solver=cvxpy_solver,
@@ -333,7 +334,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
             solver=cvxpy_solver,
@@ -366,10 +367,10 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_seas_max_365"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.l2_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             solver=cvxpy_solver,
-            seas_max=0.5,
+            seas_max=0.9,
             return_obj=True
         )
 
@@ -387,7 +388,6 @@ class TestSignalDecompositions(unittest.TestCase):
 
         fname = "test_l1_l2d2p365_data_input.csv"
         cvxpy_solver = "MOSEK"
-        #c1 = 2 # adjusted weight to get a reasonable decomposition
 
         # Test signal data; incl MOSEK expected solutions
         filepath = Path(__file__).parent.parent
@@ -422,11 +422,10 @@ class TestSignalDecompositions(unittest.TestCase):
         )
         test_data = pd.read_csv(data_file_path)
 
-        # Take first 300 days of dataset
-        indices = list([True] * 300) + list([False] * (730 - 300))
-
         # Raw signal
         signal = test_data["test_signal"].array
+        # Take select indices
+        indices = test_data["indices"]
         # Expected output
         expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
@@ -442,7 +441,7 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
 
-    def test_l1_l2d2p365_long_yearly_periodic(self):
+    def test_l1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
         fname = "test_l1_l2d2p365_data_input.csv"
@@ -466,7 +465,7 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_s_seas, actual_obj_val = sd.l1_l2d2p365(
           signal,
           solver=cvxpy_solver,
-          yearly_periodic=True,
+          yearly_periodic=False,
           return_obj=True
          )
 
@@ -518,11 +517,10 @@ class TestSignalDecompositions(unittest.TestCase):
         )
         test_data = pd.read_csv(data_file_path)
 
-        # Take first 300 days of dataset
-        indices = list([True] * 300) + list([False] * (730 - 300))
-
         # Raw signal
         signal = test_data["test_signal"].array
+        # Take select indices
+        indices = test_data["indices"]
         # Expected output
         expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
@@ -533,7 +531,7 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
 
-    def test_tl1_l2d2p365_long_yearly_periodic(self):
+    def test_tl1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
         fname = "test_tl1_l2d2p365_data_input.csv"
@@ -554,7 +552,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
 
         # Run test with default args
-        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=True, return_obj=True)
+        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=False, return_obj=True)
 
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -586,7 +584,14 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
 
         # Run test with default args
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
+        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+            signal,
+            tau=0.8,
+            c1=5,
+            c2=500,
+            solver=cvxpy_solver,
+            return_obj=True
+        )
 
         self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
@@ -606,19 +611,21 @@ class TestSignalDecompositions(unittest.TestCase):
         )
         test_data = pd.read_csv(data_file_path)
 
-        # Take first 300 days of dataset
-        indices = list([True] * 300) + list([False] * (730 - 300))
-
         # Raw signal
         signal = test_data["test_signal"].array
+        # Take select indices
+        indices = test_data["indices"]
         # Expected output
         expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_ixs"].array.dropna()
         expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
         expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
 
         # Run test
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
             signal,
+            tau=0.8,
+            c1=5,
+            c2=500,
             solver=cvxpy_solver,
             use_ixs=indices,
             return_obj = True
@@ -650,8 +657,11 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         rand_tv_weights = test_data["rand_tv_weights_365"].dropna()  # len(signal)-1
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
             signal,
+            tau=0.8,
+            c1=5,
+            c2=500,
             solver=cvxpy_solver,
             tv_weights=rand_tv_weights,
             return_obj = True
@@ -683,8 +693,11 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
-        actual_s_hat, actual_s_seas, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
             signal,
+            tau=0.8,
+            c1=5,
+            c2=500,
             solver=cvxpy_solver,
             residual_weights=rand_residual_weights,
             return_obj = True

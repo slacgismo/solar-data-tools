@@ -117,7 +117,7 @@ def l2_l1d1_l2d2p365(
 
     if return_obj:
         # returning objective value as well for comparisongs to OS
-        return s_hat.value, s_seas.value, problem.objective.value
+        return s_hat.value, s_seas.value, s_error.value, problem.objective.value
     return s_hat.value, s_seas.value
 
 def l1_l2d2p365(
@@ -270,7 +270,7 @@ def tl1_l1d1_l2d2p365(
 
     if return_obj:
         # returning objective value as well for comparisongs to OSD
-        return s_hat.value, s_seas.value[:n], problem.objective.value
+        return s_hat.value, s_seas.value[:n], s_error.value, s_linear.value, problem.objective.value
     return s_hat.value, s_seas.value[:n]
 
 
