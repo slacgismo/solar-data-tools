@@ -54,6 +54,7 @@
 import unittest
 from pathlib import Path
 import pandas as pd
+import json
 import numpy as np
 from solardatatools import signal_decompositions as sd
 
@@ -75,25 +76,33 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_default(self):
         """Test with default args"""
 
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
+        # Load input and output data
+        filepath = Path(__file__).parent.parent
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_default_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_default_output.json"
+
+       # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Raw signal
+        signal = np.array(input["test_signal"])
+
+        # Expected output
+        expected_s_hat = output["expected_s_hat_mosek_365"]
+        expected_s_seas = output["expected_s_seas_mosek_365"]
+        expected_obj_val = output["expected_obj_val_mosek_365"]
+
+        # Run test
         cvxpy_solver = "MOSEK"
         c1 = 2 # adjusted weight to get a reasonable decomposition
 
-        # Test signal data; incl MOSEK expected solutions
-        filepath = Path(__file__).parent.parent
-        data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
-
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
-        # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
-
-        # Run test
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
