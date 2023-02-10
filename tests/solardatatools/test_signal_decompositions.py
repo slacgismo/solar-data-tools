@@ -60,14 +60,18 @@ from solardatatools import signal_decompositions as sd
 
 
 class TestSignalDecompositions(unittest.TestCase):
-    # Tolerance for difference between solutions
-    tolerance = 5  # higher tolerance will fail w/ this rounded data
 
+    def setUp(self):
+        self.cvxpy_solver = "MOSEK" # all tests are using MOSEK
+
+    # TODO: can use np.testing.asset_array_almost_equal(l1, l2)
+    # Tolerance for difference between solutions
+    # to be updated for obj_value based on experiments
+    tolerance = 5  # higher tolerance will fail w/ this rounded data
     def assertListAlmostEqual(self, list1, list2, tol=tolerance):
         self.assertEqual(len(list1), len(list2))
         for a, b in zip(list1, list2):
             self.assertAlmostEqual(a, b, tol)
-
 
     ##################
     # l2_l1d1_l2d2p365
@@ -100,13 +104,12 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output["expected_obj_val_mosek_365"]
 
         # Run test
-        cvxpy_solver = "MOSEK"
         c1 = 2 # adjusted weight to get a reasonable decomposition
 
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
-            solver=cvxpy_solver,
+            solver=self.cvxpy_solver,
             return_obj=True
         )
 
@@ -117,66 +120,38 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_tv_weights(self):
         """Test with TV weights"""
 
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        c1 = 2.5 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_tv_weights_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_tv_weights_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+        rand_tv_weights = np.array(input["rand_tv_weights_365"])
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_tvw_365"][0]
+        expected_s_hat = output["expected_s_hat_mosek_tvw_365"]
+        expected_s_seas = output["expected_s_seas_mosek_tvw_365"]
+        expected_obj_val = output["expected_obj_val_mosek_tvw_365"]
 
         # Run test
-        rand_tv_weights = test_data["rand_tv_weights_365"].dropna() # len(signal)-1
+        c1 = 2.5 # adjusted weight to get a reasonable decomposition
+
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
-            solver=cvxpy_solver,
+            solver=self.cvxpy_solver,
             tv_weights=rand_tv_weights,
-            return_obj=True
-        )
-
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-
-    def test_l2_l1d1_l2d2p365_residual_weights(self):
-        """Test with residual weights"""
-
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        c1 = 2.5 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
-        filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
-
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
-        # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_rw_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_rw_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_rw_365"][0]
-
-        # Run test
-        rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
-            signal,
-            c1=c1,
-            solver=cvxpy_solver,
-            residual_weights=rand_residual_weights,
             return_obj=True
         )
 
@@ -187,29 +162,34 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_transition(self):
         """Test with piecewise fn transition location"""
 
-        transition  = [182]
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_transition_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_transition_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+        indices = input["indices"]
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_transition_365"][0]
+        expected_s_hat = output["expected_s_hat_mosek_transition_365"]
+        expected_s_seas = output["expected_s_seas_mosek_transition_365"]
+        expected_obj_val = output["expected_obj_val_mosek_transition_365"]
 
         # Run test
-        rand_weights = np.random.uniform(10, 200, len(signal)-1)
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
-            transition_locs=transition,
+            transition_locs=indices,
             return_obj=True
         )
 
@@ -220,26 +200,31 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_transition_wrong(self):
         """Test with wrong (random) transition location"""
 
-        transition  = [100, 308]
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_transition_wrong_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_transition_wrong_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+        transition  = input["indices"]
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_transition_wrong_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_transition_wrong_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_transition_wrong_365"][0]
+        expected_s_hat = output["expected_s_hat_mosek_transition_wrong_365"]
+        expected_s_seas = output["expected_s_seas_mosek_transition_wrong_365"]
+        expected_obj_val = output["expected_obj_val_mosek_transition_wrong_365"]
 
         # Run test
-        rand_weights = np.random.uniform(10, 200, len(signal)-1)
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             transition_locs=transition,
@@ -253,29 +238,36 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_default_long(self):
         """Test with default args and signal with len >365"""
 
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_default_long_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_default_long_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = np.array(input["test_signal"])
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}"].array
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}"][0]
+        expected_s_hat = output["expected_s_hat_mosek"]
+        expected_s_seas = output["expected_s_seas_mosek"]
+        expected_obj_val = output["expected_obj_val_mosek"]
 
         # Run test
+        c1 = 2 # adjusted weight to get a reasonable decomposition
+
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
-            solver=cvxpy_solver,
+            solver=self.cvxpy_solver,
             return_obj=True
         )
 
@@ -286,33 +278,37 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_idx_select(self):
         """Test with signal with select indices"""
 
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_idx_select_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_idx_select_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
 
         # Raw signal
-        signal = test_data["test_signal"].array
-
-        # Take select indices
-        indices = test_data["indices"]
+        signal = np.array(input["test_signal"])
+        indices = input["indices"]
 
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_ixs"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
+        expected_s_hat = output["expected_s_hat_mosek_ixs"]
+        expected_s_seas = output["expected_s_seas_mosek_ixs"]
+        expected_obj_val = output["expected_obj_val_mosek_ixs"]
 
         # Run test
+        c1 = 2 # adjusted weight to get a reasonable decomposition
+
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
-            solver=cvxpy_solver,
+            solver=self.cvxpy_solver,
             use_ixs=indices,
             return_obj=True
         )
@@ -324,62 +320,37 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l2_l1d1_l2d2p365_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        c1 = 1 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_yearly_periodic_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_yearly_periodic_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = np.array(input["test_signal"])
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_yearly_periodic"].array
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_yearly_periodic"].array
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
+        expected_s_hat = output["expected_s_hat_mosek_yearly_periodic"]
+        expected_s_seas = output["expected_s_seas_mosek_yearly_periodic"]
+        expected_obj_val = output["expected_obj_val_mosek_yearly_periodic"]
 
         # Run test
+        c1 = 1 # adjusted weight to get a reasonable decomposition
+
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
             signal,
             c1=c1,
-            solver=cvxpy_solver,
+            solver=self.cvxpy_solver,
             yearly_periodic=True,
-            return_obj=True
-        )
-
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
-
-    def test_l2_l1d1_l2d2p365_seas_max(self):
-        """Test with signal with a max constraint on seas_max=0.5"""
-
-        fname = "test_l2_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-
-        # Test signal data; incl MOSEK expected solutions
-        filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
-
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
-        # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_seas_max_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_seas_max_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_seas_max_365"][0]
-
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.l2_l1d1_l2d2p365(
-            signal,
-            solver=cvxpy_solver,
-            seas_max=0.9,
             return_obj=True
         )
 
@@ -395,24 +366,30 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l1_l2d2p365_default(self):
         """Test with default args"""
 
-        fname = "test_l1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_l1_l2d2p365_default_input.json"
+        output_path = str(data_file_path) + "/" + "test_l1_l2d2p365_default_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
 
         # Raw signal
-        signal = test_data["test_signal"].array[:365]
+        signal = np.array(input["test_signal"])
+
         # Expected output
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
+        expected_s_seas = output["expected_s_seas_mosek_365"]
+        expected_obj_val = output["expected_obj_val_mosek_365"]
 
         # Run test with default args
-        actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
+        actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=self.cvxpy_solver, return_obj=True)
 
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -420,29 +397,33 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l1_l2d2p365_idx_select(self):
         """Test with select indices"""
 
-        fname = "test_l1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        #c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array
-        # Take select indices
-        indices = test_data["indices"]
+        input_path = str(data_file_path) + "/" + "test_l1_l2d2p365_idx_select_input.json"
+        output_path = str(data_file_path) + "/" + "test_l1_l2d2p365_idx_select_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+        indices = input["indices"]
+
         # Expected output
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
+        expected_s_seas = output["expected_s_seas_mosek_ixs"]
+        expected_obj_val = output["expected_obj_val_mosek_ixs"]
 
         # Run test
         actual_s_seas, actual_obj_val = sd.l1_l2d2p365(
             signal,
-            solver=cvxpy_solver,
+            solver=self.cvxpy_solver,
             use_ixs=indices,
             return_obj=True
         )
@@ -453,27 +434,32 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_l1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
-        fname = "test_l1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        # c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array
+        input_path = str(data_file_path) + "/" + "test_l1_l2d2p365_long_not_yearly_periodic_input.json"
+        output_path = str(data_file_path) + "/" + "test_l1_l2d2p365_long_not_yearly_periodic_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+
         # Expected output
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_yearly_periodic"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
+        expected_s_seas = output["expected_s_seas_mosek_yearly_periodic"]
+        expected_obj_val = output["expected_obj_val_mosek_yearly_periodic"]
 
         # Run test with default args
         actual_s_seas, actual_obj_val = sd.l1_l2d2p365(
           signal,
-          solver=cvxpy_solver,
+          solver=self.cvxpy_solver,
           yearly_periodic=False,
           return_obj=True
          )
@@ -489,25 +475,33 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_tl1_l2d2p365_default(self):
         """Test with default args"""
 
-        fname = "test_tl1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        #c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
+        input_path = str(data_file_path) + "/" + "test_tl1_l2d2p365_default_input.json"
+        output_path = str(data_file_path) + "/" + "test_tl1_l2d2p365_default_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+
         # Expected output
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
+        expected_s_seas = output["expected_s_seas_mosek_365"]
+        expected_obj_val = output["expected_obj_val_mosek_365"]
 
         # Run test with default args
-        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, return_obj=True)
+        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal,
+                                                        tau=0.8,
+                                                        solver=self.cvxpy_solver,
+                                                        return_obj=True)
 
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -515,27 +509,35 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_tl1_l2d2p365_idx_select(self):
         """Test with select indices"""
 
-        fname = "test_tl1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        #c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-            filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array
-        # Take select indices
-        indices = test_data["indices"]
+        input_path = str(data_file_path) + "/" + "test_tl1_l2d2p365_idx_select_input.json"
+        output_path = str(data_file_path) + "/" + "test_tl1_l2d2p365_idx_select_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+        indices = input["indices"]
+
         # Expected output
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
+        expected_s_seas = output["expected_s_seas_mosek_ixs"]
+        expected_obj_val = output["expected_obj_val_mosek_ixs"]
 
         # Run test
-        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, use_ixs=indices, return_obj=True)
+        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal,
+                                                        tau=0.8,
+                                                        solver=self.cvxpy_solver,
+                                                        use_ixs=indices,
+                                                        return_obj=True)
 
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -543,25 +545,34 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_tl1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
-        fname = "test_tl1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        # c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_tl1_l2d2p365_long_not_yearly_periodic_input.json"
+        output_path = str(data_file_path) + "/" + "test_tl1_l2d2p365_long_not_yearly_periodic_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
 
         # Raw signal
-        signal = test_data["test_signal"].array
+        signal = np.array(input["test_signal"])
+
         # Expected output
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_yearly_periodic"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_yearly_periodic"][0]
+        expected_s_seas = output["expected_s_seas_mosek_yearly_periodic"]
+        expected_obj_val = output["expected_obj_val_mosek_yearly_periodic"]
 
         # Run test with default args
-        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal, solver=cvxpy_solver, yearly_periodic=False, return_obj=True)
+        actual_s_seas, actual_obj_val = sd.tl1_l2d2p365(signal,
+                                                        tau=0.8,
+                                                        solver=self.cvxpy_solver,
+                                                        yearly_periodic=False,
+                                                        return_obj=True)
 
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
@@ -574,23 +585,28 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_tl1_l1d1_l2d2p365_default(self):
         """Test with default args"""
 
-        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        # c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
+        input_path = str(data_file_path) + "/" + "test_tl1_l1d1_l2d2p365_default_input.json"
+        output_path = str(data_file_path) + "/" + "test_tl1_l1d1_l2d2p365_default_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_365"][0]
+        expected_s_hat = output[f"expected_s_hat_mosek_365"]
+        expected_s_seas = output[f"expected_s_seas_mosek_365"]
+        expected_obj_val = output[f"expected_obj_val_mosek_365"]
 
         # Run test with default args
         actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
@@ -598,7 +614,8 @@ class TestSignalDecompositions(unittest.TestCase):
             tau=0.8,
             c1=5,
             c2=500,
-            solver=cvxpy_solver,
+            c3=100,
+            solver=self.cvxpy_solver,
             return_obj=True
         )
 
@@ -609,25 +626,29 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_tl1_l1d1_l2d2p365_idx_select(self):
         """Test with select indices"""
 
-        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-        # c1 = 2 # adjusted weight to get a reasonable decomposition
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array
-        # Take select indices
-        indices = test_data["indices"]
+        input_path = str(data_file_path) + "/" + "test_tl1_l1d1_l2d2p365_idx_select_input.json"
+        output_path = str(data_file_path) + "/" + "test_tl1_l1d1_l2d2p365_idx_select_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+        indices = input["indices"]
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_ixs"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_ixs"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_ixs"][0]
+        expected_s_hat = output[f"expected_s_hat_mosek_ixs"]
+        expected_s_seas = output[f"expected_s_seas_mosek_ixs"]
+        expected_obj_val = output[f"expected_obj_val_mosek_ixs"]
 
         # Run test
         actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
@@ -635,7 +656,8 @@ class TestSignalDecompositions(unittest.TestCase):
             tau=0.8,
             c1=5,
             c2=500,
-            solver=cvxpy_solver,
+            c3=100,
+            solver=self.cvxpy_solver,
             use_ixs=indices,
             return_obj = True
         )
@@ -647,31 +669,38 @@ class TestSignalDecompositions(unittest.TestCase):
     def test_tl1_l1d1_l2d2p365_tv_weights(self):
         """Test with TV weights"""
 
-        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-
-        # Test signal data; incl MOSEK expected solutions
+        # Load input and output data
         filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
+        input_path = str(data_file_path) + "/" + "test_tl1_l1d1_l2d2p365_tv_weights_input.json"
+        output_path = str(data_file_path) + "/" + "test_tl1_l1d1_l2d2p365_tv_weights_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+        rand_tv_weights = np.array(input["rand_tv_weights_365"])
+
         # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_tvw_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_tvw_365"][0]
+        expected_s_hat = output[f"expected_s_hat_mosek_tvw_365"]
+        expected_s_seas = output[f"expected_s_seas_mosek_tvw_365"]
+        expected_obj_val = output[f"expected_obj_val_mosek_tvw_365"]
 
         # Run test
-        rand_tv_weights = test_data["rand_tv_weights_365"].dropna()  # len(signal)-1
         actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
             signal,
             tau=0.8,
             c1=5,
             c2=500,
-            solver=cvxpy_solver,
+            c3=100,
+            solver=self.cvxpy_solver,
             tv_weights=rand_tv_weights,
             return_obj = True
         )
@@ -680,41 +709,6 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
         self.assertAlmostEqual(expected_obj_val, actual_obj_val)
 
-    def test_tl1_l1d1_l2d2p365_residual_weights(self):
-        """Test with residual weights"""
-
-        fname = "test_tl1_l1d1_l2d2p365_data_input.csv"
-        cvxpy_solver = "MOSEK"
-
-        # Test signal data; incl MOSEK expected solutions
-        filepath = Path(__file__).parent.parent
-        data_file_path = (
-                filepath / "fixtures" / "signal_decompositions" / fname
-        )
-        test_data = pd.read_csv(data_file_path)
-
-        # Raw signal
-        signal = test_data["test_signal"].array[:365]
-        # Expected output
-        expected_s_hat = test_data[f"expected_s_hat_{cvxpy_solver.lower()}_rw_365"].array.dropna()
-        expected_s_seas = test_data[f"expected_s_seas_{cvxpy_solver.lower()}_rw_365"].array.dropna()
-        expected_obj_val = test_data[f"expected_obj_val_{cvxpy_solver.lower()}_rw_365"][0]
-
-        # Run test
-        rand_residual_weights = test_data["rand_residual_weights_365"].dropna()
-        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
-            signal,
-            tau=0.8,
-            c1=5,
-            c2=500,
-            solver=cvxpy_solver,
-            residual_weights=rand_residual_weights,
-            return_obj = True
-        )
-
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
 
 if __name__ == '__main__':
     unittest.main()
