@@ -13,7 +13,8 @@ def plot_decomp(signal, gt=None):
     
     sns.set_theme()
     sns.set(font_scale=0.8)
-    fig, axs = plt.subplots(subplots, sharex=True, figsize=(8,6))
+    width = 3 if subplots==1 else 6
+    fig, axs = plt.subplots(subplots, sharex=True, figsize=(8,width))
 
     for i in range(subplots):
         if subplots == 1:
@@ -25,4 +26,16 @@ def plot_decomp(signal, gt=None):
         axs[i].set_title(f"component $x^{i+1}$")
         
         
+    plt.tight_layout()
+    
+def plot_signal(signal):
+    """Plot one signal"""
+    signal = list(signal)
+    sns.set_theme()
+    sns.set(font_scale=0.8)
+    fig = plt.figure(figsize=(8,3))
+
+    plt.plot(signal, label="Noisy signal")
+        
+    plt.title("Saved input signal");
     plt.tight_layout()
