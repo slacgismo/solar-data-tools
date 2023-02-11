@@ -36,17 +36,17 @@ import cvxpy as cvx
 
 def l2_l1d1_l2d2p365(
     signal,
-    c0=10,
-    c1=10,
-    c2=500,
+    c0=10, # "hard-coded"
+    c1=10, # optimized
+    c2=500, # val ok
     solver=None,
     verbose=False,
-    residual_weights=None,
+    residual_weights=None, # TODO: remove
     tv_weights=None,
     use_ixs=None,
     yearly_periodic=False,
     transition_locs=None,
-    seas_max=None,
+    seas_max=None, # TODO:  remove
     return_obj=False
 ):
     """
@@ -122,9 +122,9 @@ def l2_l1d1_l2d2p365(
 
 def l1_l2d2p365(
         signal,
-        use_ixs=None,
-        c1=1e3,
-        yearly_periodic=True,
+        use_ixs=None, # unused
+        c1=1e3, # val ok
+        yearly_periodic=True, # default not overwritten in calls
         solver=None,
         verbose=False,
         return_obj=False
@@ -159,13 +159,13 @@ def l1_l2d2p365(
     return x.value
 
 
-def tl1_l2d2p365(
+def tl1_l2d2p365( # called 7 times
     signal,
     use_ixs=None,
-    tau=0.75,
-    c1=1e3,
+    tau=0.75, # passed as 0.05 (sunrise), 0.95 (sunset), 0.9, 0.85
+    c1=1e3,  # default not overwritten in calls, or same val passed
     solver=None,
-    yearly_periodic=True,
+    yearly_periodic=True, # passed as False twice
     verbose=False,
     return_obj=False
 ):
@@ -198,16 +198,16 @@ def tl1_l2d2p365(
         return x.value, problem.objective.value
     return x.value
 
-def tl1_l1d1_l2d2p365(
+def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here
     signal,
     use_ixs=None,
-    tau=0.995,
-    c1=1e3,
-    c2=1e2,
-    c3=1e2,
+    tau=0.995, # passed as 0.5
+    c1=1e3, # passed as 15
+    c2=1e2, # val ok
+    c3=1e2, # passed as 300
     solver=None,
     verbose=False,
-    residual_weights=None,
+    residual_weights=None, # TODO: remove
     tv_weights=None,
     return_obj=False
 ):
@@ -274,7 +274,9 @@ def tl1_l1d1_l2d2p365(
     return s_hat.value, s_seas.value[:n]
 
 
-def make_l2_l1d2(y, weight=1e1):
+def make_l2_l1d2(y,
+                 weight=1e1 # val ok
+):
     """Used in solardatatools/algorithms/clipping.py"""
     y_hat = cvx.Variable(len(y))
     y_param = cvx.Parameter(len(y), value=y)
