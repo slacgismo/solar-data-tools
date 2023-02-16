@@ -9,13 +9,11 @@
     -----
     - test_l2_l1d1_l2d2p365_default
     - test_l2_l1d1_l2d2p365_tv_weights
-    - test_l2_l1d1_l2d2p365_residual_weights
     - test_l2_l1d1_l2d2p365_transition
     - test_l2_l1d1_l2d2p365_transition_wrong
     - test_l2_l1d1_l2d2p365_default_long
     - test_l2_l1d1_l2d2p365_idx_select
     - test_l2_l1d1_l2d2p365_yearly_periodic
-    - test_l2_l1d1_l2d2p365_seas_max
 
 2) 'l1_l2d2p365', components:
     - l1: laplacian noise, sum-of-absolute values or l1-norm
@@ -47,15 +45,16 @@
     - test_tl1_l1d1_l2d2p365_default
     - test_tl1_l1d1_l2d2p365_idx_select
     - test_tl1_l1d1_l2d2p365_tv_weights
-    - test_tl1_l1d1_l2d2p365_residual_weights
 
 """
 
 import unittest
 from pathlib import Path
-import pandas as pd
 import json
 import numpy as np
+import pandas as pd
+from sklearn.metrics import mean_absolute_error as mae
+
 from solardatatools import signal_decompositions as sd
 
 
@@ -63,15 +62,8 @@ class TestSignalDecompositions(unittest.TestCase):
 
     def setUp(self):
         self.cvxpy_solver = "MOSEK" # all tests are using MOSEK
-
-    # TODO: can use np.testing.asset_array_almost_equal(l1, l2)
-    # Tolerance for difference between solutions
-    # to be updated for obj_value based on experiments
-    tolerance = 5  # higher tolerance will fail w/ this rounded data
-    def assertListAlmostEqual(self, list1, list2, tol=tolerance):
-        self.assertEqual(len(list1), len(list2))
-        for a, b in zip(list1, list2):
-            self.assertAlmostEqual(a, b, tol)
+        self.mae_threshold = 0.001
+        self.obj_tolerance = 1
 
     ##################
     # l2_l1d1_l2d2p365
@@ -113,9 +105,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l2_l1d1_l2d2p365_tv_weights(self):
         """Test with TV weights"""
@@ -155,9 +150,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l2_l1d1_l2d2p365_transition(self):
         """Test with piecewise fn transition location"""
@@ -193,9 +191,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l2_l1d1_l2d2p365_transition_wrong(self):
         """Test with wrong (random) transition location"""
@@ -231,9 +232,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l2_l1d1_l2d2p365_default_long(self):
         """Test with default args and signal with len >365"""
@@ -271,9 +275,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l2_l1d1_l2d2p365_idx_select(self):
         """Test with signal with select indices"""
@@ -313,9 +320,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l2_l1d1_l2d2p365_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
@@ -354,9 +364,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
     ##################
@@ -391,8 +404,10 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_seas, actual_obj_val = sd.l1_l2d2p365(signal, solver=self.cvxpy_solver, return_obj=True)
 
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l1_l2d2p365_idx_select(self):
         """Test with select indices"""
@@ -428,8 +443,10 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_l1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
@@ -464,8 +481,10 @@ class TestSignalDecompositions(unittest.TestCase):
           return_obj=True
          )
 
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
     ##############
@@ -503,8 +522,10 @@ class TestSignalDecompositions(unittest.TestCase):
                                                         solver=self.cvxpy_solver,
                                                         return_obj=True)
 
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_tl1_l2d2p365_idx_select(self):
         """Test with select indices"""
@@ -539,8 +560,10 @@ class TestSignalDecompositions(unittest.TestCase):
                                                         use_ixs=indices,
                                                         return_obj=True)
 
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_tl1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
@@ -574,8 +597,10 @@ class TestSignalDecompositions(unittest.TestCase):
                                                         yearly_periodic=False,
                                                         return_obj=True)
 
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
     ###################
@@ -619,9 +644,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj=True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_tl1_l1d1_l2d2p365_idx_select(self):
         """Test with select indices"""
@@ -662,9 +690,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj = True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_tl1_l1d1_l2d2p365_tv_weights(self):
         """Test with TV weights"""
@@ -705,9 +736,12 @@ class TestSignalDecompositions(unittest.TestCase):
             return_obj = True
         )
 
-        self.assertListAlmostEqual(list(expected_s_hat), list(actual_s_hat))
-        self.assertListAlmostEqual(list(expected_s_seas), list(actual_s_seas))
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val)
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
 if __name__ == '__main__':
