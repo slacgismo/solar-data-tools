@@ -18,6 +18,8 @@ import traceback, sys
 from solardatatools.time_axis_manipulation import (
     make_time_series,
     standardize_time_axis,
+    remove_index_timezone,
+    get_index_timezone,
 )
 from solardatatools.matrix_embedding import make_2d
 from solardatatools.data_quality import (
@@ -77,9 +79,8 @@ class DataHandler:
                     e = "Data frame must have a DatetimeIndex or"
                     e += "the user must set the datetime_col kwarg."
                     raise Exception(e)
-            df_index = self.data_frame_raw.index
-            if df_index.tz is not None:
-                df_index = df_index.tz_localize(None)
+            self.tz_info = get_index_timezone(self.data_frame_raw)
+            self.data_frame_raw = remove_index_timezone(self.data_frame_raw)
             if no_future_dates:
                 now = datetime.now()
                 self.data_frame_raw = self.data_frame_raw[
