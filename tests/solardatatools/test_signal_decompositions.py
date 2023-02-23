@@ -634,7 +634,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output[f"expected_obj_val_mosek_365"]
 
         # Run test with default args
-        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
             signal,
             tau=0.8,
             c1=5,
@@ -679,7 +679,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output[f"expected_obj_val_mosek_ixs"]
 
         # Run test
-        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
             signal,
             tau=0.8,
             c1=5,
@@ -725,7 +725,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output[f"expected_obj_val_mosek_tvw_365"]
 
         # Run test
-        actual_s_hat, actual_s_seas, _, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
+        actual_s_hat, actual_s_seas, _, actual_obj_val = sd.tl1_l1d1_l2d2p365(
             signal,
             tau=0.8,
             c1=5,
