@@ -41,12 +41,10 @@ def l2_l1d1_l2d2p365(
     c2=500, # val ok
     solver=None,
     verbose=False,
-    residual_weights=None, # TODO: remove
     tv_weights=None,
     use_ixs=None,
     yearly_periodic=False,
     transition_locs=None,
-    seas_max=None, # TODO:  remove
     return_obj=False
 ):
     """
@@ -64,8 +62,6 @@ def l2_l1d1_l2d2p365(
     seasonal signal
     :return: A 1d numpy array containing the filtered signal
     """
-    if residual_weights is None:
-        residual_weights = np.ones_like(signal)
     if tv_weights is None:
         tv_weights = np.ones(len(signal) - 1)
     if use_ixs is None:
@@ -78,21 +74,18 @@ def l2_l1d1_l2d2p365(
     c0 = cvx.Constant(value=c0)
     c1 = cvx.Constant(value=c1)
     c2 = cvx.Constant(value=c2)
-    # w = len(signal) / np.sum(index_set)
+
     if transition_locs is None: # this should be two separate sd problems
         objective = cvx.Minimize(
-            # (365 * 3 / len(signal)) * w *
-            # cvx.sum(cvx.huber(cvx.multiply(residual_weights, s_error)))
-            c0 * cvx.norm(cvx.multiply(residual_weights, s_error))
+            c0 * cvx.norm(s_error)
             + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
             + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-            # + c2 * .1 * cvx.norm(cvx.diff(s_seas, k=1))
         )
     else:
         # This part cannot yet be implemented with osd+qss.
         # Removes l1d1 cost (l1d1 penalty), instead uses index locations.
         objective = cvx.Minimize(
-            10 * cvx.norm(cvx.multiply(residual_weights, s_error))
+            c0 * cvx.norm(s_error)
             + c2 * cvx.norm(cvx.diff(s_seas, k=2))
         )
     # Consistency constraints
@@ -107,16 +100,13 @@ def l2_l1d1_l2d2p365(
     if transition_locs is not None:
         loc_mask = np.ones(len(signal) - 1, dtype=bool)
         loc_mask[transition_locs] = False
-        # loc_mask[transition_locs + 1] = False
         constraints.append(cvx.diff(s_hat, k=1)[loc_mask] == 0)
-    if seas_max is not None:
-        constraints.append(s_seas <= seas_max)
 
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
     if return_obj:
-        # returning objective value as well for comparisongs to OS
+        # Returning objective value as well for comparisons to OSD
         return s_hat.value, s_seas.value, s_error.value, problem.objective.value
     return s_hat.value, s_seas.value
 
@@ -150,11 +140,10 @@ def l1_l2d2p365(
     else:
         constraints = []
     problem = cvx.Problem(objective, constraints=constraints)
-    # Currently seems to work with SCS or MOSEK
     problem.solve(solver=solver, verbose=verbose)
 
     if return_obj:
-        # returning objective value as well for comparisongs to OS
+        # Returning objective value as well for comparisons to OSD
         return x.value, problem.objective.value
     return x.value
 
@@ -194,11 +183,11 @@ def tl1_l2d2p365( # called 7 times
     problem.solve(solver=solver, verbose=verbose)
 
     if return_obj:
-        # returning objective value as well for comparisongs to OSD
+        # Returning objective value as well for comparisons to OSD
         return x.value, problem.objective.value
     return x.value
 
-def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here
+def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     signal,
     use_ixs=None,
     tau=0.995, # passed as 0.5
@@ -207,7 +196,6 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here
     c3=1e2, # passed as 300
     solver=None,
     verbose=False,
-    residual_weights=None, # TODO: remove
     tv_weights=None,
     return_obj=False
 ):
@@ -223,8 +211,6 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here
     :return: A 1d numpy array containing the filtered signal
     """
     n = len(signal)
-    if residual_weights is None:
-        residual_weights = np.ones_like(signal)
     if tv_weights is None:
         tv_weights = np.ones(len(signal) - 1)
     if use_ixs is None:
@@ -240,7 +226,6 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here
     s_hat = cvx.Variable(n)
     s_seas = cvx.Variable(max(n, 366))
     s_error = cvx.Variable(n)
-    s_linear = cvx.Variable(n)
     c1 = cvx.Parameter(value=c1, nonneg=True)
     c2 = cvx.Parameter(value=c2, nonneg=True)
     c3 = cvx.Parameter(value=c3, nonneg=True)
@@ -251,12 +236,12 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here
         # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
         2
         * cvx.sum(
-            0.5 * cvx.abs(cvx.multiply(residual_weights, s_error))
-            + (tau - 0.5) * cvx.multiply(residual_weights, s_error)
+            0.5 * cvx.abs(s_error)
+            + (tau - 0.5) * s_error
         )
         + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
         + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-        + c3 * beta**2 # linear term that has a slop of beta over 1 year, done wrong
+        + c3 * beta**2 # linear term that has a slope of beta over 1 year, done wrong
     )
     constraints = [
         signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
@@ -269,8 +254,8 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here
     problem.solve(solver=solver, verbose=verbose)
 
     if return_obj:
-        # returning objective value as well for comparisongs to OSD
-        return s_hat.value, s_seas.value[:n], s_error.value, s_linear.value, problem.objective.value
+        # Returning objective value as well for comparisons to OSD
+        return s_hat.value, s_seas.value[:n], s_error.value, problem.objective.value
     return s_hat.value, s_seas.value[:n]
 
 
