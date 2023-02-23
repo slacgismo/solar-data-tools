@@ -207,7 +207,6 @@ class TimeShift:
                 use_ixs=use_ixs,
                 yearly_periodic=periodic_detector,
                 transition_locs=transition_locs,
-                seas_max=None,
                 solver=solver,
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))

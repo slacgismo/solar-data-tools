@@ -75,7 +75,7 @@ def l2_l1d1_l2d2p365(
     c1 = cvx.Constant(value=c1)
     c2 = cvx.Constant(value=c2)
 
-    if transition_locs is None: # this should be two separate sd problems
+    if transition_locs is None: # TODO: this should be two separate sd problems
         objective = cvx.Minimize(
             c0 * cvx.norm(s_error)
             + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))

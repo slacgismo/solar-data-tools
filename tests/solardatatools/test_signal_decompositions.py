@@ -743,6 +743,9 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertLess(mae_s_seas, self.mae_threshold)
         self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
+    def test_make_l2_l1d2_default(self):
+        # TODO: write tests for this function
+        pass
 
 if __name__ == '__main__':
     unittest.main()
