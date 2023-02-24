@@ -16,7 +16,6 @@ The algorithm works as follows:
 """
 
 import numpy as np
-from scipy.stats import mode
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
@@ -37,6 +36,7 @@ class TimeShift:
         self.jumps_per_year = None
         self.best_c1 = None
         self.best_ix = None
+        self.periodic_detector = None
         self.__recursion_depth = 0
 
     def run(
@@ -117,9 +117,10 @@ class TimeShift:
             )
             return
         # Apply corrections
-        roll_by_index = np.round(
-            (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0
-        )
+        my_set = set(np.round(s1, 3))
+        key_func = lambda x: abs(x - 12)
+        closest_element = min(my_set, key=key_func)
+        roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
         correction_metric = np.average(np.abs(roll_by_index))
         if correction_metric < 0.01:
             roll_by_index[:] = 0
@@ -137,6 +138,7 @@ class TimeShift:
         self.c1_vals = c1s
         self.best_c1 = best_c1
         self.best_ix = best_ix
+        self.periodic_detector = periodic_detector
         self.s1 = s1
         self.s2 = s2
         self.index_set = index_set
@@ -180,8 +182,9 @@ class TimeShift:
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
         slct = np.logical_and(jpy <= 5, hn <= 0.02)
-        # slct = np.logical_and(slct, rn < 0.9)
-        best_ix = np.nanmax(ixs[slct])
+        subset_ixs = ixs[slct]
+        # choose index of lowest holdout error
+        best_ix = subset_ixs[np.nanargmin(hn[subset_ixs])]
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
