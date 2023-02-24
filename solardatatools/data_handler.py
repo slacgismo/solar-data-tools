@@ -180,6 +180,7 @@ class DataHandler:
         end_day_ix=None,
         c1=None,
         c2=500.0,
+        periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
@@ -311,13 +312,14 @@ class DataHandler:
             self.data_clearness_score = 0.0
             self._ran_pipeline = True
             return
-        if ratio < 0.9:
+        if ratio < 0.85:
             msg = "Error: data was lost during NaN filling procedure. "
             msg += "This typically occurs when\nthe time stamps are in the "
             msg += "wrong timezone. Please double check your data table.\n"
             self._error_msg += "\n" + msg
             if verbose:
                 print(msg)
+                print(f"ratio of filled to raw nonzero measurements was {ratio:.2f}")
             self.daily_scores = None
             self.daily_flags = None
             self.data_quality_score = None
@@ -415,9 +417,22 @@ class DataHandler:
                     c2=c2,
                     estimator=solar_noon_estimator,
                     threshold=daytime_threshold,
-                    periodic_detector=False,
+                    periodic_detector=periodic_detector,
                     solver=solver,
                 )
+                rms = lambda x: np.sqrt(np.mean(np.square(x)))
+                if rms(self.time_shift_analysis.s2) > 0.25:
+                    old_analysis = self.time_shift_analysis
+                    self.auto_fix_time_shifts(
+                        c1=c1,
+                        c2=c2,
+                        estimator=solar_noon_estimator,
+                        threshold=daytime_threshold,
+                        periodic_detector=True,
+                        solver=solver,
+                    )
+                    if rms(old_analysis.s2) < rms(self.time_shift_analysis.s2):
+                        self.time_shift_analysis = old_analysis
             except Exception as e:
                 msg = "Fix time shift algorithm failed."
                 self._error_msg += "\n" + msg
@@ -938,7 +953,7 @@ time zone errors     {report['time zone correction'] != 0}
         solver=None,
     ):
         self.time_shift_analysis = TimeShift()
-        if self.data_clearness_score >= 0.1:
+        if self.data_clearness_score >= 0.3:
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors
