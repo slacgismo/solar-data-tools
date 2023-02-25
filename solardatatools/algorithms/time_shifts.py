@@ -118,7 +118,7 @@ class TimeShift:
             )
             return
         # Apply corrections
-        my_set = set(np.round(s1, 3))
+        my_set = set(s1)
         key_func = lambda x: abs(x - 12)
         closest_element = min(my_set, key=key_func)
         roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
