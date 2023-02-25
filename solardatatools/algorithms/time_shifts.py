@@ -36,6 +36,7 @@ class TimeShift:
         self.jumps_per_year = None
         self.best_c1 = None
         self.best_ix = None
+        self.baseline = None
         self.periodic_detector = None
         self.__recursion_depth = 0
 
@@ -142,6 +143,7 @@ class TimeShift:
         self.s1 = s1
         self.s2 = s2
         self.index_set = index_set
+        self.baseline = closest_element
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
@@ -159,6 +161,7 @@ class TimeShift:
         test_r = np.zeros_like(c1s)
         tv_metric = np.zeros_like(c1s)
         jpy = np.zeros_like(c1s)
+        rms_s2 = np.zeros_like(c1s)
         # iterate over possible values of c1 parameter
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
@@ -172,6 +175,7 @@ class TimeShift:
             count_jumps = np.sum(~np.isclose(np.diff(s1), 0, atol=1e-4))
             jumps_per_year = count_jumps / (len(metric) / 365)
             jpy[i] = jumps_per_year
+            rms_s2[i] = np.sqrt(np.mean(np.square(s2)))
 
         def zero_one_scale(x):
             return (x - np.min(x)) / (np.max(x) - np.min(x))
@@ -181,7 +185,10 @@ class TimeShift:
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
-        slct = np.logical_and(jpy <= 5, hn <= 0.02)
+        if not periodic_detector:
+            slct = jpy <= 5
+        else:
+            slct = np.logical_and(jpy <= 5, rms_s2 <= 0.25)
         subset_ixs = ixs[slct]
         # choose index of lowest holdout error
         best_ix = subset_ixs[np.nanargmin(hn[subset_ixs])]
