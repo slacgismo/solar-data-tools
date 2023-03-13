@@ -77,16 +77,20 @@ def l2_l1d1_l2d2p365(
 
     if transition_locs is None: # TODO: this should be two separate sd problems
         objective = cvx.Minimize(
-            c0 * cvx.norm(s_error)
+            # c0 * cvx.norm(s_error)
+            # + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+            # + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            c0 * cvx.sum_squares(s_error)
             + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
         )
     else:
         # This part cannot yet be implemented with osd+qss.
         # Removes l1d1 cost (l1d1 penalty), instead uses index locations.
         objective = cvx.Minimize(
             c0 * cvx.norm(s_error)
-            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+           # + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
         )
     # Consistency constraints
     constraints = [
@@ -133,7 +137,9 @@ def l1_l2d2p365(
         use_ixs = np.arange(len(signal))
     x = cvx.Variable(len(signal))
     objective = cvx.Minimize(
-        cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.norm(cvx.diff(x, k=2))
+       # cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.norm(cvx.diff(x, k=2))
+        cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
+
     )
     if len(signal) > 365 and yearly_periodic:
         constraints = [x[365:] == x[:-365]]
@@ -173,7 +179,9 @@ def tl1_l2d2p365( # called 7 times
     x = cvx.Variable(len(signal))
     r = signal[use_ixs] - x[use_ixs]
     objective = cvx.Minimize(
-        cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.norm(cvx.diff(x, k=2))
+       # cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.norm(cvx.diff(x, k=2))
+        cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
+
     )
     if len(signal) > 365 and yearly_periodic:
         constraints = [x[365:] == x[:-365]]
