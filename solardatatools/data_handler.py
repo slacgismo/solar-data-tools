@@ -18,6 +18,8 @@ import traceback, sys
 from solardatatools.time_axis_manipulation import (
     make_time_series,
     standardize_time_axis,
+    remove_index_timezone,
+    get_index_timezone,
 )
 from solardatatools.matrix_embedding import make_2d
 from solardatatools.data_quality import (
@@ -77,9 +79,8 @@ class DataHandler:
                     e = "Data frame must have a DatetimeIndex or"
                     e += "the user must set the datetime_col kwarg."
                     raise Exception(e)
-            df_index = self.data_frame_raw.index
-            if df_index.tz is not None:
-                df_index = df_index.tz_localize(None)
+            self.tz_info = get_index_timezone(self.data_frame_raw)
+            self.data_frame_raw = remove_index_timezone(self.data_frame_raw)
             if no_future_dates:
                 now = datetime.now()
                 self.data_frame_raw = self.data_frame_raw[
@@ -179,6 +180,7 @@ class DataHandler:
         end_day_ix=None,
         c1=None,
         c2=500.0,
+        periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
@@ -310,13 +312,14 @@ class DataHandler:
             self.data_clearness_score = 0.0
             self._ran_pipeline = True
             return
-        if ratio < 0.9:
+        if ratio < 0.85:
             msg = "Error: data was lost during NaN filling procedure. "
             msg += "This typically occurs when\nthe time stamps are in the "
             msg += "wrong timezone. Please double check your data table.\n"
             self._error_msg += "\n" + msg
             if verbose:
                 print(msg)
+                print(f"ratio of filled to raw nonzero measurements was {ratio:.2f}")
             self.daily_scores = None
             self.daily_flags = None
             self.data_quality_score = None
@@ -414,9 +417,22 @@ class DataHandler:
                     c2=c2,
                     estimator=solar_noon_estimator,
                     threshold=daytime_threshold,
-                    periodic_detector=False,
+                    periodic_detector=periodic_detector,
                     solver=solver,
                 )
+                rms = lambda x: np.sqrt(np.mean(np.square(x)))
+                if rms(self.time_shift_analysis.s2) > 0.25:
+                    old_analysis = self.time_shift_analysis
+                    self.auto_fix_time_shifts(
+                        c1=c1,
+                        c2=c2,
+                        estimator=solar_noon_estimator,
+                        threshold=daytime_threshold,
+                        periodic_detector=True,
+                        solver=solver,
+                    )
+                    if rms(old_analysis.s2) < rms(self.time_shift_analysis.s2):
+                        self.time_shift_analysis = old_analysis
             except Exception as e:
                 msg = "Fix time shift algorithm failed."
                 self._error_msg += "\n" + msg
@@ -530,6 +546,10 @@ class DataHandler:
                 "quality score": self.data_quality_score,
                 "clearness score": self.data_clearness_score,
                 "inverter clipping": self.inverter_clipping,
+                "clipped fraction": (
+                    np.sum(self.daily_flags.inverter_clipped)
+                    / len(self.daily_flags.inverter_clipped)
+                ),
                 "capacity change": self.capacity_changes,
                 "data quality warning": self.normal_quality_scores,
                 "time shift correction": (
@@ -584,6 +604,7 @@ data sampling        {report['sampling']} minutes
 quality score        {report['quality score']:.2f}
 clearness score      {report['clearness score']:.2f}
 inverter clipping    {report['inverter clipping']}
+clipped fraction     {report['clipped fraction']:.2f}
 capacity changes     {report['capacity change']}
 data quality warning {report['data quality warning']}
 time shift errors    {report['time shift correction']}
@@ -932,7 +953,7 @@ time zone errors     {report['time zone correction'] != 0}
         solver=None,
     ):
         self.time_shift_analysis = TimeShift()
-        if self.data_clearness_score >= 0.1:
+        if self.data_clearness_score >= 0.3:
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors

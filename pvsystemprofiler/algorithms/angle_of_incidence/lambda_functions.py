@@ -25,7 +25,9 @@ def select_function(latitude=None, tilt=None, azimuth=None):
     if latitude is None and tilt is None and azimuth is None:
         func = lambda x, phi, beta, gamma: func_costheta(x, phi, beta, gamma)
     elif latitude is not None and tilt is None and azimuth is None:
-        func = lambda x, beta, gamma: func_costheta(x, np.deg2rad(latitude), beta, gamma)
+        func = lambda x, beta, gamma: func_costheta(
+            x, np.deg2rad(latitude), beta, gamma
+        )
 
     elif latitude is None and tilt is not None and azimuth is None:
         func = lambda x, phi, gamma: func_costheta(x, phi, np.deg2rad(tilt), gamma)
@@ -34,23 +36,33 @@ def select_function(latitude=None, tilt=None, azimuth=None):
         func = lambda x, phi, beta: func_costheta(x, phi, beta, np.deg2rad(azimuth))
 
     elif latitude is None and tilt is not None and azimuth is not None:
-        func = lambda x, phi: func_costheta(x, phi, np.deg2rad(tilt), np.deg2rad(azimuth))
+        func = lambda x, phi: func_costheta(
+            x, phi, np.deg2rad(tilt), np.deg2rad(azimuth)
+        )
 
     elif latitude is not None and tilt is None and azimuth is not None:
-        func = lambda x, beta: func_costheta(x, np.deg2rad(latitude), beta, np.deg2rad(azimuth))
+        func = lambda x, beta: func_costheta(
+            x, np.deg2rad(latitude), beta, np.deg2rad(azimuth)
+        )
 
     elif latitude is not None and tilt is not None and azimuth is None:
-        func = lambda x, gamma: func_costheta(x, np.deg2rad(latitude), np.deg2rad(tilt), gamma)
+        func = lambda x, gamma: func_costheta(
+            x, np.deg2rad(latitude), np.deg2rad(tilt), gamma
+        )
 
-    bounds_dict = {'latitude': [-np.pi / 2, np.pi / 2], 'tilt': [0, np.pi / 2], 'azimuth': [-np.inf, np.inf]}
+    bounds_dict = {
+        "latitude": [-np.pi / 2, np.pi / 2],
+        "tilt": [0, np.pi / 2],
+        "azimuth": [-np.inf, np.inf],
+    }
     bounds = []
 
     if latitude is None:
-        bounds.append(bounds_dict['latitude'])
+        bounds.append(bounds_dict["latitude"])
     if tilt is None:
-        bounds.append(bounds_dict['tilt'])
+        bounds.append(bounds_dict["tilt"])
     if azimuth is None:
-        bounds.append(bounds_dict['azimuth'])
+        bounds.append(bounds_dict["azimuth"])
 
     bounds = tuple(np.transpose(bounds).tolist())
 
