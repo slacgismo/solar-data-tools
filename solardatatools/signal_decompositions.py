@@ -45,7 +45,8 @@ def l2_l1d1_l2d2p365(
     use_ixs=None,
     yearly_periodic=False,
     transition_locs=None,
-    return_obj=False
+    return_obj=False,
+    comp_osd=None
 ):
     """
     This performs total variation filtering with the addition of a seasonal
@@ -112,6 +113,14 @@ def l2_l1d1_l2d2p365(
     if return_obj:
         # Returning objective value as well for comparisons to OSD
         return s_hat.value, s_seas.value, s_error.value, problem.objective.value
+
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        s_hat.value = comp_osd[0]
+        s_seas.value = comp_osd[1]
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
+
     return s_hat.value, s_seas.value
 
 def l1_l2d2p365(
@@ -121,7 +130,8 @@ def l1_l2d2p365(
         yearly_periodic=True, # default not overwritten in calls
         solver=None,
         verbose=False,
-        return_obj=False
+        return_obj=False,
+        comp_osd=None
 ):
     """
     for a list of available solvers, see:
@@ -136,21 +146,30 @@ def l1_l2d2p365(
     if use_ixs is None:
         use_ixs = np.arange(len(signal))
     x = cvx.Variable(len(signal))
+    xr = cvx.Variable(len(signal))
     objective = cvx.Minimize(
        # cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.norm(cvx.diff(x, k=2))
-        cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
+        cvx.norm1(xr) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
 
     )
     if len(signal) > 365 and yearly_periodic:
         constraints = [x[365:] == x[:-365]]
     else:
         constraints = []
+    constraints.append(signal[use_ixs] == (x + xr)[use_ixs])
     problem = cvx.Problem(objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
     if return_obj:
         # Returning objective value as well for comparisons to OSD
         return x.value, problem.objective.value
+
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        x.value = comp_osd
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
+
     return x.value
 
 
@@ -162,7 +181,8 @@ def tl1_l2d2p365( # called 7 times
     solver=None,
     yearly_periodic=True, # passed as False twice
     verbose=False,
-    return_obj=False
+    return_obj=False,
+    comp_osd=None
 ):
     """
     https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
@@ -193,19 +213,28 @@ def tl1_l2d2p365( # called 7 times
     if return_obj:
         # Returning objective value as well for comparisons to OSD
         return x.value, problem.objective.value
+
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        x.value = comp_osd
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
+
     return x.value
 
 def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     signal,
     use_ixs=None,
     tau=0.995, # passed as 0.5
-    c1=1e3, # passed as 15
-    c2=1e2, # val ok
-    c3=1e2, # passed as 300
+    c1=1e3, # passed as 15, l1d1 term
+    c2=1e2, # val ok, seasonal term
+    c3=1e2, # passed as 300, linear term
     solver=None,
     verbose=False,
     tv_weights=None,
-    return_obj=False
+    return_obj=False,
+    comp_osd=None,
+    linear_term=True
 ):
     """
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
@@ -240,22 +269,34 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     tau = cvx.Parameter(value=tau)
     # w = len(signal) / np.sum(index_set)
     beta = cvx.Variable()
-    objective = cvx.Minimize(
-        # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
-        2
-        * cvx.sum(
-            0.5 * cvx.abs(s_error)
-            + (tau - 0.5) * s_error
+    if linear_term:
+        objective = cvx.Minimize(
+            # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
+            2
+            * cvx.sum(
+                0.5 * cvx.abs(s_error)
+                + (tau - 0.5) * s_error
+            )
+            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            + c3 * beta**2 # linear term that has a slope of beta over 1 year, done wrong
         )
-        + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-        + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-        + c3 * beta**2 # linear term that has a slope of beta over 1 year, done wrong
-    )
+    else:
+        objective = cvx.Minimize(
+            # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
+            2
+            * cvx.sum(
+                0.5 * cvx.abs(s_error)
+                + (tau - 0.5) * s_error
+            )
+            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+            + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
+        )
     constraints = [
         signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
         cvx.sum(s_seas[:365]) == 0,
     ]
-    if True:
+    if linear_term:
         constraints.append(s_seas[365:] - s_seas[:-365] == beta)
         constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
@@ -264,6 +305,14 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     if return_obj:
         # Returning objective value as well for comparisons to OSD
         return s_hat.value, s_seas.value[:n], s_error.value, problem.objective.value
+
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        s_hat.value = comp_osd[0]
+        s_seas.value = comp_osd[1]
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
+
     return s_hat.value, s_seas.value[:n]
 
 

@@ -59,8 +59,10 @@ def l2_l1d1_l2d2p365(
 
     if len(signal) > 365:
         c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365), Periodic(365)])
-        if yearly_periodic:
+        if yearly_periodic and not sum_card: # SumCard does not work with Aggregate
             c3 = Aggregate([c3, Periodic(365)])
+        elif yearly_periodic and sum_card:
+            print("Cannot use Periodic Class with SumCard")
 
     classes = [c1, c2, c3]
 
@@ -134,3 +136,41 @@ def tl1_l2d2p365(
     s_seas = problem.decomposition[1]
 
     return s_seas
+
+def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
+    signal,
+    use_ixs=None,
+    tau=0.995, # passed as 0.5
+    w1=1e3, # passed as 15, l1d1 term
+    w2=1e2, # val ok, seasonal term
+  #  w3=1e2, # passed as 300, linear term
+    w4=2, # hardcoded in prev version, tl1 term
+    solver=None,
+    verbose=False,
+    #tv_weights=None,
+    sum_card=False,
+    return_obj=False,
+    comp_osd=None
+):
+    # TODO: what to do with linear term? implement? omit? fix?
+
+    c1 = SumQuantile(tau=tau, weight=w4)
+    c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
+    if sum_card:
+        c3 = SumCard(weight=w1, diff=1)
+    else:
+        c3 = SumAbs(weight=w1, diff=1)
+    c4 =  Aggregate([NoCurvature(),
+                     Inequal(min=-0.1, max=0.01, diff=1), # check if needed /w real data
+                     SumSquare(diff=1)  # check if needed /w real data
+                     ])
+
+    classes = [c1, c2, c3]
+
+    problem = Problem(signal, classes, use_set=use_ixs)
+
+    problem.decompose(solver=solver)
+    s_seas = problem.decomposition[1]
+    s_hat = problem.decomposition[2]
+
+    return s_hat, s_seas
