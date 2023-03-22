@@ -110,6 +110,7 @@ class PVPROPostProcessor:
         self.df_error_avg = None
         self.scaled_data = defaultdict(default_val)
         self.descaled_data = defaultdict(default_val)
+        self.processed_result = defaultdict(default_val)
         self.df_x1 = None
         self.df_x2 = None
         self.df_x3 = None
@@ -437,6 +438,7 @@ class PVPROPostProcessor:
         )
 
         self.descaled_data[label + "_" + model] = df_descaled
+        self.processed_result[label + "_" + model] = df_descaled["x5"]
 
     def analyze(
         self,
@@ -488,6 +490,19 @@ class PVPROPostProcessor:
             known=known,
             solver=solver,
         )
+
+    def retreive_result(self, label, model="smooth_monotonic"):
+        if self.processed_result[label + "_" + model] is None:
+            opt = input("No data entry, would you like to run optimization? (y/n)\n")
+
+            if opt == "y":
+                self.analyze(label, model=model)
+            elif opt == "n":
+                pass
+            else:
+                pass
+        result = self.processed_result[label + "_" + model]
+        return result
 
     def sd_result_dfs(
         self,
