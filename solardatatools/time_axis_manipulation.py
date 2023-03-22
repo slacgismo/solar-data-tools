@@ -203,7 +203,7 @@ def standardize_time_axis(
     while not done:
         for d in deltas:
             fltr = np.logical_and(fltr, diff != d)
-        delta, count = mode(diff[fltr])
+        delta, count = mode(diff[fltr], keepdims=True)
         if count / len(diff) < 0.01 or len(delta) == 0:
             done = True
         else:
