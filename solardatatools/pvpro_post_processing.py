@@ -67,7 +67,7 @@ class PVPROPostProcessor:
         analysis, and initializes other attributes of the class.
         """
 
-        param_dict = {
+        self.param_dict = {
             "photocurrent": (0.01, 10, 0.01),
             "saturation_current": (0, 1 * 10 ** (-6), 5 * 10 ** (-12)),
             "resistance_series": (0.1, 2, 0.05),
@@ -133,7 +133,7 @@ class PVPROPostProcessor:
         """
 
         # adjusting the time series
-        time_delta, count = mode(np.diff(self.df.index))
+        time_delta, count = mode(np.diff(self.df.index), keepdims=True)
         freq = int(time_delta[0] / np.timedelta64(1, "s"))
         new_index = pd.date_range(
             start=self.df.index[0], end=self.df.index[-1], freq="{}s".format(freq)
@@ -181,7 +181,7 @@ class PVPROPostProcessor:
         :type verbose: bool, optional
         """
 
-        bounds = param_dict
+        bounds = self.param_dict
         indices = []
         df = self.df_ds
         cond = "".join(df.columns)
