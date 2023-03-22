@@ -85,7 +85,7 @@ class PVPROPostProcessor:
             dates = dates
 
         def default_val():
-            return "no_entry"
+            return None
 
         self.df = pd.read_csv(file_name, index_col=index_col, parse_dates=dates)
         self.period = int(period)
@@ -605,11 +605,11 @@ class PVPROPostProcessor:
         if model == "monotonic":
             model_title = "Monotonic"
 
-        if self.scaled_data[label + "_" + model] == "no_entry":
+        if self.scaled_data[label + "_" + model] is None:
             opt = input("No data entry, would you like to run optimization? (y/n)\n")
 
             if opt == "y":
-                self.analyse(label, model=model)
+                self.analyze(label, model=model)
                 self.plot_sd_space(label, model=model)
 
             if opt == "n":
@@ -683,11 +683,11 @@ class PVPROPostProcessor:
         if model == "monotonic":
             model_title = "Monotonic"
 
-        if self.descaled_data[label + "_" + model] == "no_entry":
+        if self.descaled_data[label + "_" + model] is None:
             opt = input("No data entry, would you like to run optimization? (y/n)\n")
 
             if opt == "y":
-                self.analyse(label, model=model)
+                self.analyze(label, model=model)
                 self.plot_sd_space(label, model=model)
 
             if opt == "n":
