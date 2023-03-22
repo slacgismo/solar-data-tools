@@ -88,7 +88,7 @@ class PVPROPostProcessor:
             return "no_entry"
 
         self.df = pd.read_csv(file_name, index_col=index_col, parse_dates=dates)
-        self.period = period
+        self.period = int(period)
 
         # dataframe preparation (column selection, time index correction)
         if df_prep is True:
