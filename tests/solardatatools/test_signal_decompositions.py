@@ -46,6 +46,11 @@
     - test_tl1_l1d1_l2d2p365_idx_select
     - test_tl1_l1d1_l2d2p365_tv_weights
 
+4) 'make_l2_l1d2':
+
+    TESTS
+    -----
+    - test_tl1_l1d1_l2d2p365_default
 """
 
 import unittest
@@ -743,9 +748,48 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertLess(mae_s_seas, self.mae_threshold)
         self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
+
+        ###################
+        # make_l2_l1d2
+        ###################
+
     def test_make_l2_l1d2_default(self):
-        # TODO: write tests for this function
-        pass
+        """Test with default args"""
+
+        # Load input and output data
+        filepath = Path(__file__).parent.parent
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_make_l2_l1d2_default_input.json"
+        output_path = str(data_file_path) + "/" + "test_make_l2_l1d2_default_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Input
+        signal = np.array(input["test_signal"])
+
+        # Expected output
+        expected_y_hat = output[f"expected_y_hat_mosek"]
+        expected_obj_val = output[f"expected_obj_val_mosek"]
+
+        # Run test with default args
+        actual_y_hat, actual_obj_val = sd.make_l2_l1d2(
+            signal,
+            weight=5e3,
+            solver=self.cvxpy_solver,
+            return_obj=True
+        )
+
+        mae_y_hat = mae(actual_y_hat, expected_y_hat)
+
+        self.assertLess(mae_y_hat, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 if __name__ == '__main__':
     unittest.main()

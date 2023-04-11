@@ -78,20 +78,20 @@ def l2_l1d1_l2d2p365(
 
     if transition_locs is None: # TODO: this should be two separate sd problems
         objective = cvx.Minimize(
-            c0 * cvx.norm(s_error)
-            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-            + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-            # c0 * cvx.sum_squares(s_error)
+            # c0 * cvx.norm(s_error)
             # + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-            # + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
+            # + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            c0 * cvx.sum_squares(s_error)
+            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+            + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
         )
     else:
         # This part cannot yet be implemented with osd+qss.
         # Removes l1d1 cost (l1d1 penalty), instead uses index locations.
         objective = cvx.Minimize(
             c0 * cvx.norm(s_error)
-           + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-          #  + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
+           # + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+            + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
         )
     # Consistency constraints
     constraints = [
@@ -114,12 +114,12 @@ def l2_l1d1_l2d2p365(
         # Returning objective value as well for comparisons to OSD
         return s_hat.value, s_seas.value, s_error.value, problem.objective.value
 
-    # if comp_osd is not None:
-    #     print(f"CVXPY objective       {problem.objective.value:.5f}")
-    #     s_hat.value = comp_osd[0]
-    #     s_seas.value = comp_osd[1]
-    #     print(f"OSD objective, scaled {problem.objective.value:.5f}")
-    #     return problem.objective.value
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        s_hat.value = comp_osd[0]
+        s_seas.value = comp_osd[1]
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
 
     return s_hat.value, s_seas.value
 
@@ -144,23 +144,17 @@ def l1_l2d2p365(
     :return: median fit with seasonal baseline removed
     """
     if use_ixs is None:
-        use_ixs = ~np.isnan(signal)
-    else:
-        use_ixs = np.logical_and(use_ixs, ~np.isnan(signal))
-
+        use_ixs = np.arange(len(signal))
     x = cvx.Variable(len(signal))
-    xr = cvx.Variable(len(signal))
     objective = cvx.Minimize(
-      #  cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
-    #    cvx.norm1(xr) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
-        cvx.norm1(xr) + c1 * cvx.norm(cvx.diff(x, k=2))
+       # cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.norm(cvx.diff(x, k=2))
+        cvx.norm1(signal[use_ixs] - x[use_ixs]) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
 
     )
     if len(signal) > 365 and yearly_periodic:
         constraints = [x[365:] == x[:-365]]
     else:
         constraints = []
-    constraints.append(signal[use_ixs] == x[use_ixs] + xr[use_ixs])
     problem = cvx.Problem(objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
@@ -168,11 +162,11 @@ def l1_l2d2p365(
         # Returning objective value as well for comparisons to OSD
         return x.value, problem.objective.value
 
-    # if comp_osd is not None:
-    #     print(f"CVXPY objective       {problem.objective.value:.5f}")
-    #     x.value = comp_osd
-    #     print(f"OSD objective, scaled {problem.objective.value:.5f}")
-    #     return problem.objective.value
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        x.value = comp_osd
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
 
     return x.value
 
@@ -203,8 +197,8 @@ def tl1_l2d2p365( # called 7 times
     x = cvx.Variable(len(signal))
     r = signal[use_ixs] - x[use_ixs]
     objective = cvx.Minimize(
-        cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.norm(cvx.diff(x, k=2))
-       # cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
+       # cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.norm(cvx.diff(x, k=2))
+        cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
 
     )
     if len(signal) > 365 and yearly_periodic:
@@ -218,11 +212,11 @@ def tl1_l2d2p365( # called 7 times
         # Returning objective value as well for comparisons to OSD
         return x.value, problem.objective.value
 
-    # if comp_osd is not None:
-    #     print(f"CVXPY objective       {problem.objective.value:.5f}")
-    #     x.value = comp_osd
-    #     print(f"OSD objective, scaled {problem.objective.value:.5f}")
-    #     return problem.objective.value
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        x.value = comp_osd
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
 
     return x.value
 
@@ -230,15 +224,14 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     signal,
     use_ixs=None,
     tau=0.995, # passed as 0.5
-    c1=1e3, # passed as 15, l1d1 term
-    c2=1e2, # val ok, seasonal term
-    c3=1e2, # passed as 300, linear term
+    c1=1e3, # passed as 15
+    c2=1e2, # val ok
+    c3=1e2, # passed as 300
     solver=None,
     verbose=False,
     tv_weights=None,
     return_obj=False,
-    comp_osd=None,
-    linear_term=True
+    comp_osd=None
 ):
     """
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
@@ -254,12 +247,8 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     n = len(signal)
     if tv_weights is None:
         tv_weights = np.ones(len(signal) - 1)
-    # if use_ixs is None:
-    #     use_ixs = np.ones(n, dtype=bool)
     if use_ixs is None:
-        use_ixs = ~np.isnan(signal)
-    else:
-        use_ixs = np.logical_and(use_ixs, ~np.isnan(signal))
+        use_ixs = np.ones(n, dtype=bool)
     # selected_days = np.arange(n)[index_set]
     # np.random.shuffle(selected_days)
     # ix = 2 * n // 3
@@ -277,36 +266,22 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     tau = cvx.Parameter(value=tau)
     # w = len(signal) / np.sum(index_set)
     beta = cvx.Variable()
-    if linear_term:
-        objective = cvx.Minimize(
-            # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
-            2
-            * cvx.sum(
-                0.5 * cvx.abs(s_error)
-                + (tau - 0.5) * s_error
-            )
-            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-           + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-           # + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
-            + c3 * beta**2 # linear term that has a slope of beta over 1 year, done wrong
+    objective = cvx.Minimize(
+        # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
+        2
+        * cvx.sum(
+            0.5 * cvx.abs(s_error)
+            + (tau - 0.5) * s_error
         )
-    # else:
-    #     objective = cvx.Minimize(
-    #         # (365 * 3 / len(signal)) * w * cvx.sum(0.5 * cvx.abs(s_error) + (tau - 0.5) * s_error)
-    #         2
-    #         * cvx.sum(
-    #             0.5 * cvx.abs(s_error)
-    #             + (tau - 0.5) * s_error
-    #         )
-    #         + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-    #        # + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
-    #         + c2 * cvx.norm(cvx.diff(s_seas, k=2))
-    #     )
+        + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+        + c2 * cvx.norm(cvx.diff(s_seas, k=2))
+        + c3 * beta**2 # linear term that has a slope of beta over 1 year, done wrong
+    )
     constraints = [
         signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
         cvx.sum(s_seas[:365]) == 0,
     ]
-    if linear_term:
+    if True:
         constraints.append(s_seas[365:] - s_seas[:-365] == beta)
         constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
@@ -316,55 +291,29 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
         # Returning objective value as well for comparisons to OSD
         return s_hat.value, s_seas.value[:n], s_error.value, problem.objective.value
 
-    # if comp_osd is not None:
-    #     print(f"CVXPY objective       {problem.objective.value:.5f}")
-    #     s_hat.value = comp_osd[0]
-    #     s_seas.value = comp_osd[1]
-    #     print(f"OSD objective, scaled {problem.objective.value:.5f}")
-    #     return problem.objective.value
+    if comp_osd is not None:
+        print(f"CVXPY objective       {problem.objective.value:.5f}")
+        s_hat.value = comp_osd[0]
+        s_seas.value = comp_osd[1]
+        print(f"OSD objective, scaled {problem.objective.value:.5f}")
+        return problem.objective.value
 
     return s_hat.value, s_seas.value[:n]
 
 
 def make_l2_l1d2(y,
-                 weight=1e1, # val ok
-                 solver="MOSEK",
-                 return_obj=False,
-                 comp_osd=None,
-                 use_ixs=None
+                 weight=1e1 # val ok
 ):
     """Used in solardatatools/algorithms/clipping.py"""
-    if use_ixs is None:
-        use_ixs = ~np.isnan(y)
-    # else: # TODO: implement? wasn't in original version
-    #     use_ixs = np.logical_and(use_ixs, ~np.isnan(y))
-
-    # y_param = cvx.Parameter(len(y), value=y)
-    y_param = y
-
     y_hat = cvx.Variable(len(y))
-    mu = cvx.Parameter(nonneg=True) # shouldnt this be a constant
+    y_param = cvx.Parameter(len(y), value=y)
+    mu = cvx.Parameter(nonneg=True)
     mu.value = weight
-
-    error = cvx.sum_squares(y_param[use_ixs] - y_hat[use_ixs])
+    error = cvx.sum_squares(y_param - y_hat)
     reg = cvx.norm(cvx.diff(y_hat, k=2), p=1)
-
     objective = cvx.Minimize(error + mu * reg)
     constraints = [y_param[0] == y_hat[0], y[-1] == y_hat[-1]]
     problem = cvx.Problem(objective, constraints)
-
-    if return_obj:
-        # Returning objective value as well for comparisons to OSD
-        problem.solve(solver=solver)
-        return  y_hat.value, problem.objective.value
-
-    # if comp_osd is not None:
-    #     problem.solve(solver=solver)
-    #     print(f"CVXPY objective       {problem.objective.value:.5f}")
-    #     y_hat.value = comp_osd
-    #     print(f"OSD objective, scaled {problem.objective.value:.5f}")
-    #     return problem.objective.value
-
     return problem, y_param, y_hat, mu
 
 

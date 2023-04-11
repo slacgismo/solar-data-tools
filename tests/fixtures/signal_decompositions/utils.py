@@ -19,9 +19,9 @@ def plot_decomp(signal, gt=None):
     for i in range(subplots):
         if subplots == 1:
             axs = [axs]
-        axs[i].plot(signal[i], label="Estimated", linewidth=0, marker=".",  markersize=3)
+        axs[i].plot(signal[i], label="Estimated", linewidth=1, marker=".",  markersize=0)
         if gt:
-            axs[i].plot(gt[i], label="True", linewidth=0, marker=".",  markersize=3)
+            axs[i].plot(gt[i], label="True", linewidth=1, marker=".",  markersize=0)
             axs[i].legend()
         axs[i].set_title(f"component $x^{i+1}$")
         

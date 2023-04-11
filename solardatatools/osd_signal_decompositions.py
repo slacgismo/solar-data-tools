@@ -33,7 +33,8 @@ import sys
 import numpy as np
 
 from gfosd import Problem
-from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate, AverageEqual, Periodic
+from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate, AverageEqual,\
+    Periodic, Inequality, FirstValEqual, LastValEqual, NoCurvature
 
 
 def l2_l1d1_l2d2p365(
@@ -143,14 +144,12 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     tau=0.995, # passed as 0.5
     w1=1e3, # passed as 15, l1d1 term
     w2=1e2, # val ok, seasonal term
-  #  w3=1e2, # passed as 300, linear term
+    w3=1e2, # passed as 300, linear term
     w4=2, # hardcoded in prev version, tl1 term
     solver=None,
-    verbose=False,
     #tv_weights=None,
     sum_card=False,
-    return_obj=False,
-    comp_osd=None
+    linear_term=True
 ):
     # TODO: what to do with linear term? implement? omit? fix?
 
@@ -160,12 +159,15 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
         c3 = SumCard(weight=w1, diff=1)
     else:
         c3 = SumAbs(weight=w1, diff=1)
-    c4 =  Aggregate([NoCurvature(),
-                     Inequal(min=-0.1, max=0.01, diff=1), # check if needed /w real data
+    c4 =  Aggregate([NoCurvature(weight=w3),
+                     Inequality(vmin=-0.1, vmax=0.01, diff=1), # check if needed /w real data
                      SumSquare(diff=1)  # check if needed /w real data
                      ])
 
-    classes = [c1, c2, c3]
+    if linear_term:
+        classes = [c1, c2, c3, c4]
+    else:
+        classes = [c1, c2, c3]
 
     problem = Problem(signal, classes, use_set=use_ixs)
 
@@ -174,3 +176,24 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     s_hat = problem.decomposition[2]
 
     return s_hat, s_seas
+
+
+def make_l2_l1d2(signal,
+                 weight=1e1, # val ok
+                 solver="MOSEK"
+):
+    c1 = SumSquare(weight=1)
+    c2 = Aggregate([
+        SumAbs(weight=weight, diff=2),
+        FirstValEqual(signal[0]),
+        LastValEqual(signal[-1])
+    ])
+
+    classes = [c1, c2]
+
+    problem = Problem(signal, classes)
+    problem.decompose(solver=solver)
+
+    s_hat = problem.decomposition[1]
+
+    return s_hat
