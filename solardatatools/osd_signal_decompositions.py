@@ -178,15 +178,19 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     return s_hat, s_seas
 
 
-def make_l2_l1d2(signal,
+def make_l2_l1d2_constrained(signal,
                  weight=1e1, # val ok
                  solver="MOSEK"
 ):
+    """
+    Used in solardatatools/algorithms/clipping.py
+    Added hard-coded constraints on the first and last vals
+    """
     c1 = SumSquare(weight=1)
     c2 = Aggregate([
         SumAbs(weight=weight, diff=2),
-        FirstValEqual(signal[0]),
-        LastValEqual(signal[-1])
+        FirstValEqual(0),
+        LastValEqual(1)
     ])
 
     classes = [c1, c2]
