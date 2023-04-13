@@ -8,7 +8,7 @@ import numpy as np
 import cvxpy as cvx
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from solardatatools.signal_decompositions import make_l2_l1d2
+from solardatatools.signal_decompositions import make_l2_l1d2_constrained
 
 
 class ClippingDetection:
