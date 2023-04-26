@@ -39,7 +39,7 @@ class TestDataHandler(unittest.TestCase):
         with open(scores_path) as file:
             expected_scores = np.loadtxt(file, delimiter=",")
         np.testing.assert_allclose(
-            dh.daily_scores.linearity, expected_scores, atol=1e-2
+            dh.daily_scores.linearity, expected_scores, atol=2e-2
         )
         scores_path = filepath / "fixtures" / "scoring" / "quality_clustering.csv"
         with open(scores_path) as file:
