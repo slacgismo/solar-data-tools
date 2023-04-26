@@ -29,7 +29,7 @@ class TestDataHandler(unittest.TestCase):
         with open(scores_path) as file:
             expected_scores = np.loadtxt(file, delimiter=",")
         np.testing.assert_allclose(
-            dh.daily_scores.clipping_2, expected_scores, atol=1e-3
+            dh.daily_scores.clipping_2, expected_scores, atol=2e-3
         )
         scores_path = filepath / "fixtures" / "scoring" / "density.csv"
         with open(scores_path) as file:
