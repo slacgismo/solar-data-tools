@@ -8,6 +8,9 @@ Calculates the angle incidence for a system based on its power matrix using sign
 
 def find_fit_costheta(data_matrix, clear_index, doy):
     """
+    Fits a 'cos(theta)' curve to the given power, which is assumed to be smooth, yearly periodic, and symmetric around
+    the summer solstice. Previous versions of this function did not enforce the symmetric constraint.
+
     :param data_matrix: power matrix.
     :param clear_index: boolean array specifying clear days.
     :param doy: day of year (float or array)
