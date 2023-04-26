@@ -10,6 +10,7 @@ def find_fit_costheta(data_matrix, clear_index, doy):
     """
     :param data_matrix: power matrix.
     :param clear_index: boolean array specifying clear days.
+    :param doy: day of year (float or array)
     :return: angle of incidence array.
     """
     data = np.max(data_matrix, axis=0)
