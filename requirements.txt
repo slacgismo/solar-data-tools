@@ -9,7 +9,6 @@ requests
 pvlib
 cvxpy>=1.1.0
 cmake
-urllib3
 pykml
 haversine
 boto3
