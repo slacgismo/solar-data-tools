@@ -139,8 +139,8 @@ def standardize_time_axis(
         s = df[power_col]
         avg_day = s.groupby(s.index.time).mean()
         # normalize to [0, 1]
-        avg_day /= np.max(avg_day)
         avg_day -= np.min(avg_day)
+        avg_day /= np.max(avg_day)
         # find sunrise and sunset times
         idxs = np.arange(len(avg_day))
         if avg_day[0] >= thresh:
