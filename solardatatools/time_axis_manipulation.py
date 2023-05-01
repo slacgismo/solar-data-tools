@@ -9,8 +9,7 @@ This module contains functions for transforming PV power data, including time-ax
 from datetime import timedelta
 import numpy as np
 import pandas as pd
-from scipy.stats import mode
-from typing import Optional
+from collections import Counter
 
 TZ_LOOKUP = {
     "America/Anchorage": 9,
@@ -197,18 +196,9 @@ def standardize_time_axis(
         np.int64
     )  # Round to the nearest 10 seconds
     # Find *all* common sampling frequencies
-    done = False
-    deltas = []
-    fltr = np.ones_like(diff, dtype=bool)
-    while not done:
-        for d in deltas:
-            fltr = np.logical_and(fltr, diff != d)
-        delta, count = mode(diff[fltr], keepdims=True)
-        if count / len(diff) < 0.01 or len(delta) == 0:
-            done = True
-        else:
-            deltas.append(delta[0])
-    freq = deltas[0]  # the number of seconds between each measurement
+    freq_counts = Counter(diff)
+    freq = freq_counts.most_common()[0][0]
+    deltas = [c[0] for c in freq_counts.most_common()]
     if len(deltas) > 1:
         if verbose:
             print("CAUTION: Multiple scan rates detected!")
