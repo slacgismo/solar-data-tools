@@ -10,6 +10,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 from collections import Counter
+from typing import Optional
 
 TZ_LOOKUP = {
     "America/Anchorage": 9,
