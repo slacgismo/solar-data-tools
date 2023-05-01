@@ -9,7 +9,6 @@ This module contains functions for transforming PV power data, including time-ax
 from datetime import timedelta
 import numpy as np
 import pandas as pd
-from scipy.stats import mode
 from collections import Counter
 
 TZ_LOOKUP = {
