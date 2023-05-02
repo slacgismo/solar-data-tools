@@ -47,7 +47,7 @@ class TimeShift:
         c1=None,
         c2=200.0,
         solar_noon_estimator="com",
-        threshold=0.1,
+        threshold=0.005,
         periodic_detector=False,
         solver=None,
     ):

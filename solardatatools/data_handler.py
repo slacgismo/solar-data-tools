@@ -184,7 +184,7 @@ class DataHandler:
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
-        daytime_threshold=0.1,
+        daytime_threshold=0.005,
         units="W",
         solver=None,
         reset=True,
@@ -948,7 +948,7 @@ time zone errors     {report['time zone correction'] != 0}
         c1=5.0,
         c2=500.0,
         estimator="com",
-        threshold=0.1,
+        threshold=0.005,
         periodic_detector=False,
         solver=None,
     ):
