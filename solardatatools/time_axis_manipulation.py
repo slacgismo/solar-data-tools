@@ -199,7 +199,7 @@ def standardize_time_axis(
     # Find *all* common sampling frequencies
     freq_counts = Counter(diff)
     freq = freq_counts.most_common()[0][0]
-    deltas = [c[0] for c in freq_counts.most_common()]
+    deltas = [c[0] for c in freq_counts.most_common() if int(c[1] > 0.05 * len(df))]
     if len(deltas) > 1:
         if verbose:
             print("CAUTION: Multiple scan rates detected!")
