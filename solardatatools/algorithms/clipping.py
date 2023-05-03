@@ -371,7 +371,7 @@ class ClippingDetection:
         return x_rs, y_rs
 
     def make_problem(self, y, weight=1e1):
-        out = make_l2_l1d2(y, weight=weight)
+        out = make_l2_l1d2_constrained(y, weight=weight)
 
         self.problem = out[0]
         self.y_param = out[1]
