@@ -106,8 +106,8 @@ def l2_l1d1_l2d2p365(
 
 def l1_l2d2p365( # need to remove this one, should no longer be used
         signal,
-        use_ixs=None, # unused
-        c1=1e3, # val ok
+        use_ixs=None,
+        c1=1e3,
         yearly_periodic=True, # default not overwritten in calls
         solver=None,
         verbose=False
@@ -149,7 +149,7 @@ def tl1_l2d2p365( # called 7 times
     tau=0.75, # passed as 0.05 (sunrise), 0.95 (sunset), 0.9, 0.85
     c1=5e5,
     solver=None,
-    yearly_periodic=True, # passed as False twice
+    yearly_periodic=True, # passed as False once
     verbose=False
 ):
     """
@@ -175,16 +175,6 @@ def tl1_l2d2p365( # called 7 times
         constraints = []
     problem = cvx.Problem(objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
-
-    if return_obj:
-        # Returning objective value as well for comparisons to OSD
-        return x.value, problem.objective.value
-
-    if comp_osd is not None:
-        print(f"CVXPY objective       {problem.objective.value:.5f}")
-        x.value = comp_osd
-        print(f"OSD objective, scaled {problem.objective.value:.5f}")
-        return problem.objective.value
 
     return x.value
 
