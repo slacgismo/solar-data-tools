@@ -51,7 +51,7 @@ def find_clear_days(
     # Seasonal renormalization: estimate a "baseline smoothness" based on local
     # 90th percentile of smoothness signal. This has the effect of increasing
     # the score of days if there aren't very many smooth days nearby
-    y = tl1_l2d2p365(tc, tau=0.9, c1=3e6, yearly_periodic=False, solver=solver)
+    y = tl1_l2d2p365(tc, tau=0.9, c1=3352924, yearly_periodic=False, solver=solver)
     tc /= y
     # Take the positive part function, i.e. set the negative values to zero.
     # This is the first metric
@@ -62,7 +62,7 @@ def find_clear_days(
     de /= np.nanmax(de)
     # Solve a convex minimization problem to roughly fit the local 90th
     # percentile of the data (quantile regression)
-    x = tl1_l2d2p365(de, tau=0.9, c1=2e5, yearly_periodic=True, solver=solver)
+    x = tl1_l2d2p365(de, tau=0.9, c1=204697, yearly_periodic=True, solver=solver)
     # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our
     # seasonal normalization.
     de = np.clip(np.divide(de, x), 0, 1)
