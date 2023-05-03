@@ -11,9 +11,17 @@ from solardatatools.signal_decompositions import l1_l2d2p365, tl1_l2d2p365
 from solardatatools.utilities import basic_outlier_filter
 
 
-def filter_for_sparsity(data, c1=1e3, solver="ECOS"):
-    daily_sparsity = np.sum(data > 0.005 * np.max(data), axis=0)
-    filtered_signal = l1_l2d2p365(daily_sparsity, c1=c1, solver=solver)
+def filter_for_sparsity(data, c1=6e3, solver="ECOS"):
+    nans = np.isnan(data)
+    capacity_est = np.quantile(data[~nans], 0.95)
+    data_copy = np.copy(data)
+    data_copy[nans] = 0.0
+
+    foo = data_copy > 0.02 * capacity_est  # 2% of 95th perc
+    density_signal = np.sum(foo, axis=0) / data.shape[0]
+    use_days = np.logical_and(density_signal > 0.2, density_signal < 0.8)
+
+    filtered_signal = tl1_l2d2p365(density_signal, c1=c1, use_ixs=use_days, tau=0.85, solver=solver)
     mask = basic_outlier_filter(daily_sparsity - filtered_signal, outlier_constant=5.0)
     return mask
 
@@ -43,7 +51,7 @@ def find_clear_days(
     # Seasonal renormalization: estimate a "baseline smoothness" based on local
     # 90th percentile of smoothness signal. This has the effect of increasing
     # the score of days if there aren't very many smooth days nearby
-    y = tl1_l2d2p365(tc, tau=0.9, c1=1e3, yearly_periodic=False, solver=solver)
+    y = tl1_l2d2p365(tc, tau=0.9, c1=3e6, yearly_periodic=False, solver=solver)
     tc /= y
     # Take the positive part function, i.e. set the negative values to zero.
     # This is the first metric
@@ -54,7 +62,7 @@ def find_clear_days(
     de /= np.nanmax(de)
     # Solve a convex minimization problem to roughly fit the local 90th
     # percentile of the data (quantile regression)
-    x = tl1_l2d2p365(de, tau=0.9, c1=1e3, yearly_periodic=True, solver=solver)
+    x = tl1_l2d2p365(de, tau=0.9, c1=2e5, yearly_periodic=True, solver=solver)
     # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our
     # seasonal normalization.
     de = np.clip(np.divide(de, x), 0, 1)
