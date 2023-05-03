@@ -50,9 +50,11 @@ def find_clear_days(
     tc = np.clip(tc, 0, None)
     # Calculate the daily energy
     de = np.sum(data, axis=0)
+    # Scale by max
+    de /= np.nanmax(de)
     # Solve a convex minimization problem to roughly fit the local 90th
     # percentile of the data (quantile regression)
-    x = tl1_l2d2p365(de, tau=0.9, c1=1e3, yearly_periodic=False, solver=solver)
+    x = tl1_l2d2p365(de, tau=0.9, c1=1e3, yearly_periodic=True, solver=solver)
     # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our
     # seasonal normalization.
     de = np.clip(np.divide(de, x), 0, 1)
