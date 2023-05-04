@@ -52,7 +52,7 @@ def find_clear_days(
     # 90th percentile of smoothness signal. This has the effect of increasing
     # the score of days if there aren't very many smooth days nearby
     # TODO: occasionally fails when CVXPY invokes OSQP instead of MOSEK
-    y = tl1_l2d2p365(tc, tau=0.9, c1=3352924, yearly_periodic=False, solver=solver)
+    y = tl1_l2d2p365(tc, tau=0.9, c1=2.5e6, yearly_periodic=False, solver=solver)
 
     tc /= y
     # Take the positive part function, i.e. set the negative values to zero.
