@@ -45,10 +45,9 @@ def l2_l1d1_l2d2p365(
         return_all=False,
         yearly_periodic=False,
         solver='MOSEK',
-        #tv_weights=None,
-        transition_locs=None,
         use_ixs=None,
-        sum_card=False
+        sum_card=False,
+        verbose=False
 ):
 
     c1 = SumSquare(weight=w0)
@@ -68,7 +67,7 @@ def l2_l1d1_l2d2p365(
     classes = [c1, c2, c3]
 
     problem = Problem(signal, classes, use_set=use_ixs)
-    problem.decompose(solver=solver)
+    problem.decompose(solver=solver, verbose=verbose)
 
     s_error =  problem.decomposition[0]
     s_seas = problem.decomposition[1]
@@ -103,7 +102,7 @@ def l1_l2d2p365(
 
     problem = Problem(signal, classes, use_set=use_ixs)
 
-    problem.decompose(solver=solver)
+    problem.decompose(solver=solver, verbose=verbose)
     s_seas = problem.decomposition[1]
 
     return s_seas
@@ -133,7 +132,7 @@ def tl1_l2d2p365(
 
     problem = Problem(signal, classes, use_set=use_ixs)
 
-    problem.decompose(solver=solver)
+    problem.decompose(solver=solver, verbose=verbose)
     s_seas = problem.decomposition[1]
 
     return s_seas
@@ -147,12 +146,9 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     w3=1e2, # passed as 300, linear term
     w4=2, # hardcoded in prev version, tl1 term
     solver=None,
-    #tv_weights=None,
-    sum_card=False,
-    linear_term=True
+    verbose=False,
+    sum_card=False
 ):
-    # TODO: what to do with linear term? implement? omit? fix?
-
     c1 = SumQuantile(tau=tau, weight=w4)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
     if sum_card:
@@ -164,24 +160,21 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
                      SumSquare(diff=1)  # check if needed /w real data
                      ])
 
-    if linear_term:
-        classes = [c1, c2, c3, c4]
-    else:
-        classes = [c1, c2, c3]
+    classes = [c1, c2, c3, c4]
 
     problem = Problem(signal, classes, use_set=use_ixs)
 
-    problem.decompose(solver=solver)
+    problem.decompose(solver=solver, verbose=verbose)
     s_seas = problem.decomposition[1]
     s_hat = problem.decomposition[2]
 
     return s_hat, s_seas
 
-
 def make_l2_l1d2_constrained(signal,
-                 weight=1e1, # val ok
-                 solver="MOSEK"
-):
+                            weight=1e1, # val ok
+                            solver="MOSEK",
+                            verbose=False
+                             ):
     """
     Used in solardatatools/algorithms/clipping.py
     Added hard-coded constraints on the first and last vals
@@ -196,7 +189,7 @@ def make_l2_l1d2_constrained(signal,
     classes = [c1, c2]
 
     problem = Problem(signal, classes)
-    problem.decompose(solver=solver)
+    problem.decompose(solver=solver, verbose=verbose)
 
     s_hat = problem.decomposition[1]
 

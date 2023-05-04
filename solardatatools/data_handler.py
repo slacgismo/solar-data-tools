@@ -893,7 +893,7 @@ time zone errors     {report['time zone correction'] != 0}
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
                 c1=15,
-                c2=100,
+                c2=6561,
                 c3=300,
                 reweight_eps=0.5,
                 reweight_niter=5,
@@ -946,7 +946,7 @@ time zone errors     {report['time zone correction'] != 0}
     def auto_fix_time_shifts(
         self,
         c1=5.0,
-        c2=500.0,
+        c2=1e4,
         estimator="com",
         threshold=0.1,
         periodic_detector=False,
@@ -965,7 +965,7 @@ time zone errors     {report['time zone correction'] != 0}
             solar_noon_estimator=estimator,
             threshold=threshold,
             periodic_detector=periodic_detector,
-            solver=solver,
+            solver=solver
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:

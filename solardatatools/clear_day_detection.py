@@ -7,7 +7,7 @@ This module contains functions for detecting clear days in historical PV solar d
 
 import numpy as np
 import cvxpy as cvx
-from solardatatools.signal_decompositions import l1_l2d2p365, tl1_l2d2p365
+from solardatatools.signal_decompositions import tl1_l2d2p365
 from solardatatools.utilities import basic_outlier_filter
 
 
@@ -22,7 +22,7 @@ def filter_for_sparsity(data, c1=6e3, solver="ECOS"):
     use_days = np.logical_and(density_signal > 0.2, density_signal < 0.8)
 
     filtered_signal = tl1_l2d2p365(density_signal, c1=c1, use_ixs=use_days, tau=0.85, solver=solver)
-    mask = basic_outlier_filter(daily_sparsity - filtered_signal, outlier_constant=5.0)
+    mask = basic_outlier_filter(density_signal - filtered_signal, outlier_constant=5.0)
     return mask
 
 
@@ -51,7 +51,9 @@ def find_clear_days(
     # Seasonal renormalization: estimate a "baseline smoothness" based on local
     # 90th percentile of smoothness signal. This has the effect of increasing
     # the score of days if there aren't very many smooth days nearby
+    # TODO: occasionally fails when CVXPY invokes OSQP instead of MOSEK
     y = tl1_l2d2p365(tc, tau=0.9, c1=3352924, yearly_periodic=False, solver=solver)
+
     tc /= y
     # Take the positive part function, i.e. set the negative values to zero.
     # This is the first metric

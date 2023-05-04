@@ -104,50 +104,11 @@ def l2_l1d1_l2d2p365(
 
     return s_hat.value, s_seas.value
 
-def l1_l2d2p365( # need to remove this one, should no longer be used
-        signal,
-        use_ixs=None,
-        c1=1e3,
-        yearly_periodic=True, # default not overwritten in calls
-        solver=None,
-        verbose=False
-):
-    """
-    for a list of available solvers, see:
-        https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-
-    :param signal: 1d numpy array
-    :param use_ixs: optional index set to apply cost function to
-    :param c1: float
-    :param solver: string
-    :return: median fit with seasonal baseline removed
-    """
-    if use_ixs is None:
-        use_ixs = ~np.isnan(signal)
-    else:
-        use_ixs = np.logical_and(use_ixs, ~np.isnan(signal))
-
-    x = cvx.Variable(len(signal))
-    xr = cvx.Variable(len(signal))
-    objective = cvx.Minimize(
-       cvx.norm1(xr) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
-    )
-    if len(signal) > 365 and yearly_periodic:
-        constraints = [x[365:] == x[:-365]]
-    else:
-        constraints = []
-    constraints.append(signal[use_ixs] == x[use_ixs] + xr[use_ixs])
-    problem = cvx.Problem(objective, constraints=constraints)
-    problem.solve(solver=solver, verbose=verbose)
-
-    return x.value
-
-
-def tl1_l2d2p365( # called 7 times
+def tl1_l2d2p365(
     signal,
     use_ixs=None,
     tau=0.75, # passed as 0.05 (sunrise), 0.95 (sunset), 0.9, 0.85
-    c1=5e5,
+    c1=1e2, # good default for sunrise sunset estimates (4 calls)
     solver=None,
     yearly_periodic=True, # passed as False once
     verbose=False
@@ -178,7 +139,7 @@ def tl1_l2d2p365( # called 7 times
 
     return x.value
 
-def tl1_l1d1_l2d2p365( # called once
+def tl1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
     tau=0.995, # passed as 0.5
@@ -187,8 +148,7 @@ def tl1_l1d1_l2d2p365( # called once
     c3=1e2, # passed as 300, linear term
     solver=None,
     verbose=False,
-    tv_weights=None,
-    linear_term=True
+    tv_weights=None
 ):
     """
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
@@ -204,19 +164,10 @@ def tl1_l1d1_l2d2p365( # called once
     n = len(signal)
     if tv_weights is None:
         tv_weights = np.ones(len(signal) - 1)
-    # if use_ixs is None:
-    #     use_ixs = np.ones(n, dtype=bool)
     if use_ixs is None:
         use_ixs = ~np.isnan(signal)
     else:
         use_ixs = np.logical_and(use_ixs, ~np.isnan(signal))
-    # selected_days = np.arange(n)[index_set]
-    # np.random.shuffle(selected_days)
-    # ix = 2 * n // 3
-    # train = selected_days[:ix]
-    # validate = selected_days[ix:]
-    # train.sort()
-    # validate.sort()
 
     s_hat = cvx.Variable(n)
     s_seas = cvx.Variable(max(n, 366))
@@ -226,34 +177,24 @@ def tl1_l1d1_l2d2p365( # called once
     c3 = cvx.Parameter(value=c3, nonneg=True)
     tau = cvx.Parameter(value=tau)
     beta = cvx.Variable()
-    if linear_term:
-        objective = cvx.Minimize(
-            2
-            * cvx.sum(
-                0.5 * cvx.abs(s_error)
-                + (tau - 0.5) * s_error
-            )
-            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-            + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
-            + c3 * beta**2 # linear term that has a slope of beta over 1 year, done wrong
+
+    objective = cvx.Minimize(
+        2
+        * cvx.sum(
+            0.5 * cvx.abs(s_error)
+            + (tau - 0.5) * s_error
         )
-    else:
-        objective = cvx.Minimize(
-            2
-            * cvx.sum(
-                0.5 * cvx.abs(s_error)
-                + (tau - 0.5) * s_error
-            )
-            + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
-            + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
-        )
+        + c1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+        + c2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
+        + c3 * beta**2 # linear term that has a slope of beta over 1 year, done wrong
+    )
+
     constraints = [
         signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
         cvx.sum(s_seas[:365]) == 0,
     ]
-    if linear_term:
-        constraints.append(s_seas[365:] - s_seas[:-365] == beta)
-        constraints.extend([beta <= 0.01, beta >= -0.1])
+    constraints.append(s_seas[365:] - s_seas[:-365] == beta)
+    constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
@@ -291,6 +232,45 @@ def make_l2_l1d2_constrained(signal,
 # NOT CURRENTLY USED
 ##############################################################################
 
+# def l1_l2d2p365(
+#         signal,
+#         use_ixs=None,
+#         c1=1e3,
+#         yearly_periodic=True, # default not overwritten in calls
+#         solver=None,
+#         verbose=False
+# ):
+#     """
+#     need to remove this one, no longer used in clear_day_detection
+
+#     for a list of available solvers, see:
+#         https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
+#
+#     :param signal: 1d numpy array
+#     :param use_ixs: optional index set to apply cost function to
+#     :param c1: float
+#     :param solver: string
+#     :return: median fit with seasonal baseline removed
+#     """
+#     if use_ixs is None:
+#         use_ixs = ~np.isnan(signal)
+#     else:
+#         use_ixs = np.logical_and(use_ixs, ~np.isnan(signal))
+#
+#     x = cvx.Variable(len(signal))
+#     xr = cvx.Variable(len(signal))
+#     objective = cvx.Minimize(
+#        cvx.norm1(xr) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
+#     )
+#     if len(signal) > 365 and yearly_periodic:
+#         constraints = [x[365:] == x[:-365]]
+#     else:
+#         constraints = []
+#     constraints.append(signal[use_ixs] == x[use_ixs] + xr[use_ixs])
+#     problem = cvx.Problem(objective, constraints=constraints)
+#     problem.solve(solver=solver, verbose=verbose)
+#
+#     return x.value
 
 # def hu_l1d1(signal, C=5):
 #     """
