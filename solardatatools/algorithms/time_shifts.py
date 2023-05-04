@@ -186,12 +186,12 @@ class TimeShift:
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
         if not periodic_detector:
-            slct = jpy <= 5
+            slct = np.logical_and(jpy <= 5, hn <= 0.075)
         else:
-            slct = np.logical_and(jpy <= 5, rms_s2 <= 0.25)
+            slct = np.logical_and(np.logical_and(jpy <= 5, hn <= 0.05), rms_s2 <= 0.25)
         subset_ixs = ixs[slct]
         # choose index of lowest holdout error
-        best_ix = subset_ixs[np.nanargmin(hn[subset_ixs])]
+        best_ix = np.max(subset_ixs)
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
