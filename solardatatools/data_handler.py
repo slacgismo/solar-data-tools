@@ -184,7 +184,7 @@ class DataHandler:
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
-        daytime_threshold=0.1,
+        daytime_threshold=0.005,
         units="W",
         solver=None,
         reset=True,
@@ -948,7 +948,7 @@ time zone errors     {report['time zone correction'] != 0}
         c1=5.0,
         c2=1e4,
         estimator="com",
-        threshold=0.1,
+        threshold=0.005,
         periodic_detector=False,
         solver=None,
     ):
@@ -1066,7 +1066,6 @@ time zone errors     {report['time zone correction'] != 0}
     def setup_location_and_orientation_estimation(
         self,
         gmt_offset,
-        day_selection_method="all",
         solar_noon_method="optimized_estimates",
         daylight_method="optimized_estimates",
         data_matrix="filled",
@@ -1080,7 +1079,6 @@ time zone errors     {report['time zone correction'] != 0}
         est = ConfigurationEstimator(
             self,
             gmt_offset,
-            day_selection_method=day_selection_method,
             solar_noon_method=solar_noon_method,
             daylight_method=daylight_method,
             data_matrix=data_matrix,
