@@ -9,21 +9,17 @@ and seasonal component, with Gaussian noise
     - l2: gaussian noise, sum-of-squares small or l2-norm squared
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-2) 'l1_l2d2p365': estimating a smooth, seasonal component with a laplacian
-noise model, fitting a local median instead of a local average
-    - l1: laplacian noise, sum-of-absolute values or l1-norm
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-3) 'tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
+2) 'tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
 an asymmetric laplacian noise model, fitting a local quantile instead of a
 local average
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) 'tl1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
+3) 'tl1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
 of Gaussian residuals
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-5) 'hu_l1d1': total variation denoising with Huber residual cost
+4) 'hu_l1d1': total variation denoising with Huber residual cost
     - hu: Huber cost, a function that is quadratic below a cutoff point and
     linear above the cutoff point
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
@@ -78,35 +74,6 @@ def l2_l1d1_l2d2p365(
 
     return s_hat, s_seas
 
-def l1_l2d2p365(
-        signal,
-        solver,
-        w1=1,
-        w2=1e5, # c1 in cvxpy version
-        yearly_periodic=True,
-        verbose=False,
-        use_ixs=None
-):
-    '''
-    - l1: laplacian noise, sum-of-absolute values or l1-norm
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-    '''
-
-    c1 = SumAbs(w1)
-    c2 = SumSquare(weight=w2, diff=2)
-
-    if len(signal) > 365 and yearly_periodic:
-        c2 = Aggregate([c2, Periodic(365)])
-
-    classes = [c1, c2]
-
-    problem = Problem(signal, classes, use_set=use_ixs)
-
-    problem.decompose(solver=solver, verbose=verbose)
-    s_seas = problem.decomposition[1]
-
-    return s_seas
-
 def tl1_l2d2p365(
         signal,
         tau=0.75,
@@ -151,10 +118,12 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
 ):
     c1 = SumQuantile(tau=tau, weight=w4)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
+
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
     else:
         c3 = SumAbs(weight=w1, diff=1)
+
     c4 =  Aggregate([NoCurvature(weight=w3),
                      Inequality(vmin=-0.1, vmax=0.01, diff=1), # check if needed /w real data
                      SumSquare(diff=1)  # check if needed /w real data

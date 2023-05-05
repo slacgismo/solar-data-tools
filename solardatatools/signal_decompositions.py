@@ -9,21 +9,17 @@ and seasonal component, with Gaussian noise
     - l2: gaussian noise, sum-of-squares small or l2-norm squared
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-2) 'l1_l2d2p365': estimating a smooth, seasonal component with a laplacian
-noise model, fitting a local median instead of a local average
-    - l1: laplacian noise, sum-of-absolute values or l1-norm
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-3) 'tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
+2) 'tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
 an asymmetric laplacian noise model, fitting a local quantile instead of a
 local average
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) 'tl1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
+3) 'tl1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
 of Gaussian residuals
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-5) 'hu_l1d1': total variation denoising with Huber residual cost
+4) 'hu_l1d1': total variation denoising with Huber residual cost
     - hu: Huber cost, a function that is quadratic below a cutoff point and
     linear above the cutoff point
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
@@ -226,74 +222,3 @@ def make_l2_l1d2_constrained(signal,
     problem = cvx.Problem(objective, constraints)
 
     return problem, signal, y_hat, mu
-
-
-##############################################################################
-# NOT CURRENTLY USED
-##############################################################################
-
-# def l1_l2d2p365(
-#         signal,
-#         use_ixs=None,
-#         c1=1e3,
-#         yearly_periodic=True, # default not overwritten in calls
-#         solver=None,
-#         verbose=False
-# ):
-#     """
-#     need to remove this one, no longer used in clear_day_detection
-
-#     for a list of available solvers, see:
-#         https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options
-#
-#     :param signal: 1d numpy array
-#     :param use_ixs: optional index set to apply cost function to
-#     :param c1: float
-#     :param solver: string
-#     :return: median fit with seasonal baseline removed
-#     """
-#     if use_ixs is None:
-#         use_ixs = ~np.isnan(signal)
-#     else:
-#         use_ixs = np.logical_and(use_ixs, ~np.isnan(signal))
-#
-#     x = cvx.Variable(len(signal))
-#     xr = cvx.Variable(len(signal))
-#     objective = cvx.Minimize(
-#        cvx.norm1(xr) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
-#     )
-#     if len(signal) > 365 and yearly_periodic:
-#         constraints = [x[365:] == x[:-365]]
-#     else:
-#         constraints = []
-#     constraints.append(signal[use_ixs] == x[use_ixs] + xr[use_ixs])
-#     problem = cvx.Problem(objective, constraints=constraints)
-#     problem.solve(solver=solver, verbose=verbose)
-#
-#     return x.value
-
-# def hu_l1d1(signal, C=5):
-#     """
-#     This function performs total variation filtering or denoising on a 1D signal. This filter is implemented as a
-#     convex optimization problem which is solved with cvxpy.
-#     (https://en.wikipedia.org/wiki/Total_variation_denoising)
-#
-#     :param signal: A 1d numpy array (must support boolean indexing) containing the signal of interest
-#     :param C: The regularization parameter to control the total variation in the final output signal
-#     :return: A 1d numpy array containing the filtered signal
-#     """
-#     s_hat = cvx.Variable(len(signal))
-#     mu = cvx.Constant(value=C)
-#     index_set = ~np.isnan(signal)
-#     objective = cvx.Minimize(
-#         cvx.sum(cvx.huber(signal[index_set] - s_hat[index_set]))
-#         + mu * cvx.norm1(cvx.diff(s_hat, k=1))
-#     )
-#     problem = cvx.Problem(objective=objective)
-#     try:
-#         problem.solve(solver="MOSEK")
-#     except Exception as e:
-#         print(e)
-#         print("Trying ECOS solver")
-#         problem.solve(solver="ECOS")
-#     return s_hat.value
