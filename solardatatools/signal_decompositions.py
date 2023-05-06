@@ -40,7 +40,8 @@ def l2_l1d1_l2d2p365(
     tv_weights=None,
     use_ixs=None,
     yearly_periodic=False,
-    transition_locs=None
+    transition_locs=None,
+    return_all=False
 ):
     """
     This performs total variation filtering with the addition of a seasonal
@@ -98,6 +99,9 @@ def l2_l1d1_l2d2p365(
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
+    if return_all:
+        return s_hat.value, s_seas.value, s_error.value, problem.objective.value
+
     return s_hat.value, s_seas.value
 
 def tl1_l2d2p365(
@@ -107,7 +111,8 @@ def tl1_l2d2p365(
     c1=1e2, # good default for sunrise sunset estimates (4 calls)
     solver=None,
     yearly_periodic=True, # passed as False once
-    verbose=False
+    verbose=False,
+    return_all=False
 ):
     """
     https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
@@ -133,6 +138,9 @@ def tl1_l2d2p365(
     problem = cvx.Problem(objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
+    if return_all:
+        return x.value, problem.objective.value
+
     return x.value
 
 def tl1_l1d1_l2d2p365(
@@ -144,7 +152,8 @@ def tl1_l1d1_l2d2p365(
     c3=1e2, # passed as 300, linear term
     solver=None,
     verbose=False,
-    tv_weights=None
+    tv_weights=None,
+    return_all=False
 ):
     """
     This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
@@ -194,13 +203,18 @@ def tl1_l1d1_l2d2p365(
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
 
+    if return_all:
+        return s_hat.value, s_seas.value, s_error.value, problem.objective.value
+
     return s_hat.value, s_seas.value[:n]
 
 
 def make_l2_l1d2_constrained(signal,
                  weight=1e1, # val ok
                  solver="MOSEK",
-                 use_ixs=None
+                 use_ixs=None,
+                 verbose=False,
+                 return_all=False
 ):
     """
     Used in solardatatools/algorithms/clipping.py
@@ -220,5 +234,9 @@ def make_l2_l1d2_constrained(signal,
     objective = cvx.Minimize(error + mu * reg)
     constraints = [y_hat[0] == 0, y_hat[-1] == 1]
     problem = cvx.Problem(objective, constraints)
+
+    if return_all:
+        problem.solve(solver=solver, verbose=verbose)
+        return y_hat.value, problem.objective.value
 
     return problem, signal, y_hat, mu
