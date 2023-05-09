@@ -108,7 +108,7 @@ def tl1_l2d2p365(
     signal,
     use_ixs=None,
     tau=0.75, # passed as 0.05 (sunrise), 0.95 (sunset), 0.9, 0.85
-    c1=1e2, # good default for sunrise sunset estimates (4 calls)
+    c1=500, # good default for sunrise sunset estimates (4 calls)
     solver=None,
     yearly_periodic=True, # passed as False once
     verbose=False,
