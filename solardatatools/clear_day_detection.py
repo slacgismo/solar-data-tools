@@ -13,9 +13,9 @@ from solardatatools.utilities import basic_outlier_filter
 
 def filter_for_sparsity(data, c1=6e3, solver="ECOS"):
     nans = np.isnan(data)
-    capacity_est = np.quantile(data[~nans], 0.95)
+    capacity_est = np.nanquantile(data, 0.95)
     data_copy = np.copy(data)
-    data_copy[nans] = 0.0
+    data_copy[nans] = 0.0 # simplify here
 
     foo = data_copy > 0.02 * capacity_est  # 2% of 95th perc
     density_signal = np.sum(foo, axis=0) / data.shape[0]
