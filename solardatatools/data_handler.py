@@ -179,7 +179,7 @@ class DataHandler:
         start_day_ix=None,
         end_day_ix=None,
         c1=None,
-        c2=500.0,
+        c2=1e4,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
