@@ -28,7 +28,7 @@ from solardatatools.data_quality import (
     make_quality_flags,
 )
 from solardatatools.data_filling import zero_nighttime, interp_missing
-from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
@@ -982,7 +982,8 @@ time zone errors     {report['time zone correction'] != 0}
         if self.filled_data_matrix is None:
             print("Generate a filled data matrix first.")
             return
-        clear_days = find_clear_days(
+        self.clear_day_analysis = ClearDayDetection()
+        clear_days = self.clear_day_analysis.find_clear_days(
             self.filled_data_matrix,
             smoothness_threshold=smoothness_threshold,
             energy_threshold=energy_threshold,
