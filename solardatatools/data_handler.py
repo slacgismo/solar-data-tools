@@ -216,16 +216,16 @@ class DataHandler:
         # Preprocessing
         ######################################################################
         t[0] = time()
-        # If power_col not passed, assume that the first column contains the
-        # data to be processed
-        if power_col is None:
-            power_col = self.data_frame_raw.columns[0]
-        if power_col not in self.data_frame_raw.columns:
-            print("Power column key not present in data frame.")
-            return
-        # Pandas operations to make a time axis with regular intervals.
-        # If correct_tz is True, it will also align the median daily maximum
         if self.data_frame_raw is not None:
+            # If power_col not passed, assume that the first column contains the
+            # data to be processed
+            if power_col is None:
+                power_col = self.data_frame_raw.columns[0]
+            if power_col not in self.data_frame_raw.columns:
+                print("Power column key not present in data frame.")
+                return
+            # Pandas operations to make a time axis with regular intervals.
+            # If correct_tz is True, it will also align the median daily maximum
             self.data_frame, sn_deviation = standardize_time_axis(
                 self.data_frame_raw,
                 timeindex=True,
