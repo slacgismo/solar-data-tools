@@ -10,18 +10,6 @@ import cvxpy as cvx
 from solardatatools.signal_decompositions import tl1_l2d2p365
 from solardatatools.utilities import basic_outlier_filter
 
-# -*- coding: utf-8 -*-
-"""Clear Day Detection Module
-
-This module contains functions for detecting clear days in historical PV solar data sets.
-
-"""
-
-import numpy as np
-import cvxpy as cvx
-from solardatatools.signal_decompositions import l1_l2d2p365, tl1_l2d2p365
-from solardatatools.utilities import basic_outlier_filter
-
 
 class ClearDayDetection:
     def __init__(self):
@@ -29,7 +17,7 @@ class ClearDayDetection:
         self.tc = None
         self.de = None
         self.x = None
-        self.daily_sparsity = None
+        self.density_signal = None
         self.filtered_signal = None
         self.weights = None
 
@@ -93,7 +81,7 @@ class ClearDayDetection:
         # Calculate the daily energy
         de = np.sum(data, axis=0)
         # Scale by max
-        self.de /= np.nanmax(de)
+        self.de = de/np.nanmax(de)
         # Solve a convex minimization problem to roughly fit the local 90th
         # percentile of the data (quantile regression)
         self.x = tl1_l2d2p365(self.de, tau=0.9, c1=204697, yearly_periodic=True, solver=solver)
@@ -121,7 +109,7 @@ class ClearDayDetection:
             de = self.de
             x = self.x
             y = self.y
-            daily_sparsity = self.daily_sparsity
+            density_signal = self.density_signal
             filtered_signal = self.filtered_signal
             import matplotlib.pyplot as plt
 
@@ -134,8 +122,11 @@ class ClearDayDetection:
             ax[1].plot(de, linewidth=1, marker=".")
             ax[1].plot(x, linewidth=1, label="estimated")
             ax[1].set_title("daily energy")
-            ax[2].plot(daily_sparsity, linewidth=1, marker=".")
+            ax[2].plot(density_signal, linewidth=1, marker=".")
+            ax[2].scatter([ 30, 131, 266, 311, 316, 321, 330, 332, 337, 342],
+                       [density_signal[i] for i  in [30, 131, 266, 311, 316, 321, 330, 332, 337, 342]],
+                          color="magenta")
             ax[2].plot(filtered_signal, linewidth=1, label="estimated")
-            ax[2].set_title("daily sparsity")
+            ax[2].set_title("daily density")
             plt.tight_layout()
             return fig
