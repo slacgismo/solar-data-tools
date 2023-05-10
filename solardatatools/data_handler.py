@@ -150,6 +150,7 @@ class DataHandler:
         self.time_shift_analysis = None
         self.daytime_analysis = None
         self.clipping_analysis = None
+        self.clear_day_analysis = None
         self.parameter_estimation = None
         self.polar_transform = None
         # Private attributes
