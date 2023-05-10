@@ -422,6 +422,8 @@ class DataHandler:
                 )
                 rms = lambda x: np.sqrt(np.mean(np.square(x)))
                 if rms(self.time_shift_analysis.s2) > 0.25:
+                    if verbose:
+                        print("Invoking periodic timeshift detector.")
                     old_analysis = self.time_shift_analysis
                     self.auto_fix_time_shifts(
                         c1=c1,
