@@ -190,8 +190,11 @@ class TimeShift:
         else:
             slct = np.logical_and(np.logical_and(jpy <= 5, hn <= 0.05), rms_s2 <= 0.25)
         subset_ixs = ixs[slct]
-        # choose index of lowest holdout error
-        best_ix = np.max(subset_ixs)
+        if len(subset_ixs)>0:
+            # choose index of lowest holdout error
+            best_ix = np.max(subset_ixs)
+        else:
+            best_ix = np.nanargmin(hn)
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
