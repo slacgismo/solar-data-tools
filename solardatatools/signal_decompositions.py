@@ -34,7 +34,7 @@ def l2_l1d1_l2d2p365(
     signal,
     c0=10, # "hard-coded"
     c1=50, # optimized
-    c2=1e4,
+    c2=1e5,
     solver=None,
     verbose=False,
     tv_weights=None,
