@@ -124,9 +124,6 @@ class ClearDayDetection:
             ax[1].set_title("daily energy")
             ax[2].plot(density_signal, linewidth=1, marker=".")
             ax[2].set_title("daily density")
-            ax[2].scatter([ 30, 131, 266, 311, 316, 321, 330, 332, 337, 342],
-                       [density_signal[i] for i  in [30, 131, 266, 311, 316, 321, 330, 332, 337, 342]],
-                          color="magenta", label="test case outliers")
             ax[2].plot(filtered_signal, linewidth=1, label="estimated")
             plt.legend()
             plt.tight_layout()
