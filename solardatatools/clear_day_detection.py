@@ -84,7 +84,7 @@ class ClearDayDetection:
         self.de = de/np.nanmax(de)
         # Solve a convex minimization problem to roughly fit the local 90th
         # percentile of the data (quantile regression)
-        self.x = tl1_l2d2p365(self.de, tau=0.9, c1=204697, yearly_periodic=True, solver=solver)
+        self.x = tl1_l2d2p365(self.de, tau=0.9, c1=204697, yearly_periodic=False, solver=solver)
         # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our
         # seasonal normalization.
         de = np.clip(np.divide(self.de, self.x), 0, 1)
