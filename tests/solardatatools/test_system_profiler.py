@@ -41,12 +41,13 @@ class TestSystemProfiler(unittest.TestCase):
         ref_tilt_real_loc = 22.45  # +/- 1e-4
         ref_az_real_loc = 0.28  # +/- 1e-6
 
-        np.testing.assert_allclose(estimate_latitude, ref_latitude, atol=0.45)
+        # Updated tolerances based on new updates for sunset/sunrise SDs
+        np.testing.assert_allclose(estimate_latitude, ref_latitude, atol=1.5)
         np.testing.assert_allclose(estimate_longitude, ref_longitude, atol=0.2)
         np.testing.assert_allclose(
             estimate_orientation_real_loc,
             (ref_tilt_real_loc, ref_az_real_loc),
-            atol=0.05,
+            atol=0.08,
         )
 
 
