@@ -19,10 +19,10 @@ of Gaussian residuals
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) 'hu_l1d1': total variation denoising with Huber residual cost
-    - hu: Huber cost, a function that is quadratic below a cutoff point and
-    linear above the cutoff point
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
+4) 'make_l2_l1d2_constrained':
+    - l2: gaussian noise, sum-of-squares small or l2-norm squared
+    - l1d2: piecewise linear heuristic
+    - constrained to have first val at 0 and last val at 1
 
 """
 import sys

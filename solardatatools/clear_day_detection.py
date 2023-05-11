@@ -27,12 +27,11 @@ class ClearDayDetection:
             c1=6e3,
             solver="ECOS"
     ):
-        nans = np.isnan(data)
         capacity_est = np.nanquantile(data, 0.95)
-        data_copy = np.copy(data)
-        data_copy[nans] = 0.0  # simplify here
-
         foo = data_copy > 0.02 * capacity_est  # 2% of 95th perc
+        # set nans to zero to avoid issues w/ summing
+        data_copy = np.copy(data)
+        data_copy[np.isnan(data)] = 0.0
         self.density_signal = np.sum(foo, axis=0) / data.shape[0]
         use_days = np.logical_and(self.density_signal > 0.2, self.density_signal < 0.8)
 
