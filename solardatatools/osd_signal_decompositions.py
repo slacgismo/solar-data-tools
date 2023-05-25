@@ -30,7 +30,7 @@ import numpy as np
 
 from gfosd import Problem
 from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate, AverageEqual,\
-    Periodic, Inequality, FirstValEqual, LastValEqual, NoCurvature
+    Periodic, Inequality, FirstValEqual, LastValEqual, NoCurvature, NoSlope
 
 
 def l2_l1d1_l2d2p365(
@@ -149,7 +149,9 @@ def tl1_l1d1_l2d2p365( # TODO: switch to l1 since tau passed as 0.5
                      SumSquare(diff=1),
                      ])
 
-    classes = [c1, c2, c3, c4]
+    c5 = Aggregate([NoSlope(weight=w3*3), Periodic(365)])
+
+    classes = [c1, c2, c3, c4, c5]
 
     problem = Problem(signal, classes, use_set=use_ixs)
 

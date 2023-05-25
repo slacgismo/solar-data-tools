@@ -198,7 +198,7 @@ def tl1_l1d1_l2d2p365(
         signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
         cvx.sum(s_seas[:365]) == 0,
     ]
-   # constraints.append(s_seas[365:] - s_seas[:-365] == beta) # MISSING IN OSD
+    constraints.append(s_seas[365:] - s_seas[:-365] == beta) # MISSING IN OSD Version
     constraints.extend([beta <= 0.01, beta >= -0.1])
     problem = cvx.Problem(objective=objective, constraints=constraints)
     problem.solve(solver=solver, verbose=verbose)
