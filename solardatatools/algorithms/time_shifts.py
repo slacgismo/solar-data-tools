@@ -19,7 +19,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
-from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
+from solardatatools.osd_signal_decompositions import l2_l1d1_l2d2p365
 
 
 class TimeShift:
@@ -95,7 +95,6 @@ class TimeShift:
             c2,
             use_ixs,
             periodic_detector,
-            transition_locs=index_set,
             solver=solver,
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
@@ -151,7 +150,7 @@ class TimeShift:
         # set up train/test split with sklearn
         ixs = np.arange(len(metric))
         ixs = ixs[use_ixs]
-        train_ixs, test_ixs = train_test_split(ixs, train_size=0.85)
+        train_ixs, test_ixs = train_test_split(ixs, train_size=0.9)
         train = np.zeros(len(metric), dtype=bool)
         test = np.zeros(len(metric), dtype=bool)
         train[train_ixs] = True
@@ -165,7 +164,7 @@ class TimeShift:
         # iterate over possible values of c1 parameter
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
-                metric, v, c2, train, periodic_detector, n_iter=5, solver=solver
+                metric, v, c2, train, periodic_detector, solver=solver
             )
             y = metric
             # collect results
@@ -204,25 +203,19 @@ class TimeShift:
         c2,
         use_ixs,
         periodic_detector,
-        transition_locs=None,
-        n_iter=5,
         solver=None,
     ):
-        # Iterative reweighted L1 heuristic
-        w = np.ones(len(metric) - 1)
-        eps = 0.1
-        for i in range(n_iter):
-            s1, s2 = l2_l1d1_l2d2p365(
-                metric,
-                c1=c1,
-                c2=c2,
-                tv_weights=w,
-                use_ixs=use_ixs,
-                yearly_periodic=periodic_detector,
-                transition_locs=transition_locs,
-                solver=solver,
-            )
-            w = 1 / (eps + np.abs(np.diff(s1, n=1)))
+        solver  = "QSS" # TODO: remove hardcoding once codebase transitions
+        card = True if solver == "QSS" else False
+        s1, s2 = l2_l1d1_l2d2p365(
+            metric,
+            w1=c1,
+            w2=c2,
+            use_ixs=use_ixs,
+            yearly_periodic=periodic_detector,
+            solver=solver,
+            sum_card=card
+        )
         return s1, s2
 
     def plot_analysis(self, figsize=None):
