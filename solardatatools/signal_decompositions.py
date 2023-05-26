@@ -19,10 +19,10 @@ of Gaussian residuals
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) 'hu_l1d1': total variation denoising with Huber residual cost
-    - hu: Huber cost, a function that is quadratic below a cutoff point and
-    linear above the cutoff point
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
+4) 'make_l2_l1d2_constrained':
+    - l2: gaussian noise, sum-of-squares small or l2-norm squared
+    - l1d2: piecewise linear heuristic
+    - constrained to have first val at 0 and last val at 1
 
 """
 import sys
@@ -34,7 +34,7 @@ def l2_l1d1_l2d2p365(
     signal,
     c0=10, # "hard-coded"
     c1=50, # optimized
-    c2=1e4,
+    c2=1e5,
     solver=None,
     verbose=False,
     tv_weights=None,
@@ -108,7 +108,7 @@ def tl1_l2d2p365(
     signal,
     use_ixs=None,
     tau=0.75, # passed as 0.05 (sunrise), 0.95 (sunset), 0.9, 0.85
-    c1=1e2, # good default for sunrise sunset estimates (4 calls)
+    c1=500, # good default for sunrise sunset estimates (4 calls), incr from 100 on 5/9
     solver=None,
     yearly_periodic=True, # passed as False once
     verbose=False,

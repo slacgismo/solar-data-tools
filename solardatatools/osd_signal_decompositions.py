@@ -35,9 +35,8 @@ from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate,
 
 def l2_l1d1_l2d2p365(
         signal,
-        w0=10, # error
-        w1=100, # l1d1, c1 in cvxpy version
-        w2=1, # l2d2, c2 in cvxpy version
+        w1=50, # l1d1, c1 in cvxpy version
+        w2=1e4, # l2d2, c2 in cvxpy version
         return_all=False,
         yearly_periodic=False,
         solver='MOSEK',
@@ -45,8 +44,23 @@ def l2_l1d1_l2d2p365(
         sum_card=False,
         verbose=False
 ):
+    """
+    This performs total variation filtering with the addition of a seasonal
+    baseline fit. This introduces a new signal to the model that is smooth and
+    periodic on a yearly time frame. This does a better job of describing real,
+    multi-year solar PV power data sets, and therefore does an improved job of
+    estimating the discretely changing signal.
 
-    c1 = SumSquare(weight=w0)
+    :param signal: A 1d numpy array (must support boolean indexing) containing
+    the signal of interest
+    :param w1: The regularization parameter to control the total variation in
+    the final output signal
+    :param w2: The regularization parameter to control the smoothness of the
+    seasonal signal
+    :return: A 1d numpy array containing the filtered signal
+    """
+
+    c1 = SumSquare(weight=10)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
@@ -55,10 +69,10 @@ def l2_l1d1_l2d2p365(
 
     if len(signal) > 365:
         c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365), Periodic(365)])
-        if yearly_periodic and not sum_card: # SumCard does not work with Aggregate
+        if yearly_periodic and not sum_card: # SumCard does not work well with Aggregate class
             c3 = Aggregate([c3, Periodic(365)])
         elif yearly_periodic and sum_card:
-            print("Cannot use Periodic Class with SumCard")
+            print("Cannot use Periodic Class with SumCard.")
 
     classes = [c1, c2, c3]
 

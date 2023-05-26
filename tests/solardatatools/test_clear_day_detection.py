@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 import numpy as np
 import cvxpy as cvx
-from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.clear_day_detection import ClearDayDetection
 
 
 class TestClearDayDetection(unittest.TestCase):
@@ -27,7 +27,8 @@ class TestClearDayDetection(unittest.TestCase):
         # if it's not used, try with ECOS solver.
         # However, fails with ECOS solver and raises cvx.SolverError.
         try:
-            actual_output = find_clear_days(data)
+            clear_day_detection = ClearDayDetection()
+            actual_output = clear_day_detection.find_clear_days(data)
         except (cvx.SolverError, ValueError):
             self.skipTest(
                 "This test uses MOSEK solver"
@@ -57,7 +58,8 @@ class TestClearDayDetection(unittest.TestCase):
         # if it's not used, try with ECOS solver.
         # However, fails with ECOS solver and raises cvx.SolverError.
         try:
-            actual_output = find_clear_days(data, boolean_out=False)
+            clear_day_detection = ClearDayDetection()
+            actual_output = clear_day_detection.find_clear_days(data, boolean_out=False)
         except (cvx.SolverError, ValueError):
             self.skipTest(
                 "This test uses MOSEK solver"

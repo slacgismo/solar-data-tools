@@ -28,7 +28,7 @@ from solardatatools.data_quality import (
     make_quality_flags,
 )
 from solardatatools.data_filling import zero_nighttime, interp_missing
-from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
@@ -150,6 +150,7 @@ class DataHandler:
         self.time_shift_analysis = None
         self.daytime_analysis = None
         self.clipping_analysis = None
+        self.clear_day_analysis = None
         self.parameter_estimation = None
         self.polar_transform = None
         # Private attributes
@@ -179,7 +180,7 @@ class DataHandler:
         start_day_ix=None,
         end_day_ix=None,
         c1=None,
-        c2=500.0,
+        c2=1e5,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
@@ -216,16 +217,16 @@ class DataHandler:
         # Preprocessing
         ######################################################################
         t[0] = time()
-        # If power_col not passed, assume that the first column contains the
-        # data to be processed
-        if power_col is None:
-            power_col = self.data_frame_raw.columns[0]
-        if power_col not in self.data_frame_raw.columns:
-            print("Power column key not present in data frame.")
-            return
-        # Pandas operations to make a time axis with regular intervals.
-        # If correct_tz is True, it will also align the median daily maximum
         if self.data_frame_raw is not None:
+            # If power_col not passed, assume that the first column contains the
+            # data to be processed
+            if power_col is None:
+                power_col = self.data_frame_raw.columns[0]
+            if power_col not in self.data_frame_raw.columns:
+                print("Power column key not present in data frame.")
+                return
+            # Pandas operations to make a time axis with regular intervals.
+            # If correct_tz is True, it will also align the median daily maximum
             self.data_frame, sn_deviation = standardize_time_axis(
                 self.data_frame_raw,
                 timeindex=True,
@@ -422,6 +423,8 @@ class DataHandler:
                 )
                 rms = lambda x: np.sqrt(np.mean(np.square(x)))
                 if rms(self.time_shift_analysis.s2) > 0.25:
+                    if verbose:
+                        print("Invoking periodic timeshift detector.")
                     old_analysis = self.time_shift_analysis
                     self.auto_fix_time_shifts(
                         c1=c1,
@@ -946,7 +949,7 @@ time zone errors     {report['time zone correction'] != 0}
     def auto_fix_time_shifts(
         self,
         c1=5.0,
-        c2=1e4,
+        c2=1e5,
         estimator="com",
         threshold=0.005,
         periodic_detector=False,
@@ -979,7 +982,8 @@ time zone errors     {report['time zone correction'] != 0}
         if self.filled_data_matrix is None:
             print("Generate a filled data matrix first.")
             return
-        clear_days = find_clear_days(
+        self.clear_day_analysis = ClearDayDetection()
+        clear_days = self.clear_day_analysis.find_clear_days(
             self.filled_data_matrix,
             smoothness_threshold=smoothness_threshold,
             energy_threshold=energy_threshold,
