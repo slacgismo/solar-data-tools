@@ -20,11 +20,12 @@ class WeightSetting(object):
 
     def obtain_weights(self, power_signals_d):
         try:
-            from solardatatools.clear_day_detection import find_clear_days
+            from solardatatools.clear_day_detection import ClearDayDetection
         except ImportError:
             print('Weights not set!')
             print('Please make sure you have solar-data-tools installed')
             weights = np.ones(power_signals_d.shape[1])
         else:
-            weights = find_clear_days(power_signals_d, boolean_out=False)
+            clear_day_detection = ClearDayDetection()
+            weights = clear_day_detection.find_clear_days(power_signals_d, boolean_out=False)
         return weights

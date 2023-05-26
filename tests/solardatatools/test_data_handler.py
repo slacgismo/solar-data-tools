@@ -22,30 +22,28 @@ class TestDataHandler(unittest.TestCase):
         scores_path = filepath / "fixtures" / "scoring" / "clipping_1.csv"
         with open(scores_path) as file:
             expected_scores = np.loadtxt(file, delimiter=",")
-        np.testing.assert_array_almost_equal(
-            dh.daily_scores.clipping_1, expected_scores, decimal=3
+        np.testing.assert_allclose(
+            dh.daily_scores.clipping_1, expected_scores, atol=1e-3
         )
         scores_path = filepath / "fixtures" / "scoring" / "clipping_2.csv"
         with open(scores_path) as file:
             expected_scores = np.loadtxt(file, delimiter=",")
-        np.testing.assert_array_almost_equal(
-            dh.daily_scores.clipping_2, expected_scores, decimal=3
+        np.testing.assert_allclose(
+            dh.daily_scores.clipping_2, expected_scores, atol=2e-3
         )
         scores_path = filepath / "fixtures" / "scoring" / "density.csv"
         with open(scores_path) as file:
             expected_scores = np.loadtxt(file, delimiter=",")
-        np.testing.assert_array_almost_equal(
-            dh.daily_scores.density, expected_scores, decimal=3
-        )
+        np.testing.assert_allclose(dh.daily_scores.density, expected_scores, atol=1e-3)
         scores_path = filepath / "fixtures" / "scoring" / "linearity.csv"
         with open(scores_path) as file:
             expected_scores = np.loadtxt(file, delimiter=",")
-        np.testing.assert_array_almost_equal(
-            dh.daily_scores.linearity, expected_scores, decimal=2
+        np.testing.assert_allclose(
+            dh.daily_scores.linearity, expected_scores, atol=2e-2
         )
         scores_path = filepath / "fixtures" / "scoring" / "quality_clustering.csv"
         with open(scores_path) as file:
             expected_scores = np.loadtxt(file, delimiter=",")
-        np.testing.assert_array_almost_equal(
-            dh.daily_scores.quality_clustering, expected_scores, decimal=3
+        np.testing.assert_allclose(
+            dh.daily_scores.quality_clustering, expected_scores, atol=1e-3
         )

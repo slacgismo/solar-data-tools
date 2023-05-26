@@ -15,6 +15,7 @@
 *.tax2010
 *.vcf
 *.xml
+*.png
 notebooks/*.pkl
 notebooks/data/*
 

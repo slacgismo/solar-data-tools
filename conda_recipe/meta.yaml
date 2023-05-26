@@ -29,7 +29,6 @@ requirements:
     - matplotlib
     - pvlib
     - cvxpy>=1.1.0
-    - urllib3
     - pykml
     - haversine
     - boto3

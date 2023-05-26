@@ -10,6 +10,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 from collections import Counter
+from typing import Optional
 
 TZ_LOOKUP = {
     "America/Anchorage": 9,
@@ -138,8 +139,8 @@ def standardize_time_axis(
         s = df[power_col]
         avg_day = s.groupby(s.index.time).mean()
         # normalize to [0, 1]
-        avg_day /= np.max(avg_day)
         avg_day -= np.min(avg_day)
+        avg_day /= np.max(avg_day)
         # find sunrise and sunset times
         idxs = np.arange(len(avg_day))
         if avg_day[0] >= thresh:
@@ -198,7 +199,7 @@ def standardize_time_axis(
     # Find *all* common sampling frequencies
     freq_counts = Counter(diff)
     freq = freq_counts.most_common()[0][0]
-    deltas = [c[0] for c in freq_counts.most_common()]
+    deltas = [c[0] for c in freq_counts.most_common() if int(c[1] > 0.05 * len(df))]
     if len(deltas) > 1:
         if verbose:
             print("CAUTION: Multiple scan rates detected!")
@@ -259,3 +260,47 @@ def fix_daylight_savings_with_known_tz(df, tz="America/Los_Angeles", inplace=Fal
         df_out = df.copy()
         df_out.index = index
         return df_out
+
+
+def remove_index_timezone(df):
+    """
+    Removes the timezone information from the index of a pandas DataFrame, if
+    it is timezone aware. This function was written with ChatGPT and checked by
+    Bennet Meyers
+
+    Parameters:
+    df (pandas.DataFrame): The DataFrame to modify.
+
+    Returns:
+    pandas.DataFrame: The modified DataFrame.
+    """
+    if isinstance(df.index, pd.DatetimeIndex) and df.index.tzinfo is not None:
+        new_index = df.index.tz_localize(None)
+        return df.set_index(new_index)
+    else:
+        return df
+
+
+def get_index_timezone(df: pd.DataFrame) -> Optional[str]:
+    """
+    Returns the timezone name or offset amount (in hours) of the index of a
+    pandas DataFrame. This function was written with ChatGPT and checked by
+    Bennet Meyers
+
+    Parameters:
+    df (pandas.DataFrame): The DataFrame to check.
+
+    Returns:
+    str or None: The timezone name or offset amount (in hours) of the index,
+    or None if the index is not timezone aware.
+    """
+    if isinstance(df.index, pd.DatetimeIndex):
+        tzinfo = df.index.tzinfo
+        if tzinfo is not None:
+            tzname = tzinfo.tzname(None)
+            if tzname is not None:
+                return tzname
+            else:
+                tzoffset = tzinfo.utcoffset(None).total_seconds() // 3600
+                return f"{tzoffset:+}"
+    return None

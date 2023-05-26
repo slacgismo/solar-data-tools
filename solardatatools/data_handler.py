@@ -18,6 +18,8 @@ import traceback, sys
 from solardatatools.time_axis_manipulation import (
     make_time_series,
     standardize_time_axis,
+    remove_index_timezone,
+    get_index_timezone,
 )
 from solardatatools.matrix_embedding import make_2d
 from solardatatools.data_quality import (
@@ -26,7 +28,7 @@ from solardatatools.data_quality import (
     make_quality_flags,
 )
 from solardatatools.data_filling import zero_nighttime, interp_missing
-from solardatatools.clear_day_detection import find_clear_days
+from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
@@ -77,9 +79,8 @@ class DataHandler:
                     e = "Data frame must have a DatetimeIndex or"
                     e += "the user must set the datetime_col kwarg."
                     raise Exception(e)
-            df_index = self.data_frame_raw.index
-            if df_index.tz is not None:
-                df_index = df_index.tz_localize(None)
+            self.tz_info = get_index_timezone(self.data_frame_raw)
+            self.data_frame_raw = remove_index_timezone(self.data_frame_raw)
             if no_future_dates:
                 now = datetime.now()
                 self.data_frame_raw = self.data_frame_raw[
@@ -149,6 +150,7 @@ class DataHandler:
         self.time_shift_analysis = None
         self.daytime_analysis = None
         self.clipping_analysis = None
+        self.clear_day_analysis = None
         self.parameter_estimation = None
         self.polar_transform = None
         # Private attributes
@@ -178,11 +180,12 @@ class DataHandler:
         start_day_ix=None,
         end_day_ix=None,
         c1=None,
-        c2=500.0,
+        c2=1e5,
+        periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
-        daytime_threshold=0.1,
+        daytime_threshold=0.005,
         units="W",
         solver=None,
         reset=True,
@@ -214,16 +217,16 @@ class DataHandler:
         # Preprocessing
         ######################################################################
         t[0] = time()
-        # If power_col not passed, assume that the first column contains the
-        # data to be processed
-        if power_col is None:
-            power_col = self.data_frame_raw.columns[0]
-        if power_col not in self.data_frame_raw.columns:
-            print("Power column key not present in data frame.")
-            return
-        # Pandas operations to make a time axis with regular intervals.
-        # If correct_tz is True, it will also align the median daily maximum
         if self.data_frame_raw is not None:
+            # If power_col not passed, assume that the first column contains the
+            # data to be processed
+            if power_col is None:
+                power_col = self.data_frame_raw.columns[0]
+            if power_col not in self.data_frame_raw.columns:
+                print("Power column key not present in data frame.")
+                return
+            # Pandas operations to make a time axis with regular intervals.
+            # If correct_tz is True, it will also align the median daily maximum
             self.data_frame, sn_deviation = standardize_time_axis(
                 self.data_frame_raw,
                 timeindex=True,
@@ -310,13 +313,14 @@ class DataHandler:
             self.data_clearness_score = 0.0
             self._ran_pipeline = True
             return
-        if ratio < 0.9:
+        if ratio < 0.85:
             msg = "Error: data was lost during NaN filling procedure. "
             msg += "This typically occurs when\nthe time stamps are in the "
             msg += "wrong timezone. Please double check your data table.\n"
             self._error_msg += "\n" + msg
             if verbose:
                 print(msg)
+                print(f"ratio of filled to raw nonzero measurements was {ratio:.2f}")
             self.daily_scores = None
             self.daily_flags = None
             self.data_quality_score = None
@@ -414,9 +418,24 @@ class DataHandler:
                     c2=c2,
                     estimator=solar_noon_estimator,
                     threshold=daytime_threshold,
-                    periodic_detector=False,
+                    periodic_detector=periodic_detector,
                     solver=solver,
                 )
+                rms = lambda x: np.sqrt(np.mean(np.square(x)))
+                if rms(self.time_shift_analysis.s2) > 0.25:
+                    if verbose:
+                        print("Invoking periodic timeshift detector.")
+                    old_analysis = self.time_shift_analysis
+                    self.auto_fix_time_shifts(
+                        c1=c1,
+                        c2=c2,
+                        estimator=solar_noon_estimator,
+                        threshold=daytime_threshold,
+                        periodic_detector=True,
+                        solver=solver,
+                    )
+                    if rms(old_analysis.s2) < rms(self.time_shift_analysis.s2):
+                        self.time_shift_analysis = old_analysis
             except Exception as e:
                 msg = "Fix time shift algorithm failed."
                 self._error_msg += "\n" + msg
@@ -530,6 +549,10 @@ class DataHandler:
                 "quality score": self.data_quality_score,
                 "clearness score": self.data_clearness_score,
                 "inverter clipping": self.inverter_clipping,
+                "clipped fraction": (
+                    np.sum(self.daily_flags.inverter_clipped)
+                    / len(self.daily_flags.inverter_clipped)
+                ),
                 "capacity change": self.capacity_changes,
                 "data quality warning": self.normal_quality_scores,
                 "time shift correction": (
@@ -584,6 +607,7 @@ data sampling        {report['sampling']} minutes
 quality score        {report['quality score']:.2f}
 clearness score      {report['clearness score']:.2f}
 inverter clipping    {report['inverter clipping']}
+clipped fraction     {report['clipped fraction']:.2f}
 capacity changes     {report['capacity change']}
 data quality warning {report['data quality warning']}
 time shift errors    {report['time shift correction']}
@@ -872,7 +896,7 @@ time zone errors     {report['time zone correction'] != 0}
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
                 c1=15,
-                c2=100,
+                c2=6561,
                 c3=300,
                 reweight_eps=0.5,
                 reweight_niter=5,
@@ -925,14 +949,14 @@ time zone errors     {report['time zone correction'] != 0}
     def auto_fix_time_shifts(
         self,
         c1=5.0,
-        c2=500.0,
+        c2=1e5,
         estimator="com",
-        threshold=0.1,
+        threshold=0.005,
         periodic_detector=False,
         solver=None,
     ):
         self.time_shift_analysis = TimeShift()
-        if self.data_clearness_score >= 0.1:
+        if self.data_clearness_score >= 0.3:
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors
@@ -944,7 +968,7 @@ time zone errors     {report['time zone correction'] != 0}
             solar_noon_estimator=estimator,
             threshold=threshold,
             periodic_detector=periodic_detector,
-            solver=solver,
+            solver=solver
         )
         self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
@@ -958,7 +982,8 @@ time zone errors     {report['time zone correction'] != 0}
         if self.filled_data_matrix is None:
             print("Generate a filled data matrix first.")
             return
-        clear_days = find_clear_days(
+        self.clear_day_analysis = ClearDayDetection()
+        clear_days = self.clear_day_analysis.find_clear_days(
             self.filled_data_matrix,
             smoothness_threshold=smoothness_threshold,
             energy_threshold=energy_threshold,
@@ -1045,7 +1070,6 @@ time zone errors     {report['time zone correction'] != 0}
     def setup_location_and_orientation_estimation(
         self,
         gmt_offset,
-        day_selection_method="all",
         solar_noon_method="optimized_estimates",
         daylight_method="optimized_estimates",
         data_matrix="filled",
@@ -1059,7 +1083,6 @@ time zone errors     {report['time zone correction'] != 0}
         est = ConfigurationEstimator(
             self,
             gmt_offset,
-            day_selection_method=day_selection_method,
             solar_noon_method=solar_noon_method,
             daylight_method=daylight_method,
             data_matrix=data_matrix,

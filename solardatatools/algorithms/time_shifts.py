@@ -16,7 +16,6 @@ The algorithm works as follows:
 """
 
 import numpy as np
-from scipy.stats import mode
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
@@ -37,6 +36,8 @@ class TimeShift:
         self.jumps_per_year = None
         self.best_c1 = None
         self.best_ix = None
+        self.baseline = None
+        self.periodic_detector = None
         self.__recursion_depth = 0
 
     def run(
@@ -46,7 +47,7 @@ class TimeShift:
         c1=None,
         c2=200.0,
         solar_noon_estimator="com",
-        threshold=0.1,
+        threshold=0.005,
         periodic_detector=False,
         solver=None,
     ):
@@ -117,9 +118,10 @@ class TimeShift:
             )
             return
         # Apply corrections
-        roll_by_index = np.round(
-            (mode(np.round(s1, 3)).mode[0] - s1) * data.shape[0] / 24, 0
-        )
+        my_set = set(s1)
+        key_func = lambda x: abs(x - 12)
+        closest_element = min(my_set, key=key_func)
+        roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
         correction_metric = np.average(np.abs(roll_by_index))
         if correction_metric < 0.01:
             roll_by_index[:] = 0
@@ -137,9 +139,11 @@ class TimeShift:
         self.c1_vals = c1s
         self.best_c1 = best_c1
         self.best_ix = best_ix
+        self.periodic_detector = periodic_detector
         self.s1 = s1
         self.s2 = s2
         self.index_set = index_set
+        self.baseline = closest_element
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
@@ -147,7 +151,7 @@ class TimeShift:
         # set up train/test split with sklearn
         ixs = np.arange(len(metric))
         ixs = ixs[use_ixs]
-        train_ixs, test_ixs = train_test_split(ixs, test_size=0.85)
+        train_ixs, test_ixs = train_test_split(ixs, train_size=0.85)
         train = np.zeros(len(metric), dtype=bool)
         test = np.zeros(len(metric), dtype=bool)
         train[train_ixs] = True
@@ -157,6 +161,7 @@ class TimeShift:
         test_r = np.zeros_like(c1s)
         tv_metric = np.zeros_like(c1s)
         jpy = np.zeros_like(c1s)
+        rms_s2 = np.zeros_like(c1s)
         # iterate over possible values of c1 parameter
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
@@ -170,6 +175,7 @@ class TimeShift:
             count_jumps = np.sum(~np.isclose(np.diff(s1), 0, atol=1e-4))
             jumps_per_year = count_jumps / (len(metric) / 365)
             jpy[i] = jumps_per_year
+            rms_s2[i] = np.sqrt(np.mean(np.square(s2)))
 
         def zero_one_scale(x):
             return (x - np.min(x)) / (np.max(x) - np.min(x))
@@ -179,9 +185,16 @@ class TimeShift:
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
-        slct = np.logical_and(jpy <= 5, hn <= 0.02)
-        # slct = np.logical_and(slct, rn < 0.9)
-        best_ix = np.nanmax(ixs[slct])
+        if not periodic_detector:
+            slct = np.logical_and(jpy <= 5, hn <= 0.1)
+        else:
+            slct = np.logical_and(np.logical_and(jpy <= 5, hn <= 0.05), rms_s2 <= 0.25)
+        subset_ixs = ixs[slct]
+        if len(subset_ixs)>0:
+            # choose index of lowest holdout error
+            best_ix = np.max(subset_ixs)
+        else:
+            best_ix = np.nanargmin(hn)
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
@@ -207,7 +220,6 @@ class TimeShift:
                 use_ixs=use_ixs,
                 yearly_periodic=periodic_detector,
                 transition_locs=transition_locs,
-                seas_max=None,
                 solver=solver,
             )
             w = 1 / (eps + np.abs(np.diff(s1, n=1)))

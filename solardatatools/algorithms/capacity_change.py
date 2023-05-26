@@ -32,14 +32,14 @@ class CapacityChange:
         filter=None,
         quantile=1.00,
         c1=15,
-        c2=100,
+        c2=6561,
         c3=300,
         tau=0.5,
         reweight_eps=0.5,
         reweight_niter=5,
         dbscan_eps=0.02,
         dbscan_min_samples="auto",
-        solver=None,
+        solver=None
     ):
         if filter is None:
             filter = np.ones(data.shape[1], dtype=bool)
@@ -47,8 +47,10 @@ class CapacityChange:
             metric = np.nanquantile(data, q=quantile, axis=0)
             # metric = np.sum(data, axis=0)
             metric /= np.max(metric)
+
             w = np.ones(len(metric) - 1)
             eps = reweight_eps
+
             for i in range(reweight_niter):
                 s1, s2 = tl1_l1d1_l2d2p365(
                     metric,
