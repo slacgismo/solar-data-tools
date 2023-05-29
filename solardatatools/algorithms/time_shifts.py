@@ -64,6 +64,7 @@ class TimeShift:
         # Optimize c1
         if c1 is None:
             c1s = np.logspace(-1, 2, 11)
+            #c1s = np.logspace(0, 2, 30)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
                 metric, c1s, use_ixs, c2, periodic_detector, solver=solver
             )

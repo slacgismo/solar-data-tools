@@ -100,7 +100,7 @@ def l2_l1d1_l2d2p365(
     problem.solve(solver=solver, verbose=verbose)
 
     if return_all:
-        return s_hat.value, s_seas.value, s_error.value, problem.objective.value
+        return s_hat.value, s_seas.value, s_error.value, problem.objective.value, problem
 
     return s_hat.value, s_seas.value
 

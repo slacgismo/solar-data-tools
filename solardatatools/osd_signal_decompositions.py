@@ -61,9 +61,9 @@ def l2_l1d1_l2d2p365(
     :return: A 1d numpy array containing the filtered signal
     """
     if w2>1e3:
-        w0 /= 1e3
-        w1 /= 1e3
-        w2 /= 1e3
+        w0 /= len(signal)
+        w1 /= len(signal)
+        w2 /= len(signal)
 
     c1 = SumSquare(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
@@ -89,7 +89,7 @@ def l2_l1d1_l2d2p365(
     s_hat = problem.decomposition[2]
 
     if return_all:
-        return s_hat, s_seas, s_error
+        return s_hat, s_seas, s_error, problem
 
     return s_hat, s_seas
 
@@ -134,9 +134,18 @@ def tl1_l1d1_l2d2p365( # TODO: switch to l1 since tau passed as 0.5
     verbose=False,
     sum_card=False
 ):
+    sum_card = True
+    solver = "QSS"
+    if w2 > 1e3:
+        w0 /= len(signal)
+        w1 /= len(signal)
+        w2 /= len(signal)
+        w3 /= len(signal)
+
     c1 = SumQuantile(tau=tau, weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
-                    AverageEqual(0, period=365)]
+                    AverageEqual(0, period=365),
+                    Periodic(365)]
                    )
 
     if sum_card:
@@ -144,22 +153,22 @@ def tl1_l1d1_l2d2p365( # TODO: switch to l1 since tau passed as 0.5
     else:
         c3 = SumAbs(weight=w1, diff=1)
 
-    c4 =  Aggregate([NoCurvature(weight=w3),
-                     Inequality(vmin=-0.1, vmax=0.01, diff=1),
-                     SumSquare(diff=1),
-                     ])
+    c4 = Aggregate([NoCurvature(weight=w3),
+                    Inequality(vmin=-0.1, vmax=0.01, diff=1),
+                    FirstValEqual(0),
+                    ])
 
-    c5 = Aggregate([NoSlope(weight=w3*3), Periodic(365)])
-
-    classes = [c1, c2, c3, c4, c5]
+    classes = [c1, c2, c3, c4]
 
     problem = Problem(signal, classes, use_set=use_ixs)
 
     problem.decompose(solver=solver, verbose=verbose)
     s_seas = problem.decomposition[1]
     s_hat = problem.decomposition[2]
+    s_lin = problem.decomposition[3]
 
     return s_hat, s_seas
+
 
 def make_l2_l1d2_constrained(signal,
                             weight=1e1,
