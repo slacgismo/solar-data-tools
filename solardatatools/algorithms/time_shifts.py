@@ -64,7 +64,6 @@ class TimeShift:
         # Optimize c1
         if c1 is None:
             c1s = np.logspace(-1, 2, 11)
-            #c1s = np.logspace(0, 2, 30)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
                 metric, c1s, use_ixs, c2, periodic_detector, solver=solver
             )
@@ -206,8 +205,6 @@ class TimeShift:
         periodic_detector,
         solver=None,
     ):
-        solver  = "QSS" # TODO: remove hardcoding once codebase transitions
-        card = True if solver == "QSS" else False
         s1, s2 = l2_l1d1_l2d2p365(
             metric,
             w1=c1,
@@ -215,7 +212,6 @@ class TimeShift:
             use_ixs=use_ixs,
             yearly_periodic=periodic_detector,
             solver=solver,
-            sum_card=card
         )
         return s1, s2
 

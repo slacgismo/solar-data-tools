@@ -60,10 +60,19 @@ def l2_l1d1_l2d2p365(
     seasonal signal
     :return: A 1d numpy array containing the filtered signal
     """
+    ##################################################################
+    solver = "QSS"  # TODO: remove hardcoding once codebase transitions
+    sum_card = True
+
     if w2>1e3:
-        w0 /= len(signal)
-        w1 /= len(signal)
-        w2 /= len(signal)
+        w0 /= 1e6
+        w1 /= 1e6
+        w2 /= 1e6
+    # if w2>1e3:
+    #     w0 /= len(signal)
+    #     w1 /= len(signal)
+    #     w2 /= len(signal)
+    ##################################################################
 
     c1 = SumSquare(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
@@ -137,10 +146,10 @@ def tl1_l1d1_l2d2p365( # TODO: switch to l1 since tau passed as 0.5
     sum_card = True
     solver = "QSS"
     if w2 > 1e3:
-        w0 /= len(signal)
-        w1 /= len(signal)
-        w2 /= len(signal)
-        w3 /= len(signal)
+        w0 /= 1e6
+        w1 /= 1e6
+        w2 /= 1e6
+        w3 /= 1e6
 
     c1 = SumQuantile(tau=tau, weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
