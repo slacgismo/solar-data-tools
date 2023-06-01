@@ -164,7 +164,7 @@ class TimeShift:
         # iterate over possible values of c1 parameter
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
-                metric, v, c2, train, periodic_detector, solver=solver
+                metric, v, c2, train, periodic_detector, n_iter=5, solver=solver
             )
             y = metric
             # collect results
@@ -203,16 +203,25 @@ class TimeShift:
         c2,
         use_ixs,
         periodic_detector,
+        transition_locs=None,
+        n_iter=5,
         solver=None,
     ):
+        # Iterative reweighted L1 heuristic
+        #w = np.ones(len(metric) - 1)
+        #eps = 0.1
+        #for i in range(n_iter):
         s1, s2 = l2_l1d1_l2d2p365(
             metric,
             w1=c1,
             w2=c2,
+            #tv_weights=w,
             use_ixs=use_ixs,
             yearly_periodic=periodic_detector,
+            #transition_locs=transition_locs,
             solver=solver,
         )
+            #w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
 
     def plot_analysis(self, figsize=None):
