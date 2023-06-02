@@ -61,13 +61,13 @@ def l2_l1d1_l2d2p365(
     :return: A 1d numpy array containing the filtered signal
     """
     ##################################################################
-    # solver = "QSS"  # TODO: remove hardcoding once codebase transitions
-    # sum_card = False
-
+    solver = "QSS"  # TODO: remove hardcoding once codebase transitions
+    # sum_card = True
+    #
     # if w2>1e3:
-    #     w0 /= 1e3
-    #     w1 /= 1e3
-    #     w2 /= 1e3
+    #     w0 /= 1e8
+    #     w1 /= 1e8
+    #     w2 /= 1e8
     ##################################################################
 
     c1 = SumSquare(weight=w0)
