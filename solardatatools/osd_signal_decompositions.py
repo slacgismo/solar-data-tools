@@ -62,12 +62,12 @@ def l2_l1d1_l2d2p365(
     """
     ##################################################################
     solver = "QSS"  # TODO: remove hardcoding once codebase transitions
-    # sum_card = True
+    sum_card = False
     #
-    # if w2>1e3:
-    #     w0 /= 1e8
-    #     w1 /= 1e8
-    #     w2 /= 1e8
+    if w2>1e3:
+        w0 /= 1e4
+        w1 /= 1e4
+        w2 /= 1e4
     ##################################################################
 
     c1 = SumSquare(weight=w0)
@@ -87,7 +87,7 @@ def l2_l1d1_l2d2p365(
     classes = [c1, c2, c3]
 
     problem = Problem(signal, classes, use_set=use_ixs)
-    problem.decompose(solver=solver, verbose=verbose)
+    problem.decompose(solver=solver, verbose=verbose, eps_rel=1e-6, eps_abs=1e-6)
 
     s_error =  problem.decomposition[0]
     s_seas = problem.decomposition[1]
