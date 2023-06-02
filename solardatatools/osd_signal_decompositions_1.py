@@ -139,13 +139,13 @@ def tl1_l1d1_l2d2p365( # TODO: switch to l1 since tau passed as 0.5
     verbose=False,
     sum_card=False
 ):
-    # sum_card = True
-    # solver = "QSS"
-    # if w2 > 1e3:
-    #     w0 /= 1e6
-    #     w1 /= 1e6
-    #     w2 /= 1e6
-    #     w3 /= 1e6
+    sum_card = True
+    solver = "QSS"
+    if w2 > 1e3:
+        w0 /= 1e6
+        w1 /= 1e6
+        w2 /= 1e6
+        w3 /= 1e6
 
     c1 = SumQuantile(tau=tau, weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
