@@ -971,7 +971,7 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             use_ixs = self.daily_flags.no_errors
         self.time_shift_analysis.run(
-            metric, self.filled_data_matrix,
+            metric,
             use_ixs=use_ixs,
             c1=c1,
             c2=c2,
