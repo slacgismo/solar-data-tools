@@ -184,16 +184,19 @@ class TimeShift:
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
+        hn_min_baseline = np.nanmin(hn[jpy <= 5])
         if not periodic_detector:
-            slct = np.logical_and(jpy <= 5, hn <= 0.1)
+            hn_thresh = hn <= hn_min_baseline + 0.1
+            slct = hn_thresh
         else:
-            slct = np.logical_and(np.logical_and(jpy <= 5, hn <= 0.05), rms_s2 <= 0.25)
+            hn_thresh = hn <= hn_min_baseline + 0.05
+            slct = np.logical_and(hn_thresh, rms_s2 <= 0.25)
         subset_ixs = ixs[slct]
         if len(subset_ixs)>0:
             # choose index of lowest holdout error
             best_ix = np.max(subset_ixs)
         else:
-            best_ix = np.nanargmin(hn)
+            raise("Timeshift detector weight optimization failed. Please check subroutine optimize_c1 ln 199.")
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
