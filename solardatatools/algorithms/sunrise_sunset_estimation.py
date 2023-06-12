@@ -23,7 +23,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from solardatatools.daytime import detect_sun
 from solardatatools.sunrise_sunset import rise_set_rough, rise_set_smoothed
-from solardatatools.signal_decompositions import tl1_l2d2p365
+from solardatatools.osd_signal_decompositions import tl1_l2d2p365
 
 
 class SunriseSunset:
