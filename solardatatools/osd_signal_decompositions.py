@@ -62,12 +62,12 @@ def l2_l1d1_l2d2p365(
     """
     ##################################################################
     solver = "QSS"  # TODO: remove hardcoding once codebase transitions
-    sum_card = False
-    #
+    sum_card = True
+
     if w2>1e3:
-        w0 /= 1e4
-        w1 /= 1e4
-        w2 /= 1e4
+        w0 /= 1e6
+        w1 /= 1e6
+        w2 /= 1e6
     ##################################################################
 
     c1 = SumSquare(weight=w0)
