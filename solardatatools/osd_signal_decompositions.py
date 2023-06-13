@@ -162,6 +162,7 @@ def make_l2_l1d2_constrained(signal,
     Used in solardatatools/algorithms/clipping.py
     Added hard-coded constraints on the first and last vals
     """
+    solver="QSS"
     c1 = SumSquare(weight=1)
     c2 = Aggregate([
         SumAbs(weight=weight, diff=2),
