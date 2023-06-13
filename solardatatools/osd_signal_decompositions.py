@@ -163,6 +163,7 @@ def make_l2_l1d2_constrained(signal,
     Added hard-coded constraints on the first and last vals
     """
     solver="QSS"
+
     c1 = SumSquare(weight=1)
     c2 = Aggregate([
         SumAbs(weight=weight, diff=2),
@@ -177,4 +178,4 @@ def make_l2_l1d2_constrained(signal,
 
     s_hat = problem.decomposition[1]
 
-    return s_hat
+    return problem, signal, s_hat, weight

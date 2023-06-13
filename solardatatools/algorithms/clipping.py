@@ -139,9 +139,10 @@ class ClippingDetection:
         if self.problem is None or self.y_param is None:
             self.make_problem(y_rs, weight=weight)
         else:
-            self.y_param.value = y_rs
-            self.weight.value = weight
-        self.problem.solve(solver=solver, verbose=verbose)
+            self.y_param = y_rs
+            self.weight = weight
+        #solver="QSS"
+        #self.problem.decompose(solver=solver, verbose=verbose)
         y_hat = self.y_hat
         # Look for outliers in the 2nd order difference to identify point masses from clipping
         local_curv = cvx.diff(y_hat, k=2).value
@@ -208,7 +209,7 @@ class ClippingDetection:
         plt.plot(x_rs, y_rs, linewidth=1, label="empirical CDF")
         plt.plot(
             x_rs,
-            y_hat.value,
+            y_hat,
             linewidth=3,
             color="orange",
             alpha=0.57,
@@ -303,7 +304,7 @@ class ClippingDetection:
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(y_rs, x_rs, linewidth=1, label="empirical CDF")
         ax1.plot(
-            y_hat.value,
+            y_hat,
             x_rs,
             linewidth=3,
             color="orange",
