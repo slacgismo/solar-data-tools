@@ -15,7 +15,7 @@ power production data sets. The algorithm works as follows:
 """
 
 import numpy as np
-from solardatatools.signal_decompositions import tl1_l1d1_l2d2p365
+from solardatatools.osd_signal_decompositions import tl1_l1d1_l2d2p365
 from sklearn.cluster import DBSCAN
 
 
@@ -48,24 +48,47 @@ class CapacityChange:
             # metric = np.sum(data, axis=0)
             metric /= np.max(metric)
 
-            w = np.ones(len(metric) - 1)
-            eps = reweight_eps
+            def max_min_scale(signal):
+                maximum = np.nanquantile(signal, .95)
+                minimum = np.nanquantile(signal, .05)
+                return (signal - minimum) / (maximum - minimum), minimum, maximum
 
-            for i in range(reweight_niter):
-                s1, s2 = tl1_l1d1_l2d2p365(
-                    metric,
-                    use_ixs=filter,
-                    tau=tau,
-                    c1=c1,
-                    c2=c2,
-                    c3=c3,
-                    tv_weights=w,
-                    solver=solver,
-                )
-                w = 1 / (eps + np.abs(np.diff(s1, n=1)))
+            def rescale_signal(signal, minimum, maximum):
+                return (signal * (maximum - minimum)) + minimum
+
+            scaled_metric, min_metric, max_metric = max_min_scale(metric)
+
+            # w = np.ones(len(metric) - 1)
+            # eps = reweight_eps
+
+            # for i in range(reweight_niter):
+            s1, s2 = tl1_l1d1_l2d2p365(
+                metric,
+                use_ixs=filter,
+                tau=tau,
+                w1=c1,
+                w2=c2,
+                w3=c3,
+                # tv_weights=w,
+                solver=solver,
+            )
+                # w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         else:
             # print('No valid values! Please check your data and filter.')
             return
+
+        # s1 = rescale_signal(
+        #     s1,
+        #     min_metric,
+        #     max_metric
+        # )
+        #
+        # s2 = rescale_signal(
+        #     s2,
+        #     min_metric,
+        #     max_metric
+        # )
+
         if dbscan_eps is None or dbscan_min_samples is None:
             self.metric = metric
             self.s1 = s1
