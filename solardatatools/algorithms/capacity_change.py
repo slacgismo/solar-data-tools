@@ -63,7 +63,7 @@ class CapacityChange:
 
             # for i in range(reweight_niter):
             s1, s2 = tl1_l1d1_l2d2p365(
-                metric,
+                scaled_metric,
                 use_ixs=filter,
                 tau=tau,
                 w1=c1,
@@ -77,12 +77,12 @@ class CapacityChange:
             # print('No valid values! Please check your data and filter.')
             return
 
-        # s1 = rescale_signal(
-        #     s1,
-        #     min_metric,
-        #     max_metric
-        # )
-        #
+        rescaled_signal = rescale_signal(
+            s1+s2,
+            min_metric,
+            max_metric
+        )
+
         # s2 = rescale_signal(
         #     s2,
         #     min_metric,
@@ -93,6 +93,7 @@ class CapacityChange:
             self.metric = metric
             self.s1 = s1
             self.s2 = s2
+            self.rescaled_signal = rescaled_signal
             self.labels = None
         else:
             if dbscan_min_samples == "auto":
@@ -104,4 +105,5 @@ class CapacityChange:
             self.metric = metric
             self.s1 = s1
             self.s2 = s2
+            self.rescaled_signal = rescaled_signal
             self.labels = capacity_assignments
