@@ -162,9 +162,9 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     s_seas = problem.decomposition[1]
     s_hat = problem.decomposition[2]
 
-    import matplotlib.pyplot as plt
-    problem.plot_decomposition()
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # problem.plot_decomposition()
+    # plt.show()
 
     return s_hat, s_seas
 
