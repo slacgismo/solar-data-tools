@@ -133,6 +133,8 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     solver = "QSS"
     sum_card = True
 
+    w1=40
+    w3=1
     w1 /= 1e6
     w2 /= 1e6
     w3 /= 1e6
@@ -161,12 +163,13 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     problem.decompose(solver=solver, verbose=verbose, eps_abs=1e-6, eps_rel=1e-6)
     s_seas = problem.decomposition[1]
     s_hat = problem.decomposition[2]
+    s_lin = problem.decomposition[3]
 
-    # import matplotlib.pyplot as plt
-    # problem.plot_decomposition()
-    # plt.show()
+    import matplotlib.pyplot as plt
+    problem.plot_decomposition()
+    plt.show()
 
-    return s_hat, s_seas
+    return s_hat, s_seas, s_lin
 
 def make_l2_l1d2_constrained(signal,
                             weight=1e1, # val ok
