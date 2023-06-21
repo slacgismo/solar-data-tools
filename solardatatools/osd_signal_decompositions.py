@@ -150,11 +150,11 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
         c3 = SumAbs(weight=w1, diff=1)
 
     c4 =  Aggregate([NoCurvature(weight=w3),
-                     Inequality(vmin=-0.1, vmax=0.01, diff=1), # check if needed /w real data
+                     Inequality(vmin=-0.1, vmax=0.01, diff=1),
                      FirstValEqual(0)
                      ])
 
-    classes = [c1, c2, c3]#, c4]
+    classes = [c1, c2, c3, c4]
 
     problem = Problem(signal, classes, use_set=use_ixs)
 
