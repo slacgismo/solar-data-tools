@@ -15,7 +15,7 @@ power production data sets. The algorithm works as follows:
 """
 
 import numpy as np
-from solardatatools.osd_signal_decompositions import tl1_l1d1_l2d2p365
+from solardatatools.osd_signal_decompositions import l2_l1d1_l2d2p365_linear
 from sklearn.cluster import DBSCAN
 
 
@@ -62,7 +62,7 @@ class CapacityChange:
             # eps = reweight_eps
 
             # for i in range(reweight_niter):
-            s1, s2, s3 = tl1_l1d1_l2d2p365(
+            s1, s2, s3 = l2_l1d1_l2d2p365_linear(
                 metric,
                 use_ixs=filter,
                 tau=tau,
