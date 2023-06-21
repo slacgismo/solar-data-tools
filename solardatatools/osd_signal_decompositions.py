@@ -140,7 +140,7 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     w3 /= 1e6
     w0 /= 1e6
 
-    c1 = SumSquare(weight=w0)
+    c1 = SumQuantile(tau=tau, weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
                     AverageEqual(0, period=365),
                     Periodic(365)
@@ -186,14 +186,15 @@ def l2_l1d1_l2d2p365_linear( # called once, TODO: update defaults here?
     solver = "QSS"
     sum_card = True
 
-    w1=40
-    w3=1
+    w1= 25
+    w0= 2
+    w3= 1
     w1 /= 1e6
     w2 /= 1e6
     w3 /= 1e6
     w0 /= 1e6
 
-    c1 = SumQuantile(tau=tau, weight=w0)
+    c1 = SumSquare(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
                     AverageEqual(0, period=365),
                     Periodic(365)
@@ -218,9 +219,9 @@ def l2_l1d1_l2d2p365_linear( # called once, TODO: update defaults here?
     s_hat = problem.decomposition[2]
     s_lin = problem.decomposition[3]
 
-    import matplotlib.pyplot as plt
-    problem.plot_decomposition()
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # problem.plot_decomposition()
+    # plt.show()
 
     return s_hat, s_seas, s_lin
 
