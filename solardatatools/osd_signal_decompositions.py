@@ -154,7 +154,7 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     return s_hat, s_seas
 
 def make_l2_l1d2_constrained(signal,
-                            weight=1e1, # val ok
+                            weight=10, # val ok
                             solver="MOSEK",
                             verbose=False
                              ):
@@ -163,6 +163,7 @@ def make_l2_l1d2_constrained(signal,
     Added hard-coded constraints on the first and last vals
     """
     solver="QSS"
+    weight=5 # UPDATE DEFAULT/PASSED WEIGHT!
 
     c1 = SumSquare(weight=1)
     c2 = Aggregate([
@@ -174,7 +175,7 @@ def make_l2_l1d2_constrained(signal,
     classes = [c1, c2]
 
     problem = Problem(signal, classes)
-    problem.decompose(solver=solver, verbose=verbose)
+    problem.decompose(solver=solver, verbose=verbose, eps_rel=1e-6, eps_abs=1e-6)
 
     s_hat = problem.decomposition[1]
 
