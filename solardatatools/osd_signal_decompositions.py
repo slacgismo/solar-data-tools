@@ -118,10 +118,9 @@ def tl1_l2d2p365(
 
     return s_seas
 
-def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
+def l1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     signal,
     use_ixs=None,
-    tau=0.995, # passed as 0.5
     w0=2,  # hardcoded in prev version, tl1 term
     w1=1e3, # passed as 15, l1d1 term
     w2=6000, # val ok, seasonal term
@@ -134,67 +133,15 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     sum_card = True
 
     w1=40
+    #w2=8000
+    w0=2
     w3=1
     w1 /= 1e6
     w2 /= 1e6
     w3 /= 1e6
     w0 /= 1e6
 
-    c1 = SumQuantile(tau=tau, weight=w0)
-    c2 = Aggregate([SumSquare(weight=w2, diff=2),
-                    AverageEqual(0, period=365),
-                    Periodic(365)
-                    ])
-
-    if sum_card:
-        c3 = SumCard(weight=w1, diff=1)
-    else:
-        c3 = SumAbs(weight=w1, diff=1)
-
-    c4 =  Aggregate([NoCurvature(weight=w3),
-                     Inequality(vmin=-0.1, vmax=0.01, diff=1),
-                     FirstValEqual(0)
-                     ])
-
-    classes = [c1, c2, c3, c4]
-
-    problem = Problem(signal, classes, use_set=use_ixs)
-
-    problem.decompose(solver=solver, verbose=verbose, eps_abs=1e-6, eps_rel=1e-6)
-    s_seas = problem.decomposition[1]
-    s_hat = problem.decomposition[2]
-    s_lin = problem.decomposition[3]
-
-    import matplotlib.pyplot as plt
-    problem.plot_decomposition()
-    plt.show()
-
-    return s_hat, s_seas, s_lin
-
-def l2_l1d1_l2d2p365_linear( # called once, TODO: update defaults here?
-    signal,
-    use_ixs=None,
-    tau=0.995, # passed as 0.5
-    w0=2,  # hardcoded in prev version, tl1 term
-    w1=1e3, # passed as 15, l1d1 term
-    w2=6000, # val ok, seasonal term
-    w3=1e2, # passed as 300, linear term
-    solver=None,
-    verbose=False,
-    sum_card=False
-):
-    solver = "QSS"
-    sum_card = True
-
-    w1= 25
-    w0= 2
-    w3= 1
-    w1 /= 1e6
-    w2 /= 1e6
-    w3 /= 1e6
-    w0 /= 1e6
-
-    c1 = SumSquare(weight=w0)
+    c1 = SumAbs(weight=w0) #SumQuantile(tau=tau, weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
                     AverageEqual(0, period=365),
                     Periodic(365)
