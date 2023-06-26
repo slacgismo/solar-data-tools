@@ -31,9 +31,9 @@ class CapacityChange:
         data,
         filter=None,
         quantile=1.00,
-        c1=15,
-        c2=6561,
-        c3=300,
+        c1=40e-6,  # scaled weights for QSS
+        c2=6561e-6,
+        c3=1e-6,
         reweight_eps=0.5,
         reweight_niter=5,
         dbscan_eps=0.02,
