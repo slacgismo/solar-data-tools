@@ -895,16 +895,16 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                c1=15,
-                c2=6561,
-                c3=300,
+                c1=40e-6, # scaled weights for QSS
+                c2=6561e-6,
+                c3=1e-6,
                 reweight_eps=0.5,
                 reweight_niter=5,
                 dbscan_eps=0.02,
                 dbscan_min_samples="auto",
                 solver=solver,
+                sum_card=True
             )
-        # np.max(db.labels_) > 0:
         if len(set(self.capacity_analysis.labels)) > 1:
             self.capacity_changes = True
             self.daily_flags.capacity_cluster = self.capacity_analysis.labels
@@ -928,7 +928,6 @@ time zone errors     {report['time zone correction'] != 0}
                     gridspec_kw={"height_ratios": [4, 1]},
                 )
                 ax[0].plot(xs, s1, label="capacity change detector")
-                # ax[0].plot(xs, self.capacity_analysis.rescaled_signal, label="signal model")
                 ax[0].plot(xs, s1+s2+s3, label="signal model")
                 ax[0].plot(xs, metric, alpha=0.3, label="measured signal")
                 ax[0].legend()
@@ -940,7 +939,6 @@ time zone errors     {report['time zone correction'] != 0}
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label="capacity change detector")
-                # ax.plot(xs, self.capacity_analysis.rescaled_signal, label="signal model")
                 ax.plot(xs, s1+s2+s3, label="signal model")
                 ax.plot(xs, metric, alpha=0.3, label="measured signal")
                 ax.legend()

@@ -44,55 +44,25 @@ class CapacityChange:
             filter = np.ones(data.shape[1], dtype=bool)
         if np.sum(filter) > 0:
             metric = np.nanquantile(data, q=quantile, axis=0)
-            # metric = np.sum(data, axis=0)
             metric /= np.max(metric)
 
-            def max_min_scale(signal):
-                maximum = np.nanquantile(signal, .95)
-                minimum = np.nanquantile(signal, .05)
-                return (signal - minimum) / (maximum - minimum), minimum, maximum
-
-            def rescale_signal(signal, minimum, maximum):
-                return (signal * (maximum - minimum)) + minimum
-
-            # scaled_metric, min_metric, max_metric = max_min_scale(metric)
-
-            # w = np.ones(len(metric) - 1)
-            # eps = reweight_eps
-
-            # for i in range(reweight_niter):
             s1, s2, s3 = l1_l1d1_l2d2p365(
                 metric,
                 use_ixs=filter,
                 w1=c1,
                 w2=c2,
                 w3=c3,
-                # tv_weights=w,
                 solver=solver,
             )
-                # w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         else:
             # print('No valid values! Please check your data and filter.')
             return
-
-        # rescaled_signal = rescale_signal(
-        #     s1+s2+s3,
-        #     min_metric,
-        #     max_metric
-        # )
-        #
-        # s2 = rescale_signal(
-        #     s2,
-        #     min_metric,
-        #     max_metric
-        # )
 
         if dbscan_eps is None or dbscan_min_samples is None:
             self.metric = metric
             self.s1 = s1
             self.s2 = s2
             self.s3 = s3
-           # self.rescaled_signal = rescaled_signal
             self.labels = None
         else:
             if dbscan_min_samples == "auto":
@@ -105,5 +75,4 @@ class CapacityChange:
             self.s1 = s1
             self.s2 = s2
             self.s3 = s3
-           # self.rescaled_signal = rescaled_signal
             self.labels = capacity_assignments

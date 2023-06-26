@@ -118,30 +118,18 @@ def tl1_l2d2p365(
 
     return s_seas
 
-def l1_l1d1_l2d2p365( # called once, TODO: update defaults here?
+def l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
-    w0=2,  # hardcoded in prev version, tl1 term
-    w1=1e3, # passed as 15, l1d1 term
-    w2=6000, # val ok, seasonal term
-    w3=1e2, # passed as 300, linear term
+    w0=2e-6,  # l1 term, scaled
+    w1=40e-6, # l1d1 term, scaled
+    w2=6e-3, # seasonal term, scaled
+    w3=1e-6, # linear term, scaled
     solver=None,
     verbose=False,
     sum_card=False
 ):
-    solver = "QSS"
-    sum_card = True
-
-    w1=40
-    #w2=8000
-    w0=2
-    w3=1
-    w1 /= 1e6
-    w2 /= 1e6
-    w3 /= 1e6
-    w0 /= 1e6
-
-    c1 = SumAbs(weight=w0) #SumQuantile(tau=tau, weight=w0)
+    c1 = SumAbs(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
                     AverageEqual(0, period=365),
                     Periodic(365)
@@ -165,10 +153,6 @@ def l1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     s_seas = problem.decomposition[1]
     s_hat = problem.decomposition[2]
     s_lin = problem.decomposition[3]
-
-    # import matplotlib.pyplot as plt
-    # problem.plot_decomposition()
-    # plt.show()
 
     return s_hat, s_seas, s_lin
 
