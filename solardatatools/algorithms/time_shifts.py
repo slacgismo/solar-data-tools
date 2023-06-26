@@ -19,7 +19,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
-from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
+from solardatatools.osd_signal_decompositions import l2_l1d1_l2d2p365
 
 
 class TimeShift:
@@ -63,7 +63,7 @@ class TimeShift:
         self.use_ixs = use_ixs
         # Optimize c1
         if c1 is None:
-            c1s = np.logspace(-1, 2, 11)
+            c1s = np.logspace(0.5, 3.5, 11)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
                 metric, c1s, use_ixs, c2, periodic_detector, solver=solver
             )
@@ -95,7 +95,6 @@ class TimeShift:
             c2,
             use_ixs,
             periodic_detector,
-            transition_locs=index_set,
             solver=solver,
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
@@ -185,16 +184,19 @@ class TimeShift:
         ixs = np.arange(len(c1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
+        hn_min_baseline = np.nanmin(hn[jpy <= 5])
         if not periodic_detector:
-            slct = np.logical_and(jpy <= 5, hn <= 0.1)
+            hn_thresh = hn <= hn_min_baseline + 0.1
+            slct = hn_thresh
         else:
-            slct = np.logical_and(np.logical_and(jpy <= 5, hn <= 0.05), rms_s2 <= 0.25)
+            hn_thresh = hn <= hn_min_baseline + 0.05
+            slct = np.logical_and(hn_thresh, rms_s2 <= 0.25)
         subset_ixs = ixs[slct]
         if len(subset_ixs)>0:
             # choose index of lowest holdout error
             best_ix = np.max(subset_ixs)
         else:
-            best_ix = np.nanargmin(hn)
+            raise("Timeshift detector weight optimization failed. Please check subroutine optimize_c1 ln 199.")
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
@@ -209,20 +211,20 @@ class TimeShift:
         solver=None,
     ):
         # Iterative reweighted L1 heuristic
-        w = np.ones(len(metric) - 1)
-        eps = 0.1
-        for i in range(n_iter):
-            s1, s2 = l2_l1d1_l2d2p365(
-                metric,
-                c1=c1,
-                c2=c2,
-                tv_weights=w,
-                use_ixs=use_ixs,
-                yearly_periodic=periodic_detector,
-                transition_locs=transition_locs,
-                solver=solver,
-            )
-            w = 1 / (eps + np.abs(np.diff(s1, n=1)))
+        #w = np.ones(len(metric) - 1)
+        #eps = 0.1
+        #for i in range(n_iter):
+        s1, s2 = l2_l1d1_l2d2p365(
+            metric,
+            w1=c1,
+            w2=c2,
+            #tv_weights=w,
+            use_ixs=use_ixs,
+            yearly_periodic=periodic_detector,
+            #transition_locs=transition_locs,
+            solver=solver,
+        )
+            #w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
 
     def plot_analysis(self, figsize=None):

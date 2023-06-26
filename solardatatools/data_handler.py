@@ -956,13 +956,23 @@ time zone errors     {report['time zone correction'] != 0}
         periodic_detector=False,
         solver=None,
     ):
+        def max_min_scale(signal):
+            maximum = np.nanquantile(signal, .95)
+            minimum = np.nanquantile(signal, .05)
+            return (signal - minimum) / (maximum - minimum), minimum, maximum
+
+        def rescale_signal(signal, minimum, maximum):
+            return (signal * (maximum - minimum)) + minimum
+
+        metric, min_metric, max_metric = max_min_scale(self.filled_data_matrix)
+
         self.time_shift_analysis = TimeShift()
         if self.data_clearness_score >= 0.3:
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors
         self.time_shift_analysis.run(
-            self.filled_data_matrix,
+            metric,
             use_ixs=use_ixs,
             c1=c1,
             c2=c2,
@@ -971,7 +981,12 @@ time zone errors     {report['time zone correction'] != 0}
             periodic_detector=periodic_detector,
             solver=solver
         )
-        self.filled_data_matrix = self.time_shift_analysis.corrected_data
+
+        self.filled_data_matrix = rescale_signal(
+            self.time_shift_analysis.corrected_data,
+            min_metric,
+            max_metric
+        )
         if len(self.time_shift_analysis.index_set) == 0:
             self.time_shifts = False
         else:
