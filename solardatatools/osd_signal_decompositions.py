@@ -154,17 +154,14 @@ def tl1_l1d1_l2d2p365( # called once, TODO: update defaults here?
     return s_hat, s_seas
 
 def make_l2_l1d2_constrained(signal,
-                            weight=10, # val ok
-                            solver="MOSEK",
+                            weight=5,
+                            solver="QSS",
                             verbose=False
                              ):
     """
     Used in solardatatools/algorithms/clipping.py
     Added hard-coded constraints on the first and last vals
     """
-    solver="QSS"
-    weight=5 # UPDATE DEFAULT/PASSED WEIGHT!
-
     c1 = SumSquare(weight=1)
     c2 = Aggregate([
         SumAbs(weight=weight, diff=2),
