@@ -15,7 +15,7 @@ power production data sets. The algorithm works as follows:
 """
 
 import numpy as np
-from solardatatools.signal_decompositions import tl1_l1d1_l2d2p365
+from solardatatools.osd_signal_decompositions import l1_l1d1_l2d2p365
 from sklearn.cluster import DBSCAN
 
 
@@ -31,10 +31,9 @@ class CapacityChange:
         data,
         filter=None,
         quantile=1.00,
-        c1=15,
-        c2=6561,
-        c3=300,
-        tau=0.5,
+        c1=40e-6,  # scaled weights for QSS
+        c2=6561e-6,
+        c3=1e-6,
         reweight_eps=0.5,
         reweight_niter=5,
         dbscan_eps=0.02,
@@ -45,31 +44,25 @@ class CapacityChange:
             filter = np.ones(data.shape[1], dtype=bool)
         if np.sum(filter) > 0:
             metric = np.nanquantile(data, q=quantile, axis=0)
-            # metric = np.sum(data, axis=0)
             metric /= np.max(metric)
 
-            w = np.ones(len(metric) - 1)
-            eps = reweight_eps
-
-            for i in range(reweight_niter):
-                s1, s2 = tl1_l1d1_l2d2p365(
-                    metric,
-                    use_ixs=filter,
-                    tau=tau,
-                    c1=c1,
-                    c2=c2,
-                    c3=c3,
-                    tv_weights=w,
-                    solver=solver,
-                )
-                w = 1 / (eps + np.abs(np.diff(s1, n=1)))
+            s1, s2, s3 = l1_l1d1_l2d2p365(
+                metric,
+                use_ixs=filter,
+                w1=c1,
+                w2=c2,
+                w3=c3,
+                solver=solver,
+            )
         else:
             # print('No valid values! Please check your data and filter.')
             return
+
         if dbscan_eps is None or dbscan_min_samples is None:
             self.metric = metric
             self.s1 = s1
             self.s2 = s2
+            self.s3 = s3
             self.labels = None
         else:
             if dbscan_min_samples == "auto":
@@ -81,4 +74,5 @@ class CapacityChange:
             self.metric = metric
             self.s1 = s1
             self.s2 = s2
+            self.s3 = s3
             self.labels = capacity_assignments

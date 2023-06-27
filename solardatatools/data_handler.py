@@ -895,16 +895,16 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                c1=15,
-                c2=6561,
-                c3=300,
+                c1=40e-6, # scaled weights for QSS
+                c2=6561e-6,
+                c3=1e-6,
                 reweight_eps=0.5,
                 reweight_niter=5,
                 dbscan_eps=0.02,
                 dbscan_min_samples="auto",
                 solver=solver,
+                sum_card=True
             )
-        # np.max(db.labels_) > 0:
         if len(set(self.capacity_analysis.labels)) > 1:
             self.capacity_changes = True
             self.daily_flags.capacity_cluster = self.capacity_analysis.labels
@@ -914,6 +914,7 @@ time zone errors     {report['time zone correction'] != 0}
             metric = self.capacity_analysis.metric
             s1 = self.capacity_analysis.s1
             s2 = self.capacity_analysis.s2
+            s3 = self.capacity_analysis.s3
             labels = self.capacity_analysis.labels
             try:
                 xs = self.day_index.to_pydatetime()
@@ -927,7 +928,7 @@ time zone errors     {report['time zone correction'] != 0}
                     gridspec_kw={"height_ratios": [4, 1]},
                 )
                 ax[0].plot(xs, s1, label="capacity change detector")
-                ax[0].plot(xs, s2 + s1, label="signal model")
+                ax[0].plot(xs, s1+s2+s3, label="signal model")
                 ax[0].plot(xs, metric, alpha=0.3, label="measured signal")
                 ax[0].legend()
                 ax[0].set_title("Detection of system capacity changes")
@@ -938,7 +939,7 @@ time zone errors     {report['time zone correction'] != 0}
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label="capacity change detector")
-                ax.plot(xs, s2 + s1, label="signal model")
+                ax.plot(xs, s1+s2+s3, label="signal model")
                 ax.plot(xs, metric, alpha=0.3, label="measured signal")
                 ax.legend()
                 ax.set_title("Detection of system capacity changes")
@@ -948,29 +949,46 @@ time zone errors     {report['time zone correction'] != 0}
 
     def auto_fix_time_shifts(
         self,
-        c1=5.0,
-        c2=1e5,
+        c1=5e-6,
+        c2=1e-1,
         estimator="com",
         threshold=0.005,
         periodic_detector=False,
         solver=None,
     ):
+        def max_min_scale(signal):
+            maximum = np.nanquantile(signal, .95)
+            minimum = np.nanquantile(signal, .05)
+            return (signal - minimum) / (maximum - minimum), minimum, maximum
+
+        def rescale_signal(signal, minimum, maximum):
+            return (signal * (maximum - minimum)) + minimum
+
+        # scale data by min/max
+        metric, min_metric, max_metric = max_min_scale(self.filled_data_matrix)
+
         self.time_shift_analysis = TimeShift()
         if self.data_clearness_score >= 0.3:
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors
+
         self.time_shift_analysis.run(
-            self.filled_data_matrix,
+            metric,
             use_ixs=use_ixs,
             c1=c1,
             c2=c2,
             solar_noon_estimator=estimator,
             threshold=threshold,
             periodic_detector=periodic_detector,
-            solver=solver
+            solver=solver        )
+
+        # scale data back
+        self.filled_data_matrix = rescale_signal(
+            self.time_shift_analysis.corrected_data,
+            min_metric,
+            max_metric
         )
-        self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
             self.time_shifts = False
         else:

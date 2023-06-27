@@ -5,7 +5,7 @@ unlabel PV power dataset.
 """
 
 import numpy as np
-from solardatatools.signal_decompositions import tl1_l2d2p365
+from solardatatools.osd_signal_decompositions import tl1_l2d2p365
 
 
 def rise_set_rough(bool_msk):
