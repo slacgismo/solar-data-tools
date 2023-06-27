@@ -90,6 +90,7 @@ def l2_l1d1_l2d2p365(
 
 def tl1_l2d2p365(
         signal,
+        use_ixs=None,
         tau=0.75,
         w1=500, 
         yearly_periodic=True,
@@ -101,7 +102,6 @@ def tl1_l2d2p365(
     - tl1: tilted laplacian noise
     - l2d2p365: small second order diffs (smooth) and 365-periodic
     '''
-
     c1 = SumQuantile(tau=tau, weight=1)
     c2 = SumSquare(weight=w1, diff=2)
 
@@ -117,7 +117,7 @@ def tl1_l2d2p365(
 
     return s_seas
 
-def l1_l1d1_l2d2p365(
+def l1_l1d1_l 2d2p365(
     signal,
     use_ixs=None,
     w0=2e-6,  # l1 term, scaled
@@ -154,8 +154,7 @@ def l1_l1d1_l2d2p365(
     s_lin = problem.decomposition[3]
 
     return s_hat, s_seas, s_lin
-
-
+  
 def make_l2_l1d2_constrained(signal,
                             weight=1e1,
                             solver="MOSEK",
