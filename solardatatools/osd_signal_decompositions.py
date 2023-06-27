@@ -35,12 +35,12 @@ from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate,
 
 def l2_l1d1_l2d2p365(
         signal,
-        w0=10,
-        w1=50, # l1d1, c1 in cvxpy version
-        w2=1e5, # l2d2, c2 in cvxpy version
+        w0=1e-5,
+        w1=1e-4,
+        w2=1e-1,
         return_all=False,
         yearly_periodic=False,
-        solver='MOSEK',
+        solver='QSS',
         use_ixs=None,
         sum_card=False,
         verbose=False
@@ -65,7 +65,7 @@ def l2_l1d1_l2d2p365(
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
     else:
-        c3 = SumAbs(weight=w1, diff=1) # l1d1 component
+        c3 = SumAbs(weight=w1, diff=1)
 
     if len(signal) > 365:
         c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365), Periodic(365)])
@@ -92,10 +92,11 @@ def tl1_l2d2p365(
         signal,
         use_ixs=None,
         tau=0.75,
-        solver='QSS',
-        w1=500,
+        w1=500, 
         yearly_periodic=True,
         verbose=False,
+        solver='QSS',
+        use_ixs=None
 ):
     '''
     - tl1: tilted laplacian noise
@@ -116,54 +117,44 @@ def tl1_l2d2p365(
 
     return s_seas
 
-def tl1_l1d1_l2d2p365( # TODO: switch to l1 since tau passed as 0.5
+def l1_l1d1_l 2d2p365(
     signal,
     use_ixs=None,
-    tau=0.995, # passed as 0.5
-    w0=2,
-    w1=1e3, # passed as 15, l1d1 term
-    w2=6000,
-    w3=1e2, # passed as 300, linear term
+    w0=2e-6,  # l1 term, scaled
+    w1=40e-6, # l1d1 term, scaled
+    w2=6e-3, # seasonal term, scaled
+    w3=1e-6, # linear term, scaled
     solver=None,
     verbose=False,
     sum_card=False
 ):
-    # sum_card = True
-    # solver = "QSS"
-    # if w2 > 1e3:
-    #     w0 /= 1e6
-    #     w1 /= 1e6
-    #     w2 /= 1e6
-    #     w3 /= 1e6
-
-    c1 = SumQuantile(tau=tau, weight=w0)
+    c1 = SumAbs(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
                     AverageEqual(0, period=365),
-                    Periodic(365)]
-                   )
+                    Periodic(365)
+                    ])
 
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
     else:
         c3 = SumAbs(weight=w1, diff=1)
 
-    c4 = Aggregate([NoCurvature(weight=w3),
-                    Inequality(vmin=-0.1, vmax=0.01, diff=1),
-                    FirstValEqual(0),
-                    ])
+    c4 =  Aggregate([NoCurvature(weight=w3),
+                     Inequality(vmin=-0.1, vmax=0.01, diff=1),
+                     FirstValEqual(0)
+                     ])
 
     classes = [c1, c2, c3, c4]
 
     problem = Problem(signal, classes, use_set=use_ixs)
 
-    problem.decompose(solver=solver, verbose=verbose)
+    problem.decompose(solver=solver, verbose=verbose, eps_abs=1e-6, eps_rel=1e-6)
     s_seas = problem.decomposition[1]
     s_hat = problem.decomposition[2]
     s_lin = problem.decomposition[3]
 
-    return s_hat, s_seas
-
-
+    return s_hat, s_seas, s_lin
+  
 def make_l2_l1d2_constrained(signal,
                             weight=1e1,
                             solver="MOSEK",
