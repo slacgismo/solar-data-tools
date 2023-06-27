@@ -91,10 +91,10 @@ def l2_l1d1_l2d2p365(
 def tl1_l2d2p365(
         signal,
         tau=0.75,
-        w1=500, # c1 in cvxpy version
+        w1=500, 
         yearly_periodic=True,
         verbose=False,
-        solver='MOSEK',
+        solver='QSS',
         use_ixs=None
 ):
     '''
