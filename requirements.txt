@@ -1,5 +1,5 @@
-scipy>=1.22.0
-numpy=1.25.0
+scipy
+numpy>=1.22.0
 pandas
 scikit-learn
 jupyter
