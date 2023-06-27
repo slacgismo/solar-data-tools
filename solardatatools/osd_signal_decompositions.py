@@ -117,7 +117,7 @@ def tl1_l2d2p365(
 
     return s_seas
 
-def l1_l1d1_l 2d2p365(
+def l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
     w0=2e-6,  # l1 term, scaled
