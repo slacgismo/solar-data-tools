@@ -92,8 +92,8 @@ def tl1_l2d2p365(
         signal,
         use_ixs=None,
         tau=0.75,
-        solver='MOSEK',
-        c1=500, # c1 in cvxpy version
+        solver='QSS',
+        w1=500,
         yearly_periodic=True,
         verbose=False,
 ):
@@ -101,9 +101,6 @@ def tl1_l2d2p365(
     - tl1: tilted laplacian noise
     - l2d2p365: small second order diffs (smooth) and 365-periodic
     '''
-    w1 = c1
-    solver="QSS"
-
     c1 = SumQuantile(tau=tau, weight=1)
     c2 = SumSquare(weight=w1, diff=2)
 
@@ -116,9 +113,6 @@ def tl1_l2d2p365(
 
     problem.decompose(solver=solver, verbose=verbose)
     s_seas = problem.decomposition[1]
-    # problem.plot_decomposition()
-    # import matplotlib.pyplot as plt
-    # plt.show()
 
     return s_seas
 

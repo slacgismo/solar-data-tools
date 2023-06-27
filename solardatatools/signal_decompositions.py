@@ -104,44 +104,44 @@ def l2_l1d1_l2d2p365(
 
     return s_hat.value, s_seas.value
 
-# def tl1_l2d2p365(
-#     signal,
-#     use_ixs=None,
-#     tau=0.75, # passed as 0.05 (sunrise), 0.95 (sunset), 0.9, 0.85
-#     c1=500, # good default for sunrise sunset estimates (4 calls), incr from 100 on 5/9
-#     solver=None,
-#     yearly_periodic=True, # passed as False once
-#     verbose=False,
-#     return_all=False
-# ):
-#     """
-#     https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
-#
-#     :param signal: 1d numpy array
-#     :param use_ixs: optional index set to apply cost function to
-#     :param tau: float, parameter for quantile regression
-#     :param c1: float
-#     :param solver: string
-#     :return: median fit with seasonal baseline removed
-#     """
-#     if use_ixs is None:
-#         use_ixs = ~np.isnan(signal)
-#     x = cvx.Variable(len(signal))
-#     r = signal[use_ixs] - x[use_ixs]
-#     objective = cvx.Minimize(
-#         cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
-#     )
-#     if len(signal) > 365 and yearly_periodic:
-#         constraints = [x[365:] == x[:-365]]
-#     else:
-#         constraints = []
-#     problem = cvx.Problem(objective, constraints=constraints)
-#     problem.solve(solver=solver, verbose=verbose)
-#
-#     if return_all:
-#         return x.value, problem.objective.value
-#
-#     return x.value
+def tl1_l2d2p365(
+    signal,
+    use_ixs=None,
+    tau=0.75, # passed as 0.05 (sunrise), 0.95 (sunset), 0.9, 0.85
+    c1=500, # good default for sunrise sunset estimates (4 calls), incr from 100 on 5/9
+    solver=None,
+    yearly_periodic=True, # passed as False once
+    verbose=False,
+    return_all=False
+):
+    """
+    https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
+
+    :param signal: 1d numpy array
+    :param use_ixs: optional index set to apply cost function to
+    :param tau: float, parameter for quantile regression
+    :param c1: float
+    :param solver: string
+    :return: median fit with seasonal baseline removed
+    """
+    if use_ixs is None:
+        use_ixs = ~np.isnan(signal)
+    x = cvx.Variable(len(signal))
+    r = signal[use_ixs] - x[use_ixs]
+    objective = cvx.Minimize(
+        cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) + c1 * cvx.sum_squares(cvx.diff(x, k=2))
+    )
+    if len(signal) > 365 and yearly_periodic:
+        constraints = [x[365:] == x[:-365]]
+    else:
+        constraints = []
+    problem = cvx.Problem(objective, constraints=constraints)
+    problem.solve(solver=solver, verbose=verbose)
+
+    if return_all:
+        return x.value, problem.objective.value
+
+    return x.value
 
 def tl1_l1d1_l2d2p365(
     signal,
