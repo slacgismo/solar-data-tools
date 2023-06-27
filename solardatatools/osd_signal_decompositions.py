@@ -35,12 +35,12 @@ from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate,
 
 def l2_l1d1_l2d2p365(
         signal,
-        w0=10,
-        w1=50, # l1d1, c1 in cvxpy version
-        w2=1e5, # l2d2, c2 in cvxpy version
+        w0=1e-5,
+        w1=1e-4,
+        w2=1e-1,
         return_all=False,
         yearly_periodic=False,
-        solver='MOSEK',
+        solver='QSS',
         use_ixs=None,
         sum_card=False,
         verbose=False
@@ -60,22 +60,12 @@ def l2_l1d1_l2d2p365(
     seasonal signal
     :return: A 1d numpy array containing the filtered signal
     """
-    ##################################################################
-    solver = "QSS"  # TODO: remove hardcoding once codebase transitions
-    sum_card = True
-
-    if w2>1e3:
-        w0 /= 1e6
-        w1 /= 1e6
-        w2 /= 1e6
-    ##################################################################
-
     c1 = SumSquare(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
     else:
-        c3 = SumAbs(weight=w1, diff=1) # l1d1 component
+        c3 = SumAbs(weight=w1, diff=1)
 
     if len(signal) > 365:
         c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365), Periodic(365)])

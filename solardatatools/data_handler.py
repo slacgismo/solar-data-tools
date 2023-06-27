@@ -949,8 +949,8 @@ time zone errors     {report['time zone correction'] != 0}
 
     def auto_fix_time_shifts(
         self,
-        c1=5.0,
-        c2=1e5,
+        c1=5e-6,
+        c2=1e-1,
         estimator="com",
         threshold=0.005,
         periodic_detector=False,
@@ -964,6 +964,7 @@ time zone errors     {report['time zone correction'] != 0}
         def rescale_signal(signal, minimum, maximum):
             return (signal * (maximum - minimum)) + minimum
 
+        # scale data by min/max
         metric, min_metric, max_metric = max_min_scale(self.filled_data_matrix)
 
         self.time_shift_analysis = TimeShift()
@@ -971,6 +972,7 @@ time zone errors     {report['time zone correction'] != 0}
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors
+
         self.time_shift_analysis.run(
             metric,
             use_ixs=use_ixs,
@@ -979,9 +981,9 @@ time zone errors     {report['time zone correction'] != 0}
             solar_noon_estimator=estimator,
             threshold=threshold,
             periodic_detector=periodic_detector,
-            solver=solver
-        )
+            solver=solver        )
 
+        # scale data back
         self.filled_data_matrix = rescale_signal(
             self.time_shift_analysis.corrected_data,
             min_metric,

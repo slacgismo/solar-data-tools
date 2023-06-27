@@ -45,7 +45,7 @@ class TimeShift:
         data,
         use_ixs=None,
         c1=None,
-        c2=200.0,
+        c2=1e-1,
         solar_noon_estimator="com",
         threshold=0.005,
         periodic_detector=False,
@@ -63,7 +63,7 @@ class TimeShift:
         self.use_ixs = use_ixs
         # Optimize c1
         if c1 is None:
-            c1s = np.logspace(0.5, 3.5, 11)
+            c1s = np.logspace(5e-7, 3.5e-6, 11)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
                 metric, c1s, use_ixs, c2, periodic_detector, solver=solver
             )
@@ -88,7 +88,6 @@ class TimeShift:
         )
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
-        # print(len(index_set), len(index_set) / (len(metric) / 365))
         s1, s2 = self.estimate_components(
             metric,
             best_c1,
@@ -164,7 +163,7 @@ class TimeShift:
         # iterate over possible values of c1 parameter
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
-                metric, v, c2, train, periodic_detector, n_iter=5, solver=solver
+                metric, v, c2, train, periodic_detector, solver=solver
             )
             y = metric
             # collect results
@@ -206,25 +205,18 @@ class TimeShift:
         c2,
         use_ixs,
         periodic_detector,
-        transition_locs=None,
-        n_iter=5,
         solver=None,
     ):
-        # Iterative reweighted L1 heuristic
-        #w = np.ones(len(metric) - 1)
-        #eps = 0.1
-        #for i in range(n_iter):
+
         s1, s2 = l2_l1d1_l2d2p365(
             metric,
             w1=c1,
             w2=c2,
-            #tv_weights=w,
             use_ixs=use_ixs,
             yearly_periodic=periodic_detector,
-            #transition_locs=transition_locs,
             solver=solver,
+            sum_card=True
         )
-            #w = 1 / (eps + np.abs(np.diff(s1, n=1)))
         return s1, s2
 
     def plot_analysis(self, figsize=None):
