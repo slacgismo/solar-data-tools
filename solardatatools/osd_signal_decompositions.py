@@ -156,9 +156,8 @@ def l1_l1d1_l2d2p365(
     return s_hat, s_seas, s_lin
   
 def make_l2_l1d2_constrained(signal,
-                            weight=1e1,
-                            solver="MOSEK",
-                            use_ixs=None,
+                            weight=5,
+                            solver="QSS",
                             verbose=False
                              ):
     """
@@ -174,9 +173,9 @@ def make_l2_l1d2_constrained(signal,
 
     classes = [c1, c2]
 
-    problem = Problem(signal, classes, use_set=use_ixs)
-    problem.decompose(solver=solver, verbose=verbose)
+    problem = Problem(signal, classes)
+    problem.decompose(solver=solver, verbose=verbose, eps_rel=1e-6, eps_abs=1e-6)
 
     s_hat = problem.decomposition[1]
 
-    return s_hat
+    return problem, signal, s_hat, weight

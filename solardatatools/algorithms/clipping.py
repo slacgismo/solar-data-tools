@@ -8,7 +8,7 @@ import numpy as np
 import cvxpy as cvx
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from solardatatools.signal_decompositions import make_l2_l1d2_constrained
+from solardatatools.osd_signal_decompositions import make_l2_l1d2_constrained
 
 
 class ClippingDetection:
@@ -45,7 +45,7 @@ class ClippingDetection:
         threshold=-0.35,
         solver=None,
         verbose=False,
-        weight=1e1,
+        weight=5,
     ):
         self.num_days = data_matrix.shape[1]
         self.num_rows = data_matrix.shape[0]
@@ -129,7 +129,7 @@ class ClippingDetection:
             self.clipping_mask = np.zeros((self.num_rows, self.num_days), dtype=bool)
 
     def pointmass_detection(
-        self, data, threshold=-0.35, solver=None, verbose=False, weight=1e1
+        self, data, threshold=-0.35, solver=None, verbose=False, weight=5
     ):
         self.threshold = threshold
         x_rs, y_rs = self.calculate_cdf(data)
@@ -139,9 +139,9 @@ class ClippingDetection:
         if self.problem is None or self.y_param is None:
             self.make_problem(y_rs, weight=weight)
         else:
-            self.y_param.value = y_rs
-            self.weight.value = weight
-        self.problem.solve(solver=solver, verbose=verbose)
+            self.y_param = y_rs
+            self.weight = weight
+
         y_hat = self.y_hat
         # Look for outliers in the 2nd order difference to identify point masses from clipping
         local_curv = cvx.diff(y_hat, k=2).value
@@ -208,7 +208,7 @@ class ClippingDetection:
         plt.plot(x_rs, y_rs, linewidth=1, label="empirical CDF")
         plt.plot(
             x_rs,
-            y_hat.value,
+            y_hat,
             linewidth=3,
             color="orange",
             alpha=0.57,
@@ -303,7 +303,7 @@ class ClippingDetection:
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(y_rs, x_rs, linewidth=1, label="empirical CDF")
         ax1.plot(
-            y_hat.value,
+            y_hat,
             x_rs,
             linewidth=3,
             color="orange",
@@ -370,7 +370,7 @@ class ClippingDetection:
         y_rs = f(x_rs)
         return x_rs, y_rs
 
-    def make_problem(self, y, weight=1e1):
+    def make_problem(self, y, weight=5):
         out = make_l2_l1d2_constrained(y, weight=weight)
 
         self.problem = out[0]
