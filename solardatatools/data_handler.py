@@ -180,7 +180,7 @@ class DataHandler:
         start_day_ix=None,
         end_day_ix=None,
         c1=None,
-        c2=1e-1,
+        c2=1e5,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
@@ -948,8 +948,8 @@ time zone errors     {report['time zone correction'] != 0}
 
     def auto_fix_time_shifts(
         self,
-        c1=5e-6,
-        c2=1e-1,
+        c1=5,
+        c2=1e5,
         estimator="com",
         threshold=0.005,
         periodic_detector=False,

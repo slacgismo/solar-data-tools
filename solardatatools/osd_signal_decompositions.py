@@ -35,9 +35,9 @@ from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate,
 
 def l2_l1d1_l2d2p365(
         signal,
-        w0=1e-5,
-        w1=1e-4,
-        w2=1e-1,
+        w0=10,
+        w1=50,
+        w2=1e5,
         return_all=False,
         yearly_periodic=False,
         solver='QSS',
@@ -60,6 +60,17 @@ def l2_l1d1_l2d2p365(
     seasonal signal
     :return: A 1d numpy array containing the filtered signal
     """
+    solver = "QSS"  # TODO: remove hardcoding once codebase transitions
+    sum_card = True
+
+    if solver!="QSS":
+        sum_card=False
+
+    if w2>1e3:
+        w0 /= 1e6
+        w1 /= 1e6
+        w2 /= 1e6
+
     c1 = SumSquare(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
     if sum_card:
@@ -127,6 +138,8 @@ def l1_l1d1_l2d2p365(
     verbose=False,
     sum_card=False
 ):
+    if solver!="QSS":
+        sum_card=False
     c1 = SumAbs(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
                     AverageEqual(0, period=365),

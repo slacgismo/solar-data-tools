@@ -45,7 +45,7 @@ class SunriseSunset:
         plot=False,
         figsize=(12, 10),
         zoom_fit=False,
-        solver=None,
+        solver="QSS",
     ):
         # print('Calculating times')
         if threshold is None:

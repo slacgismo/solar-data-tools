@@ -45,7 +45,7 @@ class TimeShift:
         data,
         use_ixs=None,
         c1=None,
-        c2=1e-1,
+        c2=200,
         solar_noon_estimator="com",
         threshold=0.005,
         periodic_detector=False,
@@ -63,7 +63,7 @@ class TimeShift:
         self.use_ixs = use_ixs
         # Optimize c1
         if c1 is None:
-            c1s = np.logspace(5e-7, 3.5e-6, 11)
+            c1s = np.logspace(0.5, 3.5, 11)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
                 metric, c1s, use_ixs, c2, periodic_detector, solver=solver
             )
