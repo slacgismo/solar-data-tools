@@ -95,8 +95,7 @@ def tl1_l2d2p365(
         w1=500, 
         yearly_periodic=True,
         verbose=False,
-        solver='QSS',
-        use_ixs=None
+        solver='QSS'
 ):
     '''
     - tl1: tilted laplacian noise
