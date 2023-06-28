@@ -180,14 +180,14 @@ class DataHandler:
         start_day_ix=None,
         end_day_ix=None,
         c1=None,
-        c2=1e5,
+        c2=1e-1,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
         daytime_threshold=0.005,
         units="W",
-        solver=None,
+        solver="QSS",
         reset=True,
     ):
         try:
@@ -269,7 +269,7 @@ class DataHandler:
             if solver is None or solver == "MOSEK":
                 ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
             else:
-                ss.run_optimizer(self.raw_data_matrix, plot=False, solver="ECOS")
+                ss.run_optimizer(self.raw_data_matrix, plot=False, solver="QSS")
             self.boolean_masks.daytime = ss.sunup_mask_estimated
         except:
             msg = "Sunrise/sunset detection failed."
@@ -903,7 +903,6 @@ time zone errors     {report['time zone correction'] != 0}
                 dbscan_eps=0.02,
                 dbscan_min_samples="auto",
                 solver=solver,
-                sum_card=True
             )
         if len(set(self.capacity_analysis.labels)) > 1:
             self.capacity_changes = True
@@ -981,7 +980,8 @@ time zone errors     {report['time zone correction'] != 0}
             solar_noon_estimator=estimator,
             threshold=threshold,
             periodic_detector=periodic_detector,
-            solver=solver        )
+            solver=solver
+        )
 
         # scale data back
         self.filled_data_matrix = rescale_signal(

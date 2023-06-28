@@ -183,7 +183,7 @@ class SunriseSunset:
         search_pts=21,
         plot=False,
         figsize=(8, 6),
-        solver=None,
+        solver="QSS",
     ):
         if self.true_times is not None:
             sr_true = self.true_times["sunrise times"].values
@@ -277,7 +277,7 @@ class SunriseSunset:
         selected_th = np.min(ths[slct_vals])
         bool_msk = detect_sun(data, selected_th)
         measured = rise_set_rough(bool_msk)
-        smoothed = rise_set_smoothed(measured, sunrise_tau=0.05, sunset_tau=0.95)
+        smoothed = rise_set_smoothed(measured, sunrise_tau=0.05, sunset_tau=0.95, solver=solver)
         self.sunrise_estimates = smoothed["sunrises"]
         self.sunset_estimates = smoothed["sunsets"]
         self.sunrise_measurements = measured["sunrises"]

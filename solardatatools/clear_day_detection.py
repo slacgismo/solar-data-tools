@@ -25,7 +25,7 @@ class ClearDayDetection:
             self,
             data,
             c1=6e3,
-            solver="ECOS"
+            solver="QSS"
     ):
         capacity_est = np.nanquantile(data, 0.95)
         # set nans to zero to avoid issues w/ summing
@@ -45,7 +45,7 @@ class ClearDayDetection:
             smoothness_threshold=0.9,
             energy_threshold=0.8,
             boolean_out=True,
-            solver=None
+            solver="QSS"
     ):
         """
         This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
@@ -95,7 +95,7 @@ class ClearDayDetection:
         selection = np.logical_and(tc > smoothness_threshold, de > energy_threshold)
         weights[~selection] = 0.0
         # Apply filter for sparsity to catch data errors related to non-zero nighttime data
-        msk = self.filter_for_sparsity(data, solver=None)
+        msk = self.filter_for_sparsity(data, solver=solver)
         self.weights = weights * msk.astype(int)
         if boolean_out:
             return self.weights >= 1e-3
