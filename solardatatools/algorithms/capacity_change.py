@@ -77,3 +77,9 @@ class CapacityChange:
             self.s2 = s2
             self.s3 = s3
             self.labels = capacity_assignments
+
+            # New method
+            rounded_s1 = np.round(s1, 1)
+            set_labels = list(set(rounded_s1))
+            labels = [set_labels.index(i) for i in rounded_s1]
+            self.sum_card_labels = labels
