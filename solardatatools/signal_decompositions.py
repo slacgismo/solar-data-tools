@@ -107,7 +107,8 @@ def tl1_l2d2p365(
         w1=500, 
         yearly_periodic=True,
         verbose=False,
-        solver='QSS'
+        solver='QSS',
+        return_all=False
 ):
     '''
     - tl1: tilted laplacian noise
@@ -126,6 +127,9 @@ def tl1_l2d2p365(
     problem.decompose(solver=solver, verbose=verbose)
     s_seas = problem.decomposition[1]
 
+    if return_all:
+        return s_seas, problem
+
     return s_seas
 
 def l1_l1d1_l2d2p365(
@@ -137,7 +141,8 @@ def l1_l1d1_l2d2p365(
     w3=1e-6, # linear term, scaled
     solver=None,
     verbose=False,
-    sum_card=False
+    sum_card=False,
+    return_all=False
 ):
     if solver!="QSS":
         sum_card=False
@@ -166,12 +171,15 @@ def l1_l1d1_l2d2p365(
     s_hat = problem.decomposition[2]
     s_lin = problem.decomposition[3]
 
+    if return_all:
+        return s_hat, s_seas, s_lin, problem
+
     return s_hat, s_seas, s_lin
   
 def make_l2_l1d2_constrained(signal,
                             weight=5,
                             solver="QSS",
-                            verbose=False
+                            verbose=False,
                              ):
     """
     Used in solardatatools/algorithms/clipping.py
