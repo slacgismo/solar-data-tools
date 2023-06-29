@@ -264,12 +264,8 @@ class DataHandler:
         # Run once to get a rough estimate. Update at the end after cleaning
         # is finished
         ss = SunriseSunset()
-        # CVXPY - either MOSEK or ECOS for this one, SCS fails
         try:
-            if solver is None or solver == "MOSEK":
-                ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
-            else:
-                ss.run_optimizer(self.raw_data_matrix, plot=False, solver="QSS")
+            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
             self.boolean_masks.daytime = ss.sunup_mask_estimated
         except:
             msg = "Sunrise/sunset detection failed."

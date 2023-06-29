@@ -15,7 +15,7 @@ power production data sets. The algorithm works as follows:
 """
 
 import numpy as np
-from solardatatools.osd_signal_decompositions import l1_l1d1_l2d2p365
+from solardatatools.signal_decompositions import l1_l1d1_l2d2p365
 from sklearn.cluster import DBSCAN
 
 
