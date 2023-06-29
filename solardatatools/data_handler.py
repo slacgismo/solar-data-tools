@@ -930,7 +930,6 @@ time zone errors     {report['time zone correction'] != 0}
                 ax[1].set_xlabel("date")
                 ax[0].set_ylabel("normalized daily max power")
                 ax[1].plot(xs, labels, ls="none", marker=".")
-                ax[1].plot(xs, self.capacity_analysis.sum_card_labels, ls="none", markersize=0.5, marker=".", label="SumCard")
                 ax[1].set_ylabel("Capacity clusters")
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)

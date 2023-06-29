@@ -59,27 +59,13 @@ class CapacityChange:
             # print('No valid values! Please check your data and filter.')
             return
 
-        if dbscan_eps is None or dbscan_min_samples is None:
-            self.metric = metric
-            self.s1 = s1
-            self.s2 = s2
-            self.s3 = s3
-            self.labels = None
-        else:
-            if dbscan_min_samples == "auto":
-                dbscan_min_samples = int(max(0.1 * len(s1), 3))
-            db = DBSCAN(eps=dbscan_eps, min_samples=dbscan_min_samples).fit(
-                s1[:, np.newaxis]
-            )
-            capacity_assignments = db.labels_
-            self.metric = metric
-            self.s1 = s1
-            self.s2 = s2
-            self.s3 = s3
-            self.labels = capacity_assignments
+        # Get capacity assignments
+        rounded_s1 = np.round(s1, 1)
+        set_labels = list(set(rounded_s1))
+        capacity_assignments = [set_labels.index(i) for i in rounded_s1]
 
-            # New method
-            rounded_s1 = np.round(s1, 1)
-            set_labels = list(set(rounded_s1))
-            labels = [set_labels.index(i) for i in rounded_s1]
-            self.sum_card_labels = labels
+        self.metric = metric
+        self.s1 = s1
+        self.s2 = s2
+        self.s3 = s3
+        self.labels = capacity_assignments
