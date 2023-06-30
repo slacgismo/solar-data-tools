@@ -968,33 +968,48 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             use_ixs = self.daily_flags.no_errors
 
-        # Run with convex formulation first
-        self.time_shift_analysis.run(
-            metric,
-            use_ixs=use_ixs,
-            c1=c1,
-            c2=c2,
-            solar_noon_estimator=estimator,
-            threshold=threshold,
-            periodic_detector=periodic_detector,
-            solver=solver,
-            sum_card=False
-        )
-
-        # If solver is QSS, run with nonconvex formulation again
-        # using best_c1 from convex solution
-        if solver == "QSS":
+        if c1 is None or solver != "QSS":
+            # Run with convex formulation first
             self.time_shift_analysis.run(
                 metric,
                 use_ixs=use_ixs,
-                c1=self.time_shift_analysis.best_c1,
+                c1=c1,
                 c2=c2,
                 solar_noon_estimator=estimator,
                 threshold=threshold,
                 periodic_detector=periodic_detector,
                 solver=solver,
-                sum_card=True
+                sum_card=False
             )
+
+        if solver == "QSS":
+            if c1 is not None:
+                # Run with nonconvex formulation and set c1
+                self.time_shift_analysis.run(
+                    metric,
+                    use_ixs=use_ixs,
+                    c1=c1,
+                    c2=c2,
+                    solar_noon_estimator=estimator,
+                    threshold=threshold,
+                    periodic_detector=periodic_detector,
+                    solver=solver,
+                    sum_card=True
+                )
+            else:
+                # If solver is QSS, run with nonconvex formulation again
+                # using best_c1 from convex solution
+                self.time_shift_analysis.run(
+                    metric,
+                    use_ixs=use_ixs,
+                    c1=self.time_shift_analysis.best_c1,
+                    c2=c2,
+                    solar_noon_estimator=estimator,
+                    threshold=threshold,
+                    periodic_detector=periodic_detector,
+                    solver=solver,
+                    sum_card=True
+                )
 
         # Scale data back
         self.filled_data_matrix = rescale_signal(
