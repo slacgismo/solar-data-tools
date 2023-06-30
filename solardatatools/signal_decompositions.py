@@ -14,9 +14,9 @@ an asymmetric laplacian noise model, fitting a local quantile instead of a
 local average
     - tl1: 'tilted l1-norm,' also known as quantile cost function
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-3) 'tl1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
+3) 'l1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
 of Gaussian residuals
-    - tl1: 'tilted l1-norm,' also known as quantile cost function
+    - l1: l1-norm
     - l1d1: piecewise constant heuristic, l1-norm of first order differences
     - l2d2p365: small second order diffs (smooth) and 365-periodic
 4) 'make_l2_l1d2_constrained':
@@ -60,10 +60,7 @@ def l2_l1d1_l2d2p365(
     seasonal signal
     :return: A 1d numpy array containing the filtered signal
     """
-    solver = "QSS"  # TODO: remove hardcoding once codebase transitions
-    sum_card = True
-
-    if solver!="QSS":
+    if solver != "QSS":
         sum_card=False
 
     if sum_card:
@@ -71,6 +68,11 @@ def l2_l1d1_l2d2p365(
         w0 /= 1e6
         w1 /= 1e6
         w2 /= 1e6
+    elif solver == "QSS":
+        # Scale objective
+        w0 /= 1e4
+        w1 /= 1e4
+        w2 /= 1e4
 
     c1 = SumSquare(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
@@ -146,6 +148,7 @@ def l1_l1d1_l2d2p365(
 ):
     if solver!="QSS":
         sum_card=False
+
     c1 = SumAbs(weight=w0)
     c2 = Aggregate([SumSquare(weight=w2, diff=2),
                     AverageEqual(0, period=365),

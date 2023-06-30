@@ -50,6 +50,7 @@ class TimeShift:
         threshold=0.005,
         periodic_detector=False,
         solver=None,
+        sum_card=False
     ):
         if solar_noon_estimator == "com":
             metric = energy_com(data)
@@ -65,12 +66,12 @@ class TimeShift:
         if c1 is None:
             c1s = np.logspace(0.5, 3.5, 11)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
-                metric, c1s, use_ixs, c2, periodic_detector, solver=solver
+                metric, c1s, use_ixs, c2, periodic_detector, solver=solver, sum_card=sum_card
             )
             if tv_metric[best_ix] >= 0.009:
                 # rerun the optimizer with a new random data selection
                 hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
-                    metric, c1s, use_ixs, c2, periodic_detector, solver=solver
+                    metric, c1s, use_ixs, c2, periodic_detector, solver=solver, sum_card=sum_card
                 )
             # if np.isclose(hn[best_ix], hn[-1]):
             #     best_ix = np.argmax(hn * rn)
@@ -84,7 +85,7 @@ class TimeShift:
             c1s = None
             best_ix = None
         s1, s2 = self.estimate_components(
-            metric, best_c1, c2, use_ixs, periodic_detector, solver=solver
+            metric, best_c1, c2, use_ixs, periodic_detector, solver=solver, sum_card=sum_card
         )
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
@@ -95,6 +96,7 @@ class TimeShift:
             use_ixs,
             periodic_detector,
             solver=solver,
+            sum_card=sum_card
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
         cond1 = jumps_per_year >= 5
@@ -145,7 +147,7 @@ class TimeShift:
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
-    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector, solver=None):
+    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector, solver=None, sum_card=False):
         # set up train/test split with sklearn
         ixs = np.arange(len(metric))
         ixs = ixs[use_ixs]
@@ -163,7 +165,7 @@ class TimeShift:
         # iterate over possible values of c1 parameter
         for i, v in enumerate(c1s):
             s1, s2 = self.estimate_components(
-                metric, v, c2, train, periodic_detector, solver=solver
+                metric, v, c2, train, periodic_detector, solver=solver, sum_card=sum_card
             )
             y = metric
             # collect results
@@ -206,6 +208,7 @@ class TimeShift:
         use_ixs,
         periodic_detector,
         solver=None,
+        sum_card=False
     ):
 
         s1, s2 = l2_l1d1_l2d2p365(
@@ -215,7 +218,7 @@ class TimeShift:
             use_ixs=use_ixs,
             yearly_periodic=periodic_detector,
             solver=solver,
-            sum_card=True
+            sum_card=sum_card
         )
         return s1, s2
 
