@@ -53,7 +53,7 @@ class CapacityChange:
                 w2=c2,
                 w3=c3,
                 solver=solver,
-                sum_card=True
+                sum_card=False
             )
         else:
             # print('No valid values! Please check your data and filter.')

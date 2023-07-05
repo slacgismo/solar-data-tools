@@ -137,7 +137,7 @@ class ClippingDetection:
         self.cdf_y = y_rs
         # Fit statistical model to resampled CDF that has sparse 2nd order difference
         if self.problem is None or self.y_param is None:
-            self.make_problem(y_rs, weight=weight)
+            self.make_problem(y_rs, weight=weight, solver=solver)
         else:
             self.y_param = y_rs
             self.weight = weight
@@ -370,8 +370,8 @@ class ClippingDetection:
         y_rs = f(x_rs)
         return x_rs, y_rs
 
-    def make_problem(self, y, weight=5):
-        out = make_l2_l1d2_constrained(y, weight=weight)
+    def make_problem(self, y, weight=5, solver=None):
+        out = make_l2_l1d2_constrained(y, weight=weight, solver=solver)
 
         self.problem = out[0]
         self.y_param = out[1]
