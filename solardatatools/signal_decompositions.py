@@ -146,7 +146,6 @@ def l1_l1d1_l2d2p365(
     sum_card=False,
     return_all=False
 ):
-    verbose=True
     if solver!="QSS":
         sum_card=False
 
@@ -183,16 +182,15 @@ def l1_l1d1_l2d2p365(
 def make_l2_l1d2_constrained(signal,
                             weight=5,
                             solver="QSS",
-                            verbose=True,
+                            verbose=False,
                              ):
     """
     Used in solardatatools/algorithms/clipping.py
     Added hard-coded constraints on the first and last vals
     """
-    weight=7e-3
     c1 = SumSquare(weight=1)
     c2 = Aggregate([
-        SumCard(weight=weight, diff=2),
+        SumAbs(weight=weight, diff=2),
         FirstValEqual(0),
         LastValEqual(1)
     ])
