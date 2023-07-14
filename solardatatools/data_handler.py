@@ -894,10 +894,6 @@ time zone errors     {report['time zone correction'] != 0}
                 c1=40e-6, # scaled weights for QSS
                 c2=6561e-6,
                 c3=1e-6,
-                reweight_eps=0.5,
-                reweight_niter=5,
-                dbscan_eps=0.02,
-                dbscan_min_samples="auto",
                 solver=solver,
             )
         if len(set(self.capacity_analysis.labels)) > 1:
