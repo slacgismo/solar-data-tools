@@ -530,6 +530,7 @@ class DataHandler:
                 )
             )
         self._ran_pipeline = True
+        self.total_time = total_time
         return
 
     def report(self, verbose=True, return_values=False):

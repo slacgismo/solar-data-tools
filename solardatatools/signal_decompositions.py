@@ -116,6 +116,7 @@ def tl1_l2d2p365(
     - tl1: tilted laplacian noise
     - l2d2p365: small second order diffs (smooth) and 365-periodic
     '''
+    solver = "OSQP"
     c1 = SumQuantile(tau=tau, weight=1)
     c2 = SumSquare(weight=w1, diff=2)
 
@@ -188,7 +189,9 @@ def make_l2_l1d2_constrained(signal,
     Used in solardatatools/algorithms/clipping.py
     Added hard-coded constraints on the first and last vals
     """
-    c1 = SumSquare(weight=1)
+    solver = "OSQP"
+    weight = 1 # new weight
+    c1 = SumSquare(weight=0.05) # new weight (prev 1)
     c2 = Aggregate([
         SumAbs(weight=weight, diff=2),
         FirstValEqual(0),
