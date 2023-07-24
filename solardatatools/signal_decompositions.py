@@ -40,7 +40,7 @@ def l2_l1d1_l2d2p365(
         w2=1e5,
         return_all=False,
         yearly_periodic=False,
-        solver='QSS',
+        solver="QSS",
         use_ixs=None,
         sum_card=False,
         verbose=False
@@ -106,18 +106,18 @@ def tl1_l2d2p365(
         signal,
         use_ixs=None,
         tau=0.75,
-        w1=500, 
+        w0=1,
+        w1=500,
         yearly_periodic=True,
         verbose=False,
-        solver='QSS',
+        solver="OSQP",
         return_all=False
 ):
-    '''
+    """
     - tl1: tilted laplacian noise
     - l2d2p365: small second order diffs (smooth) and 365-periodic
-    '''
-    solver = "OSQP"
-    c1 = SumQuantile(tau=tau, weight=1)
+    """
+    c1 = SumQuantile(tau=tau, weight=w0)
     c2 = SumSquare(weight=w1, diff=2)
 
     if len(signal) > 365 and yearly_periodic:
@@ -181,19 +181,18 @@ def l1_l1d1_l2d2p365(
     return s_hat, s_seas, s_lin
   
 def make_l2_l1d2_constrained(signal,
-                            weight=5,
-                            solver="QSS",
-                            verbose=False,
+                             w0=1,
+                             w1=5,
+                             solver="OSQP",
+                             verbose=False
                              ):
     """
     Used in solardatatools/algorithms/clipping.py
     Added hard-coded constraints on the first and last vals
     """
-    solver = "OSQP"
-    weight = 1 # new weight
-    c1 = SumSquare(weight=0.05) # new weight (prev 1)
+    c1 = SumSquare(weight=w0)
     c2 = Aggregate([
-        SumAbs(weight=weight, diff=2),
+        SumAbs(weight=w1, diff=2),
         FirstValEqual(0),
         LastValEqual(1)
     ])
@@ -205,4 +204,4 @@ def make_l2_l1d2_constrained(signal,
 
     s_hat = problem.decomposition[1]
 
-    return problem, signal, s_hat, weight
+    return problem, signal, s_hat, w1

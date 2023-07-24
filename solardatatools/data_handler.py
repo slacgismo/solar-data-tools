@@ -188,6 +188,7 @@ class DataHandler:
         daytime_threshold=0.005,
         units="W",
         solver="QSS",
+        solver_convex="OSQP",
         reset=True,
     ):
         try:
@@ -265,7 +266,7 @@ class DataHandler:
         # is finished
         ss = SunriseSunset()
         try:
-            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
+            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
             self.boolean_masks.daytime = ss.sunup_mask_estimated
         except:
             msg = "Sunrise/sunset detection failed."
@@ -330,8 +331,8 @@ class DataHandler:
         t_clean = np.zeros(6)
         t_clean[0] = time()
         try:
-            # CVXPY - density scoring
-            self.get_daily_scores(threshold=0.2, solver=solver)
+            # density scoring
+            self.get_daily_scores(threshold=0.2, solver=solver_convex)
         except:
             msg = "Daily quality scoring failed."
             self._error_msg += "\n" + msg
@@ -354,11 +355,10 @@ class DataHandler:
             self.daily_flags = None
         t_clean[1] = time()
         try:
-            # CVXPY
             self.detect_clear_days(
                 smoothness_threshold=clear_day_smoothness_param,
                 energy_threshold=clear_day_energy_param,
-                solver=solver,
+                solver=solver_convex,
             )
         except:
             msg = "Clear day detection failed."
@@ -368,8 +368,7 @@ class DataHandler:
                 traceback.print_exception(*sys.exc_info())
         t_clean[2] = time()
         try:
-            # CVXPY
-            self.clipping_check(solver=solver)
+            self.clipping_check(solver=solver_convex)
         except Exception as e:
             msg = "clipping check failed: " + str(e)
             self._error_msg += "\n" + msg
@@ -390,7 +389,6 @@ class DataHandler:
             self.data_clearness_score = None
         t_clean[4] = time()
         try:
-            # CVXPY
             self.capacity_clustering(solver=solver)
         except TypeError:
             msg = "Capacity clustering failed."
@@ -468,9 +466,7 @@ class DataHandler:
                 )
 
         # Update daytime detection based on cleaned up data
-        # self.daytime_analysis.run_optimizer(self.filled_data_matrix, plot=False)
-        # CVXPY
-        self.daytime_analysis.calculate_times(self.filled_data_matrix, solver=solver)
+        self.daytime_analysis.calculate_times(self.filled_data_matrix, solver=solver_convex)
         self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
         ######################################################################
         # Process Extra columns
@@ -863,7 +859,7 @@ time zone errors     {report['time zone correction'] != 0}
             self.data_clearness_score = None
         return
 
-    def clipping_check(self, solver=None):
+    def clipping_check(self, solver="OSQP"):
         if self.clipping_analysis is None:
             self.clipping_analysis = ClippingDetection()
         self.clipping_analysis.check_clipping(

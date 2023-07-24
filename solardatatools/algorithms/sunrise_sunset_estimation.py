@@ -37,6 +37,8 @@ class SunriseSunset:
         self.threshold = None
         self.total_rmse = None
         self.true_times = None
+        self.sunrise_tau = 0.1
+        self.sunset_tau = 0.9
 
     def calculate_times(
         self,
@@ -45,7 +47,7 @@ class SunriseSunset:
         plot=False,
         figsize=(12, 10),
         zoom_fit=False,
-        solver="QSS",
+        solver="OSQP",
     ):
         # print('Calculating times')
         if threshold is None:
@@ -63,7 +65,7 @@ class SunriseSunset:
         bool_msk = detect_sun(data, threshold)
         measured = rise_set_rough(bool_msk)
         smoothed = rise_set_smoothed(
-            measured, sunrise_tau=0.05, sunset_tau=0.95, solver=solver
+            measured, sunrise_tau=self.sunrise_tau, sunset_tau=self.sunset_tau, solver=solver
         )
         self.sunrise_estimates = smoothed["sunrises"]
         self.sunset_estimates = smoothed["sunsets"]
@@ -183,7 +185,7 @@ class SunriseSunset:
         search_pts=21,
         plot=False,
         figsize=(8, 6),
-        solver="QSS",
+        solver="OSQP",
     ):
         if self.true_times is not None:
             sr_true = self.true_times["sunrise times"].values
@@ -227,10 +229,10 @@ class SunriseSunset:
                     test_msk_sr[test_sr] = True
                     test_msk_ss[test_ss] = True
                     sr_smoothed = tl1_l2d2p365(
-                        sunrises, train_msk_sr, tau=0.05, solver=solver
+                        sunrises, train_msk_sr, tau=self.sunrise_tau, solver=solver
                     )
                     ss_smoothed = tl1_l2d2p365(
-                        sunsets, train_msk_ss, tau=0.95, solver=solver
+                        sunsets, train_msk_ss, tau=self.sunset_tau, solver=solver
                     )
                     r1 = (sunrises - sr_smoothed)[test_msk_sr]
                     r2 = (sunsets - ss_smoothed)[test_msk_ss]
@@ -260,7 +262,7 @@ class SunriseSunset:
                 ho_error.append(np.average(run_ho_errors))
                 if self.true_times is not None:
                     full_fit = rise_set_smoothed(
-                        measured, sunrise_tau=0.05, sunset_tau=0.95, solver=solver
+                        measured, sunrise_tau=self.sunrise_tau, sunset_tau=self.sunset_tau, solver=solver
                     )
                     sr_full = full_fit["sunrises"]
                     ss_full = full_fit["sunsets"]
@@ -277,7 +279,7 @@ class SunriseSunset:
         selected_th = np.min(ths[slct_vals])
         bool_msk = detect_sun(data, selected_th)
         measured = rise_set_rough(bool_msk)
-        smoothed = rise_set_smoothed(measured, sunrise_tau=0.05, sunset_tau=0.95, solver=solver)
+        smoothed = rise_set_smoothed(measured, sunrise_tau=self.sunrise_tau, sunset_tau=self.sunset_tau, solver=solver)
         self.sunrise_estimates = smoothed["sunrises"]
         self.sunset_estimates = smoothed["sunsets"]
         self.sunrise_measurements = measured["sunrises"]
