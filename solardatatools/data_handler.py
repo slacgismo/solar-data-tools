@@ -961,6 +961,11 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             use_ixs = self.daily_flags.no_errors
 
+        ########## Updates to timeshift algorithm, 6/2023 ##########
+        # If running with any solver other than QSS: solve convex problem
+        # If running with QSS without a set c1: run c1 meta-opt with convex problem,
+        # then subsequently solve nonconvex problem with set c1 as found in convex solution
+        # If running with QSS with a set c1: solve nonconvex problem
         if c1 is None or solver != "QSS":
             # Run with convex formulation first
             self.time_shift_analysis.run(
