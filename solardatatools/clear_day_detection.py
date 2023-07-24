@@ -72,7 +72,9 @@ class ClearDayDetection:
         # Seasonal renormalization: estimate a "baseline smoothness" based on local
         # 90th percentile of smoothness signal. This has the effect of increasing
         # the score of days if there aren't very many smooth days nearby
-        self.y = tl1_l2d2p365(self.tc, tau=0.9, w1=2.5e6, yearly_periodic=False, solver=solver)
+        # 7/24/23 SM: Adjusted weight down from 2.5e6 to 2.5e5
+        # due to failed decompositions on some datasets (TABJC1001611)
+        self.y = tl1_l2d2p365(self.tc, tau=0.9, w1=2.5e5, yearly_periodic=False, solver=solver)
         tc = self.tc/self.y
         # Take the positive part function, i.e. set the negative values to zero.
         # This is the first metric
