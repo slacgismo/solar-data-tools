@@ -29,20 +29,10 @@ class TestFixTimeShift(unittest.TestCase):
         with open(output_power_signals_file_path) as file:
             expected_power_data_fix = np.loadtxt(file, delimiter=",")
 
-        # Underling solar-data-tools uses MOSEK solver and
-        # if it's not used, try with ECOS solver.
-        # However, fails with ECOS solver and raises cvx.SolverError.
-        try:
-            time_shift_analysis = TimeShift()
-            time_shift_analysis.run(power_data_matrix, use_ixs=use_days, solver="MOSEK")
-            actual_power_data_fix = time_shift_analysis.corrected_data
-        except (cvx.SolverError, ValueError):
-            self.skipTest(
-                "This test uses MOSEK solver"
-                + "because default ECOS solver fails with large data. "
-                + "Unless MOSEK is installed, this test fails."
-            )
-        else:
-            np.testing.assert_almost_equal(
-                actual_power_data_fix, expected_power_data_fix, decimal=0.2
-            )
+        time_shift_analysis = TimeShift()
+        time_shift_analysis.run(power_data_matrix, use_ixs=use_days, solver="QSS")
+        actual_power_data_fix = time_shift_analysis.corrected_data
+
+        np.testing.assert_almost_equal(
+            actual_power_data_fix, expected_power_data_fix, decimal=0.2
+        )

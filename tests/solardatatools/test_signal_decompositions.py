@@ -89,8 +89,8 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
             signal,
-            w1=100,
-            w2=1e5,
+            w1=50,
+            w2=1e6,
             solver=self.solver,
             return_all=True
         )
@@ -133,8 +133,8 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
             signal,
-            w1=100,
-            w2=1e5,
+            w1=50,
+            w2=1e6,
             solver=self.solver,
             return_all=True
         )
@@ -178,8 +178,8 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
             signal,
-            w1=100,
-            w2=1e5,
+            w1=50,
+            w2=1e6,
             solver=self.solver,
             use_ixs=indices,
             return_all=True
@@ -223,8 +223,8 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
             signal,
-            w1=100,
-            w2=1e5,
+            w1=50,
+            w2=1e6,
             solver=self.solver,
             yearly_periodic=True,
             return_all=True
@@ -395,9 +395,10 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
             signal,
-            w1=5,
-            w2=20,
-            w3=0.001,
+            w0=1e-10,
+            w1=10e-7,
+            w2=1e-2,
+            w3=1,
             sum_card=True,
             solver=self.solver,
             return_all=True
@@ -442,9 +443,10 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
             signal,
-            w1=5,
-            w2=20,
-            w3=0.001,
+            w0=1e-10,
+            w1=10e-7,
+            w2=1e-2,
+            w3=1,
             sum_card=True,
             solver=self.solver,
             use_ixs=indices,
@@ -492,7 +494,7 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_problem, _, actual_y_hat, _ = sd.make_l2_l1d2_constrained(
             signal,
-            weight=5,
+            w1=5,
             solver=self.solver
         )
         actual_obj_val = actual_problem.objective_value
