@@ -25,7 +25,7 @@ class ClearDayDetection:
             self,
             data,
             c1=6e3,
-            solver="QSS"
+            solver="OSQP"
     ):
         capacity_est = np.nanquantile(data, 0.95)
         # set nans to zero to avoid issues w/ summing
@@ -45,7 +45,7 @@ class ClearDayDetection:
             smoothness_threshold=0.9,
             energy_threshold=0.8,
             boolean_out=True,
-            solver="QSS"
+            solver="OSQP"
     ):
         """
         This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing

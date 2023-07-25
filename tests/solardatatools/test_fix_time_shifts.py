@@ -30,9 +30,9 @@ class TestFixTimeShift(unittest.TestCase):
             expected_power_data_fix = np.loadtxt(file, delimiter=",")
 
         time_shift_analysis = TimeShift()
-        time_shift_analysis.run(power_data_matrix, use_ixs=use_days, solver="QSS")
+        time_shift_analysis.run(power_data_matrix, use_ixs=use_days, c1=100, solver="QSS")
         actual_power_data_fix = time_shift_analysis.corrected_data
 
         np.testing.assert_almost_equal(
-            actual_power_data_fix, expected_power_data_fix, decimal=0.2
+            actual_power_data_fix, expected_power_data_fix, decimal=3
         )

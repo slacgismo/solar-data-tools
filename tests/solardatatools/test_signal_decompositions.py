@@ -53,6 +53,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
     def setUp(self):
         self.solver = "QSS"
+        self.solver_convex = "OSQP" # use OSQP for convex only problem
         self.mae_threshold = 0.001
         self.obj_tolerance = 1
 
@@ -273,7 +274,7 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_s_seas, actual_problem = sd.tl1_l2d2p365(signal,
                                                         tau=0.8,
                                                         w1=1e5,
-                                                        solver=self.solver,
+                                                        solver=self.solver_convex,
                                                         return_all=True)
         actual_obj_val = actual_problem.objective_value
 
@@ -312,7 +313,7 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_s_seas, actual_problem = sd.tl1_l2d2p365(signal,
                                                         tau=0.8,
                                                         w1=1e5,
-                                                        solver=self.solver,
+                                                        solver=self.solver_convex,
                                                         use_ixs=indices,
                                                         return_all=True)
         actual_obj_val = actual_problem.objective_value
@@ -350,7 +351,7 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_seas, actual_problem = sd.tl1_l2d2p365(signal,
                                                         tau=0.8,
-                                                        solver=self.solver,
+                                                        solver=self.solver_convex,
                                                         w1=1e5,
                                                         yearly_periodic=False,
                                                         return_all=True)
@@ -495,7 +496,7 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_problem, _, actual_y_hat, _ = sd.make_l2_l1d2_constrained(
             signal,
             w1=5,
-            solver=self.solver
+            solver=self.solver_convex
         )
         actual_obj_val = actual_problem.objective_value
 
