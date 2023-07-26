@@ -179,8 +179,8 @@ class DataHandler:
         verbose=True,
         start_day_ix=None,
         end_day_ix=None,
-        c1=None,
-        c2=1e5,
+        w1=None,
+        w2=1e5,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
@@ -408,8 +408,8 @@ class DataHandler:
             try:
                 # CVXPY
                 self.auto_fix_time_shifts(
-                    c1=c1,
-                    c2=c2,
+                    w1=w1,
+                    w2=w2,
                     estimator=solar_noon_estimator,
                     threshold=daytime_threshold,
                     periodic_detector=periodic_detector,
@@ -421,8 +421,8 @@ class DataHandler:
                         print("Invoking periodic timeshift detector.")
                     old_analysis = self.time_shift_analysis
                     self.auto_fix_time_shifts(
-                        c1=c1,
-                        c2=c2,
+                        w1=w1,
+                        w2=w2,
                         estimator=solar_noon_estimator,
                         threshold=daytime_threshold,
                         periodic_detector=True,
@@ -937,8 +937,8 @@ time zone errors     {report['time zone correction'] != 0}
 
     def auto_fix_time_shifts(
         self,
-        c1=5,
-        c2=1e5,
+        w1=5,
+        w2=1e5,
         estimator="com",
         threshold=0.005,
         periodic_detector=False,
@@ -963,16 +963,16 @@ time zone errors     {report['time zone correction'] != 0}
 
         ########## Updates to timeshift algorithm, 6/2023 ##########
         # If running with any solver other than QSS: solve convex problem
-        # If running with QSS without a set c1: run c1 meta-opt with convex problem,
-        # then subsequently solve nonconvex problem with set c1 as found in convex solution
-        # If running with QSS with a set c1: solve nonconvex problem
-        if c1 is None or solver != "QSS":
+        # If running with QSS without a set w1: run w1 meta-opt with convex problem,
+        # then subsequently solve nonconvex problem with set w1 as found in convex solution
+        # If running with QSS with a set w1: solve nonconvex problem
+        if w1 is None or solver != "QSS":
             # Run with convex formulation first
             self.time_shift_analysis.run(
                 metric,
                 use_ixs=use_ixs,
-                c1=c1,
-                c2=c2,
+                w1=w1,
+                w2=w2,
                 solar_noon_estimator=estimator,
                 threshold=threshold,
                 periodic_detector=periodic_detector,
@@ -981,13 +981,13 @@ time zone errors     {report['time zone correction'] != 0}
             )
 
         if solver == "QSS":
-            if c1 is not None:
-                # Run with nonconvex formulation and set c1
+            if w1 is not None:
+                # Run with nonconvex formulation and set w1
                 self.time_shift_analysis.run(
                     metric,
                     use_ixs=use_ixs,
-                    c1=c1,
-                    c2=c2,
+                    w1=w1,
+                    w2=w2,
                     solar_noon_estimator=estimator,
                     threshold=threshold,
                     periodic_detector=periodic_detector,
@@ -996,12 +996,12 @@ time zone errors     {report['time zone correction'] != 0}
                 )
             else:
                 # If solver is QSS, run with nonconvex formulation again
-                # using best_c1 from convex solution
+                # using best_w1 from convex solution
                 self.time_shift_analysis.run(
                     metric,
                     use_ixs=use_ixs,
-                    c1=self.time_shift_analysis.best_c1,
-                    c2=c2,
+                    w1=self.time_shift_analysis.best_w1,
+                    w2=w2,
                     solar_noon_estimator=estimator,
                     threshold=threshold,
                     periodic_detector=periodic_detector,

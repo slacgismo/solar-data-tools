@@ -34,7 +34,7 @@ class TimeShift:
         self.normalized_train_error = None
         self.tv_metric = None
         self.jumps_per_year = None
-        self.best_c1 = None
+        self.best_w1 = None
         self.best_ix = None
         self.baseline = None
         self.periodic_detector = None
@@ -44,8 +44,8 @@ class TimeShift:
         self,
         data,
         use_ixs=None,
-        c1=None,
-        c2=200,
+        w1=None,
+        w2=200,
         solar_noon_estimator="com",
         threshold=0.005,
         periodic_detector=False,
@@ -62,45 +62,46 @@ class TimeShift:
         else:
             use_ixs = np.logical_and(use_ixs, ~np.isnan(metric))
         self.use_ixs = use_ixs
-        # Optimize c1
-        if c1 is None:
-            c1s = np.logspace(0.5, 3.5, 11)
-            hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
-                metric, c1s, use_ixs, c2, periodic_detector, solver=solver, sum_card=sum_card
+        # Optimize w1
+        if w1 is None:
+            w1s = np.logspace(0.5, 3.5, 11)
+            hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
+                metric, w1s, use_ixs, w2, periodic_detector, solver=solver, sum_card=sum_card
             )
             if tv_metric[best_ix] >= 0.009:
                 # rerun the optimizer with a new random data selection
-                hn, rn, tv_metric, jpy, best_ix = self.optimize_c1(
-                    metric, c1s, use_ixs, c2, periodic_detector, solver=solver, sum_card=sum_card
+                hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
+                    metric, w1s, use_ixs, w2, periodic_detector, solver=solver, sum_card=sum_card
                 )
             # if np.isclose(hn[best_ix], hn[-1]):
             #     best_ix = np.argmax(hn * rn)
-            best_c1 = c1s[best_ix]
+            best_w1 = w1s[best_ix]
         else:
-            best_c1 = c1
+            best_w1 = w1
             hn = None
             rn = None
             tv_metric = None
             jpy = None
-            c1s = None
+            w1s = None
             best_ix = None
         s1, s2 = self.estimate_components(
-            metric, best_c1, c2, use_ixs, periodic_detector, solver=solver, sum_card=sum_card
+            metric, best_w1, w2, use_ixs, periodic_detector, solver=solver, sum_card=sum_card
         )
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
         s1, s2 = self.estimate_components(
             metric,
-            best_c1,
-            c2,
+            best_w1,
+            w2,
             use_ixs,
             periodic_detector,
             solver=solver,
-            sum_card=sum_card
+            sum_card=sum_card,
+            transition_locs=index_set
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
         cond1 = jumps_per_year >= 5
-        cond2 = c1 is None
+        cond2 = w1 is None
         cond3 = self.__recursion_depth < 2
         if cond1 and cond2 and cond3:
             # Unlikely that  there are more than 5 time shifts per year. Try a
@@ -109,8 +110,8 @@ class TimeShift:
             self.run(
                 data,
                 use_ixs=use_ixs,
-                c1=c1,
-                c2=c2,
+                w1=w1,
+                w2=w2,
                 solar_noon_estimator=solar_noon_estimator,
                 threshold=threshold,
                 periodic_detector=periodic_detector,
@@ -136,8 +137,8 @@ class TimeShift:
         self.normalized_train_error = rn
         self.tv_metric = tv_metric
         self.jumps_per_year = jpy
-        self.c1_vals = c1s
-        self.best_c1 = best_c1
+        self.w1_vals = w1s
+        self.best_w1 = best_w1
         self.best_ix = best_ix
         self.periodic_detector = periodic_detector
         self.s1 = s1
@@ -147,7 +148,7 @@ class TimeShift:
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
-    def optimize_c1(self, metric, c1s, use_ixs, c2, periodic_detector, solver=None, sum_card=False):
+    def optimize_w1(self, metric, w1s, use_ixs, w2, periodic_detector, solver=None, sum_card=False):
         # set up train/test split with sklearn
         ixs = np.arange(len(metric))
         ixs = ixs[use_ixs]
@@ -157,15 +158,15 @@ class TimeShift:
         train[train_ixs] = True
         test[test_ixs] = True
         # initialize results objects
-        train_r = np.zeros_like(c1s)
-        test_r = np.zeros_like(c1s)
-        tv_metric = np.zeros_like(c1s)
-        jpy = np.zeros_like(c1s)
-        rms_s2 = np.zeros_like(c1s)
-        # iterate over possible values of c1 parameter
-        for i, v in enumerate(c1s):
+        train_r = np.zeros_like(w1s)
+        test_r = np.zeros_like(w1s)
+        tv_metric = np.zeros_like(w1s)
+        jpy = np.zeros_like(w1s)
+        rms_s2 = np.zeros_like(w1s)
+        # iterate over possible values of w1 parameter
+        for i, v in enumerate(w1s):
             s1, s2 = self.estimate_components(
-                metric, v, c2, train, periodic_detector, solver=solver, sum_card=sum_card
+                metric, v, w2, train, periodic_detector, solver=solver, sum_card=sum_card
             )
             y = metric
             # collect results
@@ -182,7 +183,7 @@ class TimeShift:
 
         hn = zero_one_scale(test_r)  # holdout error metrix
         rn = zero_one_scale(train_r)
-        ixs = np.arange(len(c1s))
+        ixs = np.arange(len(w1s))
         # Detecting more than 5 time shifts per year is extremely uncommon,
         # and is considered non-physical
         hn_min_baseline = np.nanmin(hn[jpy <= 5])
@@ -197,28 +198,30 @@ class TimeShift:
             # choose index of lowest holdout error
             best_ix = np.max(subset_ixs)
         else:
-            raise("Timeshift detector weight optimization failed. Please check subroutine optimize_c1 ln 199.")
+            raise("Timeshift detector weight optimization failed. Please check subroutine optimize_w1 ln 199.")
         return hn, rn, tv_metric, jpy, best_ix
 
     def estimate_components(
         self,
         metric,
-        c1,
-        c2,
+        w1,
+        w2,
         use_ixs,
         periodic_detector,
         solver=None,
-        sum_card=False
+        sum_card=False,
+        transition_locs=None,
     ):
 
         s1, s2 = l2_l1d1_l2d2p365(
             metric,
-            w1=c1,
-            w2=c2,
             use_ixs=use_ixs,
+            w1=w1,
+            w2=w2,
             yearly_periodic=periodic_detector,
             solver=solver,
-            sum_card=sum_card
+            sum_card=sum_card,
+            transition_locs=transition_locs,
         )
         return s1, s2
 
@@ -237,24 +240,24 @@ class TimeShift:
 
     def plot_optimization(self, figsize=None):
         if self.best_ix is not None:
-            c1s = self.c1_vals
+            w1s = self.w1_vals
             hn = self.normalized_holdout_error
             rn = self.normalized_train_error
-            best_c1 = self.best_c1
+            best_w1 = self.best_w1
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(nrows=4, sharex=True, figsize=figsize)
-            ax[0].plot(c1s, hn, marker=".")
-            ax[0].axvline(best_c1, ls="--", color="red")
+            ax[0].plot(w1s, hn, marker=".")
+            ax[0].axvline(best_w1, ls="--", color="red")
             ax[0].set_title("holdout validation")
-            ax[1].plot(c1s, self.jumps_per_year, marker=".")
-            ax[1].axvline(best_c1, ls="--", color="red")
+            ax[1].plot(w1s, self.jumps_per_year, marker=".")
+            ax[1].axvline(best_w1, ls="--", color="red")
             ax[1].set_title("jumps per year")
-            ax[2].plot(c1s, rn, marker=".")
-            ax[2].axvline(best_c1, ls="--", color="red")
+            ax[2].plot(w1s, rn, marker=".")
+            ax[2].axvline(best_w1, ls="--", color="red")
             ax[2].set_title("training residuals")
-            ax[3].plot(c1s, self.tv_metric, marker=".")
-            ax[3].axvline(best_c1, ls="--", color="red")
+            ax[3].plot(w1s, self.tv_metric, marker=".")
+            ax[3].axvline(best_w1, ls="--", color="red")
             ax[3].set_xscale("log")
             ax[3].set_title("Total variation metric")
             plt.tight_layout()
