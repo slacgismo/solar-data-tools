@@ -64,7 +64,10 @@ class TimeShift:
         self.use_ixs = use_ixs
         # Optimize w1
         if w1 is None:
-            w1s = np.logspace(0.5, 3.5, 11)
+            if solver == "MOSEK":
+                w1s = np.logspace(-1, 2, 11)
+            else:
+                w1s = np.logspace(0.5, 3.5, 11)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
                 metric, w1s, use_ixs, w2, periodic_detector, solver=solver, sum_card=sum_card
             )
