@@ -31,9 +31,9 @@ class CapacityChange:
         data,
         filter=None,
         quantile=1.00,
-        c1=40e-6,  # scaled weights for QSS
-        c2=6561e-6,
-        c3=1e-6,
+        w1=40e-6,  # scaled weights for QSS
+        w2=6561e-6,
+        w3=1e-6,
         solver=None
     ):
         if filter is None:
@@ -45,9 +45,9 @@ class CapacityChange:
             s1, s2, s3 = l1_l1d1_l2d2p365(
                 metric,
                 use_ixs=filter,
-                w1=c1,
-                w2=c2,
-                w3=c3,
+                w1=w1,
+                w2=w2,
+                w3=w3,
                 solver=solver,
                 sum_card=True
             )

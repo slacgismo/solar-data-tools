@@ -73,3 +73,49 @@ def _osd_l2_l1d1_l2d2p365(
         return s_hat, s_seas, s_error, problem
 
     return s_hat, s_seas
+
+
+def _osd_l1_l1d1_l2d2p365(
+    signal,
+    use_ixs=None,
+    w0=2e-6,  # l1 term, scaled
+    w1=40e-6, # l1d1 term, scaled
+    w2=6e-3, # seasonal term, scaled
+    w3=1e-6, # linear term, scaled
+    return_all=False,
+    solver=None,
+    sum_card=False,
+    verbose=False
+):
+    if solver!="QSS":
+        sum_card=False
+
+    c1 = SumAbs(weight=w0)
+    c2 = Aggregate([SumSquare(weight=w2, diff=2),
+                    AverageEqual(0, period=365),
+                    Periodic(365)
+                    ])
+
+    if sum_card:
+        c3 = SumCard(weight=w1, diff=1)
+    else:
+        c3 = SumAbs(weight=w1, diff=1)
+
+    c4 =  Aggregate([NoCurvature(weight=w3),
+                     Inequality(vmin=-0.1, vmax=0.01, diff=1),
+                     FirstValEqual(0)
+                     ])
+
+    classes = [c1, c2, c3, c4]
+
+    problem = Problem(signal, classes, use_set=use_ixs)
+
+    problem.decompose(solver=solver, verbose=verbose, eps_abs=1e-6, eps_rel=1e-6)
+    s_seas = problem.decomposition[1]
+    s_hat = problem.decomposition[2]
+    s_lin = problem.decomposition[3]
+
+    if return_all:
+        return s_hat, s_seas, s_lin, problem
+
+    return s_hat, s_seas, s_lin

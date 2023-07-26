@@ -24,6 +24,7 @@ def _cvx_l2_l1d1_l2d2p365(
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
     the signal of interest
+    :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the total variation in
     the final output signal
     :param w2: The regularization parameter to control the smoothness of the
@@ -83,3 +84,74 @@ def _cvx_l2_l1d1_l2d2p365(
         return s_hat.value, s_seas.value, s_error.value, problem.objective.value
 
     return s_hat.value, s_seas.value
+
+def _cvx_l1_l1d1_l2d2p365(
+    signal,
+    use_ixs=None,
+    w0=3,  # l1 term
+    w1=18, # l1d1 term
+    w2=6000, # seasonal term
+    w3=300, # linear term
+    return_all=False,
+    solver=None,
+    verbose=False
+):
+    """
+    This performs total variation filtering with the addition of a seasonal baseline fit. This introduces a new
+    signal to the model that is smooth and periodic on a yearly time frame. This does a better job of describing real,
+    multi-year solar PV power data sets, and therefore does an improved job of estimating the discretely changing
+    signal.
+
+    :param signal: A 1d numpy array (must support boolean indexing) containing the signal of interest
+    :param w0: Weight on the residual component
+    :param w1: The regularization parameter to control the total variation in the final output signal
+    :param w2: The regularization parameter to control the smoothness of the seasonal signal
+    :param w3: The regularization parameter to control the degradation slope of the seasonal signal
+    :return: A 1d numpy array containing the filtered signal
+    """
+    n = len(signal)
+
+    if use_ixs is None:
+        use_ixs = ~np.isnan(signal)
+    else:
+        use_ixs = np.logical_and(use_ixs, ~np.isnan(signal))
+
+    w0 = cvx.Parameter(value=w0, nonneg=True)
+    w1 = cvx.Parameter(value=w1, nonneg=True)
+    w2 = cvx.Parameter(value=w2, nonneg=True)
+    w3 = cvx.Parameter(value=w3, nonneg=True)
+
+    # Iterative reweighted L1 heuristic
+    tv_weights = np.ones(n - 1)
+    eps = 0.1
+    n_iter = 5
+
+    for i in range(n_iter):
+        s_hat = cvx.Variable(n)
+        s_seas = cvx.Variable(max(n, 366))
+        s_error = cvx.Variable(n)
+
+        beta = cvx.Variable()
+
+        objective = cvx.Minimize(
+              w0 * cvx.sum(0.5 * cvx.abs(s_error))
+            + w1 * cvx.norm1(cvx.multiply(tv_weights, cvx.diff(s_hat, k=1)))
+            + w2 * cvx.sum_squares(cvx.diff(s_seas, k=2))
+            + w3 * beta**2 # linear term that has a slope of beta over 1 year
+        )
+
+        constraints = [
+            signal[use_ixs] == s_hat[use_ixs] + s_seas[:n][use_ixs] + s_error[use_ixs],
+            cvx.sum(s_seas[:365]) == 0,
+        ]
+        constraints.append(s_seas[365:] - s_seas[:-365] == beta)
+        constraints.extend([beta <= 0.01, beta >= -0.1])
+        problem = cvx.Problem(objective=objective, constraints=constraints)
+        problem.solve(solver=solver, verbose=verbose)
+
+        tv_weights = 1 / (eps + np.abs(np.diff(s_hat.value, n=1)))
+
+    if return_all:
+        return s_hat.value, s_seas.value, s_error.value, problem.objective.value
+
+    return s_hat.value, s_seas.value[:n], beta.value**2

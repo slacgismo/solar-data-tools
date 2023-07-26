@@ -28,8 +28,8 @@ of Gaussian residuals
 import sys
 import numpy as np
 
-from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365
-from solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365
+from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365
+from solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365, _cvx_l1_l1d1_l2d2p365
 
 # remove when done
 from gfosd import Problem
@@ -59,6 +59,7 @@ def l2_l1d1_l2d2p365(
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
     the signal of interest
+    :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the total variation in
     the final output signal
     :param w2: The regularization parameter to control the smoothness of the
@@ -69,11 +70,12 @@ def l2_l1d1_l2d2p365(
         res = _cvx_l2_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
-            w0=w0,  
-            w1=w1, 
+            w0=w0,
+            w1=w1,
             w2=w2,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
+            solver=solver,
             transition_locs=transition_locs,
             verbose=verbose
         )
@@ -133,43 +135,36 @@ def l1_l1d1_l2d2p365(
     w1=40e-6, # l1d1 term, scaled
     w2=6e-3, # seasonal term, scaled
     w3=1e-6, # linear term, scaled
+    return_all=False,
     solver=None,
+    sum_card=False, # OSD only
     verbose=False,
-    sum_card=False,
-    return_all=False
 ):
-    if solver!="QSS":
-        sum_card=False
-
-    c1 = SumAbs(weight=w0)
-    c2 = Aggregate([SumSquare(weight=w2, diff=2),
-                    AverageEqual(0, period=365),
-                    Periodic(365)
-                    ])
-
-    if sum_card:
-        c3 = SumCard(weight=w1, diff=1)
+    if solver == "MOSEK":
+        # MOSEK weights set in CVXPY function
+        res = _cvx_l1_l1d1_l2d2p365(
+            signal=signal,
+            use_ixs=use_ixs,
+            return_all=return_all,
+            solver=solver,
+            verbose=verbose
+        )
     else:
-        c3 = SumAbs(weight=w1, diff=1)
+        res = _osd_l1_l1d1_l2d2p365(
+            signal=signal,
+            use_ixs=use_ixs,
+            w0=w0,
+            w1=w1,
+            w2=w2,
+            w3=w3,
+            return_all=return_all,
+            solver=solver,
+            sum_card=sum_card,
+            verbose=verbose
+        )
 
-    c4 =  Aggregate([NoCurvature(weight=w3),
-                     Inequality(vmin=-0.1, vmax=0.01, diff=1),
-                     FirstValEqual(0)
-                     ])
+    return res
 
-    classes = [c1, c2, c3, c4]
-
-    problem = Problem(signal, classes, use_set=use_ixs)
-
-    problem.decompose(solver=solver, verbose=verbose, eps_abs=1e-6, eps_rel=1e-6)
-    s_seas = problem.decomposition[1]
-    s_hat = problem.decomposition[2]
-    s_lin = problem.decomposition[3]
-
-    if return_all:
-        return s_hat, s_seas, s_lin, problem
-
-    return s_hat, s_seas, s_lin
   
 def make_l2_l1d2_constrained(signal,
                              w0=1,

@@ -191,17 +191,21 @@ class DataHandler:
         solver_convex="OSQP",
         reset=True,
     ):
-        try:
-            x = cvx.Variable()
-            prob = cvx.Problem(cvx.Minimize(cvx.sum_squares(x)))
-            prob.solve(solver="MOSEK")
-        except Exception as e:
-            print("VALID MOSEK LICENSE NOT AVAILABLE")
-            print(
-                "please check that your license file is in [HOME]/mosek and is current\n"
-            )
-            print("error msg:", e)
-            return
+        if solver == "MOSEK":
+            # Set all problems to use MOSEK
+            # and check that MOSEK is installed
+            solver_convex = "MOSEK"
+            try:
+                x = cvx.Variable()
+                prob = cvx.Problem(cvx.Minimize(cvx.sum_squares(x)))
+                prob.solve(solver="MOSEK")
+            except Exception as e:
+                print("VALID MOSEK LICENSE NOT AVAILABLE")
+                print(
+                    "please check that your license file is in [HOME]/mosek and is current\n"
+                )
+                print("error msg:", e)
+                return
         if reset:
             self._initialize_attributes()
         self.daily_scores = DailyScores()
@@ -888,9 +892,9 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                c1=40e-6, # scaled weights for QSS
-                c2=6561e-6,
-                c3=1e-6,
+                w1=40e-6, # scaled weights for QSS
+                w2=6561e-6,
+                w3=1e-6,
                 solver=solver,
             )
         if len(set(self.capacity_analysis.labels)) > 1:
