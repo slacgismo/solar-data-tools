@@ -93,7 +93,7 @@ def _cvx_l1_l1d1_l2d2p365(
     w2=6000, # seasonal term
     w3=300, # linear term
     return_all=False,
-    solver=None,
+    solver="MOSEK",
     verbose=False
 ):
     """
@@ -155,3 +155,33 @@ def _cvx_l1_l1d1_l2d2p365(
         return s_hat.value, s_seas.value, s_error.value, problem.objective.value
 
     return s_hat.value, s_seas.value[:n], beta.value**2
+
+
+def _cvx_make_l2_l1d2_constrained(
+        signal,
+        w1=1e1,
+        return_all=False,
+        solver="MOSEK",
+        verbose=False
+):
+    """
+    Used in solardatatools/algorithms/clipping.py
+    Added hard-coded constraints on the first and last vals
+    """
+    use_ixs = ~np.isnan(signal)
+
+    y_hat = cvx.Variable(len(signal))
+    mu = cvx.Parameter(nonneg=True)
+    mu.value = w1
+    error = cvx.sum_squares(signal[use_ixs] - y_hat[use_ixs])
+    reg = cvx.norm(cvx.diff(y_hat, k=2), p=1)
+
+    objective = cvx.Minimize(error + mu * reg)
+    constraints = [y_hat[0] == 0, y_hat[-1] == 1]
+    problem = cvx.Problem(objective, constraints)
+    problem.solve(solver=solver, verbose=verbose)
+
+    if return_all:
+        return y_hat.value, problem.objective.value
+
+    return problem, signal, y_hat.value, mu.value

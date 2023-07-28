@@ -28,8 +28,10 @@ of Gaussian residuals
 import sys
 import numpy as np
 
-from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365
-from solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365, _cvx_l1_l1d1_l2d2p365
+from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365,\
+    _osd_make_l2_l1d2_constrained
+from solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365, _cvx_l1_l1d1_l2d2p365,\
+    _cvx_make_l2_l1d2_constrained
 
 # remove when done
 from gfosd import Problem
@@ -75,7 +77,6 @@ def l2_l1d1_l2d2p365(
             w2=w2,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
-            solver=solver,
             transition_locs=transition_locs,
             verbose=verbose
         )
@@ -146,7 +147,6 @@ def l1_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
             return_all=return_all,
-            solver=solver,
             verbose=verbose
         )
     else:
@@ -174,20 +174,20 @@ def make_l2_l1d2_constrained(signal,
                              ):
     """
     Used in solardatatools/algorithms/clipping.py
-    Added hard-coded constraints on the first and last vals
     """
-    c1 = SumSquare(weight=w0)
-    c2 = Aggregate([
-        SumAbs(weight=w1, diff=2),
-        FirstValEqual(0),
-        LastValEqual(1)
-    ])
+    if solver == "MOSEK":
+        # MOSEK weights set in CVXPY function
+        res = _cvx_make_l2_l1d2_constrained(
+            signal,
+            verbose=verbose
+        )
+    else:
+        res = _osd_make_l2_l1d2_constrained(
+            signal,
+            w0=w0,
+            w1=w1,
+            solver=solver,
+            verbose=verbose
+        )
 
-    classes = [c1, c2]
-
-    problem = Problem(signal, classes)
-    problem.decompose(solver=solver, verbose=verbose, eps_rel=1e-6, eps_abs=1e-6)
-
-    s_hat = problem.decomposition[1]
-
-    return problem, signal, s_hat, w1
+    return res

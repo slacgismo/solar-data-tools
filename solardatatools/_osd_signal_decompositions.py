@@ -119,3 +119,31 @@ def _osd_l1_l1d1_l2d2p365(
         return s_hat, s_seas, s_lin, problem
 
     return s_hat, s_seas, s_lin
+
+
+def _osd_make_l2_l1d2_constrained(
+        signal,
+        w0=1,
+        w1=5,
+        solver="OSQP",
+        verbose=False
+):
+    """
+    Used in solardatatools/algorithms/clipping.py
+    Added hard-coded constraints on the first and last vals
+    """
+    c1 = SumSquare(weight=w0)
+    c2 = Aggregate([
+        SumAbs(weight=w1, diff=2),
+        FirstValEqual(0),
+        LastValEqual(1)
+    ])
+
+    classes = [c1, c2]
+
+    problem = Problem(signal, classes)
+    problem.decompose(solver=solver, verbose=verbose, eps_rel=1e-6, eps_abs=1e-6)
+
+    s_hat = problem.decomposition[1]
+
+    return problem, signal, s_hat, w1
