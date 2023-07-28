@@ -29,14 +29,9 @@ import sys
 import numpy as np
 
 from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365,\
-    _osd_make_l2_l1d2_constrained
+    _osd_tl1_l2d2p365, _osd_make_l2_l1d2_constrained
 from solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365, _cvx_l1_l1d1_l2d2p365,\
-    _cvx_make_l2_l1d2_constrained
-
-# remove when done
-from gfosd import Problem
-from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate, AverageEqual,\
-    Periodic, Inequality, FirstValEqual, LastValEqual, NoCurvature, NoSlope
+    _cvx_tl1_l2d2p365, _cvx_make_l2_l1d2_constrained
 
 
 def l2_l1d1_l2d2p365(
@@ -96,6 +91,7 @@ def l2_l1d1_l2d2p365(
 
     return res
 
+
 def tl1_l2d2p365(
         signal,
         use_ixs=None,
@@ -103,31 +99,41 @@ def tl1_l2d2p365(
         w0=1,
         w1=500,
         yearly_periodic=True,
-        verbose=False,
+        return_all=False,
         solver="OSQP",
-        return_all=False
+        verbose=False
 ):
     """
     - tl1: tilted laplacian noise
     - l2d2p365: small second order diffs (smooth) and 365-periodic
     """
-    c1 = SumQuantile(tau=tau, weight=w0)
-    c2 = SumSquare(weight=w1, diff=2)
+    solver="MOSEK"
+    if solver == "MOSEK":
+        res = _cvx_tl1_l2d2p365(
+            signal=signal,
+            use_ixs=use_ixs,
+            tau=tau,
+            w0=w0,
+            w1=w1,
+            yearly_periodic=yearly_periodic,
+            return_all=return_all,
+            verbose=verbose
+        )
+    else:
+        res = _osd_tl1_l2d2p365(
+            signal=signal,
+            use_ixs=use_ixs,
+            tau=tau,
+            w0=w0,
+            w1=w1,
+            yearly_periodic=yearly_periodic,
+            return_all=return_all,
+            solver=solver,
+            verbose=verbose
+        )
 
-    if len(signal) > 365 and yearly_periodic:
-        c2 = Aggregate([c2, Periodic(365)])
+    return res
 
-    classes = [c1, c2]
-
-    problem = Problem(signal, classes, use_set=use_ixs)
-
-    problem.decompose(solver=solver, verbose=verbose)
-    s_seas = problem.decomposition[1]
-
-    if return_all:
-        return s_seas, problem
-
-    return s_seas
 
 def l1_l1d1_l2d2p365(
     signal,

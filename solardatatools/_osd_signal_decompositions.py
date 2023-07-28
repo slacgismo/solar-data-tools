@@ -5,6 +5,7 @@ from gfosd import Problem
 from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate, AverageEqual,\
     Periodic, Inequality, FirstValEqual, LastValEqual, NoCurvature, NoSlope
 
+
 def _osd_l2_l1d1_l2d2p365(
         signal,
         w0=10,
@@ -73,6 +74,40 @@ def _osd_l2_l1d1_l2d2p365(
         return s_hat, s_seas, s_error, problem
 
     return s_hat, s_seas
+
+
+def _osd_tl1_l2d2p365(
+        signal,
+        use_ixs=None,
+        tau=0.75,
+        w0=1,
+        w1=500,
+        yearly_periodic=True,
+        return_all=False,
+        solver="OSQP",
+        verbose=False
+):
+    """
+    - tl1: tilted laplacian noise
+    - l2d2p365: small second order diffs (smooth) and 365-periodic
+    """
+    c1 = SumQuantile(tau=tau, weight=w0)
+    c2 = SumSquare(weight=w1, diff=2)
+
+    if len(signal) > 365 and yearly_periodic:
+        c2 = Aggregate([c2, Periodic(365)])
+
+    classes = [c1, c2]
+
+    problem = Problem(signal, classes, use_set=use_ixs)
+
+    problem.decompose(solver=solver, verbose=verbose)
+    s_seas = problem.decomposition[1]
+
+    if return_all:
+        return s_seas, problem
+
+    return s_seas
 
 
 def _osd_l1_l1d1_l2d2p365(

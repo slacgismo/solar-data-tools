@@ -3,6 +3,7 @@ import numpy as np
 
 import cvxpy as cvx
 
+
 def _cvx_l2_l1d1_l2d2p365(
     signal,
     use_ixs=None,
@@ -84,6 +85,49 @@ def _cvx_l2_l1d1_l2d2p365(
         return s_hat.value, s_seas.value, s_error.value, problem.objective.value
 
     return s_hat.value, s_seas.value
+
+
+def _cvx_tl1_l2d2p365(
+    signal,
+    use_ixs=None,
+    tau=0.75, # passed as 0.05/0.1 (sunrise), 0.95/0.9 (sunset)
+    w0=1,
+    w1=500,
+    yearly_periodic=True,
+    return_all=False,
+    solver=None,
+    verbose=False
+):
+    """
+    https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
+
+    :param signal: 1d numpy array
+    :param use_ixs: optional index set to apply cost function to
+    :param tau: float, parameter for quantile regression
+    :param c1: float
+    :param solver: string
+    :return: median fit with seasonal baseline removed
+    """
+    if use_ixs is None:
+        use_ixs = ~np.isnan(signal)
+    x = cvx.Variable(len(signal))
+    r = signal[use_ixs] - x[use_ixs]
+    objective = cvx.Minimize(
+        w0 * cvx.sum(0.5 * cvx.abs(r) + (tau - 0.5) * r) +
+        w1 * cvx.sum_squares(cvx.diff(x, k=2))
+    )
+    if len(signal) > 365 and yearly_periodic:
+        constraints = [x[365:] == x[:-365]]
+    else:
+        constraints = []
+    problem = cvx.Problem(objective, constraints=constraints)
+    problem.solve(solver=solver, verbose=verbose)
+
+    if return_all:
+        return x.value, problem.objective.value
+
+    return x.value
+
 
 def _cvx_l1_l1d1_l2d2p365(
     signal,
