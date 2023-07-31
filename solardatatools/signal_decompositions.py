@@ -107,7 +107,6 @@ def tl1_l2d2p365(
     - tl1: tilted laplacian noise
     - l2d2p365: small second order diffs (smooth) and 365-periodic
     """
-    solver="MOSEK"
     if solver == "MOSEK":
         res = _cvx_tl1_l2d2p365(
             signal=signal,
