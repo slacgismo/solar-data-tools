@@ -126,10 +126,14 @@ def _osd_l1_l1d1_l2d2p365(
         sum_card=False
 
     c1 = SumAbs(weight=w0)
-    c2 = Aggregate([SumSquare(weight=w2, diff=2),
-                    AverageEqual(0, period=365),
-                    Periodic(365)
-                    ])
+    
+    if len(signal)>=365:
+        c2 = Aggregate([SumSquare(weight=w2, diff=2),
+                        AverageEqual(0, period=365),
+                        Periodic(365)
+                        ])
+    else:
+        c2 = SumSquare(weight=w2, diff=2)
 
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
