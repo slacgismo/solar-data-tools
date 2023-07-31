@@ -95,7 +95,7 @@ def _cvx_tl1_l2d2p365(
     w1=500,
     yearly_periodic=True,
     return_all=False,
-    solver=None,
+    solver="MOSEK",
     verbose=False
 ):
     """
