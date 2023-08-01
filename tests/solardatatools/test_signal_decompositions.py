@@ -11,6 +11,8 @@
     - test_l2_l1d1_l2d2p365_default_long
     - test_l2_l1d1_l2d2p365_idx_select
     - test_l2_l1d1_l2d2p365_yearly_periodic
+    - test_l2_l1d1_l2d2p365_yearly_periodic_sum_card
+    - test_l2_l1d1_l2d2p365_osqp
 
 2) 'tl1_l2d2p365', components:
     - tl1: 'tilted l1-norm,' also known as quantile cost function
@@ -31,6 +33,7 @@
     -----
     - test_l1_l1d1_l2d2p365_default
     - test_l1_l1d1_l2d2p365_idx_select
+    - test_l1_l1d1_l2d2p365_osqp
 
 4) 'make_l2_l1d2_constrained':
 
@@ -227,6 +230,97 @@ class TestSignalDecompositions(unittest.TestCase):
             w1=50,
             w2=1e6,
             solver=self.solver,
+            yearly_periodic=True,
+            return_all=True
+        )
+
+        actual_obj_val = actual_problem.objective_value
+
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+
+    def test_l2_l1d1_l2d2p365_yearly_periodic_sum_card(self):
+        """Test with signal with len>365 and yearly_periodic and sum_card set to True"""
+
+        # Load input and output data
+        filepath = Path(__file__).parent.parent
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_yearly_periodic_sum_card_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_yearly_periodic_sum_card_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Raw signal
+        signal = np.array(input["test_signal"])
+
+        # Expected output
+        expected_s_hat = output["expected_s_hat_yearly_periodic_sum_card"]
+        expected_s_seas = output["expected_s_seas_yearly_periodic_sum_card"]
+        expected_obj_val = output["expected_obj_val_yearly_periodic_sum_card"]
+
+        # Run test
+        actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
+            signal,
+            w1=50,
+            w2=1e6,
+            solver=self.solver,
+            yearly_periodic=True,
+            return_all=True,
+            sum_card=True
+        )
+
+        actual_obj_val = actual_problem.objective_value
+
+        mae_s_hat = mae(actual_s_hat, expected_s_hat)
+        mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+        self.assertLess(mae_s_hat, self.mae_threshold)
+        self.assertLess(mae_s_seas, self.mae_threshold)
+        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+
+    def test_l2_l1d1_l2d2p365_osqp(self):
+        """Test with signal with len>365 and yearly_periodic and sum_card set to True"""
+
+        # Load input and output data
+        filepath = Path(__file__).parent.parent
+        data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+        input_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_osqp_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d1_l2d2p365_osqp_output.json"
+
+        # Load input
+        with open(input_path) as f:
+            input = json.load(f)
+
+        # Load output
+        with open(output_path) as f:
+            output = json.load(f)
+
+        # Raw signal
+        signal = np.array(input["test_signal"])
+
+        # Expected output
+        expected_s_hat = output["expected_s_hat_osqp"]
+        expected_s_seas = output["expected_s_seas_osqp"]
+        expected_obj_val = output["expected_obj_val_osqp"]
+
+        # Run test
+        actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
+            signal,
+            w1=50,
+            w2=1e6,
+            solver="OSQP",
             yearly_periodic=True,
             return_all=True
         )
@@ -461,6 +555,53 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertLess(mae_s_hat, self.mae_threshold)
         self.assertLess(mae_s_seas, self.mae_threshold)
         self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+
+    def test_l1_l1d1_l2d2p365_osqp(self):
+            """Test with select indices"""
+
+            # Load input and output data
+            filepath = Path(__file__).parent.parent
+            data_file_path = (filepath / "fixtures" / "signal_decompositions")
+
+            input_path = str(data_file_path) + "/" + "test_l1_l1d1_l2d2p365_osqp_input.json"
+            output_path = str(data_file_path) + "/" + "test_l1_l1d1_l2d2p365_osqp_output.json"
+
+            # Load input
+            with open(input_path) as f:
+                input = json.load(f)
+
+            # Load output
+            with open(output_path) as f:
+                output = json.load(f)
+
+            # Input
+            signal = np.array(input["test_signal"])
+            indices = input["indices"]
+
+            # Expected output
+            expected_s_hat = output[f"expected_s_hat_osqp"]
+            expected_s_seas = output[f"expected_s_seas_osqp"]
+            expected_obj_val = output[f"expected_obj_val_osqp"]
+
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
+                signal,
+                w0=1,
+                w1=1000,
+                w2=2000,
+                w3=1,
+                solver="OSQP",
+                use_ixs=indices,
+                return_all=True
+            )
+            actual_obj_val = actual_problem.objective_value
+
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
+
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
         ##########################
