@@ -36,7 +36,7 @@
 
     TESTS
     -----
-    - test_tl1_l1d1_l2d2p365_default
+    - test_make_l2_l1d2_constrained_default
 """
 
 import unittest

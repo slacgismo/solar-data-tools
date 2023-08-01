@@ -48,7 +48,9 @@ def _osd_l2_l1d1_l2d2p365(
         w2 /= 1e4
 
     c1 = SumSquare(weight=w0)
-    c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365)])
+
+    c2 = SumSquare(weight=w2, diff=2)
+    
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
     else:

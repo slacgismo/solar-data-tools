@@ -14,7 +14,7 @@ def _cvx_l2_l1d1_l2d2p365(
     return_all=False, 
     solver="MOSEK",
     transition_locs=None,
-    verbose=True,
+    verbose=False,
 ):
     """
     This performs total variation filtering with the addition of a seasonal
