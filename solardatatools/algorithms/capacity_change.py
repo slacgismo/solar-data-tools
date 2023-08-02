@@ -61,7 +61,7 @@ class CapacityChange:
         capacity_assignments = [set_labels.index(i) for i in rounded_s1]
 
         self.metric = metric
-        self.s1 = s1
-        self.s2 = s2
-        self.s3 = s3
+        self.s1 = s1 # pwc
+        self.s2 = s2 # seasonal
+        self.s3 = s3 # linear
         self.labels = capacity_assignments

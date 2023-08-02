@@ -135,6 +135,8 @@ def _osd_l1_l1d1_l2d2p365(
                         AverageEqual(0, period=365),
                         Periodic(365)
                         ])
+    else:
+        w1 /= 4.9 # PWC weight needs adjusting when dataset is short
 
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
