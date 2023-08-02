@@ -21,12 +21,6 @@ class TestWeightSetting(unittest.TestCase):
         with open(weights_file_path) as file:
             expected_weights = np.loadtxt(file, delimiter=',')
 
-        weight_setting = WeightSetting(solver_type='MOSEK')
-        try:
-            actual_weights = weight_setting.obtain_weights(power_signals_d)
-        except cvx.SolverError:
-            self.skipTest("This test uses MOSEK solver"
-                + "because default ECOS solver fails with large data. "
-                + "Unless MOSEK is installed, this test fails.")
-        else:
-            np.testing.assert_allclose(actual_weights, expected_weights, rtol=1e-5)
+        weight_setting = WeightSetting()
+        actual_weights = weight_setting.obtain_weights(power_signals_d)
+        np.testing.assert_allclose(actual_weights, expected_weights, rtol=1e-5)

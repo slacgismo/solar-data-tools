@@ -59,7 +59,7 @@ def make_linearity_scores(data_matrix, capacity, density_baseline):
     difference_mat = np.round(temp_mat[1:] - temp_mat[:-1], 4)
     modes, counts = mode(difference_mat, axis=0, nan_policy="omit", keepdims=True)
     n = data_matrix.shape[0] - 1
-    linearity_scores = counts.data.squeeze() / (n * density_baseline)
+    linearity_scores = np.asarray(counts.data).squeeze() / (n * density_baseline)
     # Label detected infill points with a boolean mask
     infill = np.zeros_like(data_matrix, dtype=bool)
     slct = linearity_scores >= 0.1

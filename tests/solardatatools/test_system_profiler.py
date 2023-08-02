@@ -36,10 +36,10 @@ class TestSystemProfiler(unittest.TestCase):
         # changes slightly each run, depending on the results of the
         # sunrise sunset evaluation, which uses holdout validation
         # to pick some hyperparameters.
-        ref_latitude = 36.6  # +/- 0.3
+        ref_latitude = 37.5  # +/- 0.8
         ref_longitude = -77.0  # +/- 0.03
-        ref_tilt_real_loc = 22.45  # +/- 1e-4
-        ref_az_real_loc = 0.28  # +/- 1e-6
+        ref_tilt_real_loc = 22.45  # +/- 0.015
+        ref_az_real_loc = 0.28  # +/- 0.015
 
         # Updated tolerances based on new updates for sunset/sunrise SDs
         np.testing.assert_allclose(estimate_latitude, ref_latitude, atol=2)
@@ -47,7 +47,7 @@ class TestSystemProfiler(unittest.TestCase):
         np.testing.assert_allclose(
             estimate_orientation_real_loc,
             (ref_tilt_real_loc, ref_az_real_loc),
-            atol=0.08,
+            atol=0.1,
         )
 
 

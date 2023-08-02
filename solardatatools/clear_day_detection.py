@@ -25,7 +25,7 @@ class ClearDayDetection:
             self,
             data,
             c1=6e3,
-            solver="ECOS"
+            solver="OSQP"
     ):
         capacity_est = np.nanquantile(data, 0.95)
         # set nans to zero to avoid issues w/ summing
@@ -35,7 +35,7 @@ class ClearDayDetection:
         self.density_signal = np.sum(foo, axis=0) / data.shape[0]
         use_days = np.logical_and(self.density_signal > 0.2, self.density_signal < 0.8)
 
-        self.filtered_signal = tl1_l2d2p365(self.density_signal, c1=c1, use_ixs=use_days, tau=0.85, solver=solver)
+        self.filtered_signal = tl1_l2d2p365(self.density_signal, w1=c1, use_ixs=use_days, tau=0.85, solver=solver)
         mask = basic_outlier_filter(self.density_signal - self.filtered_signal, outlier_constant=5.0)
         return mask
 
@@ -45,7 +45,7 @@ class ClearDayDetection:
             smoothness_threshold=0.9,
             energy_threshold=0.8,
             boolean_out=True,
-            solver=None
+            solver="OSQP"
     ):
         """
         This function quickly finds clear days in a PV power data set. The input to this function is a 2D array containing
@@ -72,7 +72,9 @@ class ClearDayDetection:
         # Seasonal renormalization: estimate a "baseline smoothness" based on local
         # 90th percentile of smoothness signal. This has the effect of increasing
         # the score of days if there aren't very many smooth days nearby
-        self.y = tl1_l2d2p365(self.tc, tau=0.9, c1=2.5e6, yearly_periodic=False, solver=solver)
+        # 7/24/23 SM: Adjusted weight down from 2.5e6 to 2.5e5
+        # due to failed decompositions on some datasets (TABJC1001611)
+        self.y = tl1_l2d2p365(self.tc, tau=0.9, w1=2.5e5, yearly_periodic=False, solver=solver)
         tc = self.tc/self.y
         # Take the positive part function, i.e. set the negative values to zero.
         # This is the first metric
@@ -83,7 +85,7 @@ class ClearDayDetection:
         self.de = de/np.nanmax(de)
         # Solve a convex minimization problem to roughly fit the local 90th
         # percentile of the data (quantile regression)
-        self.x = tl1_l2d2p365(self.de, tau=0.9, c1=204697, yearly_periodic=False, solver=solver)
+        self.x = tl1_l2d2p365(self.de, tau=0.9, w1=204697, yearly_periodic=False, solver=solver)
         # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our
         # seasonal normalization.
         de = np.clip(np.divide(self.de, self.x), 0, 1)
@@ -95,7 +97,7 @@ class ClearDayDetection:
         selection = np.logical_and(tc > smoothness_threshold, de > energy_threshold)
         weights[~selection] = 0.0
         # Apply filter for sparsity to catch data errors related to non-zero nighttime data
-        msk = self.filter_for_sparsity(data, solver=None)
+        msk = self.filter_for_sparsity(data, solver=solver)
         self.weights = weights * msk.astype(int)
         if boolean_out:
             return self.weights >= 1e-3
