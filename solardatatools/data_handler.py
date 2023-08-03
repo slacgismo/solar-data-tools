@@ -879,7 +879,7 @@ time zone errors     {report['time zone correction'] != 0}
 
     def find_clipped_times(self):
         if self.clipping_analysis is None:
-            self.clipping_check()
+            self.clipping_check(solver=solver_convex)
         self.clipping_analysis.find_clipped_times()
         self.boolean_masks.clipped_times = self.clipping_analysis.clipping_mask
 
@@ -894,7 +894,6 @@ time zone errors     {report['time zone correction'] != 0}
                 quantile=1.00,
                 w1=40e-6, # scaled weights for QSS
                 w2=6561e-6,
-                w3=1e-6,
                 solver=solver,
             )
         if len(set(self.capacity_analysis.labels)) > 1:

@@ -24,6 +24,7 @@ class CapacityChange:
         self.metric = None
         self.s1 = None
         self.s2 = None
+        self.s3 = None
         self.labels = None
 
     def run(
@@ -33,7 +34,6 @@ class CapacityChange:
         quantile=1.00,
         w1=40e-6,  # scaled weights for QSS
         w2=6561e-6,
-        w3=1e-6,
         solver=None
     ):
         if filter is None:
@@ -47,7 +47,6 @@ class CapacityChange:
                 use_ixs=filter,
                 w1=w1,
                 w2=w2,
-                w3=w3,
                 solver=solver,
                 sum_card=True
             )

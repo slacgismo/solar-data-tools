@@ -140,7 +140,6 @@ def l1_l1d1_l2d2p365(
     w0=2e-6,  # l1 term, scaled
     w1=40e-6, # l1d1 term, scaled
     w2=6e-3, # seasonal term, scaled
-    w3=1e-6, # linear term, scaled
     return_all=False,
     solver=None,
     sum_card=False, # OSD only
@@ -161,7 +160,6 @@ def l1_l1d1_l2d2p365(
             w0=w0,
             w1=w1,
             w2=w2,
-            w3=w3,
             return_all=return_all,
             solver=solver,
             sum_card=sum_card,

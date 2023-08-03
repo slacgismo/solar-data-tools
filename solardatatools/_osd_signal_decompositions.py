@@ -118,7 +118,6 @@ def _osd_l1_l1d1_l2d2p365(
     w0=2e-6,  # l1 term, scaled
     w1=40e-6, # l1d1 term, scaled
     w2=6e-3, # seasonal term, scaled
-    w3=1e-6, # linear term, scaled
     return_all=False,
     solver=None,
     sum_card=False,
@@ -136,15 +135,14 @@ def _osd_l1_l1d1_l2d2p365(
                         Periodic(365)
                         ])
     else:
-        w1 /= 4.9 # PWC weight needs adjusting when dataset is short
+        w1 /= 5 # PWC weight needs adjusting when dataset is short
 
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
     else:
         c3 = SumAbs(weight=w1, diff=1)
 
-    c4 =  Aggregate([NoCurvature(weight=w3),
-                     Inequality(vmin=-0.1, vmax=0.01, diff=1),
+    c4 =  Aggregate([NoCurvature(),
                      FirstValEqual(0)
                      ])
 

@@ -493,7 +493,6 @@ class TestSignalDecompositions(unittest.TestCase):
             w0=1e-10,
             w1=10e-7,
             w2=1e-2,
-            w3=1,
             sum_card=True,
             solver=self.solver,
             return_all=True
@@ -541,7 +540,6 @@ class TestSignalDecompositions(unittest.TestCase):
             w0=1e-10,
             w1=10e-7,
             w2=1e-2,
-            w3=1,
             sum_card=True,
             solver=self.solver,
             use_ixs=indices,
@@ -589,7 +587,6 @@ class TestSignalDecompositions(unittest.TestCase):
                 w0=1,
                 w1=1000,
                 w2=2000,
-                w3=1,
                 solver="OSQP",
                 use_ixs=indices,
                 return_all=True

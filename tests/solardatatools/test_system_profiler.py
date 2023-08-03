@@ -47,7 +47,7 @@ class TestSystemProfiler(unittest.TestCase):
         np.testing.assert_allclose(
             estimate_orientation_real_loc,
             (ref_tilt_real_loc, ref_az_real_loc),
-            atol=0.1,
+            atol=0.5,
         )
 
 

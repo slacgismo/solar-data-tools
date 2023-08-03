@@ -36,6 +36,7 @@ class TimeShift:
         self.jumps_per_year = None
         self.best_w1 = None
         self.best_ix = None
+        self.w1_vals = None
         self.baseline = None
         self.periodic_detector = None
         self.__recursion_depth = 0
@@ -81,12 +82,12 @@ class TimeShift:
             best_w1 = w1s[best_ix]
         else:
             best_w1 = w1
-            hn = None
-            rn = None
-            tv_metric = None
-            jpy = None
-            w1s = None
-            best_ix = None
+            hn = self.normalized_holdout_error
+            rn = self.normalized_train_error
+            tv_metric = self.tv_metric
+            jpy = self.jumps_per_year
+            w1s = self.w1_vals
+            best_ix = self.best_ix
         s1, s2 = self.estimate_components(
             metric, best_w1, w2, use_ixs, periodic_detector, solver=solver, sum_card=sum_card
         )

@@ -47,6 +47,7 @@ import json
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error as mae
+import cvxpy as cvx
 
 from solardatatools import _cvx_signal_decompositions as sd
 
@@ -88,21 +89,25 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_365"]
         expected_obj_val = output["expected_obj_val_mosek_365"]
 
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal,
-            w1=10,
-            w2=1e5,
-            solver=self.cvxpy_solver,
-            return_all=True
-        )
+        try:
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
+                signal,
+                w1=10,
+                w2=1e5,
+                solver=self.cvxpy_solver,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
     def test_cvx_l2_l1d1_l2d2p365_transition(self):
@@ -132,21 +137,25 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_transition_365"]
         expected_obj_val = output["expected_obj_val_mosek_transition_365"]
 
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal,
-            w1=10,
-            w2=1e5,
-            transition_locs=indices,
-            return_all=True
-        )
+        try:
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
+                signal,
+                w1=10,
+                w2=1e5,
+                transition_locs=indices,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_cvx_l2_l1d1_l2d2p365_transition_wrong(self):
         """Test with wrong (random) transition location"""
@@ -175,21 +184,25 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_transition_wrong_365"]
         expected_obj_val = output["expected_obj_val_mosek_transition_wrong_365"]
 
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal,
-            w1=10,
-            w2=1e5,
-            transition_locs=transition,
-            return_all=True
-        )
+        try:
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
+                signal,
+                w1=10,
+                w2=1e5,
+                transition_locs=transition,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_cvx_l2_l1d1_l2d2p365_default_long(self):
         """Test with default args and signal with len >365"""
@@ -217,21 +230,25 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek"]
         expected_obj_val = output["expected_obj_val_mosek"]
 
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal,
-            w1=10,
-            w2=1e5,
-            solver=self.cvxpy_solver,
-            return_all=True
-        )
+        try:
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
+                signal,
+                w1=10,
+                w2=1e5,
+                solver=self.cvxpy_solver,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_cvx_l2_l1d1_l2d2p365_idx_select(self):
         """Test with signal with select indices"""
@@ -260,22 +277,26 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_ixs"]
         expected_obj_val = output["expected_obj_val_mosek_ixs"]
 
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal,
-            w1=10,
-            w2=1e5,
-            solver=self.cvxpy_solver,
-            use_ixs=indices,
-            return_all=True
-        )
+        try:
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
+                signal,
+                w1=10,
+                w2=1e5,
+                solver=self.cvxpy_solver,
+                use_ixs=indices,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_cvx_l2_l1d1_l2d2p365_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
@@ -303,22 +324,26 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_yearly_periodic"]
         expected_obj_val = output["expected_obj_val_mosek_yearly_periodic"]
 
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal,
-            w1=10,
-            w2=1e5,
-            solver=self.cvxpy_solver,
-            yearly_periodic=True,
-            return_all=True
-        )
+        try:
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
+                signal,
+                w1=10,
+                w2=1e5,
+                solver=self.cvxpy_solver,
+                yearly_periodic=True,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
     ###################
@@ -350,17 +375,21 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_365"]
         expected_obj_val = output["expected_obj_val_mosek_365"]
 
-        # Run test with default args
-        actual_s_seas, actual_obj_val = sd._cvx_tl1_l2d2p365(signal,
-                                                        tau=0.8,
-                                                        w1=1e5,
-                                                        solver=self.cvxpy_solver,
-                                                        return_all=True)
+        try:
+            # Run test with default args
+            actual_s_seas, actual_obj_val = sd._cvx_tl1_l2d2p365(signal,
+                                                            tau=0.8,
+                                                            w1=1e5,
+                                                            solver=self.cvxpy_solver,
+                                                            return_all=True)
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_cvx_tl1_l2d2p365_idx_select(self):
         """Test with select indices"""
@@ -388,18 +417,22 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_ixs"]
         expected_obj_val = output["expected_obj_val_mosek_ixs"]
 
-        # Run test
-        actual_s_seas, actual_obj_val = sd._cvx_tl1_l2d2p365(signal,
-                                                        tau=0.8,
-                                                        w1=1e5,
-                                                        solver=self.cvxpy_solver,
-                                                        use_ixs=indices,
-                                                        return_all=True)
+        try:
+            # Run test
+            actual_s_seas, actual_obj_val = sd._cvx_tl1_l2d2p365(signal,
+                                                            tau=0.8,
+                                                            w1=1e5,
+                                                            solver=self.cvxpy_solver,
+                                                            use_ixs=indices,
+                                                            return_all=True)
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_cxv_tl1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
@@ -426,18 +459,22 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output["expected_s_seas_mosek_yearly_periodic"]
         expected_obj_val = output["expected_obj_val_mosek_yearly_periodic"]
 
-        # Run test with default args
-        actual_s_seas, actual_obj_val = sd._cvx_tl1_l2d2p365(signal,
-                                                        tau=0.8,
-                                                        solver=self.cvxpy_solver,
-                                                        w1=1e5,
-                                                        yearly_periodic=False,
-                                                        return_all=True)
+        try:
+            # Run test with default args
+            actual_s_seas, actual_obj_val = sd._cvx_tl1_l2d2p365(signal,
+                                                            tau=0.8,
+                                                            solver=self.cvxpy_solver,
+                                                            w1=1e5,
+                                                            yearly_periodic=False,
+                                                            return_all=True)
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
     #######################
@@ -470,21 +507,25 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output[f"expected_s_seas_mosek_365"]
         expected_obj_val = output[f"expected_obj_val_mosek_365"]
 
-        # Run test with default args
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l1_l1d1_l2d2p365(
-            signal,
-            w1=5,
-            w2=1e5,
-            solver=self.cvxpy_solver,
-            return_all=True
-        )
+        try:
+            # Run test with default args
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l1_l1d1_l2d2p365(
+                signal,
+                w1=5,
+                w2=1e5,
+                solver=self.cvxpy_solver,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     def test_cvx_l1_l1d1_l2d2p365_idx_select(self):
         """Test with select indices"""
@@ -513,22 +554,26 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_s_seas = output[f"expected_s_seas_mosek_ixs"]
         expected_obj_val = output[f"expected_obj_val_mosek_ixs"]
 
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l1_l1d1_l2d2p365(
-            signal,
-            w1=5,
-            w2=1e5,
-            solver=self.cvxpy_solver,
-            use_ixs=indices,
-            return_all = True
-        )
+        try:
+            # Run test
+            actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l1_l1d1_l2d2p365(
+                signal,
+                w1=5,
+                w2=1e5,
+                solver=self.cvxpy_solver,
+                use_ixs=indices,
+                return_all = True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_s_hat = mae(actual_s_hat, expected_s_hat)
+            mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_s_hat, self.mae_threshold)
+            self.assertLess(mae_s_seas, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 
         ###############################
@@ -560,18 +605,22 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_y_hat = output[f"expected_y_hat_mosek"]
         expected_obj_val = output[f"expected_obj_val_mosek"]
 
-        # Run test with default args
-        actual_y_hat, actual_obj_val = sd._cvx_make_l2_l1d2_constrained(
-            signal,
-            w1=1e1,
-            solver=self.cvxpy_solver,
-            return_all=True
-        )
+        try:
+            # Run test with default args
+            actual_y_hat, actual_obj_val = sd._cvx_make_l2_l1d2_constrained(
+                signal,
+                w1=1e1,
+                solver=self.cvxpy_solver,
+                return_all=True
+            )
+        except cvx.SolverError:
+            self.skipTest("This test uses MOSEK solver."
+                + "Unless MOSEK is installed, this test fails.")
+        else:
+            mae_y_hat = mae(actual_y_hat, expected_y_hat)
 
-        mae_y_hat = mae(actual_y_hat, expected_y_hat)
-
-        self.assertLess(mae_y_hat, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
+            self.assertLess(mae_y_hat, self.mae_threshold)
+            self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
 if __name__ == '__main__':
     unittest.main()
