@@ -6,7 +6,6 @@ on:
 jobs:
     build-pypi:
         runs-on: ubuntu-latest
-        needs: run-tests
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v3
@@ -26,7 +25,6 @@ jobs:
 
     build-conda:
         runs-on: ubuntu-latest
-        needs: run-tests
 # sets default shell to remove need for source to run the conda shell
         defaults:
           run:
