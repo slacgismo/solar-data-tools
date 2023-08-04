@@ -1,4 +1,9 @@
-""" This module contains tests for the following signal decompositions:
+"""
+!!!!!!!!! NOTE !!!!!!!!!!!!
+These tests will fail and return a MOSEK error if a MOSEK license isn't found.
+If required, please check that your license file is in [HOME]/mosek and is current.
+
+This module contains tests for the following signal decompositions:
 
 1) '_cvx_l2_l1d1_l2d2p365', components:
     - l2: gaussian noise, sum-of-squares small or l2-norm squared
@@ -34,11 +39,11 @@
     - test_cvx_l1_l1d1_l2d2p365_default
     - test_cvx_l1_l1d1_l2d2p365_idx_select
 
-4) '_cvx_make_l2_l1d2_constrained':
+4) '_cvx_l2_l1d2_constrained':
 
     TESTS
     -----
-    - test_cvx_make_l2_l1d2_constrained_default
+    - test_cvx_l2_l1d2_constrained_default
 """
 
 import unittest
@@ -532,18 +537,18 @@ class TestSignalDecompositions(unittest.TestCase):
 
 
         ###############################
-        # _cvx_make_l2_l1d2_constrained
+        # _cvx_l2_l1d2_constrained
         ###############################
 
-    def test_cvx_make_l2_l1d2_constrained_default(self):
+    def test_cvx_l2_l1d2_constrained_default(self):
         """Test with default args"""
 
         # Load input and output data
         filepath = Path(__file__).parent.parent
         data_file_path = (filepath / "fixtures" / "signal_decompositions" / "_cvx_signal_decompositions")
 
-        input_path = str(data_file_path) + "/" + "test_cvx_make_l2_l1d2_constrained_default_input.json"
-        output_path = str(data_file_path) + "/" + "test_cvx_make_l2_l1d2_constrained_default_output.json"
+        input_path = str(data_file_path) + "/" + "test_cvx_l2_l1d2_constrained_default_input.json"
+        output_path = str(data_file_path) + "/" + "test_cvx_l2_l1d2_constrained_default_output.json"
 
         # Load input
         with open(input_path) as f:
@@ -561,7 +566,7 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output[f"expected_obj_val_mosek"]
 
         # Run test with default args
-        actual_y_hat, actual_obj_val = sd._cvx_make_l2_l1d2_constrained(
+        actual_y_hat, actual_obj_val = sd._cvx_l2_l1d2_constrained(
             signal,
             w1=1e1,
             solver=self.cvxpy_solver,

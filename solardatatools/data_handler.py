@@ -410,7 +410,6 @@ class DataHandler:
         t[3] = time()
         if fix_shifts:
             try:
-                # CVXPY
                 self.auto_fix_time_shifts(
                     w1=w1,
                     w2=w2,
@@ -769,7 +768,7 @@ time zone errors     {report['time zone correction'] != 0}
         return
 
     def get_daily_scores(self, threshold=0.2, solver=None):
-        self.get_density_scores(threshold=threshold, solver=solver)  # CVXPY
+        self.get_density_scores(threshold=threshold, solver=solver)
         self.get_linearity_scores()
         return
 
