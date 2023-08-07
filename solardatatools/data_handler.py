@@ -179,28 +179,33 @@ class DataHandler:
         verbose=True,
         start_day_ix=None,
         end_day_ix=None,
-        c1=None,
-        c2=1e5,
+        w1=None,
+        w2=1e5,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
         daytime_threshold=0.005,
         units="W",
-        solver=None,
+        solver="QSS",
+        solver_convex="OSQP",
         reset=True,
     ):
-        try:
-            x = cvx.Variable()
-            prob = cvx.Problem(cvx.Minimize(cvx.sum_squares(x)))
-            prob.solve(solver="MOSEK")
-        except Exception as e:
-            print("VALID MOSEK LICENSE NOT AVAILABLE")
-            print(
-                "please check that your license file is in [HOME]/mosek and is current\n"
-            )
-            print("error msg:", e)
-            return
+        if solver == "MOSEK":
+            # Set all problems to use MOSEK
+            # and check that MOSEK is installed
+            solver_convex = "MOSEK"
+            try:
+                x = cvx.Variable()
+                prob = cvx.Problem(cvx.Minimize(cvx.sum_squares(x)))
+                prob.solve(solver="MOSEK")
+            except Exception as e:
+                print("VALID MOSEK LICENSE NOT AVAILABLE")
+                print(
+                    "please check that your license file is in [HOME]/mosek and is current\n"
+                )
+                print("error msg:", e)
+                return
         if reset:
             self._initialize_attributes()
         self.daily_scores = DailyScores()
@@ -264,12 +269,8 @@ class DataHandler:
         # Run once to get a rough estimate. Update at the end after cleaning
         # is finished
         ss = SunriseSunset()
-        # CVXPY - either MOSEK or ECOS for this one, SCS fails
         try:
-            if solver is None or solver == "MOSEK":
-                ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver)
-            else:
-                ss.run_optimizer(self.raw_data_matrix, plot=False, solver="ECOS")
+            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
             self.boolean_masks.daytime = ss.sunup_mask_estimated
         except:
             msg = "Sunrise/sunset detection failed."
@@ -334,8 +335,8 @@ class DataHandler:
         t_clean = np.zeros(6)
         t_clean[0] = time()
         try:
-            # CVXPY - density scoring
-            self.get_daily_scores(threshold=0.2, solver=solver)
+            # density scoring
+            self.get_daily_scores(threshold=0.2, solver=solver_convex)
         except:
             msg = "Daily quality scoring failed."
             self._error_msg += "\n" + msg
@@ -358,11 +359,10 @@ class DataHandler:
             self.daily_flags = None
         t_clean[1] = time()
         try:
-            # CVXPY
             self.detect_clear_days(
                 smoothness_threshold=clear_day_smoothness_param,
                 energy_threshold=clear_day_energy_param,
-                solver=solver,
+                solver=solver_convex,
             )
         except:
             msg = "Clear day detection failed."
@@ -372,8 +372,7 @@ class DataHandler:
                 traceback.print_exception(*sys.exc_info())
         t_clean[2] = time()
         try:
-            # CVXPY
-            self.clipping_check(solver=solver)
+            self.clipping_check(solver=solver_convex)
         except Exception as e:
             msg = "clipping check failed: " + str(e)
             self._error_msg += "\n" + msg
@@ -394,7 +393,6 @@ class DataHandler:
             self.data_clearness_score = None
         t_clean[4] = time()
         try:
-            # CVXPY
             self.capacity_clustering(solver=solver)
         except TypeError:
             msg = "Capacity clustering failed."
@@ -412,10 +410,9 @@ class DataHandler:
         t[3] = time()
         if fix_shifts:
             try:
-                # CVXPY
                 self.auto_fix_time_shifts(
-                    c1=c1,
-                    c2=c2,
+                    w1=w1,
+                    w2=w2,
                     estimator=solar_noon_estimator,
                     threshold=daytime_threshold,
                     periodic_detector=periodic_detector,
@@ -427,8 +424,8 @@ class DataHandler:
                         print("Invoking periodic timeshift detector.")
                     old_analysis = self.time_shift_analysis
                     self.auto_fix_time_shifts(
-                        c1=c1,
-                        c2=c2,
+                        w1=w1,
+                        w2=w2,
                         estimator=solar_noon_estimator,
                         threshold=daytime_threshold,
                         periodic_detector=True,
@@ -472,9 +469,7 @@ class DataHandler:
                 )
 
         # Update daytime detection based on cleaned up data
-        # self.daytime_analysis.run_optimizer(self.filled_data_matrix, plot=False)
-        # CVXPY
-        self.daytime_analysis.calculate_times(self.filled_data_matrix, solver=solver)
+        self.daytime_analysis.calculate_times(self.filled_data_matrix, solver=solver_convex)
         self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
         ######################################################################
         # Process Extra columns
@@ -534,6 +529,7 @@ class DataHandler:
                 )
             )
         self._ran_pipeline = True
+        self.total_time = total_time
         return
 
     def report(self, verbose=True, return_values=False):
@@ -772,7 +768,7 @@ time zone errors     {report['time zone correction'] != 0}
         return
 
     def get_daily_scores(self, threshold=0.2, solver=None):
-        self.get_density_scores(threshold=threshold, solver=solver)  # CVXPY
+        self.get_density_scores(threshold=threshold, solver=solver)
         self.get_linearity_scores()
         return
 
@@ -866,7 +862,7 @@ time zone errors     {report['time zone correction'] != 0}
             self.data_clearness_score = None
         return
 
-    def clipping_check(self, solver=None):
+    def clipping_check(self, solver="OSQP"):
         if self.clipping_analysis is None:
             self.clipping_analysis = ClippingDetection()
         self.clipping_analysis.check_clipping(
@@ -882,7 +878,7 @@ time zone errors     {report['time zone correction'] != 0}
 
     def find_clipped_times(self):
         if self.clipping_analysis is None:
-            self.clipping_check()
+            self.clipping_check(solver=solver_convex)
         self.clipping_analysis.find_clipped_times()
         self.boolean_masks.clipped_times = self.clipping_analysis.clipping_mask
 
@@ -895,16 +891,10 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                c1=15,
-                c2=6561,
-                c3=300,
-                reweight_eps=0.5,
-                reweight_niter=5,
-                dbscan_eps=0.02,
-                dbscan_min_samples="auto",
+                w1=40e-6, # scaled weights for QSS
+                w2=6561e-6,
                 solver=solver,
             )
-        # np.max(db.labels_) > 0:
         if len(set(self.capacity_analysis.labels)) > 1:
             self.capacity_changes = True
             self.daily_flags.capacity_cluster = self.capacity_analysis.labels
@@ -914,6 +904,7 @@ time zone errors     {report['time zone correction'] != 0}
             metric = self.capacity_analysis.metric
             s1 = self.capacity_analysis.s1
             s2 = self.capacity_analysis.s2
+            s3 = self.capacity_analysis.s3
             labels = self.capacity_analysis.labels
             try:
                 xs = self.day_index.to_pydatetime()
@@ -927,7 +918,7 @@ time zone errors     {report['time zone correction'] != 0}
                     gridspec_kw={"height_ratios": [4, 1]},
                 )
                 ax[0].plot(xs, s1, label="capacity change detector")
-                ax[0].plot(xs, s2 + s1, label="signal model")
+                ax[0].plot(xs, s1+s2+s3, label="signal model")
                 ax[0].plot(xs, metric, alpha=0.3, label="measured signal")
                 ax[0].legend()
                 ax[0].set_title("Detection of system capacity changes")
@@ -938,7 +929,7 @@ time zone errors     {report['time zone correction'] != 0}
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label="capacity change detector")
-                ax.plot(xs, s2 + s1, label="signal model")
+                ax.plot(xs, s1+s2+s3, label="signal model")
                 ax.plot(xs, metric, alpha=0.3, label="measured signal")
                 ax.legend()
                 ax.set_title("Detection of system capacity changes")
@@ -948,29 +939,84 @@ time zone errors     {report['time zone correction'] != 0}
 
     def auto_fix_time_shifts(
         self,
-        c1=5.0,
-        c2=1e5,
+        w1=5,
+        w2=1e5,
         estimator="com",
         threshold=0.005,
         periodic_detector=False,
         solver=None,
     ):
+        def max_min_scale(signal):
+            maximum = np.nanquantile(signal, .95)
+            minimum = np.nanquantile(signal, .05)
+            return (signal - minimum) / (maximum - minimum), minimum, maximum
+
+        def rescale_signal(signal, minimum, maximum):
+            return (signal * (maximum - minimum)) + minimum
+
+        # scale data by min/max
+        metric, min_metric, max_metric = max_min_scale(self.filled_data_matrix)
+
         self.time_shift_analysis = TimeShift()
         if self.data_clearness_score >= 0.3:
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors
-        self.time_shift_analysis.run(
-            self.filled_data_matrix,
-            use_ixs=use_ixs,
-            c1=c1,
-            c2=c2,
-            solar_noon_estimator=estimator,
-            threshold=threshold,
-            periodic_detector=periodic_detector,
-            solver=solver
+
+        ########## Updates to timeshift algorithm, 6/2023 ##########
+        # If running with any solver other than QSS: solve convex problem
+        # If running with QSS without a set w1: run w1 meta-opt with convex problem,
+        # then subsequently solve nonconvex problem with set w1 as found in convex solution
+        # If running with QSS with a set w1: solve nonconvex problem
+        if w1 is None or solver != "QSS":
+            # Run with convex formulation first
+            self.time_shift_analysis.run(
+                metric,
+                use_ixs=use_ixs,
+                w1=w1,
+                w2=w2,
+                solar_noon_estimator=estimator,
+                threshold=threshold,
+                periodic_detector=periodic_detector,
+                solver=solver,
+                sum_card=False
+            )
+
+        if solver == "QSS":
+            if w1 is not None:
+                # Run with nonconvex formulation and set w1
+                self.time_shift_analysis.run(
+                    metric,
+                    use_ixs=use_ixs,
+                    w1=w1,
+                    w2=w2,
+                    solar_noon_estimator=estimator,
+                    threshold=threshold,
+                    periodic_detector=periodic_detector,
+                    solver=solver,
+                    sum_card=True
+                )
+            else:
+                # If solver is QSS, run with nonconvex formulation again
+                # using best_w1 from convex solution
+                self.time_shift_analysis.run(
+                    metric,
+                    use_ixs=use_ixs,
+                    w1=self.time_shift_analysis.best_w1,
+                    w2=w2,
+                    solar_noon_estimator=estimator,
+                    threshold=threshold,
+                    periodic_detector=periodic_detector,
+                    solver=solver,
+                    sum_card=True
+                )
+
+        # Scale data back
+        self.filled_data_matrix = rescale_signal(
+            self.time_shift_analysis.corrected_data,
+            min_metric,
+            max_metric
         )
-        self.filled_data_matrix = self.time_shift_analysis.corrected_data
         if len(self.time_shift_analysis.index_set) == 0:
             self.time_shifts = False
         else:

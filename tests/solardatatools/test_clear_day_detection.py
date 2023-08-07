@@ -23,20 +23,10 @@ class TestClearDayDetection(unittest.TestCase):
             expected_output = np.loadtxt(file, delimiter=",")
         expected_output = expected_output >= 1e-3
 
-        # Underling solar-data-tools uses MOSEK solver and
-        # if it's not used, try with ECOS solver.
-        # However, fails with ECOS solver and raises cvx.SolverError.
-        try:
-            clear_day_detection = ClearDayDetection()
-            actual_output = clear_day_detection.find_clear_days(data)
-        except (cvx.SolverError, ValueError):
-            self.skipTest(
-                "This test uses MOSEK solver"
-                + "because default ECOS solver fails with large data. "
-                + "Unless MOSEK is installed, this test fails."
-            )
-        else:
-            np.testing.assert_array_equal(expected_output, actual_output)
+        clear_day_detection = ClearDayDetection()
+        actual_output = clear_day_detection.find_clear_days(data)
+
+        np.testing.assert_array_equal(expected_output, actual_output)
 
     def test_clear_day_weights(self):
         filepath = Path(__file__).parent.parent
@@ -54,17 +44,7 @@ class TestClearDayDetection(unittest.TestCase):
         with open(expected_data_file_path) as file:
             expected_output = np.loadtxt(file, delimiter=",")
 
-        # Underling solar-data-tools uses MOSEK solver and
-        # if it's not used, try with ECOS solver.
-        # However, fails with ECOS solver and raises cvx.SolverError.
-        try:
-            clear_day_detection = ClearDayDetection()
-            actual_output = clear_day_detection.find_clear_days(data, boolean_out=False)
-        except (cvx.SolverError, ValueError):
-            self.skipTest(
-                "This test uses MOSEK solver"
-                + "because default ECOS solver fails with large data. "
-                + "Unless MOSEK is installed, this test fails."
-            )
-        else:
-            np.testing.assert_array_almost_equal(expected_output, actual_output, 4)
+        clear_day_detection = ClearDayDetection()
+        actual_output = clear_day_detection.find_clear_days(data, boolean_out=False)
+
+        np.testing.assert_array_almost_equal(expected_output, actual_output, 4)
