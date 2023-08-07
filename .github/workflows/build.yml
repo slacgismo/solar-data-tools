@@ -38,7 +38,7 @@ jobs:
             uses: actions/checkout@v3
 
           - name: Install Python
-            uses: actions/setup-python@v4
+            uses: actions/setup-python@v3
             with:
               python-version: "3.10"
 
@@ -55,7 +55,7 @@ jobs:
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
               conda install mamba -n base -c conda-forge
-              mamba install "conda-build=3.21.9" colorama pip ruamel ruamel.yaml rich mamba jsonschema -c conda-forge
+              mamba install python=3.10 "conda-build=3.21.9" colorama pip ruamel ruamel.yaml rich mamba jsonschema -c conda-forge
               pip install -e .
 
 # echo yes before login to prevent anaconda bug breaking automation
