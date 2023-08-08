@@ -52,7 +52,7 @@ jobs:
 
           - name: Install the Mamba Dependencies
             run: |
-              conda config --set always_yes yes --set auto_update_conda false
+              conda config --set always_yes yes --set auto_update_conda false --set channel_priority disabled
               conda update conda
               conda install mamba -n base -c conda-forge
               mamba install python=3.10 "conda-build=3.21.9" colorama pip ruamel ruamel.yaml rich mamba jsonschema -c conda-forge
@@ -66,7 +66,7 @@ jobs:
             id: mambabuild
             run: |
               mamba install anaconda-client
-              conda config --set anaconda_upload no
+              conda config --set anaconda_upload no --set channel_priority disabled
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
               git fetch --prune --unshallow --tags
               VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge --numpy 1.22.0
