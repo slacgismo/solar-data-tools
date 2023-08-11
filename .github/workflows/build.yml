@@ -37,6 +37,11 @@ jobs:
           - name: Checkout Repository
             uses: actions/checkout@v3
 
+          - name: Install Python
+            uses: actions/setup-python@v3
+            with:
+              python-version: "3.10"
+
 # Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
           - name: Install Miniconda
             uses: conda-incubator/setup-miniconda@v2
@@ -45,21 +50,24 @@ jobs:
               activate-environment: ""
               miniconda-version: "latest"
 
-          - name: Install the Conda Dependencies
+          - name: Install the Mamba Dependencies
             run: |
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
-              conda install conda-build
+              conda install mamba -n base -c conda-forge
+              conda install -n base conda-libmamba-solver
+              mamba install python=3.10 "conda-build=3.21.9" colorama pip ruamel ruamel.yaml rich mamba jsonschema -c conda-forge
+              pip install -e .
 
 # echo yes before login to prevent anaconda bug breaking automation
 # git tags MUST be fetched otherwise output will be blank
 # bash variables cannot be used in github actions, must use actions specific syntax and methods
 # channels need to be specified on build and are saved in the package for installs
           - name: Build the Anaconda Package
-            id: condabuild
+            id: mambabuild
             run: |
-              conda install anaconda-client
-              conda config --set anaconda_upload no
+              mamba install anaconda-client
+              conda config --set anaconda_upload no --set solver libmamba
               echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
               git fetch --prune --unshallow --tags
               VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge --numpy 1.22.0
@@ -68,4 +76,4 @@ jobs:
           - name: Upload the Anaconda Package
             id: condaload
             run: |
-              anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2
+              anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.mambabuild.outputs.gitversion }}-*.tar.bz2
