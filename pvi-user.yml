@@ -5,6 +5,7 @@ channels:
   - conda-forge
   - defaults
   - stanfordcvxgrp
+  - slacgismo
   - mosek
 dependencies:
   - python=3.10
@@ -30,4 +31,7 @@ dependencies:
   - cassandra-driver
   - openblas
   - smart_open
+  - solar-data-tools
+  - pv-system-profiler
+  - statistical-clear-sky
 
