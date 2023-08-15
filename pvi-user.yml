@@ -13,15 +13,21 @@ dependencies:
   - pandas
   - scikit-learn
   - jupyter
+  - ipython
   - matplotlib
   - seaborn
   - requests
   - pvlib
   - cvxpy>=1.1.0
-  - cmakes
+  - cmake
   - pykml
   - haversine
   - boto3
   - qss
   - sig-decomp
   - mosek
+  - s3fs
+  - cassandra-driver
+  - openblas
+  - smart_open
+
