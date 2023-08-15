@@ -1,0 +1,27 @@
+# conda env create -f pvi-user.yml
+name: pvi-user
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+  - stanfordcvxgrp
+  - mosek
+dependencies:
+  - python=3.10
+  - scipy>=1.11
+  - numpy>=1.22.0
+  - pandas
+  - scikit-learn
+  - jupyter
+  - matplotlib
+  - seaborn
+  - requests
+  - pvlib
+  - cvxpy>=1.1.0
+  - cmakes
+  - pykml
+  - haversine
+  - boto3
+  - qss
+  - sig-decomp
+  - mosek
