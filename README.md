@@ -174,17 +174,17 @@ dh.run_pipeline(power_col='dc_power')
 If everything is working correctly, you should see something like the following
 
 ```
-total time: 16.67 seconds
+total time: 24.27 seconds
 --------------------------------
 Breakdown
 --------------------------------
-Preprocessing              6.52s
-Cleaning                   8.62s
-Filtering/Summarizing      1.53s
-    Data quality           0.23s
-    Clear day detect       0.19s
-    Clipping detect        0.21s
-    Capacity change detect 0.91s
+Preprocessing              11.14s
+Cleaning                   0.94s
+Filtering/Summarizing      12.19s
+    Data quality           0.25s
+    Clear day detect       1.75s
+    Clipping detect        7.77s
+    Capacity change detect 2.42s
 ```
 
 ## Contributors
