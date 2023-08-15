@@ -146,14 +146,13 @@ $ conda install -c slacgismo solar-data-tools
 
 ### Solvers
 
-#### ECOS
+#### QSS & OSQP
 
-By default, ECOS solver is used, which is supported by cvxpy because it is Open Source.
-However, it is found that Mosek solver is more stable. Thus, we encourage you to install it separately as below and obtain the license on your own.
+By default, [QSS](https://github.com/cvxgrp/qss) and OSQP solvers are used for non-convex and convex problems, respectively. Both are supported by [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools, and both are open source. 
 
 #### MOSEK
 
- MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
+MOSEK is a commercial software package. It is more stable and offers faster solve times. The included YAML/requirements.txt file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
 
 * [mosek](https://www.mosek.com/resources/getting-started/)
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
@@ -161,7 +160,7 @@ However, it is found that Mosek solver is more stable. Thus, we encourage you to
 
 ## Usage
 
-Users will primarily interact with this software through the `DataHandler` class.
+Users will primarily interact with this software through the `DataHandler` class. If you would like to specify a solver, just pass the keyword argument `solver` to `dh.pipeline` with the solver of choice. Passing QSS will keep the convex problems solver as OSQP, unless `solver_convex=QSS` is passed as well. Setting `solver=MOSEK` will set the solver to MOSEK for convex and non-convex problems by default.
 
 ```python
 from solardatatools import DataHandler
