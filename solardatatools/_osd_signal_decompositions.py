@@ -264,6 +264,9 @@ def _osd_l2_l1d2_constrained(
     :return: A tuple with returning the signal, the l1d2 component estimate,
      and the weight
     """
+    print(signal.shape)
+    print(signal.nbytes)
+
     c1 = SumSquare(weight=w0)
     c2 = Aggregate([
         SumAbs(weight=w1, diff=2),
