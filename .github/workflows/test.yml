@@ -28,9 +28,6 @@ jobs:
               sudo $pythonLocation/bin/python3 -m pip install awscli coverage
               sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
               $pythonLocation/bin/python3 -m pip list
-              sudo git clone https://github.com/cvxgrp/signal-decomposition.git
-              sudo $pythonLocation/bin/python3 -m pip install -r signal-decomposition/requirements.txt
-              sudo $pythonLocation/bin/python3 -m pip install ./signal-decomposition/.
 
           - name: Setup Mosek License File
             run: |

@@ -35,11 +35,11 @@
     - test_l1_l1d1_l2d2p365_idx_select
     - test_l1_l1d1_l2d2p365_osqp
 
-4) 'make_l2_l1d2_constrained':
+4) 'l2_l1d2_constrained':
 
     TESTS
     -----
-    - test_make_l2_l1d2_constrained_default
+    - test_l2_l1d2_constrained_default
 """
 
 import unittest
@@ -602,18 +602,18 @@ class TestSignalDecompositions(unittest.TestCase):
 
 
         ##########################
-        # make_l2_l1d2_constrained
+        # l2_l1d2_constrained
         ##########################
 
-    def test_make_l2_l1d2_default(self):
+    def test_l2_l1d2_default(self):
         """Test with default args"""
 
         # Load input and output data
         filepath = Path(__file__).parent.parent
         data_file_path = (filepath / "fixtures" / "signal_decompositions")
 
-        input_path = str(data_file_path) + "/" + "test_make_l2_l1d2_default_input.json"
-        output_path = str(data_file_path) + "/" + "test_make_l2_l1d2_default_output.json"
+        input_path = str(data_file_path) + "/" + "test_l2_l1d2_default_input.json"
+        output_path = str(data_file_path) + "/" + "test_l2_l1d2_default_output.json"
 
         # Load input
         with open(input_path) as f:
@@ -631,10 +631,11 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output[f"expected_obj_val"]
 
         # Run test with default args
-        actual_problem, _, actual_y_hat, _ = sd.make_l2_l1d2_constrained(
+        actual_y_hat, actual_problem = sd.l2_l1d2_constrained(
             signal,
             w1=5,
-            solver=self.solver_convex
+            solver=self.solver_convex,
+            return_all=True
         )
         actual_obj_val = actual_problem.objective_value
 

@@ -8,7 +8,7 @@ import numpy as np
 import cvxpy as cvx
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from solardatatools.signal_decompositions import make_l2_l1d2_constrained
+from solardatatools.signal_decompositions import l2_l1d2_constrained
 
 
 class ClippingDetection:
@@ -30,7 +30,6 @@ class ClippingDetection:
         self.threshold = None
         self.cdf_x = None
         self.cdf_y = None
-        self.problem = None
         self.y_hat = None
         self.y_param = None
         self.weight = None
@@ -136,8 +135,8 @@ class ClippingDetection:
         self.cdf_x = x_rs
         self.cdf_y = y_rs
         # Fit statistical model to resampled CDF that has sparse 2nd order difference
-        if self.problem is None or self.y_param is None:
-            self.make_problem(y_rs, weight=weight, solver=solver)
+        if self.y_param is None:
+            self.get_l2_l1d2(y_rs, weight=weight, solver=solver)
         else:
             self.y_param = y_rs
             self.weight = weight
@@ -370,10 +369,9 @@ class ClippingDetection:
         y_rs = f(x_rs)
         return x_rs, y_rs
 
-    def make_problem(self, y, weight=5, solver=None):
-        out = make_l2_l1d2_constrained(y, w1=weight, solver=solver)
+    def get_l2_l1d2(self, y, weight=5, solver=None):
+        out = l2_l1d2_constrained(y, w1=weight, solver=solver)
 
-        self.problem = out[0]
-        self.y_param = out[1]
-        self.y_hat = out[2]
-        self.weight = out[3]
+        self.y_param = out[0]
+        self.y_hat = out[1]
+        self.weight = out[2]

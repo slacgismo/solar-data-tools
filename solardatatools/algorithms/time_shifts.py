@@ -65,6 +65,8 @@ class TimeShift:
         self.use_ixs = use_ixs
         # Optimize w1
         if w1 is None:
+            # TODO: investigate if two separate ranges are needed
+            #  for MOSEK vs QSS and possibly simplify
             if solver == "MOSEK":
                 w1s = np.logspace(-1, 2, 11)
             else:

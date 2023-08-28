@@ -24,7 +24,7 @@ class ClearDayDetection:
     def filter_for_sparsity(
             self,
             data,
-            c1=6e3,
+            w1=6e3,
             solver="OSQP"
     ):
         capacity_est = np.nanquantile(data, 0.95)
@@ -35,7 +35,7 @@ class ClearDayDetection:
         self.density_signal = np.sum(foo, axis=0) / data.shape[0]
         use_days = np.logical_and(self.density_signal > 0.2, self.density_signal < 0.8)
 
-        self.filtered_signal = tl1_l2d2p365(self.density_signal, w1=c1, use_ixs=use_days, tau=0.85, solver=solver)
+        self.filtered_signal = tl1_l2d2p365(self.density_signal, w1=w1, use_ixs=use_days, tau=0.85, solver=solver)
         mask = basic_outlier_filter(self.density_signal - self.filtered_signal, outlier_constant=5.0)
         return mask
 
@@ -85,7 +85,7 @@ class ClearDayDetection:
         self.de = de/np.nanmax(de)
         # Solve a convex minimization problem to roughly fit the local 90th
         # percentile of the data (quantile regression)
-        self.x = tl1_l2d2p365(self.de, tau=0.9, w1=204697, yearly_periodic=False, solver=solver)
+        self.x = tl1_l2d2p365(self.de, tau=0.9, w1=2e5, yearly_periodic=False, solver=solver)
         # x gives us the local top 90th percentile of daily energy, i.e. the very sunny days. This gives us our
         # seasonal normalization.
         de = np.clip(np.divide(self.de, self.x), 0, 1)
