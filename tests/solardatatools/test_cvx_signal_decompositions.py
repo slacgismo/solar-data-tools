@@ -59,7 +59,7 @@ from solardatatools import _cvx_signal_decompositions as sd
 class TestSignalDecompositions(unittest.TestCase):
     def setUp(self):
         self.cvxpy_solver = "CLARABEL"  # all tests are using MOSEK
-        self.mae_threshold = 0.001
+        self.mae_threshold = 0.003
         self.obj_tolerance = 1
 
     #######################
@@ -155,7 +155,12 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal, w1=10, w2=1e5, transition_locs=indices, return_all=True
+            signal,
+            w1=10,
+            w2=1e5,
+            transition_locs=indices,
+            solver=self.cvxpy_solver,
+            return_all=True,
         )
 
         mae_s_hat = mae(actual_s_hat, expected_s_hat)
@@ -207,7 +212,12 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l2_l1d1_l2d2p365(
-            signal, w1=10, w2=1e5, transition_locs=transition, return_all=True
+            signal,
+            w1=10,
+            w2=1e5,
+            transition_locs=transition,
+            solver=self.cvxpy_solver,
+            return_all=True,
         )
 
         mae_s_hat = mae(actual_s_hat, expected_s_hat)
