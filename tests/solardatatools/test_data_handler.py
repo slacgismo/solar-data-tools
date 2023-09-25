@@ -12,7 +12,8 @@ class TestDataHandler(unittest.TestCase):
         data_file_path = filepath / "fixtures" / "data_transforms" / "timeseries.csv"
         df = pd.read_csv(data_file_path, parse_dates=[1], index_col=1)
         dh = DataHandler(df)
-        dh.run_pipeline(verbose=False)
+        dh.fix_dst()
+        dh.run_pipeline(power_col="ac_power", fix_shifts=True, verbose=False)
         # dh.report()
         self.assertAlmostEqual(dh.capacity_estimate, 6.7453649044036865, places=2)
         self.assertAlmostEqual(dh.data_quality_score, 0.9948186528497409, places=3)
