@@ -11,7 +11,7 @@ class TestSystemProfiler(unittest.TestCase):
         data_file_path = (
             filepath / "fixtures" / "system_profiler" / "data_handler_input.csv"
         )
-        data = pd.read_csv(data_file_path, index_col=0, parse_dates=True)
+        data = pd.read_csv(data_file_path, parse_dates=[1], index_col=1)
         dh = DataHandler(data, datetime_col="Date-Time")
         dh.fix_dst()
         dh.run_pipeline(

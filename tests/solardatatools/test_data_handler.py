@@ -10,7 +10,7 @@ class TestDataHandler(unittest.TestCase):
     def test_load_and_run(self):
         filepath = Path(__file__).parent.parent
         data_file_path = filepath / "fixtures" / "data_transforms" / "timeseries.csv"
-        df = pd.read_csv(data_file_path, index_col=0, parse_dates=True)
+        df = pd.read_csv(data_file_path, parse_dates=[1], index_col=1)
         dh = DataHandler(df)
         dh.run_pipeline(verbose=False)
         # dh.report()
