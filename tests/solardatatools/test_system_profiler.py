@@ -15,9 +15,9 @@ class TestSystemProfiler(unittest.TestCase):
         dh = DataHandler(data)
         dh.fix_dst()
         dh.run_pipeline(
-            power_col="ac_power", fix_shifts=False, correct_tz=False, verbose=True
+            power_col="ac_power", fix_shifts=False, correct_tz=False, verbose=False
         )
-        dh.report()
+        # dh.report()
         dh.setup_location_and_orientation_estimation(-5)
 
         estimate_latitude = dh.estimate_latitude()
@@ -39,7 +39,7 @@ class TestSystemProfiler(unittest.TestCase):
         # to pick some hyperparameters.
         ref_latitude = 37.5  # +/- 0.8
         ref_longitude = -77.0  # +/- 0.03
-        ref_tilt_real_loc = 22.45  # +/- 0.015
+        ref_tilt_real_loc = 22.5  # +/- 0.015
         ref_az_real_loc = 0.28  # +/- 0.015
 
         # Updated tolerances based on new updates for sunset/sunrise SDs

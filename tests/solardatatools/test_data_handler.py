@@ -14,7 +14,7 @@ class TestDataHandler(unittest.TestCase):
         dh = DataHandler(df)
         dh.fix_dst()
         dh.run_pipeline(power_col="ac_power_01", fix_shifts=True, verbose=False)
-        dh.report()
+        # dh.report()
         self.assertAlmostEqual(dh.capacity_estimate, 6.7453649044036865, places=2)
         self.assertAlmostEqual(dh.data_quality_score, 0.9948186528497409, places=3)
         self.assertAlmostEqual(dh.data_clearness_score, 0.49222797927461137, places=3)
