@@ -15,8 +15,9 @@ class TestSystemProfiler(unittest.TestCase):
         dh = DataHandler(data)
         dh.fix_dst()
         dh.run_pipeline(
-            power_col="ac_power", fix_shifts=False, correct_tz=False, verbose=False
+            power_col="ac_power", fix_shifts=False, correct_tz=False, verbose=True
         )
+        dh.report()
         dh.setup_location_and_orientation_estimation(-5)
 
         estimate_latitude = dh.estimate_latitude()
