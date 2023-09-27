@@ -6,6 +6,9 @@ jobs:
     deploy-pypi:
         runs-on: ubuntu-latest
         environment: deployment
+        permissions:
+          id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+          
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v3
@@ -23,8 +26,8 @@ jobs:
               git fetch --prune --unshallow --tags
               sudo python setup.py sdist bdist_wheel
 
-          - name: Push to PyPI
-            run: sudo twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} dist/*
+          - name: Publish package distributions to PyPI
+            uses: pypa/gh-action-pypi-publish@release/v1
 
     deploy-conda:
         runs-on: ubuntu-latest
