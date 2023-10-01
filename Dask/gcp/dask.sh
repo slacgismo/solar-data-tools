@@ -21,7 +21,16 @@
 
 set -euxo pipefail
 
-readonly DEFAULT_CONDA_ENV=$(conda info --base)
+apt-get update -qq
+apt-get install build-essential cmake sudo curl nano git -y
+mkdir sdt
+cd ./sdt
+git clone https://github.com/CMU-Fall23-Practicum/solar-data-tools.git
+cd ..
+
+conda create --yes --name solar_data_tools python=3.10
+
+readonly DEFAULT_CONDA_ENV=$(conda info --solar_data_tools)
 readonly DASK_YARN_CONFIG_DIR=/etc/dask/
 readonly DASK_YARN_CONFIG_FILE=${DASK_YARN_CONFIG_DIR}/config.yaml
 
@@ -36,7 +45,9 @@ readonly MASTER="$(/usr/share/google/get_metadata_value attributes/dataproc-mast
 readonly DASK_LAUNCHER=/usr/local/bin/dask-launcher.sh
 readonly DASK_SERVICE=dask-cluster
 
-CONDA_PACKAGES=("dask=${DASK_VERSION}" 'dask-bigquery' 'dask-ml')
+CONDA_PACKAGES=(
+  "dask=${DASK_VERSION}" 'dask-bigquery' 'dask-ml' 'scipy' 'numpy>=1.22.0' 'pandas' 'scikit-learn' 'jupyter' 'matplotlib' 'seaborn' 'requests' 'pvlib' 'cvxpy>=1.1.0' 'cmake' 'pykml' 'haversine' 'boto3'
+)
 
 if [[ "${DASK_RUNTIME}" == 'yarn' ]]; then
   # Pin `distributed` package version because `dask-yarn` 0.9
@@ -128,6 +139,10 @@ EOF
 function main() {
   # Install conda packages
   execute_with_retries "mamba install -y ${CONDA_PACKAGES[*]}"
+
+  # Install non-conda packages (but still part of the requirements of solar-data-tools)
+  pip install sig-decomp
+  pip install Mosek
 
   if [[ "${DASK_RUNTIME}" == "yarn" ]]; then
     # Create Dask YARN config file
