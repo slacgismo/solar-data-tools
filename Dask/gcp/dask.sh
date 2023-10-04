@@ -28,13 +28,12 @@ cd ./sdt
 git clone https://github.com/CMU-Fall23-Practicum/solar-data-tools.git
 cd ..
 
-conda create --yes --name solar_data_tools python=3.10
-
-readonly DEFAULT_CONDA_ENV=$(conda info --solar_data_tools)
+readonly DEFAULT_CONDA_ENV=$(conda info --base)
 readonly DASK_YARN_CONFIG_DIR=/etc/dask/
 readonly DASK_YARN_CONFIG_FILE=${DASK_YARN_CONFIG_DIR}/config.yaml
 
-readonly DASK_RUNTIME="$(/usr/share/google/get_metadata_value attributes/dask-runtime || echo 'yarn')"
+# readonly DASK_RUNTIME="$(/usr/share/google/get_metadata_value attributes/dask-runtime || echo 'yarn')"
+readonly DASK_RUNTIME='yarn'
 readonly RUN_WORKER_ON_MASTER="$(/usr/share/google/get_metadata_value attributes/dask-worker-on-master || echo 'true')"
 readonly DASK_VERSION='2022.1'
 
@@ -46,7 +45,7 @@ readonly DASK_LAUNCHER=/usr/local/bin/dask-launcher.sh
 readonly DASK_SERVICE=dask-cluster
 
 CONDA_PACKAGES=(
-  "dask=${DASK_VERSION}" 'dask-bigquery' 'dask-ml' 'scipy' 'numpy>=1.22.0' 'pandas' 'scikit-learn' 'jupyter' 'matplotlib' 'seaborn' 'requests' 'pvlib' 'cvxpy>=1.1.0' 'cmake' 'pykml' 'haversine' 'boto3'
+  "dask=${DASK_VERSION}" 'dask-bigquery' 'dask-ml'
 )
 
 if [[ "${DASK_RUNTIME}" == 'yarn' ]]; then
@@ -140,10 +139,6 @@ function main() {
   # Install conda packages
   execute_with_retries "mamba install -y ${CONDA_PACKAGES[*]}"
 
-  # Install non-conda packages (but still part of the requirements of solar-data-tools)
-  pip install sig-decomp
-  pip install Mosek
-
   if [[ "${DASK_RUNTIME}" == "yarn" ]]; then
     # Create Dask YARN config file
     configure_dask_yarn
@@ -157,6 +152,11 @@ function main() {
     echo "Unsupported Dask Runtime: ${DASK_RUNTIME}"
     exit 1
   fi
+
+  pip install -e ./sdt/solar-data-tools
+  pip install cassandra-driver
+  mkdir ~/.aws
+  echo $'54.176.95.208\n' > ~/.aws/cassandra_cluster
 
   echo "Dask for ${DASK_RUNTIME} successfully initialized."
 }
