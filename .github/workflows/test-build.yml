@@ -45,7 +45,7 @@ jobs:
               activate-environment: ""
               miniconda-version: "latest"
 
-          - name: Install the Mamba Dependencies
+          - name: Install the Conda Dependencies
             run: |
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
@@ -58,7 +58,7 @@ jobs:
 # bash variables cannot be used in github actions, must use actions specific syntax and methods
 # channels need to be specified on build and are saved in the package for installs
           - name: Build the Anaconda Package
-            id: mambabuild
+            id: condabuild
             run: |
               conda install anaconda-client
               conda config --set anaconda_upload no --set solver libmamba
