@@ -49,9 +49,8 @@ jobs:
             run: |
               conda config --set always_yes yes --set auto_update_conda false
               conda update conda
-              conda install mamba -n base -c conda-forge
               conda install -n base conda-libmamba-solver
-              mamba install python=3.10 conda-build colorama pip ruamel ruamel.yaml rich mamba jsonschema -c conda-forge
+              conda install python=3.10 conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
               pip install -e .
 
 # echo yes before login to prevent anaconda bug breaking automation
@@ -61,7 +60,7 @@ jobs:
           - name: Build the Anaconda Package
             id: mambabuild
             run: |
-              mamba install anaconda-client
+              conda install anaconda-client
               conda config --set anaconda_upload no --set solver libmamba
               git fetch --prune --unshallow --tags
               VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge --numpy 1.22.0
