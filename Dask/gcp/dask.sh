@@ -21,13 +21,6 @@
 
 set -euxo pipefail
 
-apt-get update -qq
-apt-get install build-essential cmake sudo curl nano git -y
-mkdir sdt
-cd ./sdt
-git clone https://github.com/CMU-Fall23-Practicum/solar-data-tools.git
-cd ..
-
 readonly DEFAULT_CONDA_ENV=$(conda info --base)
 readonly DASK_YARN_CONFIG_DIR=/etc/dask/
 readonly DASK_YARN_CONFIG_FILE=${DASK_YARN_CONFIG_DIR}/config.yaml
@@ -43,6 +36,16 @@ readonly MASTER="$(/usr/share/google/get_metadata_value attributes/dataproc-mast
 # Dask 'standalone' config
 readonly DASK_LAUNCHER=/usr/local/bin/dask-launcher.sh
 readonly DASK_SERVICE=dask-cluster
+
+# solar-data-tools repo link
+readonly SDT_LOC=https://github.com/slacgismo/solar-data-tools.git
+
+apt-get update -qq
+apt-get install build-essential cmake sudo curl nano git -y
+mkdir sdt
+cd ./sdt
+git clone ${SDT_LOC}
+cd ..
 
 CONDA_PACKAGES=(
   "dask=${DASK_VERSION}" 'dask-bigquery' 'dask-ml'
@@ -153,6 +156,7 @@ function main() {
     exit 1
   fi
 
+  # in the future, we should install by pip install solar-data-tools
   pip install -e ./sdt/solar-data-tools
   pip install cassandra-driver
   mkdir ~/.aws
