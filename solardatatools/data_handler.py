@@ -188,7 +188,7 @@ class DataHandler:
         daytime_threshold=0.005,
         units="W",
         solver="QSS",
-        solver_convex="OSQP",
+        solver_convex="CLARABEL",
         reset=True,
     ):
         if solver == "MOSEK":
@@ -469,7 +469,9 @@ class DataHandler:
                 )
 
         # Update daytime detection based on cleaned up data
-        self.daytime_analysis.calculate_times(self.filled_data_matrix, solver=solver_convex)
+        self.daytime_analysis.calculate_times(
+            self.filled_data_matrix, solver=solver_convex
+        )
         self.boolean_masks.daytime = self.daytime_analysis.sunup_mask_estimated
         ######################################################################
         # Process Extra columns
@@ -891,7 +893,7 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                w1=40e-6, # scaled weights for QSS
+                w1=40e-6,  # scaled weights for QSS
                 w2=6561e-6,
                 solver=solver,
             )
@@ -918,7 +920,7 @@ time zone errors     {report['time zone correction'] != 0}
                     gridspec_kw={"height_ratios": [4, 1]},
                 )
                 ax[0].plot(xs, s1, label="capacity change detector")
-                ax[0].plot(xs, s1+s2+s3, label="signal model")
+                ax[0].plot(xs, s1 + s2 + s3, label="signal model")
                 ax[0].plot(xs, metric, alpha=0.3, label="measured signal")
                 ax[0].legend()
                 ax[0].set_title("Detection of system capacity changes")
@@ -929,7 +931,7 @@ time zone errors     {report['time zone correction'] != 0}
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label="capacity change detector")
-                ax.plot(xs, s1+s2+s3, label="signal model")
+                ax.plot(xs, s1 + s2 + s3, label="signal model")
                 ax.plot(xs, metric, alpha=0.3, label="measured signal")
                 ax.legend()
                 ax.set_title("Detection of system capacity changes")
@@ -947,8 +949,8 @@ time zone errors     {report['time zone correction'] != 0}
         solver=None,
     ):
         def max_min_scale(signal):
-            maximum = np.nanquantile(signal, .95)
-            minimum = np.nanquantile(signal, .05)
+            maximum = np.nanquantile(signal, 0.95)
+            minimum = np.nanquantile(signal, 0.05)
             return (signal - minimum) / (maximum - minimum), minimum, maximum
 
         def rescale_signal(signal, minimum, maximum):
@@ -979,7 +981,7 @@ time zone errors     {report['time zone correction'] != 0}
                 threshold=threshold,
                 periodic_detector=periodic_detector,
                 solver=solver,
-                sum_card=False
+                sum_card=False,
             )
 
         if solver == "QSS":
@@ -994,7 +996,7 @@ time zone errors     {report['time zone correction'] != 0}
                     threshold=threshold,
                     periodic_detector=periodic_detector,
                     solver=solver,
-                    sum_card=True
+                    sum_card=True,
                 )
             else:
                 # If solver is QSS, run with nonconvex formulation again
@@ -1008,14 +1010,12 @@ time zone errors     {report['time zone correction'] != 0}
                     threshold=threshold,
                     periodic_detector=periodic_detector,
                     solver=solver,
-                    sum_card=True
+                    sum_card=True,
                 )
 
         # Scale data back
         self.filled_data_matrix = rescale_signal(
-            self.time_shift_analysis.corrected_data,
-            min_metric,
-            max_metric
+            self.time_shift_analysis.corrected_data, min_metric, max_metric
         )
         if len(self.time_shift_analysis.index_set) == 0:
             self.time_shifts = False
