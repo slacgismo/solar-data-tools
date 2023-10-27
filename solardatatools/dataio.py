@@ -233,7 +233,7 @@ def load_redshift_data(
     redshift_params: DBConnectionParams,
     siteid: str,
     column: str = "ac_power",
-    sensor: int | None = None,
+    sensor: int | list[int] | None = None,
     tmin: datetime | None = None,
     tmax: datetime | None = None,
     limit: int | None = None,
@@ -343,11 +343,9 @@ def load_redshift_data(
                 df = cursor.fetch_dataframe()
                 return df
 
-    sensor_found: bool = False
-    sensor_dict: dict = {}
+    sensor_not_found: bool = True
+    sensor_dict: dict[int, str] = {}
     if sensor is not None:
-        sensor = sensor - 1
-
         site_sensor_map_query = f"""
         SELECT sensor FROM measurements
         WHERE site = '{siteid}'
@@ -360,11 +358,20 @@ def load_redshift_data(
         if site_sensor_df is None:
             raise Exception("No data returned from query when getting sensor map")
         sensor_dict = site_sensor_df.to_dict()["sensor"]
-        if sensor not in sensor_dict:
-            raise Exception(
-                f"The index of {sensor + 1} for a sensor at site {siteid} is out of bounds. For site {siteid} please choose a sensor index ranging from 1 to {len(sensor_dict)}"
-            )
-        sensor_found = True
+
+        if isinstance(sensor, list):
+            for sensor_index in sensor:
+                if sensor_index not in sensor_dict:
+                    raise Exception(
+                        f"The index of {sensor_index} for a sensor at site {siteid} is out of bounds. For site {siteid} please choose a sensor index ranging from 0 to {len(sensor_dict) - 1}"
+                    )
+            sensor_not_found = False
+        else:
+            if sensor not in sensor_dict:
+                raise Exception(
+                    f"The index of {sensor} for a sensor at site {siteid} is out of bounds. For site {siteid} please choose a sensor index ranging from 0 to {len(sensor_dict) - 1}"
+                )
+            sensor_not_found = False
 
     sql_query = f"""
     SELECT site, meas_name, ts, sensor, meas_val_f FROM measurements
@@ -373,8 +380,12 @@ def load_redshift_data(
     """
 
     # ts_constraint = np.logical_or(tmin is not None, tmax is not None)
-    if sensor is not None and sensor_found:
-        sql_query += f"AND sensor = '{sensor_dict.get(sensor)}'\n"
+    if sensor is not None and not sensor_not_found:
+        if isinstance(sensor, list):
+            sensor_ids = tuple(sensor_dict.get(sensor_index) for sensor_index in sensor)
+            sql_query += f"AND sensor IN {sensor_ids}\n"
+        else:
+            sql_query += f"AND sensor = '{sensor_dict.get(sensor)}'\n"
     if tmin is not None:
         sql_query += f"AND ts > '{tmin}'\n"
     if tmax is not None:
