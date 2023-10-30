@@ -343,9 +343,17 @@ def load_redshift_data(
                 df = cursor.fetch_dataframe()
                 return df
 
+    if isinstance(siteid, str) is False:
+        raise Exception(f"Siteid must be a string. Siteid is of type {type(siteid)}")
+
     sensor_not_found: bool = True
     sensor_dict: dict[int, str] = {}
     if sensor is not None:
+        if isinstance(sensor, (int, list)) is False:
+            raise Exception(
+                f"Sensor must be either an int or a list of ints. Sensor is of type {type(sensor)}"
+            )
+
         site_sensor_map_query = f"""
         SELECT sensor FROM measurements
         WHERE site = '{siteid}'
@@ -359,19 +367,17 @@ def load_redshift_data(
             raise Exception("No data returned from query when getting sensor map")
         sensor_dict = site_sensor_df.to_dict()["sensor"]
 
-        if isinstance(sensor, list):
-            for sensor_index in sensor:
-                if sensor_index not in sensor_dict:
-                    raise Exception(
-                        f"The index of {sensor_index} for a sensor at site {siteid} is out of bounds. For site {siteid} please choose a sensor index ranging from 0 to {len(sensor_dict) - 1}"
-                    )
-            sensor_not_found = False
+        if isinstance(sensor, int):
+            sensor_list = [sensor]
         else:
-            if sensor not in sensor_dict:
+            sensor_list = sensor
+
+        for sensor_index in sensor_list:
+            if sensor_index not in sensor_dict:
                 raise Exception(
-                    f"The index of {sensor} for a sensor at site {siteid} is out of bounds. For site {siteid} please choose a sensor index ranging from 0 to {len(sensor_dict) - 1}"
+                    f"The index of {sensor_index} for a sensor at site {siteid} is out of bounds. For site {siteid} please choose a sensor index ranging from 0 to {len(sensor_dict) - 1}"
                 )
-            sensor_not_found = False
+        sensor_not_found = False
 
     sql_query = f"""
     SELECT site, meas_name, ts, sensor, meas_val_f FROM measurements
@@ -381,21 +387,24 @@ def load_redshift_data(
 
     # ts_constraint = np.logical_or(tmin is not None, tmax is not None)
     if sensor is not None and not sensor_not_found:
-        if isinstance(sensor, list):
+        if isinstance(sensor, list) and len(sensor) > 1:
             sensor_ids = tuple(sensor_dict.get(sensor_index) for sensor_index in sensor)
             sql_query += f"AND sensor IN {sensor_ids}\n"
         else:
+            if isinstance(sensor, list):
+                sensor = sensor[0]
             sql_query += f"AND sensor = '{sensor_dict.get(sensor)}'\n"
     if tmin is not None:
+        if isinstance(tmin, datetime) is False:
+            raise Exception(f"tmin must be a datetime. tmin is of type {type(tmin)}")
         sql_query += f"AND ts > '{tmin}'\n"
     if tmax is not None:
+        if isinstance(tmax, datetime) is False:
+            raise Exception(f"tmax must be a datetime. tmax is of type {type(tmax)}")
         sql_query += f"AND ts < '{tmax}'\n"
-    # if sensor is not None and ts_constraint:
-    #     sql_query += f"AND sensor = '{sensor}'\n"
-    # elif sensor is not None and not ts_constraint:
-    #     sql_query += f"AND ts > '2000-01-01'\n"
-    #     sql_query += f"AND sensor = '{sensor}'\n"
     if limit is not None:
+        if isinstance(limit, int) is False:
+            raise Exception(f"Limit must be an int. Limit is of type {type(limit)}")
         sql_query += f"LIMIT {limit}\n"
 
     df = create_df_from_query(redshift_params, sql_query)
