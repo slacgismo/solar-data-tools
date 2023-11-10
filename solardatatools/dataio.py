@@ -411,3 +411,96 @@ def load_redshift_data(
     if df is None:
         raise Exception("No data returned from query")
     return df
+
+
+def load_redshift_data_remote(
+    siteid: str,
+    api_key: str,
+    column: str = "ac_power",
+    sensor: int | list[int] | None = None,
+    tmin: datetime | None = None,
+    tmax: datetime | None = None,
+    limit: int | None = None,
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """Loads data based on a site id from a Redshift database into a Pandas DataFrame using an SSH tunnel
+
+    Parameters
+    ----------
+        siteid : str
+            site id to query
+        api_key : str
+            api key for authentication
+        column : str
+            meas_name to query  (default ac_power)
+        sensor : int, optional
+            sensor index to query based on number of sensors at the site id (default None)
+        tmin : timestamp, optional
+            minimum timestamp to query (default None)
+        tmax : timestamp, optional
+            maximum timestamp to query (default None)
+        limit : int, optional
+            maximum number of rows to query (default None)
+        verbose : bool, optional
+            whether to print out timing information (default False)
+
+    Returns
+    ------
+    df : pd.DataFrame
+        Pandas DataFrame containing the queried data
+    """
+
+    def timing(verbose: bool = True):
+        def decorator(func: Callable):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                start_time = time()
+                result = func(*args, **kwargs)
+                end_time = time()
+                execution_time = end_time - start_time
+                if verbose:
+                    print(f"{func.__name__} took {execution_time:.2f} seconds to run")
+                return result
+
+            return wrapper
+
+        return decorator
+
+    @timing(verbose)
+    def query_redshift_w_api() -> pd.DataFrame:
+        url = "http://127.0.0.1:3000/redshift"
+        payload = {
+            "api_key": api_key,
+            "siteid": siteid,
+            "column": column,
+            "sensor": sensor,
+            "tmin": str(tmin),
+            "tmax": str(tmax),
+            "limit": str(limit),
+        }
+
+        if sensor is None:
+            payload.pop("sensor")
+        if tmin is None:
+            payload.pop("tmin")
+        if tmax is None:
+            payload.pop("tmax")
+        if limit is None:
+            payload.pop("limit")
+
+        response = requests.post(url, json=payload, timeout=60)
+        if response.status_code != 200:
+            raise Exception(f"Error {response.status_code} returned from API")
+        data = response.json()
+        json_data = json.loads(data)
+
+        df = pd.DataFrame(json_data)
+        return df
+
+    df = query_redshift_w_api()
+
+    if df is None:
+        raise Exception("No data returned from query")
+    if df.empty:
+        raise Exception("Empty dataframe returned from query")
+    return df
