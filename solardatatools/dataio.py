@@ -468,7 +468,7 @@ def load_redshift_data_remote(
 
     @timing(verbose)
     def query_redshift_w_api() -> pd.DataFrame:
-        url = "http://127.0.0.1:3000/redshift"
+        url = "https://lmojfukey3rylrbqughzlfu6ca0ujdby.lambda-url.us-west-1.on.aws/"
         payload = {
             "api_key": api_key,
             "siteid": siteid,
@@ -488,7 +488,7 @@ def load_redshift_data_remote(
         if limit is None:
             payload.pop("limit")
 
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(url, json=payload, timeout=60 * 5)
         if response.status_code != 200:
             raise Exception(f"Error {response.status_code} returned from API")
         data = response.json()
