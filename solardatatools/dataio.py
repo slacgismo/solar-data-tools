@@ -467,7 +467,7 @@ def load_redshift_data_remote(
         return decorator
 
     @timing(verbose)
-    def query_redshift_w_api() -> pd.DataFrame:
+    def query_redshift_w_api(page: int) -> pd.DataFrame:
         url = "https://lmojfukey3rylrbqughzlfu6ca0ujdby.lambda-url.us-west-1.on.aws/"
         payload = {
             "api_key": api_key,
@@ -477,6 +477,7 @@ def load_redshift_data_remote(
             "tmin": str(tmin),
             "tmax": str(tmax),
             "limit": str(limit),
+            "page": str(page),
         }
 
         if sensor is None:
@@ -491,16 +492,85 @@ def load_redshift_data_remote(
         response = requests.post(url, json=payload, timeout=60 * 5)
         if response.status_code != 200:
             raise Exception(f"Error {response.status_code} returned from API")
+
+        print(f"Content size: {len(response.content)}")
+
         data = response.json()
         json_data = json.loads(data)
 
         df = pd.DataFrame(json_data)
         return df
 
-    df = query_redshift_w_api()
+    # page = 0
+    # df: pd.DataFrame = pd.DataFrame()
+    # while True:
+    #     try:
+    #         new_df: pd.DataFrame = query_redshift_w_api(page)
+    #         if new_df.empty:
+    #             break
+    #         print(page, len(new_df))
+    #         print(new_df.head(10))
+    #         print(new_df.tail(10))
+    #         df = pd.concat([df, new_df], ignore_index=True)
+    #     except Exception as e:
+    #         print(e)
+    #         break
+    #     if df is None:
+    #         raise Exception("No data returned from query")
+    #     page += 1
 
-    if df is None:
-        raise Exception("No data returned from query")
+    import threading
+
+    def fetch_data(df_list: list[pd.DataFrame], index: int, page: int):
+        try:
+            new_df = query_redshift_w_api(page)
+            if new_df.empty:
+                raise Exception("Empty dataframe returned from query")
+            print(page, len(new_df))
+            # print(new_df.head(10))
+            # print(new_df.tail(10))
+            df_list[index] = new_df
+
+        except Exception as e:
+            print(e)
+            # raise e
+
+    page = 0
+    df = pd.DataFrame()
+    list_of_dfs: list[pd.DataFrame] = []
+    batch_size = 2
+    is_finished = False
+    while not is_finished:
+        df_list = [pd.DataFrame() for _ in range(batch_size)]
+        page_batch = list(range(page, page + batch_size))
+        threads: list[threading.Thread] = []
+
+        # Create threads for each batch of pages
+        for i in range(len(page_batch)):
+            thread = threading.Thread(
+                target=fetch_data, args=(df_list, i, page_batch[i])
+            )
+            threads.append(thread)
+            thread.start()
+
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join()
+
+        # Move to the next batch of pages
+        page += batch_size
+
+        # Concatenate the dataframes
+        valid_df_list = [new_df for new_df in df_list if not new_df.empty]
+
+        # If any batch returns an empty DataFrame, stop querying
+        if len(valid_df_list) == 0:
+            is_finished = True
+
+        list_of_dfs.extend(valid_df_list)
+
+    df = pd.concat(list_of_dfs, ignore_index=True)
+    # If any batch returns an empty DataFrame, stop querying
     if df.empty:
         raise Exception("Empty dataframe returned from query")
     return df
