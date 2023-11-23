@@ -4,6 +4,7 @@
 This module contains functions for obtaining data from various sources.
 
 """
+import math
 from solardatatools.time_axis_manipulation import (
     standardize_time_axis,
     fix_daylight_savings_with_known_tz,
@@ -423,6 +424,7 @@ def load_redshift_data_remote(
     tmin: datetime | None = None,
     tmax: datetime | None = None,
     limit: int | None = None,
+    batch_size: int = 4,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Loads data based on a site id from a Redshift database into a Pandas DataFrame using an SSH tunnel
@@ -486,7 +488,7 @@ def load_redshift_data_remote(
         return decorator
 
     @timing(verbose)
-    def query_redshift_w_api(page: int) -> pd.DataFrame:
+    def query_redshift_w_api(page: int, batch_num: bool = False):
         url = "https://lmojfukey3rylrbqughzlfu6ca0ujdby.lambda-url.us-west-1.on.aws/"
         payload = {
             "api_key": api_key,
@@ -497,6 +499,7 @@ def load_redshift_data_remote(
             "tmax": str(tmax),
             "limit": str(limit),
             "page": str(page),
+            "batch_num": str(batch_num),
         }
 
         if sensor is None:
@@ -514,9 +517,7 @@ def load_redshift_data_remote(
 
         print(f"Content size: {len(response.content)}")
 
-        df = decompress_data_to_dataframe(response.content)
-        # df = pd.DataFrame(json_data)
-        return df
+        return response
 
     # page = 0
     # df: pd.DataFrame = pd.DataFrame()
@@ -540,7 +541,9 @@ def load_redshift_data_remote(
 
     def fetch_data(df_list: list[pd.DataFrame], index: int, page: int):
         try:
-            new_df = query_redshift_w_api(page)
+            response = query_redshift_w_api(page)
+            new_df = decompress_data_to_dataframe(response.content)
+
             if new_df.empty:
                 raise Exception("Empty dataframe returned from query")
             print(page, len(new_df))
@@ -550,12 +553,24 @@ def load_redshift_data_remote(
             print(e)
             # raise e
 
+    batch_df = query_redshift_w_api(0, batch_num=True)
+    data = batch_df.json()
+    max_limit = int(data["max_limit"])
+    total_count = int(data["total_count"])
+    batches = int(data["batches"])
+    print("total_count", total_count)
+    print("max_limit", max_limit)
+    print("batches", batches)
+
+    loops = math.ceil(batches / batch_size)
+    if batches < batch_size:
+        loops = 1
+        batch_size = batches
     page = 0
     df = pd.DataFrame()
     list_of_dfs: list[pd.DataFrame] = []
-    batch_size = 2
-    is_finished = False
-    while not is_finished:
+    # batch_size =
+    for _ in range(loops):
         df_list = [pd.DataFrame() for _ in range(batch_size)]
         page_batch = list(range(page, page + batch_size))
         threads: list[threading.Thread] = []
@@ -577,10 +592,6 @@ def load_redshift_data_remote(
 
         # Concatenate the dataframes
         valid_df_list = [new_df for new_df in df_list if not new_df.empty]
-
-        # If any batch returns an empty DataFrame, stop querying
-        if len(valid_df_list) == 0:
-            is_finished = True
 
         list_of_dfs.extend(valid_df_list)
 
