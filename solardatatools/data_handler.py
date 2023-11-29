@@ -744,7 +744,7 @@ time zone errors     {report['time zone correction'] != 0}
         self.daily_signals.energy = (
             np.sum(self.filled_data_matrix, axis=0)
             * 24
-            / self.filled_data_matrix.shape[1]
+            / self.filled_data_matrix.shape[0]
         )
         return
 
