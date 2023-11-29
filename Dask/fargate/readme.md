@@ -1,6 +1,6 @@
-** This is just a DRAFT **
-To-do list:  
-[  ] Replace "image = jjcrush/dask:latest" in demo.ipynb with some other repo name
+** This is just a DRAFT **  
+- [ ] What do we do with the hardcoded part of **demo.ipynb**? E.g. replace "image = jjcrush/dask:latest" another repo name
+- [ ] We used Cassandra, shall we add instructions about it?
 
 
 # AMI Permissions
@@ -12,10 +12,10 @@ To-do list:
 # Get AWS CLI (Recommended)
 [Please see this link for details](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
-# AWS Credentials (Add specific instructions for Windows/Linux)
+# AWS Credentials
 Here we have 2 options
 1. Using AWS CLI commands     
-   We are taking *long-term credentials* as an example, for other types of credentials, please refer to this [link](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html))
+   We are taking *long-term credentials* as an example, for other types of credentials, please refer to this [link](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html)
    1. Open a terminal and run `aws configure`
    2. Fill in the requested information:
       1. AWS Access Key ID
@@ -34,41 +34,78 @@ Here we have 2 options
         aws_secret_access_key=<_SECRET_>
         ```
 # Prepare Environment
-## Python Packages
+## Required Python Packages
+```
 dask["complete"]  
 dask-cloudprovider[all]  
 solar-data-tools
+```
 
-If you have additional dependencies, install them as well
+If you have additional dependencies, install them as well (both Docker image and local environment setup will need them, which are shown below)
 
 ## Docker Image
-Install your python requirements and all dependencies as steps in your dockerfile.
 
+1. Install your python requirements and all dependencies as steps in your dockerfile.  
+   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: **[Problem] Put the link here!!!**  
+2. Build a docker image
+   1. Go to the directory where your Dockerfile is
+   2. ```docker build -t <YOUR_IMAGE_NAME> .```
+3. Push your docker image to a repository
+   1. Dockerhub (**Highly Recommended**)
+      1. ```docker tag <YOUR_IMAGE_NAME>:latest <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest```
+      2. ```docker push <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest```
+   2. ECR Repository  (**Not Recommended**)  
+      **This could lead to unexpected issues, use it only when absolutely necessary**
+      1. In your AWS console, search `ECR`
+      2. Follow the instructions to create a repository or go to an existing one
+      3. On the repository page, click `View push commands` on the up right corner
+      4. Follow the popped instructions. 
 
-(**To be uploaded**)  
-There's a A sample docker image with solar-data-tools dependencies and all the packages listed above. Please find the 
+For more details, please follow this [link](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html)
 
-** Tell users how to find the "view push commands" page **
+## Client Environment
+This refers to the local environment where users run their python scripts to create a cluster and submit the job. To keep your local machine clean, we recommend using `Anaconda` to create a virtual environment and install all required packages there.
 
-** Give them example dockerfile. **
+1.  Install [Anaconda](https://www.anaconda.com/download/)
+2.  Create a virtual environment  
+   ```conda create --name YOUR_ENV_NAME python=PYTHON_VERSION```  
+   For example  
+   ```conda create --name my_dask_env python=3.10```  
+   **Important**: this python version must be the same used in the docker image above! Otherwise the client will fail to submit jobs to the cluster
+3.  Activate the conda environment  
+   ```conda activate YOUR_ENV_NAME```
+4.  Install packages listed above, for example
+      ```
+      # Add this channel for solar-data-tools
+      conda config --add channels slacgismo                 
+      conda install dask["complete"]
+      conda install dask-cloudprovider[all]
+      conda install solar-data-tools
+      ```
+5.  Install [Jupyter Notebook](https://jupyter.org/install) (Recommended)
+       -  VSCode plugin (optional): if you are using VSCode, click the sidebar *Extension*, search for *Jupyter* and install the plugin
+6.  In Jupyter Notebook, set the python interpreter (in the drop down list, choose the environment we just created).
 
-** Please use dockerhub to store your image and make it public (saves you a lot of time to debug) **
-
-
-
-To create your own image, make sure you have all the packages included and follow this [link](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html)
-
+Now, let's try the demo!
 # Run Demo
-** Explain: how to run the demo **
-** Be specific: e.g., create a repo in us-east-2 or ```YOUR_REGION```, name: dask **
+1. Get the demo script here **[Problem] Put Link!!!**
+2. [**Problem**] Hardcoded lines, what do we do?
+      ```
+      tags = {"project-pa-number": "21691-H2001", "project": "pvinsight"}
+      cluster = FargateCluster(tags=tags, image="jjcrush/dask:latest")
+      ```
+3. 
 
 
 # Issues
-1. **RuntimeError**: Error during deserialization of the task graph  
-   - **[Solution]**
-   Please make sure the client environment aligns with the scheduler environment! e.g. python versions, python packages & versions. 
+1. **Error during deserialization of the task graph**   
+     - **Solution**:
+     Please make sure the client environment aligns with the scheduler environment!  (e.g. python versions, python packages & versions) 
 
-2. **Windows Powershell compatibility issues with AWS**:  
-
-3. ** Scheduler failed to pull the image **
-   ** Docker Image Repository **
+2. **Windows Powershell compatibility issues with AWS** 
+   - Details: docker push shows `retrying in ... second ... EOF`
+   - **Solution**: Use Git Bash on windows can save you a lot of time.
+3. **Scheduler failed to pull the image**
+   -  Details: sometimes it reports "unable to retreive ecr registry auth ... please check your task network configuration"
+   - **Solution**: If your image is in a *ECR* repository (private or public), this is the hazardous situation. Consider switching to *Dockerhub*, which has been proven to be perfectly compatible with Fargate.  
+4. 
