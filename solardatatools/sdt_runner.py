@@ -178,6 +178,68 @@ def cli(dir, db_list, n_workers, n_threads, mem_limit, track_times, worker_log_f
         with open(worker_log_file, "w") as fp:
             json.dump(logs , fp, indent=4)
 
+def generate_task_local(filename, track_times=True):
+    """
+    Generate the analysis task for a given local file. 
+    
+    Parameters:
+    - filename: Name of the local file
+    - track_times: Booleans to determine whether run times are added 
+    to the output
+
+    Returns:
+    - A Dask delayed task object for the data analysis, which depends
+    on the ingest task. 
+    """
+    task_ingest = delayed(local_csv_to_dh)(filename)
+    task_analyze = delayed(run_job)(task_ingest, track_times)
+    return task_analyze
+
+def generate_tasks_directory(directory, track_times=True):
+    """
+    Generate the analysis tasks for a given directory containing csv's. 
+    
+    Parameters:
+    - directory: Path of the directory containing csv's
+    - track_times: Booleans to determine whether run times are added 
+    to the output
+
+    Returns:
+    - A list of Dask delayed task objects for the data analysis, 
+    each of which depends on an ingest task. 
+    """
+    result = []
+    for filename in get_csvs_in_dir(directory):
+        result.append(generate_task_local(filename))
+    return result
+
+def execute_tasks(task_list):
+    """
+    Execute a list of tasks. 
+    
+    NOTE: The Dask cluster should be 
+    intialized before calling this function. 
+    
+    Parameters:
+    - task_list: A list of dask delayed object
+
+    Returns:
+    - A list of reports from execution
+    """
+    reports = compute(*task_list,)
+    return reports
+
+# TODO: we need functions to generate tasks from remote sources
 
 if __name__ == "__main__":
-    cli()
+    obj_list = generate_tasks_directory("./")
+
+    # Note that dask.visualize works differently without
+    # iPython notebook.
+    obj_list[0].visualize() 
+
+    client = Client(threads_per_worker=4, n_workers=2)
+
+    execute_tasks(obj_list)
+
+
