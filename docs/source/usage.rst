@@ -1,6 +1,9 @@
 Usage
 -----
 
+Data Handler
+^^^^^^^^^^^^
+
 Clear Day Detection
 ^^^^^^^^^^^^^^^^^^^
 
