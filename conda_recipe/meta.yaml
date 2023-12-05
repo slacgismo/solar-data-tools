@@ -33,6 +33,7 @@ requirements:
     - haversine
     - boto3
     - Mosek
+    - clarabel
 
   run:
     - scipy
@@ -44,6 +45,7 @@ requirements:
     - pvlib
     - cvxpy
     - python
+    - clarabel
 
 about:
   home: https://github.com/bmeyers/solar-data-tools
