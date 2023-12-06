@@ -11,7 +11,7 @@ from solardatatools.time_axis_manipulation import (
 )
 from solardatatools.utilities import progress
 
-from time import time
+from time import time, perf_counter
 from io import StringIO, BytesIO
 import base64
 import os
@@ -232,191 +232,6 @@ def load_constellation_data(
 
 
 def load_redshift_data(
-    ssh_params: SSHParams,
-    redshift_params: DBConnectionParams,
-    siteid: str,
-    column: str = "ac_power",
-    sensor: int | list[int] | None = None,
-    tmin: datetime | None = None,
-    tmax: datetime | None = None,
-    limit: int | None = None,
-    verbose: bool = False,
-) -> pd.DataFrame:
-    """Loads data based on a site id from a Redshift database into a Pandas DataFrame using an SSH tunnel
-
-    Parameters
-    ----------
-        ssh_params : SSHParams
-            SSH connection parameters
-        redshift_params : DBConnectionParams
-            Redshift connection parameters
-        siteid : str
-            site id to query
-        column : str
-            meas_name to query  (default ac_power)
-        sensor : int, optional
-            sensor index to query based on number of sensors at the site id (default None)
-        tmin : timestamp, optional
-            minimum timestamp to query (default None)
-        tmax : timestamp, optional
-            maximum timestamp to query (default None)
-        limit : int, optional
-            maximum number of rows to query (default None)
-        verbose : bool, optional
-            whether to print out timing information (default False)
-
-    Returns
-    ------
-    df : pd.DataFrame
-        Pandas DataFrame containing the queried data
-    """
-
-    try:
-        import sshtunnel
-    except ImportError:
-        raise Exception(
-            "Please install sshtunnel into your Python environment to use this function"
-        )
-
-    try:
-        import redshift_connector
-    except ImportError:
-        raise Exception(
-            "Please install redshift_connector into your Python environment to use this function"
-        )
-
-    def timing(verbose: bool = True):
-        def decorator(func: Callable):
-            @wraps(func)
-            def wrapper(*args, **kwargs) -> Any:
-                start_time = time()
-                result = func(*args, **kwargs)
-                end_time = time()
-                execution_time = end_time - start_time
-                if verbose:
-                    print(f"{func.__name__} took {execution_time:.2f} seconds to run")
-                return result
-
-            return wrapper
-
-        return decorator
-
-    def create_tunnel_and_connect(
-        ssh_params: SSHParams,
-    ):
-        def decorator(func: Callable):
-            @wraps(func)
-            def inner_wrapper(
-                db_connection_params: DBConnectionParams, *args, **kwargs
-            ):
-                with sshtunnel.SSHTunnelForwarder(
-                    ssh_address_or_host=ssh_params["ssh_address_or_host"],
-                    ssh_username=ssh_params["ssh_username"],
-                    ssh_pkey=os.path.abspath(ssh_params["ssh_private_key"]),
-                    remote_bind_address=ssh_params["remote_bind_address"],
-                    host_pkey_directories=[
-                        os.path.dirname(os.path.abspath(ssh_params["ssh_private_key"]))
-                    ],
-                ) as tunnel:
-                    if tunnel is None:
-                        raise Exception("Tunnel is None")
-
-                    tunnel.start()
-
-                    if tunnel.is_active is False:
-                        raise Exception("Tunnel is not active")
-
-                    local_port = tunnel.local_bind_port
-                    db_connection_params["port"] = local_port
-
-                    return func(db_connection_params, *args, **kwargs)
-
-            return inner_wrapper
-
-        return decorator
-
-    @timing(verbose)
-    @create_tunnel_and_connect(ssh_params)
-    def create_df_from_query(
-        redshift_params: DBConnectionParams, sql_query: str
-    ) -> pd.DataFrame:
-        with redshift_connector.connect(**redshift_params) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql_query)
-                df = cursor.fetch_dataframe()
-                return df
-
-    if isinstance(siteid, str) is False:
-        raise Exception(f"Siteid must be a string. Siteid is of type {type(siteid)}")
-
-    sensor_not_found: bool = True
-    sensor_dict: dict[int, str] = {}
-    if sensor is not None:
-        if isinstance(sensor, (int, list)) is False:
-            raise Exception(
-                f"Sensor must be either an int or a list of ints. Sensor is of type {type(sensor)}"
-            )
-
-        site_sensor_map_query = f"""
-        SELECT sensor FROM measurements
-        WHERE site = '{siteid}'
-        GROUP BY sensor
-        ORDER BY sensor ASC
-        """
-
-        site_sensor_df = create_df_from_query(redshift_params, site_sensor_map_query)
-
-        if site_sensor_df is None:
-            raise Exception("No data returned from query when getting sensor map")
-        sensor_dict = site_sensor_df.to_dict()["sensor"]
-
-        if isinstance(sensor, int):
-            sensor_list = [sensor]
-        else:
-            sensor_list = sensor
-
-        for sensor_index in sensor_list:
-            if sensor_index not in sensor_dict:
-                raise Exception(
-                    f"The index of {sensor_index} for a sensor at site {siteid} is out of bounds. For site {siteid} please choose a sensor index ranging from 0 to {len(sensor_dict) - 1}"
-                )
-        sensor_not_found = False
-
-    sql_query = f"""
-    SELECT site, meas_name, ts, sensor, meas_val_f FROM measurements
-    WHERE site = '{siteid}'
-    AND meas_name = '{column}'
-    """
-
-    # ts_constraint = np.logical_or(tmin is not None, tmax is not None)
-    if sensor is not None and not sensor_not_found:
-        if isinstance(sensor, list) and len(sensor) > 1:
-            sensor_ids = tuple(sensor_dict.get(sensor_index) for sensor_index in sensor)
-            sql_query += f"AND sensor IN {sensor_ids}\n"
-        else:
-            if isinstance(sensor, list):
-                sensor = sensor[0]
-            sql_query += f"AND sensor = '{sensor_dict.get(sensor)}'\n"
-    if tmin is not None:
-        if isinstance(tmin, datetime) is False:
-            raise Exception(f"tmin must be a datetime. tmin is of type {type(tmin)}")
-        sql_query += f"AND ts > '{tmin}'\n"
-    if tmax is not None:
-        if isinstance(tmax, datetime) is False:
-            raise Exception(f"tmax must be a datetime. tmax is of type {type(tmax)}")
-        sql_query += f"AND ts < '{tmax}'\n"
-    if limit is not None:
-        if isinstance(limit, int) is False:
-            raise Exception(f"Limit must be an int. Limit is of type {type(limit)}")
-        sql_query += f"LIMIT {limit}\n"
-
-    df = create_df_from_query(redshift_params, sql_query)
-    if df is None:
-        raise Exception("No data returned from query")
-    return df
-
-
-def load_redshift_data_remote(
     siteid: str,
     api_key: str,
     column: str = "ac_power",
@@ -424,7 +239,6 @@ def load_redshift_data_remote(
     tmin: datetime | None = None,
     tmax: datetime | None = None,
     limit: int | None = None,
-    batch_size: int = 4,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Loads data based on a site id from a Redshift database into a Pandas DataFrame using an SSH tunnel
@@ -434,10 +248,10 @@ def load_redshift_data_remote(
         siteid : str
             site id to query
         api_key : str
-            api key for authentication
+            api key for authentication to redshift
         column : str
-            meas_name to query  (default ac_power)
-        sensor : int, optional
+            meas_name to query (default ac_power)
+        sensor : int, list[int], optional
             sensor index to query based on number of sensors at the site id (default None)
         tmin : timestamp, optional
             minimum timestamp to query (default None)
@@ -455,16 +269,10 @@ def load_redshift_data_remote(
     """
 
     def decompress_data_to_dataframe(encoded_data):
-        # Decode Base64 data to bytes
-        # decoded_data = base64.b64decode(encoded_data)
-
-        # print("Decoded data:", decoded_data)
         # Decompress gzip data
         decompressed_buffer = BytesIO(encoded_data)
         with gzip.GzipFile(fileobj=decompressed_buffer, mode="rb") as gz:
             decompressed_data = gz.read().decode("utf-8")
-
-        # Inspect the decompressed data (optional - for debugging)
 
         # Attempt to read the decompressed data as CSV
         df = pd.read_csv(StringIO(decompressed_data))
@@ -475,12 +283,12 @@ def load_redshift_data_remote(
         def decorator(func: Callable):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                start_time = time()
+                start_time = perf_counter()
                 result = func(*args, **kwargs)
-                end_time = time()
+                end_time = perf_counter()
                 execution_time = end_time - start_time
                 if verbose:
-                    print(f"{func.__name__} took {execution_time:.2f} seconds to run")
+                    print(f"{func.__name__} took {execution_time:.3f} seconds to run")
                 return result
 
             return wrapper
@@ -488,7 +296,7 @@ def load_redshift_data_remote(
         return decorator
 
     @timing(verbose)
-    def query_redshift_w_api(page: int, batch_num: bool = False):
+    def query_redshift_w_api(page: int, is_batch: bool = False) -> requests.Response:
         url = "https://lmojfukey3rylrbqughzlfu6ca0ujdby.lambda-url.us-west-1.on.aws/"
         payload = {
             "api_key": api_key,
@@ -499,7 +307,7 @@ def load_redshift_data_remote(
             "tmax": str(tmax),
             "limit": str(limit),
             "page": str(page),
-            "batch_num": str(batch_num),
+            "batch_num": str(is_batch),
         }
 
         if sensor is None:
@@ -515,29 +323,10 @@ def load_redshift_data_remote(
         if response.status_code != 200:
             raise Exception(f"Error {response.status_code} returned from API")
 
-        print(f"Content size: {len(response.content)}")
+        if verbose:
+            print(f"Content size: {len(response.content)}")
 
         return response
-
-    # page = 0
-    # df: pd.DataFrame = pd.DataFrame()
-    # while True:
-    #     try:
-    #         new_df: pd.DataFrame = query_redshift_w_api(page)
-    #         if new_df.empty:
-    #             break
-    #         print(page, len(new_df))
-    #         print(new_df.head(10))
-    #         print(new_df.tail(10))
-    #         df = pd.concat([df, new_df], ignore_index=True)
-    #     except Exception as e:
-    #         print(e)
-    #         break
-    #     if df is None:
-    #         raise Exception("No data returned from query")
-    #     page += 1
-
-    import threading
 
     def fetch_data(df_list: list[pd.DataFrame], index: int, page: int):
         try:
@@ -546,30 +335,35 @@ def load_redshift_data_remote(
 
             if new_df.empty:
                 raise Exception("Empty dataframe returned from query")
-            print(page, len(new_df))
+            if verbose:
+                print(f"Page: {page}, Rows: {len(new_df)}")
             df_list[index] = new_df
 
         except Exception as e:
             print(e)
             # raise e
 
-    batch_df = query_redshift_w_api(0, batch_num=True)
+    import threading
+
+    batch_df: requests.Response = query_redshift_w_api(0, is_batch=True)
     data = batch_df.json()
     max_limit = int(data["max_limit"])
     total_count = int(data["total_count"])
     batches = int(data["batches"])
-    print("total_count", total_count)
-    print("max_limit", max_limit)
-    print("batches", batches)
+    if verbose:
+        print("total number rows for query: ", total_count)
+        print("Max number of rows per API call", max_limit)
+        print("Total number of batches", batches)
+
+    batch_size = 2  # Max number of threads to run at once (limited by redshift)
 
     loops = math.ceil(batches / batch_size)
-    if batches < batch_size:
+    if batches <= batch_size:
         loops = 1
         batch_size = batches
     page = 0
     df = pd.DataFrame()
     list_of_dfs: list[pd.DataFrame] = []
-    # batch_size =
     for _ in range(loops):
         df_list = [pd.DataFrame() for _ in range(batch_size)]
         page_batch = list(range(page, page + batch_size))
