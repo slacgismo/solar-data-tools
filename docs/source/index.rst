@@ -1,5 +1,5 @@
 Solar Data Tools 
-================
+=================
 
 |PyPI release| |Anaconda Cloud release|
 
