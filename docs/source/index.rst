@@ -1,11 +1,9 @@
-solar-data-tools
+Solar Data Tools 
 ================
 
 |PyPI release| |Anaconda Cloud release|
 
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in a data set, common data transforms, and fixing time stamp issues. These tools are designed to be automatic and require little if any input from the user. Libraries are included to help with data IO and plotting as well.
-
-There is close integration between this repository and the `Statistical Clear Sky <https://github.com/slacgismo/StatisticalClearSky>`_ repository, which provides a "clear sky model" of system output, given only measured power as an input.
 
 See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebooks>`_ folder for examples.
 
