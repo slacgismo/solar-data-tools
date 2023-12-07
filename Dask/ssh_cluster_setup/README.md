@@ -23,3 +23,4 @@ In contrast, we have conducted extensive research in the scenarion where our cli
 1. Please make sure your dependencies are up-to-date. To us the problem was pyopenssl. upgrade with `pip install --upgrade pyopenssl`.  
 2. To us, setting up ssh clusters with pem files is not really working as expected. But switching to password authentication works. So we would recommend that if you are having authorization issues with ssh setup.  
 3. To run solar-data-tools run_pipeline, make sure your EC2 instances has a memory greater than 16 GB. (By default, AWS EC2 instances has a memory of 1GB, and cannot be modified after innitializations).
+4. We have a demo script [here](./ssh_cluster_example.py) that was tested to work on AWS EC2 in December 2023, ubuntu image.
