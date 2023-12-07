@@ -288,7 +288,7 @@ def load_redshift_data(
 
         return df
 
-    def timing(verbose: bool = True):
+    def timing(verbose: bool = True) -> Callable:
         def decorator(func: Callable):
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -304,7 +304,7 @@ def load_redshift_data(
 
         return decorator
 
-    # @timing(verbose)
+    @timing(verbose)
     def query_redshift_w_api(
         params: QueryParams, page: int, is_batch: bool = False
     ) -> requests.Response:
