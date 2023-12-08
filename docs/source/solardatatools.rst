@@ -12,34 +12,10 @@ Subpackages
 Submodules
 ----------
 
-solardatatools.circular\_statistics module
-------------------------------------------
-
-.. automodule:: solardatatools.circular_statistics
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 solardatatools.clear\_day\_detection module
 -------------------------------------------
 
 .. automodule:: solardatatools.clear_day_detection
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-solardatatools.clear\_time\_labeling module
--------------------------------------------
-
-.. automodule:: solardatatools.clear_time_labeling
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-solardatatools.data\_filling module
------------------------------------
-
-.. automodule:: solardatatools.data_filling
    :members:
    :undoc-members:
    :show-inheritance:
@@ -96,14 +72,6 @@ solardatatools.sensor\_identification module
 --------------------------------------------
 
 .. automodule:: solardatatools.sensor_identification
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-solardatatools.soiling module
------------------------------
-
-.. automodule:: solardatatools.soiling
    :members:
    :undoc-members:
    :show-inheritance:
