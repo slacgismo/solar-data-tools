@@ -12,14 +12,6 @@ solardatatools.algorithms.capacity\_change module
    :undoc-members:
    :show-inheritance:
 
-solardatatools.algorithms.sunrise\_sunset\_estimation module
-------------------------------------------------------------
-
-.. automodule:: solardatatools.algorithms.sunrise_sunset_estimation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 solardatatools.algorithms.time\_shifts module
 ---------------------------------------------
 
