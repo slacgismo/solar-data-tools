@@ -65,7 +65,7 @@ def remote_file_to_dh(file):
     """
     Converts a file of remote database site into a list solar-data-tools DataHandler.
     Parameters:
-    - site: remote IP address of database.
+    - file: remote sites of database.
     Returns:
     - A list of tuples of the unique identifier and its corresponding DataHandler.
     """
@@ -73,8 +73,8 @@ def remote_file_to_dh(file):
     for site in file:
         df = load_cassandra_data(site)
         dh = DataHandler(df, convert_to_ts=True)
+        dh.data_frame_raw.index = dh.data_frame_raw.index.view("int")
         dh_keys = dh.keys
-        df.index = dh.data_frame_raw.index.view("int")
         for key in dh_keys:
             system = key[0][1]
             system = system.strip()
@@ -253,7 +253,7 @@ def generate_task_remote(file, track_times=True):
     on the ingest task.
     """
     task_analyze = []
-    task_ingest = delayed(remote_file_to_dh)(file)
+    task_ingest = remote_file_to_dh(file)
     for task in task_ingest:
         task_analyze.append(delayed(run_job)(task, track_times))
     return task_analyze
@@ -280,10 +280,10 @@ def generate_tasks_directory_local(directory, track_times=True):
 
 def generate_tasks_remote_database(db_list):
     """
-    Generate the analysis tasks for a remote S3 bucket containing csv's.
+    Generate the analysis tasks for remote database.
 
     Parameters:
-    - db_list: Path of the directory containing a list of IPs of remote database
+    - db_list: Path of the directory containing a list of sites from remote database
 
     Returns:
     - A list of Dask delayed task objects for the data analysis,
@@ -293,7 +293,6 @@ def generate_tasks_remote_database(db_list):
     with open(db_list, "r") as file:
         result.extend(generate_task_remote(file))
     return result
-
 
 def execute_tasks(task_list):
     """
