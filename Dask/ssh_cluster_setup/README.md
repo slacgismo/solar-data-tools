@@ -20,7 +20,9 @@ In contrast, we have conducted extensive research in the scenarion where our cli
 * Our example script is also included in this folder.
 
 ### Appendix: some debugging tips while using AWS EC2
-1. Please make sure your dependencies are up-to-date. To us the problem was pyopenssl. upgrade with `pip install --upgrade pyopenssl`.  
+1. Please make sure your dependencies are up-to-date. To us the problem was pyopenssl. We have created a [requirements.txt](./requirements.txt) file as a **minimal** set of libraries required to have a ssh cluster working. Make sure everything in it is up to date by running `pip install --upgrade -r requirements.txt`.   
 2. To us, setting up ssh clusters with pem files is not really working as expected. But switching to password authentication works. So we would recommend that if you are having authorization issues with ssh setup.  
-3. To run solar-data-tools run_pipeline, make sure your EC2 instances has a memory greater than 16 GB. (By default, AWS EC2 instances has a memory of 1GB, and cannot be modified after innitializations).
-4. We have a demo script [here](./ssh_cluster_example.py) that was tested to work on AWS EC2 in December 2023, ubuntu image.
+3. To run solar-data-tools run_pipeline, make sure your EC2 instances has a memory greater than 16 GB. (By default, AWS EC2 instances has a memory of 1GB, and cannot be modified after innitializations).  
+4. We have a demo script [here](./ssh_cluster_example.py) that was tested to work on AWS EC2 in December 2023, ubuntu image.  
+5. Make sure the python environments are the same across your platforms.  
+6. Whereever you are setting up your cluster, please make sure you have sufficient firewall rules. Our recommendation is to allow all traffic during debug phase, and narrow it down once you have everything working.
