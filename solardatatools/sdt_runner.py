@@ -60,28 +60,6 @@ def local_csv_to_dh(file):
     name = os.path.basename(file)
     return (name, dh)
 
-
-def remote_file_to_dh(file):
-    """
-    Converts a file of remote database site into a list solar-data-tools DataHandler.
-    Parameters:
-    - file: remote sites of database.
-    Returns:
-    - A list of tuples of the unique identifier and its corresponding DataHandler.
-    """
-    result = []
-    for site in file:
-        df = load_cassandra_data(site)
-        dh = DataHandler(df, convert_to_ts=True)
-        dh.data_frame_raw.index = dh.data_frame_raw.index.view("int")
-        dh_keys = dh.keys
-        for key in dh_keys:
-            system = key[0][1]
-            system = system.strip()
-            result.append((system, dh))
-    return result
-
-
 def get_csvs_in_dir(folder_path):
     """
     Gets the csvs in a directory.
@@ -116,6 +94,33 @@ def run_job(data_result, track_times):
 
     try:
         data_handler.run_pipeline()
+        report = data_handler.report(verbose=False, return_values=True)
+        report["name"] = name
+        if track_times:
+            report["total_time"] = data_handler.total_time
+    except:
+        report = {}
+        report["name"] = name
+    return report
+
+def remote_run_job(data_result, track_times):
+    """
+    Processes a single unit of data using DataHandler.
+    Parameters:
+    - data_result: Tuple of the file name and its corresponding DataHandler.
+    - track_times: Boolean to determine whether run times are added to the 
+                   output.
+    Returns:
+    - A dictionary containing the name of the data and the processed report.
+    If there was an error with processing, only the name of the data is 
+    returned.
+    """
+    name = data_result[0]
+    data_handler = data_result[1]
+    column = data_result[2]
+    
+    try:    
+        data_handler.run_pipeline(power_col=column)
         report = data_handler.report(verbose=False, return_values=True)
         report["name"] = name
         if track_times:
@@ -239,24 +244,29 @@ def generate_task_local(filename, track_times=True):
     return task_analyze
 
 
-def generate_task_remote(file, track_times=True):
+def remote_site_to_dhs(site, track_times=True):
     """
-    Generate the analysis task for a given system.
-
+    Converts a remote database site into a solar-data-tools DataHandler.
     Parameters:
-    - system: Name of the system
-    - track_times: Booleans to determine whether run times are added
-    to the output
-
+    - site: remote site.
     Returns:
-    - A Dask delayed task object for the data analysis, which depends
-    on the ingest task.
+    - A tuple of the unique identifier and its corresponding DataHandler.
     """
-    task_analyze = []
-    task_ingest = remote_file_to_dh(file)
-    for task in task_ingest:
-        task_analyze.append(delayed(run_job)(task, track_times))
-    return task_analyze
+    result = []
+    df = load_cassandra_data(site)
+    dh = DataHandler(df, convert_to_ts=True)
+    dh.data_frame_raw.index = dh.data_frame_raw.index.view("int")
+    dh_keys = dh.keys
+    for key in dh_keys:
+        site = key[0][0]
+        site = site.strip()
+        system = key[0][1]
+        system = system.strip()
+        name = site + system
+        column = key[1]
+        task_analyze = delayed(remote_run_job)((name, dh, column), track_times)
+        result.append(task_analyze)
+    return result
 
 
 def generate_tasks_directory_local(directory, track_times=True):
@@ -291,7 +301,8 @@ def generate_tasks_remote_database(db_list):
     """
     result = []
     with open(db_list, "r") as file:
-        result.extend(generate_task_remote(file))
+        for site in file:
+            result.extend(remote_site_to_dhs(site))
     return result
 
 def execute_tasks(task_list):
