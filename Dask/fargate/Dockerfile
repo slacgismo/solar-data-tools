@@ -14,3 +14,5 @@ RUN python3 -m pip install -e .
 
 RUN pip install dask["complete"]
 RUN pip install dask-cloudprovider[all]
+RUN pip install bokeh
+RUN pip install s3fs

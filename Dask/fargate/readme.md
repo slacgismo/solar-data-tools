@@ -1,7 +1,4 @@
-** This is just a DRAFT **  
-- [ ] What do we do with the hardcoded part of **demo.ipynb**? E.g. replace "image = jjcrush/dask:latest" another repo name
-- [ ] We used Cassandra, shall we add instructions about it?
-
+Please follow this step-by-step guide before running the solar-data-tools demo.
 
 # AMI Permissions
 1. Please first refer to this [setup guide](https://cloudprovider.dask.org/en/latest/aws.html#fargate)
@@ -46,15 +43,15 @@ If you have additional dependencies, install them as well (both Docker image and
 ## Docker Image
 
 1. Install your python requirements and all dependencies as steps in your dockerfile.  
-   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: **[Problem] Put the link here!!!**  
+   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: [link](./Dockerfile)  
 2. Build a docker image
    1. Go to the directory where your Dockerfile is
    2. ```docker build -t <YOUR_IMAGE_NAME> .```
-3. Push your docker image to a repository
+3. Push your docker image to a repository. 2 options here:
    1. Dockerhub (**Highly Recommended**)
       1. ```docker tag <YOUR_IMAGE_NAME>:latest <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest```
       2. ```docker push <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest```
-   2. ECR Repository  (**Not Recommended**)  
+   2. ECR  (**Not Recommended**)  
       **This could lead to unexpected issues, use it only when absolutely necessary**
       1. In your AWS console, search `ECR`
       2. Follow the instructions to create a repository or go to an existing one
@@ -84,28 +81,56 @@ This refers to the local environment where users run their python scripts to cre
       ```
 5.  Install [Jupyter Notebook](https://jupyter.org/install) (Recommended)
        -  VSCode plugin (optional): if you are using VSCode, click the sidebar *Extension*, search for *Jupyter* and install the plugin
-6.  In Jupyter Notebook, set the python interpreter (in the drop down list, choose the environment we just created).
+
+# Prepare your data plug
+Here's the [link](../../notebooks/runner.ipynb) to a sample dataplug
+
+## Example: data provision using local files  
+
+The idea is to load the data from a CSV file as pandas DataFrame, and use the provided function `DataHandler` to convert dataframes into datahandler, then output tuples `(unique_identifier, data_handler)` with which solar-data-tools will perform the analysis.
+```Python
+def local_csv_to_dh(file):
+    """
+    Converts a local CSV file into a solar-data-tools DataHandler.
+    Parameters:
+    - file: Path to the CSV file.
+    Returns:
+    - A tuple of the file name and its corresponding DataHandler.
+    """
+    df = pd.read_csv(file, index_col=0)
+    # Convert index from int to datetime object
+    df.index = pd.to_datetime(df.index)
+    dh = DataHandler(df)
+    name = os.path.basename(file)
+    return (name, dh)
+```
+Here is an example of the changes: if you wish to utilize remote data, consider replacing the input with a list of unique identifiers for remote databases; for Cassandra, the input should be `siteid`.
+
+
 
 Now, let's try the demo!
 # Run Demo
-1. Get the demo script here **[Problem] Put Link!!!**
-2. [**Problem**] Hardcoded lines, what do we do?
-      ```
-      tags = {"project-pa-number": "21691-H2001", "project": "pvinsight"}
-      cluster = FargateCluster(tags=tags, image="jjcrush/dask:latest")
-      ```
-3. 
+1. Get the demo script [here](./demo.ipynb)
+2. Open Jupyter Notebook, set the python interpreter (in the drop down list, choose the environment we just created)
+3. **Please add your stuff before using this script (see comments for details)**
+4. Run the script and wait for cluster initialization, you can check the scheduler and workers status via AWS ECS console
+5. If it does not work, please check:
+   1. Is the cluster created? In ECS console, click cluster id
+   2. Is the scheduler running? In cluster console, click the tab 'tasks' to find the scheduler
+   3. Want detailed error messages? Click on each worker/scheduler and then the **logs** tab for specific information
 
 
-# Issues
+# Debug Tips
 1. **Error during deserialization of the task graph**   
      - **Solution**:
      Please make sure the client environment aligns with the scheduler environment!  (e.g. python versions, python packages & versions) 
 
 2. **Windows Powershell compatibility issues with AWS** 
-   - Details: docker push shows `retrying in ... second ... EOF`
+   - Details: docker push command shows `retrying in ... second ... EOF`
    - **Solution**: Use Git Bash on windows can save you a lot of time.
 3. **Scheduler failed to pull the image**
    -  Details: sometimes it reports "unable to retreive ecr registry auth ... please check your task network configuration"
    - **Solution**: If your image is in a *ECR* repository (private or public), this is the hazardous situation. Consider switching to *Dockerhub*, which has been proven to be perfectly compatible with Fargate.  
-4. 
+4. **Workers failed to run**  
+   - Details: the worker logs a report: `Worker is at 85% memory usage`
+   - **Solution**: This indicates the cluster might not be powerful enough to handle the workload. Please double-check the worker node specification. Scaling up the cluster, either horizontally or vertically, should resolve the issue.
