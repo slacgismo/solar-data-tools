@@ -120,7 +120,7 @@ Now, let's try the demo!
    3. Want detailed error messages? Click on each worker/scheduler and then the **logs** tab for specific information
 
 
-# Debug Tips
+# Debugging Tips
 1. **Error during deserialization of the task graph**   
      - **Solution**:
      Please make sure the client environment aligns with the scheduler environment!  (e.g. python versions, python packages & versions) 
