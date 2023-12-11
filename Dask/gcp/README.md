@@ -2,7 +2,7 @@
 1. Go to GCP console, in VPC Network -> Firewall, create a new rule, set fields as shown in the following picture:  
 ![vpc rule](./readme_imgs/VPC.png)
 2. copy the [setup script](./dask.sh) to any google cloud storage bucket
-3. run the following commands, change the variables accourdingly.
+3. run the following commands on google cloud shell, change the variables accourdingly.
 ```
 CLUSTER_NAME=dask
 REGION=us-central1

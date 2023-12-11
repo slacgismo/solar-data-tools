@@ -37,16 +37,6 @@ readonly MASTER="$(/usr/share/google/get_metadata_value attributes/dataproc-mast
 readonly DASK_LAUNCHER=/usr/local/bin/dask-launcher.sh
 readonly DASK_SERVICE=dask-cluster
 
-# solar-data-tools repo link
-readonly SDT_LOC=https://github.com/slacgismo/solar-data-tools.git
-
-apt-get update -qq
-apt-get install build-essential cmake sudo curl nano git -y
-mkdir sdt
-cd ./sdt
-git clone ${SDT_LOC}
-cd ..
-
 CONDA_PACKAGES=(
   "dask=${DASK_VERSION}" 'dask-bigquery' 'dask-ml'
 )
@@ -157,7 +147,7 @@ function main() {
   fi
 
   # in the future, we should install by pip install solar-data-tools
-  pip install -e ./sdt/solar-data-tools
+  pip install solar-data-tools
   pip install cassandra-driver
   mkdir ~/.aws
   echo $'54.176.95.208\n' > ~/.aws/cassandra_cluster

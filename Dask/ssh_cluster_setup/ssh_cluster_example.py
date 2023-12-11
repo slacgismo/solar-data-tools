@@ -4,6 +4,7 @@ from statistical_clear_sky import SCSF
 from dask.distributed import Client, SSHCluster
 import dask
 
+# Please replace the ips with internal ips of your clusters, they don't need to be the same.
 ec2_ips = ["172.31.27.52", "172.31.27.52", "172.31.27.52"]
 password="slacgismo"
 pem = "~/dask-ssh.pem"
