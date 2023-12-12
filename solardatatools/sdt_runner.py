@@ -77,13 +77,15 @@ def get_csvs_in_dir(folder_path):
     return csvs
 
 
-def run_job(data_result, track_times):
+def run_job(data_result, track_times, local=True):
     """
     Processes a single unit of data using DataHandler.
     Parameters:
     - data_result: Tuple of the file name and its corresponding DataHandler.
     - track_times: Boolean to determine whether run times are added to the
                    output.
+    - local: Boolean to determine whether the inputs user are working with 
+             locally or remotely
     Returns:
     - A dictionary containing the name of the data and the processed report.
     If there was an error with processing, only the name of the data is
@@ -91,36 +93,15 @@ def run_job(data_result, track_times):
     """
     name = data_result[0]
     data_handler = data_result[1]
+    column = None
+    if not local:
+        column = data_result[2]
 
     try:
-        data_handler.run_pipeline()
-        report = data_handler.report(verbose=False, return_values=True)
-        report["name"] = name
-        if track_times:
-            report["total_time"] = data_handler.total_time
-    except:
-        report = {}
-        report["name"] = name
-    return report
-
-def remote_run_job(data_result, track_times):
-    """
-    Processes a single unit of data using DataHandler.
-    Parameters:
-    - data_result: Tuple of the file name and its corresponding DataHandler.
-    - track_times: Boolean to determine whether run times are added to the 
-                   output.
-    Returns:
-    - A dictionary containing the name of the data and the processed report.
-    If there was an error with processing, only the name of the data is 
-    returned.
-    """
-    name = data_result[0]
-    data_handler = data_result[1]
-    column = data_result[2]
-    
-    try:    
-        data_handler.run_pipeline(power_col=column)
+        if local:
+            data_handler.run_pipeline()
+        else:
+            data_handler.run_pipeline(power_col=column)
         report = data_handler.report(verbose=False, return_values=True)
         report["name"] = name
         if track_times:
@@ -264,7 +245,7 @@ def remote_site_to_dhs(site, track_times=True):
         system = system.strip()
         name = site + system
         column = key[1]
-        task_analyze = delayed(remote_run_job)((name, dh, column), track_times)
+        task_analyze = delayed(run_job)((name, dh, column), track_times, False)
         result.append(task_analyze)
     return result
 
