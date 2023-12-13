@@ -22,16 +22,15 @@ jupyter notebook
 ```
 This will open a new tab in your web browser with the Jupyter Dashboard.
 
-Navigate to the Example Notebook:
-
 In the Jupyter Dashboard, navigate to this directory and find the ipynb file.
 
-Open the Example Notebook:
-
-Click on the example.ipynb file to open the notebook in a new tab.
+To open the Example Notebook, click on the example.ipynb file to open the notebook in a new tab.
 
 
-Additional Resources
+## Additional Resources
+
 Jupyter Documentation
+
 Jupyter Notebook Basics
+
 Feel free to reach out if you have any questions or issues opening the notebook. 
