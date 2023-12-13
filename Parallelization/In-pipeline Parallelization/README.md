@@ -37,5 +37,5 @@ Feel free to reach out if you have any questions or issues opening the notebook.
 
 ## Other files in this directory
 
-- **DAG.jam** If you wish to edit or import the directed acyclic graph, you can download the JAM file and import to your project accordingly with Figma. 
-- **img/DAG.png** A more accessible format of the graph is available as a PNG file. 
+- **DAG.jam:** If you wish to edit or import the directed acyclic graph, you can download the JAM file and import to your project accordingly with Figma. 
+- **img/DAG.png:** A more accessible format of the graph is available as a PNG file. 
