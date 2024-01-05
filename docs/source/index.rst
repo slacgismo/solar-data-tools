@@ -1,5 +1,3 @@
-:tocdepth: 3
-
 Solar Data Tools
 =================
 
