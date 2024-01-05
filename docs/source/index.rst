@@ -19,7 +19,7 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
 .. grid:: 2
 
     .. grid-item-card::
-        :img-top: /docs/source/_static/index-images/getting_started.svg
+        :img-top: source/_static/index-images/getting_started.svg
 
         Getting Started
         ^^^^^^^^^^^^^^^
