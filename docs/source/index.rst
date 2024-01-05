@@ -1,4 +1,6 @@
-Solar Data Tools 
+:tocdepth: 3
+
+Solar Data Tools
 =================
 
 |PyPI release| |Anaconda Cloud release|
