@@ -18,4 +18,5 @@ sig-decomp
 osqp
 clarabel
 qss
-sphinx_rtd_theme
+pydata-sphinx-theme
+sphinx-design
