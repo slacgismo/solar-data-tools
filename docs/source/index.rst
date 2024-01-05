@@ -37,7 +37,7 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
             To the getting started guides
 
     .. grid-item-card::
-        :img-top: docs/source/_static/index-images/user_guide.svg
+        :img-top: ../source/_static/index-images/user_guide.svg
 
         User Guide
         ^^^^^^^^^^
