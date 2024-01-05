@@ -19,7 +19,7 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
 .. grid:: 2
 
     .. grid-item-card::
-        :img-top: source/_static/index_images/getting_started.svg
+        :img-top: ../source/_static/index_images/getting_started.svg
 
         Getting Started
         ^^^^^^^^^^^^^^^
@@ -37,7 +37,7 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
             To the getting started guides
 
     .. grid-item-card::
-        :img-top: source/_static/index_images/user_guide.svg
+        :img-top: ../_static/index_images/user_guide.svg
 
         User Guide
         ^^^^^^^^^^
@@ -55,7 +55,7 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
             To the user guide
 
     .. grid-item-card::
-        :img-top: source/_static/index_images/contributor.svg
+        :img-top: ./source/_static/index_images/contributor.svg
 
         Contributor's Guide
         ^^^^^^^^^^^^^^^^^^^
@@ -74,7 +74,7 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
             To the contributor's guide
 
     .. grid-item-card::
-        :img-top: source/_static/index_images/api.svg
+        :img-top: docs/source/_static/index_images/api.svg
 
         Project details
         ^^^^^^^^^^^^^^^
