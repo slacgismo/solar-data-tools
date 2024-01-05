@@ -20,6 +20,7 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
 
     .. grid-item-card::
         :img-top: ../source/_static/index_images/getting_started.svg
+        :width: 20%
 
         Getting Started
         ^^^^^^^^^^^^^^^
