@@ -12,6 +12,17 @@ Tools for performing common tasks on solar PV data signals. These tasks include 
 
 See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebooks>`_ folder for examples.
 
+.. Important:: These documentation pages are under construction.
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   index_getting_started
+   index_user_docs
+   index_dev
+   index_project_details
+
 .. grid:: 1 2 2 2
     :gutter: 4
     :padding: 2 2 0 0
@@ -43,7 +54,6 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
         +++
 
         .. button-ref:: index_user_docs
-            :ref-type: ref
             :click-parent:
             :color: primary
             :expand:
@@ -62,7 +72,6 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
         +++
 
         .. button-ref:: index_dev
-            :ref-type: ref
             :click-parent:
             :color: primary
             :expand:
@@ -79,7 +88,6 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
         +++
 
         .. button-ref:: index_project_details
-            :ref-type: ref
             :click-parent:
             :color: primary
             :expand:
