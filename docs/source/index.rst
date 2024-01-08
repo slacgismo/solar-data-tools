@@ -12,15 +12,6 @@ Tools for performing common tasks on solar PV data signals. These tasks include 
 
 See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebooks>`_ folder for examples.
 
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-
-   index_getting_started
-   index_user_docs
-   index_dev
-   index_project_details
-
 .. grid:: 1 2 2 2
     :gutter: 4
     :padding: 2 2 0 0
