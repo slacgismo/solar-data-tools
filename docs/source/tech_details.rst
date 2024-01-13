@@ -1,5 +1,3 @@
-.. _tech_details:
-
 *****************
 Technical Details
 *****************

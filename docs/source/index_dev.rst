@@ -1,5 +1,3 @@
-.. _index_dev:
-
 ***********************
 Contribution Guidelines
 ***********************

@@ -1,5 +1,3 @@
-.. _index_project_details:
-
 ***************
 Project details
 ***************
