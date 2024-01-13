@@ -1,4 +1,4 @@
-.. _dev:
+.. _index_dev:
 
 ***********************
 Contribution Guidelines

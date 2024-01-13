@@ -1,4 +1,4 @@
-.. _project-details:
+.. _index_project_details:
 
 ***************
 Project details
