@@ -4,19 +4,40 @@
 This module contains functions for obtaining data from various sources.
 
 """
+import math
 from solardatatools.time_axis_manipulation import (
     standardize_time_axis,
     fix_daylight_savings_with_known_tz,
 )
 from solardatatools.utilities import progress
 
-from time import time
-from io import StringIO
+from time import time, perf_counter
+from io import StringIO, BytesIO
+import base64
 import os
 import json
 import requests
 import numpy as np
 import pandas as pd
+from typing import Callable, TypedDict, Any, Tuple, Dict
+from functools import wraps
+from datetime import datetime
+import gzip
+
+
+class SSHParams(TypedDict):
+    ssh_address_or_host: tuple[str, int]
+    ssh_username: str
+    ssh_private_key: str
+    remote_bind_address: tuple[str, int]
+
+
+class DBConnectionParams(TypedDict):
+    database: str
+    user: str
+    password: str
+    host: str
+    port: int
 
 
 def get_pvdaq_data(sysid=2, api_key="DEMO_KEY", year=2011, delim=",", standardize=True):
@@ -207,4 +228,218 @@ def load_constellation_data(
             file_json = json.loads(line)
             file_json
         return df, file_json
+    return df
+
+
+def load_redshift_data(
+    siteid: str,
+    api_key: str,
+    column: str = "ac_power",
+    sensor: int | list[int] | None = None,
+    tmin: datetime | None = None,
+    tmax: datetime | None = None,
+    limit: int | None = None,
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """Loads data based on a site id from a Redshift database into a Pandas DataFrame using an SSH tunnel
+
+    Parameters
+    ----------
+        siteid : str
+            site id to query
+        api_key : str
+            api key for authentication to redshift
+        column : str
+            meas_name to query (default ac_power)
+        sensor : int, list[int], optional
+            sensor index to query based on number of sensors at the site id (default None)
+        tmin : timestamp, optional
+            minimum timestamp to query (default None)
+        tmax : timestamp, optional
+            maximum timestamp to query (default None)
+        limit : int, optional
+            maximum number of rows to query (default None)
+        verbose : bool, optional
+            whether to print out timing information (default False)
+
+    Returns
+    ------
+    df : pd.DataFrame
+        Pandas DataFrame containing the queried data
+    """
+
+    class QueryParams(TypedDict):
+        api_key: str
+        siteid: str
+        column: str
+        sensor: int | list[int] | None
+        tmin: datetime | None
+        tmax: datetime | None
+        limit: int | None
+
+    def decompress_data_to_dataframe(encoded_data):
+        # Decompress gzip data
+        decompressed_buffer = BytesIO(encoded_data)
+        with gzip.GzipFile(fileobj=decompressed_buffer, mode="rb") as gz:
+            decompressed_data = gz.read().decode("utf-8")
+
+        # Attempt to read the decompressed data as CSV
+        df = pd.read_csv(StringIO(decompressed_data))
+
+        return df
+
+    def timing(verbose: bool = True) -> Callable:
+        def decorator(func: Callable):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                start_time = perf_counter()
+                result = func(*args, **kwargs)
+                end_time = perf_counter()
+                execution_time = end_time - start_time
+                if verbose:
+                    print(f"{func.__name__} took {execution_time:.3f} seconds to run")
+                return result
+
+            return wrapper
+
+        return decorator
+
+    @timing(verbose)
+    def query_redshift_w_api(
+        params: QueryParams, page: int, is_batch: bool = False
+    ) -> requests.Response:
+        url = "https://lmojfukey3rylrbqughzlfu6ca0ujdby.lambda-url.us-west-1.on.aws/"
+        payload = {
+            "api_key": params.get("api_key"),
+            "siteid": params.get("siteid"),
+            "column": params.get("column"),
+            "sensor": params.get("sensor"),
+            "tmin": str(params.get("tmin")),
+            "tmax": str(params.get("tmax")),
+            "limit": str(params.get("limit")),
+            "page": str(page),
+            "is_batch": str(is_batch),
+        }
+
+        if sensor is None:
+            payload.pop("sensor")
+        if tmin is None:
+            payload.pop("tmin")
+        if tmax is None:
+            payload.pop("tmax")
+        if limit is None:
+            payload.pop("limit")
+
+        response = requests.post(url, json=payload, timeout=60 * 5)
+
+        if response.status_code != 200:
+            error = response.json()
+            error_msg = error["error"]
+            raise Exception(
+                f"Query failed with status code {response.status_code}: {error_msg}"
+            )
+        if verbose:
+            print(f"Content size: {len(response.content)}")
+
+        return response
+
+    def fetch_data(
+        query_params: QueryParams, df_list: list[pd.DataFrame], index: int, page: int
+    ):
+        try:
+            response = query_redshift_w_api(query_params, page)
+            new_df = decompress_data_to_dataframe(response.content)
+
+            if new_df.empty:
+                raise Exception("Empty dataframe returned from query")
+            if verbose:
+                print(f"Page: {page}, Rows: {len(new_df)}")
+            df_list[index] = new_df
+
+        except Exception as e:
+            print(e)
+            # raise e
+
+    import threading
+
+    data: Dict[str, Any] = {}
+
+    query_params: QueryParams = {
+        "api_key": api_key,
+        "siteid": siteid,
+        "column": column,
+        "sensor": sensor,
+        "tmin": tmin,
+        "tmax": tmax,
+        "limit": limit,
+    }
+
+    try:
+        batch_df: requests.Response = query_redshift_w_api(
+            query_params, 0, is_batch=True
+        )
+        data = batch_df.json()
+    except Exception as e:
+        raise e
+    max_limit = int(data["max_limit"])
+    total_count = int(data["total_count"])
+    batches = int(data["batches"])
+    if verbose:
+        print("total number rows for query: ", total_count)
+        print("Max number of rows per API call", max_limit)
+        print("Total number of batches", batches)
+
+    batch_size = 2  # Max number of threads to run at once (limited by redshift)
+
+    loops = math.ceil(batches / batch_size)
+
+    if batches <= batch_size:
+        loops = 1
+        batch_size = batches
+    # if limit is not None:
+    #     if limit <= max_limit:
+    #         loops = 1
+    #         batch_size = 1
+    #     else:
+    #         loops = math.ceil(limit / max_limit)
+    #         batch_size = math.ceil(batches / loops)
+
+    running_count = total_count
+    page = 0
+    df = pd.DataFrame()
+    list_of_dfs: list[pd.DataFrame] = []
+    for _ in range(loops):
+        df_list = [pd.DataFrame() for _ in range(batch_size)]
+        page_batch = list(range(page, page + batch_size))
+        threads: list[threading.Thread] = []
+
+        # Create threads for each batch of pages
+        for i in range(len(page_batch)):
+            query_params_copy = query_params.copy()
+            if running_count < max_limit:
+                query_params_copy["limit"] = running_count
+            thread = threading.Thread(
+                target=fetch_data, args=(query_params_copy, df_list, i, page_batch[i])
+            )
+            threads.append(thread)
+            thread.start()
+
+            running_count -= max_limit
+
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join()
+
+        # Move to the next batch of pages
+        page += batch_size
+
+        # Concatenate the dataframes
+        valid_df_list = [new_df for new_df in df_list if not new_df.empty]
+
+        list_of_dfs.extend(valid_df_list)
+
+    df = pd.concat(list_of_dfs, ignore_index=True)
+    # If any batch returns an empty DataFrame, stop querying
+    if df.empty:
+        raise Exception("Empty dataframe returned from query")
     return df
