@@ -10,8 +10,6 @@ Solar Data Tools
 
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in a data set, common data transforms, and fixing time stamp issues. These tools are designed to be automatic and require little if any input from the user. Libraries are included to help with data IO and plotting as well.
 
-See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebooks>`_ folder for examples.
-
 .. Important:: These documentation pages are under construction.
 
 .. toctree::
@@ -31,8 +29,8 @@ See `notebooks <https://github.com/slacgismo/solar-data-tools/tree/master/notebo
     .. grid-item-card:: Getting Started
         :img-top: ../source/images/getting_started.svg
 
-        New to Solar Data Tools? Check out the getting started guides. They contain an
-        introduction to the main concepts and links to additional tutorials.
+        New to Solar Data Tools? Check out the getting started guides for installation and general usage information,
+        as well as quick links to additional examples and tutorials.
 
         +++
 

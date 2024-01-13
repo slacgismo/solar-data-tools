@@ -1,3 +1,13 @@
+.. _project-details:
+
 ***************
-Project Details
+Project details
 ***************
+
+.. toctree::
+   :maxdepth: 1
+
+   tech_details
+   versioning
+   authors
+   license

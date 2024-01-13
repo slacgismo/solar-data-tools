@@ -33,7 +33,8 @@ author = "Bennet Meyers"
 extensions = [
     "sphinx_design",
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon"
+    "sphinx.ext.napoleon",
+    "nbsphinx" # for notebooks integration
 ]
 
 # Add any paths that contain templates here, relative to this directory.

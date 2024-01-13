@@ -20,3 +20,5 @@ clarabel
 qss
 pydata-sphinx-theme
 sphinx-design
+nbsphinx
+pandoc
