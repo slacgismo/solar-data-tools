@@ -43,7 +43,7 @@ If you have additional dependencies, install them as well (both Docker image and
 ## Docker Image
 
 1. Install your python requirements and all dependencies as steps in your dockerfile.  
-   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: [link](./Dockerfile)  
+   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: [link](Dockerfile)  
 2. Build a docker image
    1. Go to the directory where your Dockerfile is
    2. ```docker build -t <YOUR_IMAGE_NAME> .```
@@ -84,7 +84,7 @@ This refers to the local environment where users run their python scripts to cre
 
 Now, let's try the demo!
 # Run Demo
-1. Get the demo script [here](./demo.ipynb)
+1. Get the demo script [here](../fargate/fargate_demo.ipynb)
 2. Open Jupyter Notebook, set the python interpreter (in the drop down list, choose the environment we just created)
 3. **Please add your stuff before using this script (see comments for details)**
 4. Run the script and wait for cluster initialization, you can check the scheduler and workers status via AWS ECS console
