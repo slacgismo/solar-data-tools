@@ -60,7 +60,7 @@ If you have additional dependencies, install them as well (both Docker image and
 
 For more details, please follow this [link](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html)
 
-## Client Environment
+## Local Environment
 This refers to the local environment where users run their python scripts to create a cluster and submit the job. To keep your local machine clean, we recommend using `Anaconda` to create a virtual environment and install all required packages there.
 
 1.  Install [Anaconda](https://www.anaconda.com/download/)
@@ -81,32 +81,6 @@ This refers to the local environment where users run their python scripts to cre
       ```
 5.  Install [Jupyter Notebook](https://jupyter.org/install) (Recommended)
        -  VSCode plugin (optional): if you are using VSCode, click the sidebar *Extension*, search for *Jupyter* and install the plugin
-
-# Prepare your data plug
-Here's the [link](../../notebooks/runner.ipynb) to a sample dataplug
-
-## Example: data provision using local files  
-
-The idea is to load the data from a CSV file as pandas DataFrame, and use the provided function `DataHandler` to convert dataframes into datahandler, then output tuples `(unique_identifier, data_handler)` with which solar-data-tools will perform the analysis.
-```Python
-def local_csv_to_dh(file):
-    """
-    Converts a local CSV file into a solar-data-tools DataHandler.
-    Parameters:
-    - file: Path to the CSV file.
-    Returns:
-    - A tuple of the file name and its corresponding DataHandler.
-    """
-    df = pd.read_csv(file, index_col=0)
-    # Convert index from int to datetime object
-    df.index = pd.to_datetime(df.index)
-    dh = DataHandler(df)
-    name = os.path.basename(file)
-    return (name, dh)
-```
-Here is an example of the changes: if you wish to utilize remote data, consider replacing the input with a list of unique identifiers for remote databases; for Cassandra, the input should be `siteid`.
-
-
 
 Now, let's try the demo!
 # Run Demo
