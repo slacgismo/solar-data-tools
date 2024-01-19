@@ -1,3 +1,0 @@
-pyopenssl
-dask[complete]
-solar-data-tools

@@ -75,8 +75,8 @@ This refers to the local environment where users run their python scripts to cre
       ```
       # Add this channel for solar-data-tools
       conda config --add channels slacgismo                 
-      conda install dask["complete"]
-      conda install dask-cloudprovider[all]
+      conda install -c conda-forge dask
+      conda install -c conda-forge dask-cloudprovider
       conda install solar-data-tools
       ```
 5.  Install [Jupyter Notebook](https://jupyter.org/install) (Recommended)
