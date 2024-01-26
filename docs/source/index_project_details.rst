@@ -8,4 +8,5 @@ Project details
    tech_details
    versioning
    authors
+   acknowledgment
    license
