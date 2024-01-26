@@ -1,3 +1,4 @@
+import os
 from dask.distributed import Client
 from dask_cloudprovider.aws import FargateCluster
 r'''
@@ -13,15 +14,34 @@ TAGS = {
 }
 
 IMAGE = "smiskov/dask-sdt-sm:latest"
-def _init_fargate_cluster(tags: dict, image: str, scale_num: int) -> FargateCluster:
-    cluster = FargateCluster(tags=tags, image=image)
-    cluster.scale(scale_num) # TODO: this probably should be accessible somewhere else
+
+# AWS_KEY = os.environ['AWS_ACCESS_KEY']
+# AWS_SECRET = os.environ['AWS_SECRET_ACCESS_KEY']
+
+
+
+def _init_fargate_cluster() -> FargateCluster:
+    cluster = FargateCluster(
+        tags=TAGS,
+        image=IMAGE,
+        region_name="us-west-1",
+        n_workers=10,
+        worker_nthreads=1,
+        environment={
+            'AWS_ACCESS_KEY_ID': AWS_KEY,
+            'AWS_SECRET_ACCESS_KEY': AWS_SECRET
+        }
+    )
+    cluster.scale(12) # TODO: this probably should be accessible somewhere else
     return cluster
+
 
 def _init_dask_client(cluster: FargateCluster) -> Client:
     client = Client(cluster)
     return client
 
+
 def get_fargate_cluster(tags=TAGS, image=IMAGE, scale_num=12) -> Client:
-    cluster = _init_fargate_cluster(tags, image, scale_num)
+    cluster = _init_fargate_cluster()
+
     return _init_dask_client(cluster)
