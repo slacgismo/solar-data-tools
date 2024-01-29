@@ -5,6 +5,7 @@ This module contains functions for obtaining data from various sources.
 
 """
 import math
+from warnings import warn
 from solardatatools.time_axis_manipulation import (
     standardize_time_axis,
     fix_daylight_savings_with_known_tz,
@@ -135,6 +136,12 @@ def load_cassandra_data(
     cluster_ip=None,
     verbose=True,
 ):
+    warn(
+        "This function is deprecated. Please use load_redshift_data function instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     try:
         from cassandra.cluster import Cluster
     except ImportError:
@@ -226,33 +233,29 @@ def load_redshift_data(
     limit: int | None = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
-    """Queries a SunPower dataset by site id and returns a Pandas DataFrame
+    """
+    Queries a SunPower dataset by site id and returns a Pandas DataFrame.
 
     Request an API key by registering at https://pvdb.slacgismo.org and emailing slacgismotutorials@gmail.com with your information and use case.
 
-    Parameters
-    ----------
-        siteid : str
-            site id to query
-        api_key : str
-            api key for authentication to query data
-        column : str
-            meas_name to query (default ac_power)
-        sensor : int, list[int], optional
-            sensor index to query based on number of sensors at the site id (default None)
-        tmin : timestamp, optional
-            minimum timestamp to query (default None)
-        tmax : timestamp, optional
-            maximum timestamp to query (default None)
-        limit : int, optional
-            maximum number of rows to query (default None)
-        verbose : bool, optional
-            whether to print out timing information (default False)
-
-    Returns
-    ------
-    df : pd.DataFrame
-        Pandas DataFrame containing the queried data
+    :param siteid: Site id to query
+    :type siteid: str
+    :param api_key: API key for authentication to query data
+    :type api_key: str
+    :param column: Meas_name to query, defaults to "ac_power"
+    :type column: str, optional
+    :param sensor: Sensor index to query based on the number of sensors at the site id, defaults to None
+    :type sensor: int | list[int] | None, optional
+    :param tmin: Minimum timestamp to query, defaults to None
+    :type tmin: datetime | None, optional
+    :param tmax: Maximum timestamp to query, defaults to None
+    :type tmax: datetime | None, optional
+    :param limit: Maximum number of rows to query, defaults to None
+    :type limit: int | None, optional
+    :param verbose: Option to print out additional information, defaults to False
+    :type verbose: bool, optional
+    :return: Pandas DataFrame containing the queried data.
+    :rtype: pd.DataFrame
     """
 
     class QueryParams(TypedDict):
@@ -402,7 +405,8 @@ def load_redshift_data(
         batch_df: requests.Response = get_query_info(query_params)
         data = batch_df.json()
     except Exception as e:
-        raise e
+        print(e)
+        raise Exception("Failed to get query info")
     max_limit = int(data["max_limit"])
     total_count = int(data["total_count"])
     batches = int(data["batches"])
