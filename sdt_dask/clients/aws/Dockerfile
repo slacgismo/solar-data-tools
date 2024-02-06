@@ -7,8 +7,6 @@ WORKDIR /root
 RUN mkdir sdt
 WORKDIR /root/sdt
 
-RUN pip install dask["complete"]
-RUN pip install dask-cloudprovider[all]
-RUN pip install bokeh
-RUN pip install s3fs
-RUN pip install solar-data-tools
+COPY requirements.txt /root/sdt/.
+
+RUN pip install -r requirements.txt
