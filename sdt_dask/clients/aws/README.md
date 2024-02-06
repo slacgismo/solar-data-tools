@@ -43,7 +43,7 @@ If you have additional dependencies, install them as well (both Docker image and
 ## Docker Image
 
 1. Install your python requirements and all dependencies as steps in your dockerfile.  
-   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: [link](Dockerfile)  
+   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: [link](Dockerfile). (To create a ```requirements.txt``` file that works with pip in Docker from a conda env, you can install pip in your conda env, then run ```pip list --format=freeze > requirements.txt```).
 2. Build a docker image
    1. Go to the directory where your Dockerfile is
    2. ```docker build -t <YOUR_IMAGE_NAME> .```
