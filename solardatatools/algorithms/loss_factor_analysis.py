@@ -15,15 +15,21 @@ import gfosd.components as comp
 from spcqe.functions import make_basis_matrix, make_regularization_matrix
 
 
-class LossFactorEstimator:
-    def __init__(self, energy_data, **kwargs):
+class DegradationSoilingEstimator:
+    def __init__(
+        self, energy_data, capacity_change_labels=None, outage_flags=None, **kwargs
+    ):
         self.energy_data = energy_data
         log_energy = np.zeros_like(self.energy_data)
-        is_zero = np.isclose(dh.daily_signals.energy, 0, atol=1e-1)
+        is_zero = np.isclose(energy_data, 0, atol=1e-1)
         log_energy[is_zero] = np.nan
-        log_energy[~is_zero] = np.log(dh.daily_signals.energy[~is_zero])
+        log_energy[~is_zero] = np.log(energy_data[~is_zero])
         self.log_energy = log_energy
         self.use_ixs = ~is_zero
+        if outage_flags is not None:
+            self.use_ixs = np.logical_and(self.use_ixs, ~outage_flags)
+        self.capacity_change_labels = capacity_change_labels
+        self.total_measured_energy = np.sum(self.energy_data[self.use_ixs])
         self.problem = self.make_problem(**kwargs)
         self.degradation_rate = None
         self.energy_model = None
@@ -31,14 +37,19 @@ class LossFactorEstimator:
         self.total_energy_loss = None
         self.total_percent_loss = None
         self.degradation_energy_loss = None
-        self.degradation_percent_loss = None
         self.soiling_energy_loss = None
-        self.soiling_percent_loss = None
+        self.capacity_change_loss = None
         self.weather_energy_loss = None
         self.weather_percent_loss = None
+        self.outage_energy_loss = None
+        self.degradation_percent = None
+        self.soiling_percent = None
+        self.capacity_change_percent = None
+        self.weather_percent = None
+        self.outage_percent = None
 
     def estimate_losses(self, solver="CLARABEL"):
-        self.problem.decompose(solver=solver)
+        self.problem.decompose(solver=solver, verbose=False)
         # in the SD formulation, we put the residual term first, so it's the reverse order of how we specify this model (weather last)
         self.log_energy_model = self.problem.decomposition[::-1]
         self.energy_model = np.exp(self.log_energy_model)
@@ -46,68 +57,45 @@ class LossFactorEstimator:
             (self.energy_model[1][365:] - self.energy_model[1][:-365])
             / self.energy_model[1][365:]
         )
+        # self.energy_lost_outages = np.sum(self.energy_model[:, self.use_ixs]) - np.sum(self.energy_model)
         total_energy = np.sum(self.energy_data[self.use_ixs])
-        self.total_energy_loss = total_energy - np.sum(
-            self.energy_model[0][self.use_ixs]
-        )
-        self.degradation_energy_loss = total_energy - np.sum(
-            np.product(self.energy_model[[True, False, True, True]], axis=0)[
-                self.use_ixs
-            ]
-        )
-        self.soiling_energy_loss = total_energy - np.sum(
-            np.product(self.energy_model[[True, True, False, True]], axis=0)[
-                self.use_ixs
-            ]
-        )
-        self.weather_energy_loss = total_energy - np.sum(
-            np.product(self.energy_model[[True, True, True, False]], axis=0)[
-                self.use_ixs
-            ]
-        )
-        items = [
-            self.degradation_energy_loss,
-            self.soiling_energy_loss,
-            self.weather_energy_loss,
-        ]
-        avg_item = np.average(items)
-        new_items = []
-        for item in items:
-            item -= avg_item
-            item += self.total_energy_loss / len(items)
-            new_items.append(item)
-        (
-            self.degradation_energy_loss,
-            self.soiling_energy_loss,
-            self.weather_energy_loss,
-        ) = new_items
-        self.total_percent_loss = (
-            100 * self.total_energy_loss / np.sum(self.energy_data)
-        )
-        self.degradation_percent_loss = (
-            100 * self.degradation_energy_loss / np.sum(self.energy_data)
-        )
-        self.soiling_percent_loss = (
-            100 * self.soiling_energy_loss / np.sum(self.energy_data)
-        )
-        self.weather_percent_loss = (
-            100 * self.weather_energy_loss / np.sum(self.energy_data)
-        )
+        baseline_energy = np.sum(self.energy_model[0])
+        self.total_energy_loss = total_energy - baseline_energy
+        self.total_percent_loss = 100 * self.total_energy_loss / baseline_energy
 
+        out = attribute_losses(self.energy_model, self.use_ixs)
+        self.degradation_energy_loss = out[0]
+        self.soiling_energy_loss = out[1]
+        self.capacity_change_loss = out[2]
+        self.weather_energy_loss = out[3]
+        self.outage_energy_loss = out[4]
+
+        self.degradation_percent = out[0] / self.total_energy_loss
+        self.soiling_percent = out[1] / self.total_energy_loss
+        self.capacity_change_percent = out[2] / self.total_energy_loss
+        self.weather_percent = out[3] / self.total_energy_loss
+        self.outage_percent = out[4] / self.total_energy_loss
+
+        assert np.isclose(
+            self.total_energy_loss,
+            self.degradation_energy_loss
+            + self.soiling_energy_loss
+            + self.capacity_change_loss
+            + self.weather_energy_loss
+            + self.outage_energy_loss,
+        )
         return
 
     def report(self):
         if self.total_energy_loss is not None:
             out = {
                 "degradation rate [%/yr]": self.degradation_rate,
-                "total percent loss [%]": self.total_percent_loss,
-                "degradation percent loss [%]": self.degradation_percent_loss,
-                "soiling percent loss [%]": self.soiling_percent_loss,
-                "weather percent loss [%]": self.weather_percent_loss,
                 "total energy loss [kWh]": self.total_energy_loss,
                 "degradation energy loss [kWh]": self.degradation_energy_loss,
                 "soiling energy loss [kWh]": self.soiling_energy_loss,
+                "capacity change energy loss [kWh]": self.capacity_change_loss,
                 "weather energy loss [kWh]": self.weather_energy_loss,
+                "system outage loss [kWh]": self.outage_energy_loss,
             }
             return out
 
@@ -118,12 +106,12 @@ class LossFactorEstimator:
 
     def make_problem(
         self,
-        tau=0.95,
+        tau=0.9,
         num_harmonics=4,
         deg_type="linear",
         include_soiling=True,
         weight_seasonal=10e-2,
-        weight_soiling_stiffness=1e1,
+        weight_soiling_stiffness=1e0,
         weight_soiling_sparsity=1e-2,
         weight_deg_nonlinear=10e4,
     ):
@@ -141,6 +129,9 @@ class LossFactorEstimator:
                 [
                     comp.Inequality(vmax=0),
                     comp.SumAbs(weight=weight_soiling_stiffness, diff=2),
+                    comp.SumQuantile(
+                        tau=0.98, weight=10 * weight_soiling_sparsity, diff=1
+                    ),
                     comp.SumAbs(weight=weight_soiling_sparsity),
                 ]
             )
@@ -165,6 +156,164 @@ class LossFactorEstimator:
             )
         elif deg_select.value == "none":
             c4 = comp.Aggregate([comp.NoSlope(), comp.FirstValEqual(value=0)])
+        # capacity change term — leverage previous analysis from SDT pipeline
+        if self.capacity_change_labels is not None:
+            basis_M = np.zeros((length, len(set(self.capacity_change_labels))))
+            for lb in set(self.capacity_change_labels):
+                slct = np.array(self.capacity_change_labels) == lb
+                basis_M[slct, lb] = 1
+            c5 = comp.Aggregate(
+                [
+                    comp.Inequality(vmax=0),
+                    comp.Basis(basis=basis_M),
+                    comp.SumAbs(weight=1e-6),
+                ]
+            )
+        else:
+            c5 = comp.Aggregate([comp.NoSlope(), comp.FirstValEqual(value=0)])
 
-        prob = Problem(self.log_energy, [c1, c3, c4, c2])
+        prob = Problem(self.log_energy, [c1, c5, c3, c4, c2], use_set=self.use_ixs)
         return prob
+
+    def plot_pie(self):
+        plt.pie(
+            [
+                np.clip(-self.degradation_energy_loss, 0, np.inf),
+                np.clip(-self.soiling_energy_loss, 0, np.inf),
+                np.clip(-self.capacity_change_loss, 0, np.inf),
+                np.clip(-self.weather_energy_loss, 0, np.inf),
+                np.clip(-self.outage_energy_loss, 0, np.inf),
+            ],
+            labels=[
+                "degradation",
+                "soiling",
+                "capacity change",
+                "weather",
+                "outages",
+            ],
+            autopct="%1.1f%%",
+        )
+        plt.title("System loss breakdown")
+        return plt.gcf()
+
+    def plot_waterfall(self):
+        index = [
+            "baseline",
+            "weather",
+            "outages",
+            "capacity changes",
+            "soiling",
+            "degradation",
+        ]
+        bl = np.sum(self.energy_model[0])
+        data = {
+            "amount": [
+                bl,
+                self.weather_energy_loss,
+                self.outage_energy_loss,
+                self.capacity_change_loss,
+                self.soiling_energy_loss,
+                self.degradation_energy_loss,
+            ]
+        }
+        fig = waterfall_plot(data, index)
+        return fig
+
+
+def model_wrapper(energy_model, use_ixs):
+    n = energy_model.shape[0]
+
+    def model_f(**kwargs):
+        defaults = {f"arg{i + 1}": False for i in range(n)}
+        defaults.update(kwargs)
+        slct = [True] + [item for _, item in defaults.items()]
+        apply_outages = slct[-1]
+        slct = slct[:-1]
+        model_select = energy_model[slct]
+        daily_energy = np.product(model_select, axis=0)
+        if apply_outages:
+            daily_energy = daily_energy[use_ixs]
+        return np.sum(daily_energy)
+
+    return model_f
+
+
+def enumerate_paths_full(origin, destination, path=None):
+    """
+    recursive algorithm for generating all possible monotonically increasing paths between
+    two points on a n-dimensional hypercube
+    """
+    origin = list(origin)
+    destination = list(destination)
+    correct_ordering = np.all(
+        np.asarray(destination, dtype=int) - np.asarray(origin, dtype=int) >= 0
+    )
+    if not correct_ordering:
+        raise Exception("destination must be larger than origin in all dimensions")
+    if path is None:
+        path = []
+    paths = []
+    if origin == destination:
+        # a path has been completed
+        paths.append(path + [origin])
+    else:
+        # find the next index that can be incremented
+        for i in range(len(origin)):
+            if origin[i] != destination[i]:
+                # create the next point in this path
+                next_position = list(origin)
+                next_position[i] = destination[0]
+                # recurse to finish all paths that begin on this path
+                paths.extend(
+                    enumerate_paths_full(next_position, destination, path + [origin])
+                )
+
+    return paths
+
+
+def enumerate_paths(n, dtype=int):
+    """
+    enumerates all possible paths from the origin to the ones vector in R^n
+    """
+    origin = np.zeros(n, dtype=dtype)
+    destination = np.ones(n, dtype=dtype)
+    return np.asarray(enumerate_paths_full(origin, destination))
+
+
+def attribute_losses(energy_model, use_ixs):
+    """This function assigns a total attribution to each loss factor, given a
+    multiplicative loss factor model relative to a baseline, using Shapley
+    attribution.
+
+    :param energy_model: a multiplicative decomposition of PV daily energy, with the
+        baseline first -- ie: baseline, degradation, soiling, capacity changes, and
+        weather (residual)
+    :type energy_model: 2d numpy array of shape n x T, where T is the number of days
+        and n is the number of model factors
+    :param use_ixs: a numpy boolean index where False records a system outage
+    :type use_ixs: 1d numpy boolean array
+
+    :return: a list of energy loss attributions, in the input order
+    :rtype: 1d numpy float array
+    """
+    model_f = model_wrapper(energy_model, use_ixs)
+    paths = enumerate_paths(energy_model.shape[0], dtype=bool)
+    energy_estimates = np.zeros((paths.shape[0], paths.shape[1]))
+    for ix, path in enumerate(paths):
+        for jx, point in enumerate(path):
+            kwargs = {f"arg{i + 1}": v for i, v in enumerate(point)}
+            energy = model_f(**kwargs)
+            energy_estimates[ix, jx] = energy
+    lifts = np.diff(energy_estimates, axis=1)
+    path_diffs = np.diff(paths, axis=1)
+    ordering = np.argmax(path_diffs, axis=-1)
+    ordered_lifts = np.take_along_axis(lifts, np.argsort(ordering, axis=1), axis=1)
+    # print(energy_estimates)
+    # print(lifts)
+    # print(ordered_lifts)
+    attributions = np.average(ordered_lifts, axis=0)
+    total_energy = energy_estimates[0, -1]
+    baseline_energy = energy_estimates[0, 0]
+    # check that we've attributed all losses
+    assert np.isclose(np.sum(attributions), total_energy - baseline_energy)
+    return attributions
