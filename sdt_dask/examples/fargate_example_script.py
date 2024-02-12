@@ -8,8 +8,9 @@ from sdt_dask.dataplugs.pvdaq_plug import PVDAQPlug
 
 
 # Set up
+PA_NUMBER = os.getenv("project-pa-number")
 TAGS = {
-    "project-pa-number": "21691-H2001",
+    "project-pa-number": PA_NUMBER,
     "project": "pvinsight"
 }
 
