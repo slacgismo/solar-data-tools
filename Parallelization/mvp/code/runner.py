@@ -95,7 +95,8 @@ if __name__ == "__main__":
     if not aws_access_key_id or not aws_secret_access_key:
         raise ValueError("AWS credentials not found in environment variables")
 
-    tags = {"project-pa-number": "21691-H2001", "project": "pvinsight"}
+    pa_number = os.environ['project-pa-number']
+    tags = {"project-pa-number": pa_number, "project": "pvinsight"}
     aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
     aws_secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
 
