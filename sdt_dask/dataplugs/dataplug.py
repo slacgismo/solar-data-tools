@@ -11,13 +11,14 @@ class DataPlug:
     def __init__(self):
         pass
 
-    def get_data(self, key: str) -> pd.DataFrame:
+    def get_data(self, keys: tuple) -> pd.DataFrame:
         """This is the main function that the Dask tool will interact with.
         Users should keep the args and returns as defined here when writing
         their custom dataplugs.
 
-        :param key: string designating a unique set of historical power
-            generation measurements
+        :param keys: Tuple containing the required inputs for each plug, w
+            which will at least include a unique set of historical power
+         generation measurements
         :return: Returns a pandas DataFrame with a timestamp column and
             a power column
         """

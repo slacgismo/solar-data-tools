@@ -23,8 +23,8 @@ VPC = "vpc-ab2ff6d3" # for us-west-2
 
 
 # Instantiate a data plug
-data_plug = PVDAQPlug(year=2011)
-KEYS = [34, 35, 51]
+data_plug = PVDAQPlug()
+KEYS = [(34, 2011), (35, 2015), (51,2012)] # site ID and year pairs
 
 # Define the pipeline run for as single dataset
 def run_pipeline(datahandler, solver, solver_convex, verbose=False):

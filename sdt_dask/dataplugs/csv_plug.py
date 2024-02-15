@@ -34,8 +34,8 @@ class LocalFiles(DataPlug):
         Users should keep the args and returns as defined here when writing
         their custom dataplugs.
 
-        :param key: string designating a unique set of historical power
-            generation measurements
+        :param key: Filename (without the extension suffix)--typically designating
+            a unique set of historical power generation measurements
         :return: Returns a pandas DataFrame with a timestamp column and
             a power column
         """
