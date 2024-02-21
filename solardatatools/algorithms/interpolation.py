@@ -35,10 +35,14 @@ def compute_integral_interpolation(ttnew, xxnew, new_indices):
     Returns:
         y (np.ndarray): Interpolated signal (length n-1).
     '''
-    piecewise_integrals = np.diff(ttnew) * xxnew[:-1]
+    xxnew_filled = np.nan_to_num(xxnew, nan=0) # replace NaNs with zeros
+    piecewise_integrals = np.diff(ttnew) * xxnew_filled[:-1]
     cumulative_integrals = np.zeros(ttnew.shape[0])
     # Add the initial zero as a baseline for the cumulative sum
     cumulative_integrals[1:] = np.cumsum(piecewise_integrals)
+    was_nan = np.isnan(xxnew)
+    was_nan[-1] = False # the last point is not used in the interpolation
+    cumulative_integrals[was_nan] = np.nan # set NaNs back to NaN
     y = np.diff(cumulative_integrals[new_indices])
     return y
 
