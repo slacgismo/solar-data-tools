@@ -6,7 +6,9 @@ Here is the basic usage of the example data plugs and instruction on how to writ
 [TODO] Fill out info about example data plugs and how users can write their own.
 
 [TODO] Make a standard attribute for data plugs: a tuple that has one, two or more values corresponding to the inputs that each data plug requires: 
-- CSV plug: list of file names
-- PVDAQ plug: files IDs and associated years
-- PVDB (Redshift) plug: list of site IDs and list of inverter index numbers
-	- needs list of non-standard libraries in requirements file (```requests``` only so far)
+- CSV plug: file name
+- PVDAQ plug: files ID and associated year(s)
+- PVDB (Redshift) plug: site ID and list of inverter index numbers
+
+[TODO]
+- Need to include requirements for each dataplug, which should be a list of any non-standard libraries (e.g. in a requirements file)
