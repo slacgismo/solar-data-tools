@@ -1,10 +1,9 @@
 Please follow this step-by-step guide before running the solar-data-tools demo.
 
 # AMI Permissions
-1. Please first refer to this [setup guide](https://cloudprovider.dask.org/en/latest/aws.html#fargate)
+You need the appropriate permissions to be able to create and manage ECS clusters. If you don't already have those assigned (perhaps by your IT department), refer to this [setup guide](https://cloudprovider.dask.org/en/latest/aws.html#fargate) for more information.
 
-2. If private image repository needed, also add ECR permission
-   (push/pull minimum permissions, full permissions if need to create new repo)
+If a private image repository is needed (instead of using Docker, which is the recommended route), also add ECR permission (push/pull minimum permissions, full permissions if need to create new repo).
 
 # Get AWS CLI (Recommended)
 [Please see this link for details](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
