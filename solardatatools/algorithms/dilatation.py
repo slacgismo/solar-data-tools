@@ -1,4 +1,118 @@
+"""
+This module contains functions to dilate a signal from a regular time grid to a dilated time grid and
+to undilate it back.
+"""
+
 import numpy as np
+
+def build_original_idx(signal_series, nvals_ori):
+    """
+    This function builds a float index from 00:00 first day to last measure of last day (eg. 23:55)
+    for the original signal. The last point of the index is the end of the last time bin (eg. 00:00 next day).
+
+    :param signal_series: pandas.Series, original signal as a DataHandler attribute.
+    :param nvals_ori: int, number of values per day for the original signal.
+    :return: ndarray, 1D array with the original index (length nvals_ori*ndays + 1).
+    """
+    signal_idx_ori = signal_series.index.astype(int).to_numpy()
+    signal_idx_ori = (signal_idx_ori - signal_idx_ori[0])
+    signal_idx_ori = signal_idx_ori / signal_idx_ori[1] * 24 / nvals_ori
+    dt = signal_idx_ori[-1] - signal_idx_ori[-2]
+    signal_idx_ori = np.append(signal_idx_ori, signal_idx_ori[-1] + dt) # Last bin end
+    return signal_idx_ori
+
+def build_dilated_idx(sunrises, sunsets, signal_idx_ori, nvals_dil=101):
+    """
+    This function builds a float index from 00:00 first day to the last sunset of the last day (eg. 18:37)
+    for the dilated signal. The last point of the index is the end of the last time bin (00:00 next day).
+
+    :param sunrises: ndarray, 1D array with the sunrise times (length ndays).
+    :param sunsets: ndarray, 1D array with the sunset times (length ndays).
+    :param signal_idx_ori: ndarray, 1D array with the original index (length nvals_ori*ndays + 1).
+    :param nvals_dil: int, number of values per day for the dilated signal. Default is 101.
+    :return: ndarray, 1D array with the dilated index (length nvals_dil*ndays + 2).
+    """
+    sunrise_idx_ori = sunrises + 24*np.arange(len(sunrises))
+    sunset_idx_ori = sunsets + 24*np.arange(len(sunsets))
+    signal_idx_dil = np.linspace(sunrise_idx_ori, sunset_idx_ori, nvals_dil).ravel(order='F')
+    signal_idx_dil = np.append(0, signal_idx_dil) # Adding first midnight
+    signal_idx_dil = np.append(signal_idx_dil, signal_idx_ori[-1]) # Last bin end
+    return signal_idx_dil
+
+def dilate_signal(signal_idx_dil, signal_idx_ori, signal_ori):
+    """
+    This function dilates a signal from a regular time grid to a dilated time grid.
+
+    :param signal_idx_dil: ndarray, 1D array with the dilated index (length n).
+    :param signal_idx_ori: ndarray, 1D array with the original index (length m).
+    :param signal_ori: ndarray, 1D array with the original signal values (length m-1).
+    :return: ndarray, 1D array with the dilated signal values (length n-1).
+    """
+    _signal_ori = np.append(signal_ori, signal_ori[-1]) # Adding last dummy value to interpolate
+    signal_dil = interpolate(signal_idx_dil, signal_idx_ori, _signal_ori, alignment='left')
+    return signal_dil
+
+def undilate_signal(signal_idx_ori, signal_idx_dil, signal_dil):
+    """
+    This function undilates a signal from the dilated time grid to the regular time grid.
+
+    :param signal_idx_ori: ndarray, 1D array with the original index (length m).
+    :param signal_idx_dil: ndarray, 1D array with the dilated index (length n).
+    :param signal_dil: ndarray, 1D array with the dilated signal values (length n-1).
+    :return: ndarray, 1D array with the original signal values (length m-1).
+    """
+    _signal_dil = np.append(signal_dil, signal_dil[-1]) # Adding last dummy value to interpolate
+    signal_ori = interpolate(signal_idx_ori, signal_idx_dil, _signal_dil, alignment='left')
+    return signal_ori
+
+def undilate_quantiles(signal_idx_ori, signal_idx_dil, quantiles_dil, nvals_dil=101):
+    """
+    This function undilates a 2D matrix of quantiles from the dilated time grid to the regular time grid.
+
+    :param signal_idx_ori: ndarray, 1D array with the original index (length m).
+    :param signal_idx_dil: ndarray, 1D array with the dilated index (length n).
+    :param quantiles_dil: ndarray, 2D array with the quantile values in the dilated time grid (shape (n-1, p)).
+    :param nvals_dil: int, number of values per day for the dilated signal. Default is 101.
+    :return: ndarray, 2D array with the quantile values in the original time grid (shape (m-1, p)).
+    """
+    # we remove the first and last points of the dilated signal index to get the number of days
+    ndays = (len(signal_idx_dil) - 2) // nvals_dil
+    # we add one zero value at the beginning of every every night
+    new_signal_idx_dil = extrapolate_signal_after_sunset(signal_idx_dil, nvals_dil, ndays, method='linear')
+    _quantile_dil = np.zeros(nvals_dil * ndays + 2)
+    quantiles_ori = np.zeros((signal_idx_ori.shape[0]-1, quantiles_dil.shape[1]))
+    for i in range(quantiles_dil.shape[1]):
+        _quantile_dil[:-1] = quantiles_dil[:,i]
+        new_quantile_dil = extrapolate_signal_after_sunset(_quantile_dil, nvals_dil, ndays, method='zero_padding')
+        quantiles_ori[:,i] = interpolate(signal_idx_ori, new_signal_idx_dil, new_quantile_dil, alignment='left')
+    return quantiles_ori
+
+def extrapolate_signal_after_sunset(signal, nvals, ndays, method):
+    """
+    This generic function extrapolates a signal after sunset to add a zero value
+    at the beginning of every night.
+
+    :param signal: ndarray, 1D array with the signal values (length nvals*ndays + 2).
+    :param nvals: int, number of values per day for the signal.
+    :param ndays: int, number of days in the signal.
+    :param method: str, method to use for the extrapolation, either 'linear' or 'zero_padding'.
+    :raises ValueError: raised if method is not 'linear' or 'zero_padding'.
+    :return: ndarray, 1D array with the signal values after the extrapolation (length (nvals+1)*ndays + 2).
+    """
+    # Signal has length nvals * ndays + 2
+    matrix = np.zeros((nvals + 1, ndays))
+    matrix[:-1] = signal[1:-1].reshape((nvals, ndays), order='F')
+    if method == 'linear':
+        matrix[-1] = matrix[-2] + (matrix[-2] - matrix[-3])
+    elif method == 'zero_padding':
+        matrix[-1] = 0
+    else:
+        raise ValueError("Invalid value for method. Choose from: ['linear', 'zero_padding']")
+    new_signal = np.zeros((nvals + 1) * ndays + 2)
+    new_signal[0] = signal[0]
+    new_signal[1:-1] = matrix.ravel(order='F')
+    new_signal[-1] = signal[-1]
+    return new_signal
 
 def interpolate(tnew, t, x, alignment='left'):
     """
