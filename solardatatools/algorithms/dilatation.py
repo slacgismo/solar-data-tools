@@ -1,27 +1,74 @@
-"""
+""" Dilatation Module
+
 This module contains functions to dilate a signal from a regular time grid to a dilated time grid and
 to undilate it back.
+
 """
 
 import numpy as np
+from solardatatools.plotting import plot_2d
 
-def build_original_idx(signal_series, nvals_ori):
-    """
-    This function builds a float index from 00:00 first day to last measure of last day (eg. 23:55)
-    for the original signal. The last point of the index is the end of the last time bin (eg. 00:00 next day).
+DEFAULT = {
+    "nvals_dil": 101,
+}
 
-    :param signal_series: pandas.Series, original signal as a DataHandler attribute.
-    :param nvals_ori: int, number of values per day for the original signal.
-    :return: ndarray, 1D array with the original index (length nvals_ori*ndays + 1).
-    """
-    signal_idx_ori = signal_series.index.astype(int).to_numpy()
-    signal_idx_ori = (signal_idx_ori - signal_idx_ori[0])
-    signal_idx_ori = signal_idx_ori / signal_idx_ori[1] * 24 / nvals_ori
-    dt = signal_idx_ori[-1] - signal_idx_ori[-2]
-    signal_idx_ori = np.append(signal_idx_ori, signal_idx_ori[-1] + dt) # Last bin end
-    return signal_idx_ori
+class Dilatation:
+    def __init__(self, data_handler, **config):
+        self.dh = data_handler
+        self.nvals_ori = data_handler.raw_data_matrix.shape[0]
+        self.ndays = data_handler.raw_data_matrix.shape[1]
+        self.idx_ori = None
+        self.idx_dil = None
+        self.signal_ori = data_handler.raw_data_matrix.ravel(order='F')
+        self.signal_dil = None
+        if len(config) == 0:
+            self.config = DEFAULT
+        else:
+            self.config = config
+        self.run()
+    
+    def run(self):
+        # original index as 1D array of floats (hours since midnight of the first day)
+        self.idx_ori = np.linspace(0, self.ndays*24, self.ndays*self.nvals_ori + 1)
+        # dilated index as 1D float array of floats (hours since midnight of the first day)
+        self.idx_dil = build_dilated_idx(
+            self.dh.daytime_analysis.sunrise_estimates,
+            self.dh.daytime_analysis.sunset_estimates,
+            self.idx_ori,
+            self.config["nvals_dil"])
+        # dilated signal
+        self.signal_dil = dilate_signal(self.idx_dil, self.idx_ori, self.signal_ori)
+    
+    def plot_heatmap(
+        self,
+        space='original',
+        figsize=(12, 6),
+        scale_to_kw=True,
+        year_lines=True,
+        units=None,
+    ):
+        if space == 'original':
+            mat = self.signal_ori.reshape((self.nvals_ori, self.ndays), order='F')
+        elif space == 'dilated':
+            mat = self.signal_dil[1:].reshape((self.config["nvals_dil"], self.ndays), order='F')
+        else:
+            raise ValueError("Invalid value for space. Choose from: ['original', 'dilated']")
+        if units is None:
+            if scale_to_kw and self.dh.power_units == "W":
+                mat /= 1000
+                units = "kW"
+            else:
+                units = self.dh.power_units
+        return plot_2d(
+            mat,
+            figsize=figsize,
+            dates=self.dh.day_index,
+            year_lines=year_lines,
+            units=units,
+        )
+        
 
-def build_dilated_idx(sunrises, sunsets, signal_idx_ori, nvals_dil=101):
+def build_dilated_idx(sunrises, sunsets, signal_idx_ori, nvals_dil=DEFAULT["nvals_dil"]):
     """
     This function builds a float index from 00:00 first day to the last sunset of the last day (eg. 18:37)
     for the dilated signal. The last point of the index is the end of the last time bin (00:00 next day).
@@ -65,7 +112,7 @@ def undilate_signal(signal_idx_ori, signal_idx_dil, signal_dil):
     signal_ori = interpolate(signal_idx_ori, signal_idx_dil, _signal_dil, alignment='left')
     return signal_ori
 
-def undilate_quantiles(signal_idx_ori, signal_idx_dil, quantiles_dil, nvals_dil=101):
+def undilate_quantiles(signal_idx_ori, signal_idx_dil, quantiles_dil, nvals_dil=DEFAULT["nvals_dil"]):
     """
     This function undilates a 2D matrix of quantiles from the dilated time grid to the regular time grid.
 
