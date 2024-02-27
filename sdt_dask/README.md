@@ -31,7 +31,7 @@ to install older versions of `numpy` or other common packages with a
 We want to:
 - Find cases where this method of creating containers will fail
 - Document what errors look like from the user's perspective
-- Implement error handling any exceptions that will make it clear to users that there's a dependency version issue)
+- Implement error handling of any exceptions (errors should make it clear to users that there's a dependency version issue)
 
 ### Examples for users
 Each existing dataplug should have at least a `dataplug.py` module, along 
