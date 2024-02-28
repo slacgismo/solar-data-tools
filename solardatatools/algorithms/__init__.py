@@ -6,3 +6,4 @@ from solardatatools.algorithms.shade import ShadeAnalysis
 from solardatatools.algorithms.soiling import SoilingAnalysis
 from solardatatools.algorithms.soiling import soiling_seperation_old
 from solardatatools.algorithms.soiling import soiling_seperation
+from solardatatools.algorithms.dilatation import Dilatation
