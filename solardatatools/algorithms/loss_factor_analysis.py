@@ -10,12 +10,15 @@ and d_t, s_t, and w_t are the loss factors for degradation, soiling, and weather
 
 """
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from gfosd import Problem
 import gfosd.components as comp
 from spcqe.functions import make_basis_matrix, make_regularization_matrix
 
 
-class DegradationSoilingEstimator:
+class LossFactorAnalysis:
     def __init__(
         self, energy_data, capacity_change_labels=None, outage_flags=None, **kwargs
     ):
@@ -219,6 +222,27 @@ class DegradationSoilingEstimator:
         fig = waterfall_plot(data, index)
         return fig
 
+    def plot_decomposition(self, figsize=(16, 8.5)):
+        _fig_decomp = self.problem.plot_decomposition(
+            exponentiate=True, figsize=figsize
+        )
+        _ax = _fig_decomp.axes
+        _ax[0].plot(
+            np.arange(len(self.energy_data))[~self.use_ixs],
+            self.energy_model[-1, ~self.use_ixs],
+            color="red",
+            marker=".",
+            ls="none",
+        )
+        _ax[0].set_title("weather and system outages")
+        _ax[1].set_title("capacity changes")
+        _ax[2].set_title("soiling")
+        _ax[3].set_title("degradation")
+        _ax[4].set_title("baseline")
+        _ax[5].set_title("measured energy (green) and model minus weather")
+        plt.tight_layout()
+        return _fig_decomp
+
 
 def model_wrapper(energy_model, use_ixs):
     n = energy_model.shape[0]
@@ -317,3 +341,69 @@ def attribute_losses(energy_model, use_ixs):
     # check that we've attributed all losses
     assert np.isclose(np.sum(attributions), total_energy - baseline_energy)
     return attributions
+
+
+def waterfall_plot(data, index, figsize=(10, 4)):
+    # Store data and create a blank series to use for the waterfall
+    trans = pd.DataFrame(data=data, index=index)
+    blank = trans.amount.cumsum().shift(1).fillna(0)
+
+    # Get the net total number for the final element in the waterfall
+    total = trans.sum().amount
+    trans.loc["measured energy"] = total
+    blank.loc["measured energy"] = total
+
+    # The steps graphically show the levels as well as used for label placement
+    step = blank.reset_index(drop=True).repeat(3).shift(-1)
+    step[1::3] = np.nan
+
+    # When plotting the last element, we want to show the full bar,
+    # Set the blank to 0
+    blank.loc["measured energy"] = 0
+
+    # Plot and label
+    my_plot = trans.plot(
+        kind="bar",
+        stacked=True,
+        bottom=blank,
+        legend=None,
+        figsize=figsize,
+        title="System Loss Factor Waterfall",
+    )
+    my_plot.plot(step.index, step.values, "k")
+    my_plot.set_xlabel("Loss Factors")
+    my_plot.set_ylabel("Energy (Wh)")
+
+    # Get the y-axis position for the labels
+    y_height = trans.amount.cumsum().shift(1).fillna(0)
+
+    # Get an offset so labels don't sit right on top of the bar
+    max = trans.max()
+    max = max.iloc[0]
+    neg_offset = max / 25
+    pos_offset = max / 50
+    plot_offset = int(max / 15)
+
+    # Start label loop
+    loop = 0
+    for index, row in trans.iterrows():
+        # For the last item in the list, we don't want to double count
+        if row["amount"] == total:
+            y = y_height.iloc[loop]
+        else:
+            y = y_height.iloc[loop] + row["amount"]
+        # Determine if we want a neg or pos offset
+        if row["amount"] > 0:
+            y += pos_offset
+        else:
+            y -= neg_offset
+        my_plot.annotate("{:,.0f}".format(row["amount"]), (loop, y), ha="center")
+        loop += 1
+
+    # Scale up the y axis so there is room for the labels
+    my_plot.set_ylim(0, blank.max() + int(plot_offset))
+    # Rotate the labels
+    my_plot.set_xticklabels(trans.index, rotation=0)
+    fig = my_plot.get_figure()
+    fig.set_layout_engine(layout="tight")
+    return fig
