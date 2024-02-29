@@ -148,6 +148,7 @@ class LossFactorAnalysis:
             n_reduce = int(0.9 * n_tot)
             bottom_mat = sp.lil_matrix((n_tot - n_reduce, n_reduce))
             bottom_mat[:, -1] = 1
+            # don't allow any downward shifts in the last 10% of the data (constrain values to be equal)
             custom_basis = sp.bmat([[sp.eye(n_reduce)], [bottom_mat]])
             c4 = comp.Aggregate(
                 [
