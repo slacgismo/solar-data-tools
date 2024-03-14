@@ -34,6 +34,7 @@ class LossFactorAnalysis:
         self.capacity_change_labels = capacity_change_labels
         self.total_measured_energy = np.sum(self.energy_data[self.use_ixs])
         self.problem = self.make_problem(**kwargs)
+        self.user_settings = kwargs
         self.degradation_rate = None
         self.energy_model = None
         self.log_energy_model = None
@@ -50,6 +51,66 @@ class LossFactorAnalysis:
         self.capacity_change_percent = None
         self.weather_percent = None
         self.outage_percent = None
+
+    def estimate_degradation_rate(
+        self,
+        max_samples=500,
+        median_tol=1e-3,
+        confidence_tol=1e-2,
+        fraction_hold=0.2,
+        method="median_unbiased",
+        debug=False,
+    ):
+        old_ixs = np.copy(self.use_ixs)
+        change_is_small_now = False
+        change_is_small_window = False
+        output = pd.DataFrame(columns=["tau", "weight", "deg"])
+        running_stats = pd.DataFrame(columns=["p50", "p025", "p975"])
+        counter = 0
+        while not (change_is_small_now and change_is_small_window):
+            # print(counter)
+            tau = np.random.uniform(0.85, 0.95)
+            weight = np.random.uniform(0.5, 5)
+            good_ixs = np.arange(len(self.use_ixs))[self.use_ixs]
+            num_values = int(len(good_ixs) * fraction_hold)
+            # select random index locations for removal
+            selected_ixs = np.random.choice(good_ixs, size=num_values, replace=False)
+            msk = np.zeros(len(self.use_ixs), dtype=bool)
+            msk[selected_ixs] = True
+            new_ixs = ~np.logical_or(~self.use_ixs, msk)
+            self.use_ixs = new_ixs
+            # remake modified problem
+            self.problem = self.make_problem(tau=tau, weight_soiling_stiffness=weight)
+            # run signal decomposition and shapley attribution
+            self.estimate_losses()
+            # record running results
+            output.loc[counter] = [tau, weight, self.degradation_rate]
+            running_stats.loc[counter] = [
+                np.median(output["deg"]),
+                np.quantile(output["deg"], 0.025, method=method),
+                np.quantile(output["deg"], 0.975, method=method),
+            ]
+            self.use_ixs = old_ixs
+            counter += 1
+            # check exit conditions
+            if counter < 10:
+                # get at least 10 samples
+                continue
+            elif counter > max_samples:
+                # don't go over max_samples
+                break
+            diffs = np.diff(running_stats, axis=0)
+            change_is_small_now = np.all(
+                np.abs(diffs[-1]) <= [median_tol, confidence_tol, confidence_tol]
+            )
+            change_is_small_window = np.all(
+                np.average(np.abs(diffs[-10:]), axis=0)
+                <= [median_tol, confidence_tol, confidence_tol]
+            )
+            if debug:
+                print(counter, running_stats[-1], diffs[-1])
+        self.problem = self.make_problem(**self.user_settings)
+        return output, running_stats
 
     def estimate_losses(self, solver="CLARABEL"):
         self.problem.decompose(solver=solver, verbose=False)
