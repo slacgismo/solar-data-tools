@@ -1,6 +1,10 @@
 name: Test Build
 
-on: [push]
+on:
+  push:
+    branches: [pkg-update]
+  pull_request:
+    branches: [main]
 jobs:
   build-pypi:
     runs-on: ubuntu-latest
