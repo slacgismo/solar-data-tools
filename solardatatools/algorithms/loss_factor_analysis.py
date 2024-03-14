@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from gfosd import Problem
 import gfosd.components as comp
 from spcqe.functions import make_basis_matrix, make_regularization_matrix
+from tqdm import tqdm
 
 
 class LossFactorAnalysis:
@@ -59,6 +60,7 @@ class LossFactorAnalysis:
         confidence_tol=1e-2,
         fraction_hold=0.2,
         method="median_unbiased",
+        verbose=False,
         debug=False,
     ):
         old_ixs = np.copy(self.use_ixs)
@@ -67,8 +69,29 @@ class LossFactorAnalysis:
         output = pd.DataFrame(columns=["tau", "weight", "deg"])
         running_stats = pd.DataFrame(columns=["p50", "p025", "p975"])
         counter = 0
+        if verbose:
+            print(
+                """
+            ************************************************
+            * Solar Data Tools Degradation Estimation Tool *
+            ************************************************
+
+            Monte Carlo sampling to generate a distributional estimate
+            of the degradation rate [%/yr]
+
+            The distribution typically stabilizes in 50-100 samples.
+
+            Author: Bennet Meyers, SLAC
+
+            This material is based upon work supported by the U.S. Department
+            of Energy's Office of Energy Efficiency and Renewable Energy (EERE)
+            under the Solar Energy Technologies Office Award Number 38529.\n
+            """
+            )
+            progress = tqdm()
         while not (change_is_small_now and change_is_small_window):
-            # print(counter)
+            if verbose:
+                progress.update()
             tau = np.random.uniform(0.85, 0.95)
             weight = np.random.uniform(0.5, 5)
             good_ixs = np.arange(len(self.use_ixs))[self.use_ixs]
@@ -107,8 +130,14 @@ class LossFactorAnalysis:
                 np.average(np.abs(diffs[-10:]), axis=0)
                 <= [median_tol, confidence_tol, confidence_tol]
             )
-            if debug:
-                print(counter, running_stats[-1], diffs[-1])
+            if verbose and counter % 5 == 0:
+                vn = running_stats.values[-1]
+                progress.write(
+                    f"P50, P02.5, P97.5: {vn[0]:.3f}, {vn[1]:.3f}, {vn[2]:.3f}"
+                )
+                progress.write(
+                    f"changes: {diffs[-1][0]:.3e}, {diffs[-1][1]:.3e}, {diffs[-1][2]:.3e}"
+                )
         self.problem = self.make_problem(**self.user_settings)
         return output, running_stats
 
