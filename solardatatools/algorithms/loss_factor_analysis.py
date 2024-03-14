@@ -34,6 +34,7 @@ class LossFactorAnalysis:
             self.use_ixs = np.logical_and(self.use_ixs, ~outage_flags)
         self.capacity_change_labels = capacity_change_labels
         self.total_measured_energy = np.sum(self.energy_data[self.use_ixs])
+        self.MC_results = None
         self.problem = self.make_problem(**kwargs)
         self.user_settings = kwargs
         self.degradation_rate = None
@@ -115,22 +116,8 @@ class LossFactorAnalysis:
             ]
             self.use_ixs = old_ixs
             counter += 1
-            # check exit conditions
-            if counter < 10:
-                # get at least 10 samples
-                continue
-            elif counter > max_samples:
-                # don't go over max_samples
-                break
             diffs = np.diff(running_stats, axis=0)
-            change_is_small_now = np.all(
-                np.abs(diffs[-1]) <= [median_tol, confidence_tol, confidence_tol]
-            )
-            change_is_small_window = np.all(
-                np.average(np.abs(diffs[-10:]), axis=0)
-                <= [median_tol, confidence_tol, confidence_tol]
-            )
-            if verbose and counter % 5 == 0:
+            if verbose and (counter + 1) % 10 == 0:
                 vn = running_stats.values[-1]
                 progress.write(
                     f"P50, P02.5, P97.5: {vn[0]:.3f}, {vn[1]:.3f}, {vn[2]:.3f}"
@@ -138,8 +125,24 @@ class LossFactorAnalysis:
                 progress.write(
                     f"changes: {diffs[-1][0]:.3e}, {diffs[-1][1]:.3e}, {diffs[-1][2]:.3e}"
                 )
+            # check exit conditions
+            if counter < 10:
+                # get at least 10 samples
+                continue
+            elif counter > max_samples:
+                # don't go over max_samples
+                break
+
+            change_is_small_now = np.all(
+                np.abs(diffs[-1]) <= [median_tol, confidence_tol, confidence_tol]
+            )
+            change_is_small_window = np.all(
+                np.average(np.abs(diffs[-10:]), axis=0)
+                <= [median_tol, confidence_tol, confidence_tol]
+            )
+        self.degradation_rate = np.median(output["deg"])
+        self.MC_results = {"samples": output, "running stats": running_stats}
         self.problem = self.make_problem(**self.user_settings)
-        return output, running_stats
 
     def estimate_losses(self, solver="CLARABEL"):
         self.problem.decompose(solver=solver, verbose=False)
@@ -207,7 +210,12 @@ class LossFactorAnalysis:
         weight_soiling_stiffness=1e0,
         weight_soiling_sparsity=1e-2,
         weight_deg_nonlinear=10e4,
+        deg_rate=None,
     ):
+        # Inherit degradation rate if Monte Carlo sampling has been conducted, but only if the user doesn't pass their
+        # own rate
+        if deg_rate is None and self.MC_results is not None:
+            deg_rate = self.degradation_rate
         # Pinball loss noise
         c1 = comp.SumQuantile(tau=tau)
         # Smooth periodic term
@@ -232,7 +240,10 @@ class LossFactorAnalysis:
             c3 = comp.Aggregate([comp.NoSlope(), comp.FirstValEqual(value=0)])
         # Degradation term
         if deg_type == "linear":
-            c4 = comp.Aggregate([comp.NoCurvature(), comp.FirstValEqual(value=0)])
+            atom_list = [comp.NoCurvature(), comp.FirstValEqual(value=0)]
+            if deg_rate is not None:
+                atom_list.append(comp.FirstValEqual(value=deg_rate / 100 / 365, diff=1))
+            c4 = comp.Aggregate(atom_list)
         elif deg_type == "nonlinear":
             n_tot = length
             n_reduce = int(0.9 * n_tot)
