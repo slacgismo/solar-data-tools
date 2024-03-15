@@ -39,6 +39,10 @@ class LossFactorAnalysis:
         :param kwargs: arguments to be passed to to the make_problem method
         """
         self.energy_data = energy_data
+        if len(self.energy_data) <= 365:
+            print(
+                "WARNING: This technique is not designed for use on less than one year of data!"
+            )
         log_energy = np.zeros_like(self.energy_data)
         is_zero = np.isclose(energy_data, 0, atol=1e-1)
         log_energy[is_zero] = np.nan
@@ -63,7 +67,6 @@ class LossFactorAnalysis:
         self.soiling_energy_loss = None
         self.capacity_change_loss = None
         self.weather_energy_loss = None
-        self.weather_percent_loss = None
         self.outage_energy_loss = None
         self.degradation_percent = None
         self.soiling_percent = None
