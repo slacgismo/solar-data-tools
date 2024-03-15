@@ -164,7 +164,7 @@ class LossFactorAnalysis:
                     f"changes: {diffs[-1][0]:.3e}, {diffs[-1][1]:.3e}, {diffs[-1][2]:.3e}"
                 )
             # check exit conditions
-            if counter < 10:
+            if counter < 20:
                 # get at least 10 samples
                 continue
             elif counter > max_samples:
