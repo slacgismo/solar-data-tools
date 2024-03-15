@@ -15,6 +15,7 @@ from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import traceback, sys
+from tqdm import tqdm
 from solardatatools.time_axis_manipulation import (
     make_time_series,
     standardize_time_axis,
@@ -193,6 +194,25 @@ class DataHandler:
         solver_convex="CLARABEL",
         reset=True,
     ):
+        if verbose:
+            print(
+                """
+            *********************************************
+            * Solar Data Tools Data Onboarding Pipeline *
+            *********************************************
+
+            This pipeline runs a series of preprocessing, cleaning, and quality
+            control tasks on stand-alone PV power or irradiance time series data.
+            After the pipeline is run, the data may be plotted, filtered, or
+            further analyzed.
+
+            Authors: Bennet Meyers and Sara Miskovich, SLAC
+
+            This material is based upon work supported by the U.S. Department
+            of Energy's Office of Energy Efficiency and Renewable Energy (EERE)
+            under the Solar Energy Technologies Office Award Number 38529.\n
+            """
+            )
         if solver == "MOSEK":
             # Set all problems to use MOSEK
             # and check that MOSEK is installed
@@ -224,6 +244,8 @@ class DataHandler:
         # Preprocessing
         ######################################################################
         t[0] = time()
+        if verbose:
+            progress = tqdm(desc="task list", total=7)
         if self.data_frame_raw is not None:
             # If power_col not passed, assume that the first column contains the
             # data to be processed
@@ -243,6 +265,8 @@ class DataHandler:
             )
             if correct_tz:
                 self.tz_correction = sn_deviation
+        if verbose:
+            progress.update()
         # Embed the data as a matrix, with days in columns. Also, set some
         # attributes, like the scan rate, day index, and day of year arary.
         # Almost never use start_day_ix and end_day_ix, but they're there
@@ -270,6 +294,8 @@ class DataHandler:
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         # Run once to get a rough estimate. Update at the end after cleaning
         # is finished
+        if verbose:
+            progress.update()
         ss = SunriseSunset()
         try:
             ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
@@ -285,6 +311,8 @@ class DataHandler:
         # Cleaning
         ######################################################################
         t[1] = time()
+        if verbose:
+            progress.update()
         try:
             self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
         except:
@@ -334,6 +362,8 @@ class DataHandler:
         # Scoring
         ######################################################################
         t[2] = time()
+        if verbose:
+            progress.update()
         t_clean = np.zeros(6)
         t_clean[0] = time()
         try:
@@ -410,6 +440,8 @@ class DataHandler:
         # two depend on fixing the time shifts, when then occur.
         ######################################################################
         t[3] = time()
+        if verbose:
+            progress.update()
         if fix_shifts:
             try:
                 self.auto_fix_time_shifts(
@@ -479,6 +511,8 @@ class DataHandler:
         # Process Extra columns
         ######################################################################
         t[4] = time()
+        if verbose:
+            progress.update()
         if extra_cols is not None:
             freq = int(self.data_sampling * 60)
             new_index = pd.date_range(
@@ -499,6 +533,9 @@ class DataHandler:
         # Cleanup
         self.__recursion_depth = 0
         if verbose:
+            progress.update()
+            progress.close()
+            print("\n")
             if self.__initial_time is not None:
                 restart_msg = (
                     "{:.2f} seconds spent automatically localizing the time zone\n"
