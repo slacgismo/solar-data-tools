@@ -37,6 +37,7 @@ from solardatatools.algorithms import (
     TimeShift,
     SunriseSunset,
     ClippingDetection,
+    LossFactorAnalysis,
 )
 from pandas.plotting import register_matplotlib_converters
 
@@ -153,6 +154,7 @@ class DataHandler:
         self.clear_day_analysis = None
         self.parameter_estimation = None
         self.polar_transform = None
+        self.loss_analysis = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -617,6 +619,160 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             return
 
+    def fix_dst(self):
+        """
+        Helper function for fixing data sets with known DST shift. This function
+        works for data recorded anywhere in the United States. The choice of
+        timezone (e.g. 'US/Pacific') does not matter, as long as the dates
+        of the clock changes are the same.
+        :return:
+        """
+        if not self.__fix_dst_ran:
+            df = self.data_frame_raw
+            df_localized = df.tz_localize(
+                "US/Pacific", ambiguous="NaT", nonexistent="NaT"
+            )
+            df_localized = df_localized[df_localized.index == df_localized.index]
+            df_localized = df_localized.tz_convert("Etc/GMT+8")
+            df_localized = df_localized.tz_localize(None)
+            self.data_frame_raw = df_localized
+            self.__fix_dst_ran = True
+            return
+        else:
+            print("DST correction already performed on this data set.")
+            return
+
+    def run_loss_factor_analysis(
+        self,
+        verbose=True,
+        tau=0.9,
+        num_harmonics=4,
+        deg_type="linear",
+        include_soiling=True,
+        weight_seasonal=10e-2,
+        weight_soiling_stiffness=2e0,
+        weight_soiling_sparsity=2e-2,
+        weight_deg_nonlinear=10e4,
+        deg_rate=None,
+    ):
+        """
+
+        :return:
+        """
+        if self._ran_pipeline:
+            self.loss_analysis = LossFactorAnalysis(
+                self.daily_signals.energy,
+                capacity_change_labels=self.capacity_analysis.labels,
+                outage_flags=~self.daily_flags.no_errors,
+                tau=tau,
+                num_harmonics=num_harmonics,
+                deg_type=deg_type,
+                include_soiling=include_soiling,
+                weight_seasonal=weight_seasonal,
+                weight_soiling_stiffness=weight_soiling_stiffness,
+                weight_soiling_sparsity=weight_soiling_sparsity,
+                weight_deg_nonlinear=weight_deg_nonlinear,
+                deg_rate=deg_rate,
+            )
+            if deg_rate is None:
+                self.loss_analysis.estimate_degradation_rate(verbose=verbose)
+            elif verbose:
+                print("Loading user-provided degradation rate.")
+            if verbose:
+                print("Performing loss factor analysis...")
+            self.loss_analysis.estimate_losses()
+            if verbose:
+                lb = self.loss_analysis.degradation_rate_lb
+                ub = self.loss_analysis.degradation_rate_ub
+                if lb is not None and ub is not None:
+                    print(
+                        f"""
+                    ***************************************
+                    * Solar Data Tools Loss Factor Report *
+                    ***************************************
+
+                    degradation rate [%/yr]:                    {self.loss_analysis.degradation_rate:>6.3f}
+                    deg. rate 95% confidence:          [{lb:>6.3f}, {ub:>6.3f}]
+                    total energy loss [kWh]:             {self.loss_analysis.total_energy_loss:>13.1f}
+                    bulk deg. energy loss (gain) [kWh]:  {self.loss_analysis.degradation_energy_loss:>13.1f}
+                    soiling energy loss [kWh]:           {self.loss_analysis.soiling_energy_loss:>13.1f}
+                    capacity change energy loss [kWh]:   {self.loss_analysis.capacity_change_loss:>13.1f}
+                    weather energy loss [kWh]:           {self.loss_analysis.weather_energy_loss:>13.1f}
+                    system outage loss [kWh]:            {self.loss_analysis.outage_energy_loss:>13.1f}
+                    """
+                    )
+                else:
+                    print(
+                        f"""
+                    ***************************************
+                    * Solar Data Tools Loss Factor Report *
+                    ***************************************
+
+                    degradation rate [%/yr]:                    {self.loss_analysis.degradation_rate:.3f}
+                    total energy loss [kWh]:             {self.loss_analysis.total_energy_loss:>13.1f}
+                    bulk deg. energy loss (gain) [kWh]:  {self.loss_analysis.degradation_energy_loss:>13.1f}
+                    soiling energy loss [kWh]:           {self.loss_analysis.soiling_energy_loss:>13.1f}
+                    capacity change energy loss [kWh]:   {self.loss_analysis.capacity_change_loss:>13.1f}
+                    weather energy loss [kWh]:           {self.loss_analysis.weather_energy_loss:>13.1f}
+                    system outage loss [kWh]:            {self.loss_analysis.outage_energy_loss:>13.1f}
+                    """
+                    )
+        else:
+            print("Please run pipeline first.")
+
+    def fit_statistical_clear_sky_model(
+        self,
+        data_matrix=None,
+        rank=6,
+        mu_l=None,
+        mu_r=None,
+        tau=None,
+        exit_criterion_epsilon=1e-3,
+        solver_type="MOSEK",
+        max_iteration=10,
+        calculate_degradation=True,
+        max_degradation=None,
+        min_degradation=None,
+        non_neg_constraints=False,
+        verbose=True,
+        bootstraps=None,
+    ):
+        try:
+            from statistical_clear_sky import SCSF
+        except ImportError:
+            print("Please install statistical-clear-sky package")
+            return
+        scsf = SCSF(
+            data_handler_obj=self,
+            data_matrix=data_matrix,
+            rank_k=rank,
+            solver_type=solver_type,
+        )
+        scsf.execute(
+            mu_l=mu_l,
+            mu_r=mu_r,
+            tau=tau,
+            exit_criterion_epsilon=exit_criterion_epsilon,
+            max_iteration=max_iteration,
+            is_degradation_calculated=calculate_degradation,
+            max_degradation=max_degradation,
+            min_degradation=min_degradation,
+            non_neg_constraints=non_neg_constraints,
+            verbose=verbose,
+            bootstraps=bootstraps,
+        )
+        self.scsf = scsf
+
+    def calculate_scsf_performance_index(self):
+        if self.scsf is None:
+            print("No SCSF model detected. Fitting now...")
+            self.fit_statistical_clear_sky_model()
+        clear = self.scsf.estimated_power_matrix
+        clear_energy = np.sum(clear, axis=0)
+        measured_energy = np.sum(self.filled_data_matrix, axis=0)
+        pi = np.divide(measured_energy, clear_energy)
+        return pi
+
     def augment_data_frame(self, boolean_index, column_name):
         """
         Add a column to the data frame (tabular) representation of the data,
@@ -687,29 +843,6 @@ time zone errors     {report['time zone correction'] != 0}
         ]
         self.data_frame_raw.index = old_index
         self.data_frame_raw[self.seq_index_key] = old_col
-
-    def fix_dst(self):
-        """
-        Helper function for fixing data sets with known DST shift. This function
-        works for data recorded anywhere in the United States. The choice of
-        timezone (e.g. 'US/Pacific') does not matter, as long as the dates
-        of the clock changes are the same.
-        :return:
-        """
-        if not self.__fix_dst_ran:
-            df = self.data_frame_raw
-            df_localized = df.tz_localize(
-                "US/Pacific", ambiguous="NaT", nonexistent="NaT"
-            )
-            df_localized = df_localized[df_localized.index == df_localized.index]
-            df_localized = df_localized.tz_convert("Etc/GMT+8")
-            df_localized = df_localized.tz_localize(None)
-            self.data_frame_raw = df_localized
-            self.__fix_dst_ran = True
-            return
-        else:
-            print("DST correction already performed on this data set.")
-            return
 
     def make_data_matrix(self, use_col=None, start_day_ix=None, end_day_ix=None):
         df = self.data_frame
@@ -1059,59 +1192,6 @@ time zone errors     {report['time zone correction'] != 0}
             min_length=min_length,
         )
         self.boolean_masks.clear_times = clear_times
-
-    def fit_statistical_clear_sky_model(
-        self,
-        data_matrix=None,
-        rank=6,
-        mu_l=None,
-        mu_r=None,
-        tau=None,
-        exit_criterion_epsilon=1e-3,
-        solver_type="MOSEK",
-        max_iteration=10,
-        calculate_degradation=True,
-        max_degradation=None,
-        min_degradation=None,
-        non_neg_constraints=False,
-        verbose=True,
-        bootstraps=None,
-    ):
-        try:
-            from statistical_clear_sky import SCSF
-        except ImportError:
-            print("Please install statistical-clear-sky package")
-            return
-        scsf = SCSF(
-            data_handler_obj=self,
-            data_matrix=data_matrix,
-            rank_k=rank,
-            solver_type=solver_type,
-        )
-        scsf.execute(
-            mu_l=mu_l,
-            mu_r=mu_r,
-            tau=tau,
-            exit_criterion_epsilon=exit_criterion_epsilon,
-            max_iteration=max_iteration,
-            is_degradation_calculated=calculate_degradation,
-            max_degradation=max_degradation,
-            min_degradation=min_degradation,
-            non_neg_constraints=non_neg_constraints,
-            verbose=verbose,
-            bootstraps=bootstraps,
-        )
-        self.scsf = scsf
-
-    def calculate_scsf_performance_index(self):
-        if self.scsf is None:
-            print("No SCSF model detected. Fitting now...")
-            self.fit_statistical_clear_sky_model()
-        clear = self.scsf.estimated_power_matrix
-        clear_energy = np.sum(clear, axis=0)
-        measured_energy = np.sum(self.filled_data_matrix, axis=0)
-        pi = np.divide(measured_energy, clear_energy)
-        return pi
 
     def setup_location_and_orientation_estimation(
         self,
