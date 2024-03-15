@@ -39,6 +39,8 @@ class LossFactorAnalysis:
         self.problem = self.make_problem(**kwargs)
         self.user_settings = kwargs
         self.degradation_rate = None
+        self.degradation_rate_lb = None
+        self.degradation_rate_ub = None
         self.energy_model = None
         self.log_energy_model = None
         self.total_energy_loss = None
@@ -142,6 +144,8 @@ class LossFactorAnalysis:
                 <= [median_tol, confidence_tol, confidence_tol]
             )
         self.degradation_rate = np.median(output["deg"])
+        self.degradation_rate_lb = np.quantile(output["deg"], 0.025, method=method)
+        self.degradation_rate_ub = np.quantile(output["deg"], 0.975, method=method)
         self.MC_results = {"samples": output, "running stats": running_stats}
         self.problem = self.make_problem(**self.user_settings)
 
@@ -187,6 +191,8 @@ class LossFactorAnalysis:
         if self.total_energy_loss is not None:
             out = {
                 "degradation rate [%/yr]": self.degradation_rate,
+                "deg rate lower bound [%/yr]": self.degradation_rate_lb,
+                "deg rate upper bound [%/yr]": self.degradation_rate_ub,
                 "total energy loss [kWh]": self.total_energy_loss,
                 "degradation energy loss [kWh]": self.degradation_energy_loss,
                 "soiling energy loss [kWh]": self.soiling_energy_loss,
