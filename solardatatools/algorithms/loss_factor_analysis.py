@@ -10,6 +10,7 @@ and d_t, s_t, and w_t are the loss factors for degradation, soiling, capacity ch
 the set of "known" index values, e.g. the days that we have good energy production values for (not missing or
 corrupted).
 
+Author: Bennet Meyers
 """
 
 import numpy as np
