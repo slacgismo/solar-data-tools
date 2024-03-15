@@ -203,8 +203,8 @@ class DataHandler:
 
             This pipeline runs a series of preprocessing, cleaning, and quality
             control tasks on stand-alone PV power or irradiance time series data.
-            After the pipeline is a run, the data may be plotted, filtered, or
-            further analyzed
+            After the pipeline is run, the data may be plotted, filtered, or
+            further analyzed.
 
             Authors: Bennet Meyers and Sara Miskovich, SLAC
 
