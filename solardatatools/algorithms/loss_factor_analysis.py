@@ -3,10 +3,12 @@
 This module is for estimation of degradation and soiling losses from unlabeled
 daily energy production data. Model is of the form
 
-y_t = x_t * d_t * s_t * w_t, for t = 1,...,T
+y_t = x_t * d_t * s_t * c_t * w_t, for t \in K
 
 where y_t [kWh] is the measured real daily energy on each day, x_t [kWh] is an ideal yearly baseline of performance,
-and d_t, s_t, and w_t are the loss factors for degradation, soiling, and weather respectively.
+and d_t, s_t, and w_t are the loss factors for degradation, soiling, capacity changes, and weather respectively. K is
+the set of "known" index values, e.g. the days that we have good energy production values for (not missing or
+corrupted).
 
 """
 
