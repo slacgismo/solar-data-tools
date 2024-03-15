@@ -297,3 +297,9 @@ bh_unicode_properties.cache
 GitHub.sublime-settings
 
 # End of https://www.gitignore.io/api/data,macos,python,pycharm,database,sublimetext,jupyternotebook
+/sdt_dask/dataplugs/example_data
+sdt_dask/examples/summary_report_fargate.csv
+sdt_dask/results/dask-report-fargate-or.html
+sdt_dask/results/summary_report.csv
+sdt_dask/results/dask-report.html
+sdt_dask/examples/summary_report.csv
