@@ -18,3 +18,5 @@ sig-decomp
 osqp
 clarabel
 qss
+tqdm
+spcqe @ git+https://github.com/cvxgrp/spcqe.git@29c72667f6f0876531f5cff0e43c2201591183e9
