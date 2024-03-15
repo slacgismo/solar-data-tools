@@ -438,6 +438,8 @@ class LossFactorAnalysis:
         # own rate
         if deg_rate is None and self.MC_results is not None:
             deg_rate = self.degradation_rate
+        ### Construct Losses ###
+        # NB: the order in which the lossses are defined here are *not* the order they are in the problem (see below)
         # Pinball loss noise
         c1 = comp.SumQuantile(tau=tau)
         # Smooth periodic term
@@ -499,7 +501,7 @@ class LossFactorAnalysis:
             )
         else:
             c5 = SetEqual(val=np.zeros(length))
-
+        # Component order: weather, capacity change, soiling, degradation, baseline
         prob = Problem(self.log_energy, [c1, c5, c3, c4, c2], use_set=self.use_ixs)
         return prob
 
