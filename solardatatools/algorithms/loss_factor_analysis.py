@@ -15,6 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from gfosd import Problem
 import gfosd.components as comp
+from gfosd.components.base_graph_class import GraphComponent
 from spcqe.functions import make_basis_matrix, make_regularization_matrix
 from tqdm import tqdm
 
@@ -144,8 +145,8 @@ class LossFactorAnalysis:
         self.MC_results = {"samples": output, "running stats": running_stats}
         self.problem = self.make_problem(**self.user_settings)
 
-    def estimate_losses(self, solver="CLARABEL"):
-        self.problem.decompose(solver=solver, verbose=False)
+    def estimate_losses(self, solver="CLARABEL", verbose=False):
+        self.problem.decompose(solver=solver, verbose=verbose)
         # in the SD formulation, we put the residual term first, so it's the reverse order of how we specify this model (weather last)
         self.log_energy_model = self.problem.decomposition[::-1]
         self.energy_model = np.exp(self.log_energy_model)
@@ -194,91 +195,6 @@ class LossFactorAnalysis:
                 "system outage loss [kWh]": self.outage_energy_loss,
             }
             return out
-
-    def holdout_validate(self, seed=None, solver="CLARABEL"):
-        residual, test_ix = self.problem.holdout_decompose(seed=seed, solver=solver)
-        error_metric = np.sum(np.abs(residual))
-        return error_metric
-
-    def make_problem(
-        self,
-        tau=0.9,
-        num_harmonics=4,
-        deg_type="linear",
-        include_soiling=True,
-        weight_seasonal=10e-2,
-        weight_soiling_stiffness=1e0,
-        weight_soiling_sparsity=1e-2,
-        weight_deg_nonlinear=10e4,
-        deg_rate=None,
-    ):
-        # Inherit degradation rate if Monte Carlo sampling has been conducted, but only if the user doesn't pass their
-        # own rate
-        if deg_rate is None and self.MC_results is not None:
-            deg_rate = self.degradation_rate
-        # Pinball loss noise
-        c1 = comp.SumQuantile(tau=tau)
-        # Smooth periodic term
-        length = len(self.log_energy)
-        periods = [365.2425]  # average length of a year in days
-        _B = make_basis_matrix(num_harmonics, length, periods)
-        _D = make_regularization_matrix(num_harmonics, weight_seasonal, periods)
-        c2 = comp.Basis(basis=_B, penalty=_D)
-        # Soiling term
-        if include_soiling:
-            c3 = comp.Aggregate(
-                [
-                    comp.Inequality(vmax=0),
-                    comp.SumAbs(weight=weight_soiling_stiffness, diff=2),
-                    comp.SumQuantile(
-                        tau=0.98, weight=10 * weight_soiling_sparsity, diff=1
-                    ),
-                    comp.SumAbs(weight=weight_soiling_sparsity),
-                ]
-            )
-        else:
-            c3 = comp.Aggregate([comp.NoSlope(), comp.FirstValEqual(value=0)])
-        # Degradation term
-        if deg_type == "linear":
-            atom_list = [comp.NoCurvature(), comp.FirstValEqual(value=0)]
-            if deg_rate is not None:
-                atom_list.append(comp.FirstValEqual(value=deg_rate / 100 / 365, diff=1))
-            c4 = comp.Aggregate(atom_list)
-        elif deg_type == "nonlinear":
-            n_tot = length
-            n_reduce = int(0.9 * n_tot)
-            bottom_mat = sp.lil_matrix((n_tot - n_reduce, n_reduce))
-            bottom_mat[:, -1] = 1
-            # don't allow any downward shifts in the last 10% of the data (constrain values to be equal)
-            custom_basis = sp.bmat([[sp.eye(n_reduce)], [bottom_mat]])
-            c4 = comp.Aggregate(
-                [
-                    comp.Inequality(vmax=0, diff=1),
-                    comp.SumSquare(diff=2, weight=weight_deg_nonlinear),
-                    comp.FirstValEqual(value=0),
-                    comp.Basis(custom_basis),
-                ]
-            )
-        elif deg_select.value == "none":
-            c4 = comp.Aggregate([comp.NoSlope(), comp.FirstValEqual(value=0)])
-        # capacity change term — leverage previous analysis from SDT pipeline
-        if self.capacity_change_labels is not None:
-            basis_M = np.zeros((length, len(set(self.capacity_change_labels))))
-            for lb in set(self.capacity_change_labels):
-                slct = np.array(self.capacity_change_labels) == lb
-                basis_M[slct, lb] = 1
-            c5 = comp.Aggregate(
-                [
-                    comp.Inequality(vmax=0),
-                    comp.Basis(basis=basis_M),
-                    comp.SumAbs(weight=1e-6),
-                ]
-            )
-        else:
-            c5 = comp.Aggregate([comp.NoSlope(), comp.FirstValEqual(value=0)])
-
-        prob = Problem(self.log_energy, [c1, c5, c3, c4, c2], use_set=self.use_ixs)
-        return prob
 
     def plot_pie(self):
         plt.pie(
@@ -344,6 +260,143 @@ class LossFactorAnalysis:
         _ax[5].set_title("measured energy (green) and model minus weather")
         plt.tight_layout()
         return _fig_decomp
+
+    def plot_mc_histogram(self, figsize=None, title=None):
+        if self.MC_results is not None:
+            if figsize is not None:
+                fig = plt.figure(figsize=figsize)
+            degs = self.MC_results["samples"]["deg"]
+            n, bins, patches = plt.hist(degs)
+            plt.axvline(np.average(degs), color="yellow", label="mean")
+            plt.axvline(np.median(degs), color="orange", label="median")
+            mode_index = n.argmax()
+            plt.axvline(
+                bins[mode_index] + np.diff(bins)[0] / 2, color="red", label="mode"
+            )
+            plt.axvline(np.quantile(degs, 0.025), color="gray", ls=":")
+            plt.axvline(
+                np.quantile(degs, 0.975), color="gray", ls=":", label="95% confidence"
+            )
+            plt.legend()
+            if title is not None:
+                plt.title(title)
+            return plt.gcf()
+
+    def plot_mc_by_tau(self, figsize=None, title=None):
+        if self.MC_results is not None:
+            if figsize is not None:
+                fig = plt.figure(figsize=figsize)
+            degs = self.MC_results["samples"]["deg"]
+            taus = self.MC_results["samples"]["tau"]
+            weights = self.MC_results["samples"]["weight"]
+            plt.scatter(taus, degs, c=weights, cmap="plasma")
+            plt.colorbar(label="soiling stiffness [1]")
+            plt.xlabel("quantile level, tau [1]")
+            plt.ylabel("degradation rate estimate [%/yr]")
+            if title is not None:
+                plt.title(title)
+            return plt.gcf()
+
+    def plot_mc_by_weight(self, figsize=None, title=None):
+        if self.MC_results is not None:
+            if figsize is not None:
+                fig = plt.figure(figsize=figsize)
+            degs = self.MC_results["samples"]["deg"]
+            taus = self.MC_results["samples"]["tau"]
+            weights = self.MC_results["samples"]["weight"]
+            plt.scatter(weights, degs, c=taus, cmap="plasma")
+            plt.colorbar(label="quantile level, tau [1]")
+            plt.xlabel("soiling stiffness [1]")
+            plt.ylabel("degradation rate estimate [%/yr]")
+            if title is not None:
+                plt.title(title)
+            return plt.gcf()
+
+    def holdout_validate(self, seed=None, solver="CLARABEL"):
+        residual, test_ix = self.problem.holdout_decompose(seed=seed, solver=solver)
+        error_metric = np.sum(np.abs(residual))
+        return error_metric
+
+    def make_problem(
+        self,
+        tau=0.9,
+        num_harmonics=4,
+        deg_type="linear",
+        include_soiling=True,
+        weight_seasonal=10e-2,
+        weight_soiling_stiffness=1e0,
+        weight_soiling_sparsity=1e-2,
+        weight_deg_nonlinear=10e4,
+        deg_rate=None,
+    ):
+        # Inherit degradation rate if Monte Carlo sampling has been conducted, but only if the user doesn't pass their
+        # own rate
+        if deg_rate is None and self.MC_results is not None:
+            deg_rate = self.degradation_rate
+        # Pinball loss noise
+        c1 = comp.SumQuantile(tau=tau)
+        # Smooth periodic term
+        length = len(self.log_energy)
+        periods = [365.2425]  # average length of a year in days
+        _B = make_basis_matrix(num_harmonics, length, periods)
+        _D = make_regularization_matrix(num_harmonics, weight_seasonal, periods)
+        c2 = comp.Basis(basis=_B, penalty=_D)
+        # Soiling term
+        if include_soiling:
+            c3 = comp.Aggregate(
+                [
+                    comp.Inequality(vmax=0),
+                    comp.SumAbs(weight=weight_soiling_stiffness, diff=2),
+                    comp.SumQuantile(
+                        tau=0.98, weight=10 * weight_soiling_sparsity, diff=1
+                    ),
+                    comp.SumAbs(weight=weight_soiling_sparsity),
+                ]
+            )
+        else:
+            c3 = comp.Aggregate([comp.NoSlope(), comp.FirstValEqual(value=0)])
+        # Degradation term
+        if deg_type == "linear":
+            if deg_rate is None:
+                c4 = comp.Aggregate([comp.NoCurvature(), comp.FirstValEqual(value=0)])
+            else:
+                val = np.cumsum(np.r_[[0], np.ones(length - 1) * deg_rate / 100 / 365])
+                c4 = SetEqual(val=val)
+        elif deg_type == "nonlinear":
+            n_tot = length
+            n_reduce = int(0.9 * n_tot)
+            bottom_mat = sp.lil_matrix((n_tot - n_reduce, n_reduce))
+            bottom_mat[:, -1] = 1
+            # don't allow any downward shifts in the last 10% of the data (constrain values to be equal)
+            custom_basis = sp.bmat([[sp.eye(n_reduce)], [bottom_mat]])
+            c4 = comp.Aggregate(
+                [
+                    comp.Inequality(vmax=0, diff=1),
+                    comp.SumSquare(diff=2, weight=weight_deg_nonlinear),
+                    comp.FirstValEqual(value=0),
+                    comp.Basis(custom_basis),
+                ]
+            )
+        elif deg_select.value == "none":
+            c4 = SetEqual(val=np.zeros(length))
+        # capacity change term — leverage previous analysis from SDT pipeline
+        if self.capacity_change_labels is not None:
+            basis_M = np.zeros((length, len(set(self.capacity_change_labels))))
+            for lb in set(self.capacity_change_labels):
+                slct = np.array(self.capacity_change_labels) == lb
+                basis_M[slct, lb] = 1
+            c5 = comp.Aggregate(
+                [
+                    comp.Inequality(vmax=0),
+                    comp.Basis(basis=basis_M),
+                    comp.SumAbs(weight=1e-6),
+                ]
+            )
+        else:
+            c5 = SetEqual(val=np.zeros(length))
+
+        prob = Problem(self.log_energy, [c1, c5, c3, c4, c2], use_set=self.use_ixs)
+        return prob
 
 
 def model_wrapper(energy_model, use_ixs):
@@ -509,3 +562,19 @@ def waterfall_plot(data, index, figsize=(10, 4)):
     fig = my_plot.get_figure()
     fig.set_layout_engine(layout="tight")
     return fig
+
+
+class SetEqual(GraphComponent):
+    def __init__(self, val, *args, **kwargs):
+        super().__init__(diff=0, *args, **kwargs)
+        self._has_helpers = True
+        self._val = val
+
+    def _set_z_size(self):
+        self._z_size = 0
+
+    def _make_A(self):
+        super()._make_A()
+
+    def _make_c(self):
+        self._c = self._val
