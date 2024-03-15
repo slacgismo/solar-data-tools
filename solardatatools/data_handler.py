@@ -245,7 +245,7 @@ class DataHandler:
         ######################################################################
         t[0] = time()
         if verbose:
-            progress = tqdm(total=5)
+            progress = tqdm(desc="task list", total=7)
         if self.data_frame_raw is not None:
             # If power_col not passed, assume that the first column contains the
             # data to be processed
@@ -265,6 +265,8 @@ class DataHandler:
             )
             if correct_tz:
                 self.tz_correction = sn_deviation
+        if verbose:
+            progress.update()
         # Embed the data as a matrix, with days in columns. Also, set some
         # attributes, like the scan rate, day index, and day of year arary.
         # Almost never use start_day_ix and end_day_ix, but they're there
@@ -292,6 +294,8 @@ class DataHandler:
         self.boolean_masks.missing_values = np.isnan(self.raw_data_matrix)
         # Run once to get a rough estimate. Update at the end after cleaning
         # is finished
+        if verbose:
+            progress.update()
         ss = SunriseSunset()
         try:
             ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
