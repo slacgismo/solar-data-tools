@@ -24,6 +24,17 @@ class LossFactorAnalysis:
     def __init__(
         self, energy_data, capacity_change_labels=None, outage_flags=None, **kwargs
     ):
+        """
+        A class for analyzing loss factors, including the degradation rate, of a PV system
+
+        :param energy_data: a discrete time series of daily integrated energy
+        :type energy_data: numpy 1D array
+        :param capacity_change_labels: labeling of known capacity changes, e.g. from the CapacityChange tool
+        :type  capacity_change_labels: 1D array of integer labels, with same length as energy_data
+        :param outage_flags: labeling of days with known operational issues, e.g. from DataHandle pipeline
+        :type outage_flags: 1D array of integer labels, with same length as energy_data
+        :param kwargs: arguments to be passed to to the make_problem method
+        """
         self.energy_data = energy_data
         log_energy = np.zeros_like(self.energy_data)
         is_zero = np.isclose(energy_data, 0, atol=1e-1)
@@ -60,13 +71,31 @@ class LossFactorAnalysis:
     def estimate_degradation_rate(
         self,
         max_samples=500,
-        median_tol=1e-3,
+        median_tol=5e-3,
         confidence_tol=1e-2,
         fraction_hold=0.2,
         method="median_unbiased",
         verbose=False,
-        debug=False,
     ):
+        """
+        This function runs a Monte Carlo simulation to estimate the uncertainty in the estimation of the degrdation rate
+        based on the loss model. This will randomly sample problem parameters (quantile level and soiling stiffness
+        weight), while randomly holding out 20% of the days each time. The algorithm exits when the estimates of the
+        median, 2.5 percentile, and 97.5 percentile have stabilized. Results are stored in the following class
+        attributes:
+            self.degradation_rate
+            self.degradation_rate_lb
+            self.degradation_rate_ub
+            self.MC_results
+
+        :param max_samples: maximimum number of MC samples to generate (typically exits before this)
+        :param median_tol: tolerance for median estimate stability
+        :param confidence_tol: tolerance for outer percentile estimate stability
+        :param fraction_hold: fraction of values to holdout in each sample
+        :param method: quantile estimation method (see: https://numpy.org/doc/stable/reference/generated/numpy.quantile.html)
+        :param verbose: control print statements
+        :return: None
+        """
         old_ixs = np.copy(self.use_ixs)
         change_is_small_now = False
         change_is_small_window = False
@@ -188,6 +217,10 @@ class LossFactorAnalysis:
         return
 
     def report(self):
+        """
+        Creates a machine-readible dictionary of result from the loss factor analysis
+        :return: dictionary
+        """
         if self.total_energy_loss is not None:
             out = {
                 "degradation rate [%/yr]": self.degradation_rate,
@@ -203,6 +236,11 @@ class LossFactorAnalysis:
             return out
 
     def plot_pie(self):
+        """
+        Create a pie plot of losses
+
+        :return: matplotlib figure
+        """
         plt.pie(
             [
                 np.clip(-self.degradation_energy_loss, 0, np.inf),
@@ -224,6 +262,11 @@ class LossFactorAnalysis:
         return plt.gcf()
 
     def plot_waterfall(self):
+        """
+        Create a waterfall plot of losses
+
+        :return: matplotlib figure
+        """
         index = [
             "baseline",
             "weather",
@@ -247,6 +290,12 @@ class LossFactorAnalysis:
         return fig
 
     def plot_decomposition(self, figsize=(16, 8.5)):
+        """
+        Creates a figure with subplots illustrating the estimated signal components found through decomposition
+
+        :param figsize: size of figure (tuple)
+        :return: matplotlib figure
+        """
         _fig_decomp = self.problem.plot_decomposition(
             exponentiate=True, figsize=figsize
         )
@@ -268,6 +317,14 @@ class LossFactorAnalysis:
         return _fig_decomp
 
     def plot_mc_histogram(self, figsize=None, title=None):
+        """
+        Creates a historgram of the Monte Carlo samples and annotates the chart with mean, median, mode, and confidence
+        intervals.
+
+        :param figsize: size of figure (tuple)
+        :param title: title for figure (string)
+        :return: matplotlib figure
+        """
         if self.MC_results is not None:
             if figsize is not None:
                 fig = plt.figure(figsize=figsize)
@@ -289,6 +346,15 @@ class LossFactorAnalysis:
             return plt.gcf()
 
     def plot_mc_by_tau(self, figsize=None, title=None):
+        """
+        Creates a scatterplot of the Monte Carlo samples versus tau (quantile level) and colors the points by the
+        weight of the soiling stiffness term
+
+
+        :param figsize: size of figure (tuple)
+        :param title: title for figure (string)
+        :return: matplotlib figure
+        """
         if self.MC_results is not None:
             if figsize is not None:
                 fig = plt.figure(figsize=figsize)
@@ -304,6 +370,15 @@ class LossFactorAnalysis:
             return plt.gcf()
 
     def plot_mc_by_weight(self, figsize=None, title=None):
+        """
+        Creates a scatterplot of the Monte Carlo samples versus weight (soiling stiffness) and colors the points by the
+        tau (quantile level)
+
+
+        :param figsize: size of figure (tuple)
+        :param title: title for figure (string)
+        :return: matplotlib figure
+        """
         if self.MC_results is not None:
             if figsize is not None:
                 fig = plt.figure(figsize=figsize)
@@ -318,11 +393,6 @@ class LossFactorAnalysis:
                 plt.title(title)
             return plt.gcf()
 
-    def holdout_validate(self, seed=None, solver="CLARABEL"):
-        residual, test_ix = self.problem.holdout_decompose(seed=seed, solver=solver)
-        error_metric = np.sum(np.abs(residual))
-        return error_metric
-
     def make_problem(
         self,
         tau=0.9,
@@ -335,6 +405,29 @@ class LossFactorAnalysis:
         weight_deg_nonlinear=10e4,
         deg_rate=None,
     ):
+        """
+        Constuct the signal decomposition problem for estimation of loss factors in PV energy data.
+
+        :param tau: the quantile level to fit
+        :type tau: float
+        :param num_harmonics: the number of harmonics to include in model for yearly periodicity
+        :type num_harmonics: int
+        :param deg_type: the type of degradation to model ("linear", "nonlinear", or "none")
+        :type deg_type: str
+        :param include_soiling: whether to include a soiling term
+        :type include_soiling: bool
+        :param weight_seasonal: the weight on the seasonal penalty term (higher is stiffer)
+        :type weight_seasonal: float
+        :param weight_soiling_stiffness: the weight on the soiling stiffness (higher is stiffer)
+        :type weight_soiling_stiffness: float
+        :param weight_soiling_sparsity: the weight on the soiling stiffness (higher is sparser)
+        :type weight_soiling_sparsity: float
+        :param weight_deg_nonlinear: only used if 'nonlinear' degradation model is selected
+        :type weight_deg_nonlinear: float
+        :param deg_rate: pass to set a known degradation rate rather than have the SD problem estimate it
+        :type deg_rate: None or float [%/yr]
+        :return: a gfosd.Problem instance
+        """
         # Inherit degradation rate if Monte Carlo sampling has been conducted, but only if the user doesn't pass their
         # own rate
         if deg_rate is None and self.MC_results is not None:
@@ -403,6 +496,11 @@ class LossFactorAnalysis:
 
         prob = Problem(self.log_energy, [c1, c5, c3, c4, c2], use_set=self.use_ixs)
         return prob
+
+    def holdout_validate(self, seed=None, solver="CLARABEL"):
+        residual, test_ix = self.problem.holdout_decompose(seed=seed, solver=solver)
+        error_metric = np.sum(np.abs(residual))
+        return error_metric
 
 
 def model_wrapper(energy_model, use_ixs):

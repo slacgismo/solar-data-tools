@@ -650,8 +650,8 @@ time zone errors     {report['time zone correction'] != 0}
         deg_type="linear",
         include_soiling=True,
         weight_seasonal=10e-2,
-        weight_soiling_stiffness=1e0,
-        weight_soiling_sparsity=1e-2,
+        weight_soiling_stiffness=2e0,
+        weight_soiling_sparsity=2e-2,
         weight_deg_nonlinear=10e4,
         deg_rate=None,
     ):
@@ -690,7 +690,7 @@ time zone errors     {report['time zone correction'] != 0}
                 * Solar Data Tools Loss Factor Report *
                 ***************************************
 
-                degradation rate [%/yr]:                    {self.loss_analysis.degradation_rate:.3f}
+                degradation rate [%/yr]:                    {self.loss_analysis.degradation_rate:>6.3f}
                 deg. rate 95% confidence:          [{lb:>6.3f}, {ub:>6.3f}]
                 total energy loss [kWh]:             {self.loss_analysis.total_energy_loss:>13.1f}
                 bulk deg. energy loss (gain) [kWh]:  {self.loss_analysis.degradation_energy_loss:>13.1f}
