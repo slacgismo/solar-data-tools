@@ -681,21 +681,41 @@ time zone errors     {report['time zone correction'] != 0}
             print("Performing loss factor analysis...")
         self.loss_analysis.estimate_losses()
         if verbose:
-            print(
-                f"""
-            ***************************************
-            * Solar Data Tools Loss Factor Report *
-            ***************************************
+            lb = self.loss_analysis.degradation_rate_lb
+            ub = self.loss_analysis.degradation_rate_ub
+            if lb is not None and ub is not None:
+                print(
+                    f"""
+                ***************************************
+                * Solar Data Tools Loss Factor Report *
+                ***************************************
 
-            degradation rate [%/yr]:           {self.loss_analysis.degradation_rate:.3f},
-            total energy loss [kWh]:           {self.loss_analysis.total_energy_loss:.1f},
-            degradation energy loss [kWh]:     {self.loss_analysis.degradation_energy_loss:.1f},
-            soiling energy loss [kWh]:         {self.loss_analysis.soiling_energy_loss:.1f},
-            capacity change energy loss [kWh]: {self.loss_analysis.capacity_change_loss:.1f},
-            weather energy loss [kWh]:         {self.loss_analysis.weather_energy_loss:.1f},
-            system outage loss [kWh]:          {self.loss_analysis.outage_energy_loss:.1f},
-            """
-            )
+                degradation rate [%/yr]:                    {self.loss_analysis.degradation_rate:.3f}
+                deg. rate 95% confidence:          [{lb:>6.3f}, {ub:>6.3f}]
+                total energy loss [kWh]:             {self.loss_analysis.total_energy_loss:>13.1f}
+                bulk deg. energy loss (gain) [kWh]:  {self.loss_analysis.degradation_energy_loss:>13.1f}
+                soiling energy loss [kWh]:           {self.loss_analysis.soiling_energy_loss:>13.1f}
+                capacity change energy loss [kWh]:   {self.loss_analysis.capacity_change_loss:>13.1f}
+                weather energy loss [kWh]:           {self.loss_analysis.weather_energy_loss:>13.1f}
+                system outage loss [kWh]:            {self.loss_analysis.outage_energy_loss:>13.1f}
+                """
+                )
+            else:
+                print(
+                    f"""
+                ***************************************
+                * Solar Data Tools Loss Factor Report *
+                ***************************************
+
+                degradation rate [%/yr]:                    {self.loss_analysis.degradation_rate:.3f}
+                total energy loss [kWh]:             {self.loss_analysis.total_energy_loss:>13.1f}
+                bulk deg. energy loss (gain) [kWh]:  {self.loss_analysis.degradation_energy_loss:>13.1f}
+                soiling energy loss [kWh]:           {self.loss_analysis.soiling_energy_loss:>13.1f}
+                capacity change energy loss [kWh]:   {self.loss_analysis.capacity_change_loss:>13.1f}
+                weather energy loss [kWh]:           {self.loss_analysis.weather_energy_loss:>13.1f}
+                system outage loss [kWh]:            {self.loss_analysis.outage_energy_loss:>13.1f}
+                """
+                )
 
     def fit_statistical_clear_sky_model(
         self,
