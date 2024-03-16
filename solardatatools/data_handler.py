@@ -248,7 +248,7 @@ class DataHandler:
         ######################################################################
         t[0] = time()
         if verbose:
-            progress = tqdm(desc="task list", total=7)
+            progress = tqdm(desc="task list", total=7, ncols=80)
         if self.data_frame_raw is not None:
             # If power_col not passed, assume that the first column contains the
             # data to be processed
