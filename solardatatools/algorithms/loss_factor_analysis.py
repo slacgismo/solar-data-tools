@@ -165,7 +165,7 @@ class LossFactorAnalysis:
                 )
             # check exit conditions
             if counter < 20:
-                # get at least 10 samples
+                # get at least 20 samples
                 continue
             elif counter > max_samples:
                 # don't go over max_samples
