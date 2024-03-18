@@ -34,7 +34,7 @@ class CapacityChange:
         quantile=1.00,
         w1=40e-6,  # scaled weights for QSS
         w2=6561e-6,
-        solver=None
+        solver=None,
     ):
         if filter is None:
             filter = np.ones(data.shape[1], dtype=bool)
@@ -43,24 +43,23 @@ class CapacityChange:
             metric /= np.max(metric)
 
             s1, s2, s3 = l1_l1d1_l2d2p365(
-                metric,
-                use_ixs=filter,
-                w1=w1,
-                w2=w2,
-                solver=solver,
-                sum_card=True
+                metric, use_ixs=filter, w1=w1, w2=w2, solver=solver, sum_card=True
             )
         else:
             # print('No valid values! Please check your data and filter.')
             return
 
         # Get capacity assignments
-        rounded_s1 = np.round(s1, 1)
+        def custom_round(x, base=0.05):
+            ndigits = len(str(base).split(".")[-1])
+            return np.round(base * np.round(x / base), ndigits)
+
+        rounded_s1 = custom_round(s1)
         set_labels = list(set(rounded_s1))
         capacity_assignments = [set_labels.index(i) for i in rounded_s1]
 
         self.metric = metric
-        self.s1 = s1 # pwc
-        self.s2 = s2 # seasonal
-        self.s3 = s3 # linear
+        self.s1 = s1  # pwc
+        self.s2 = s2  # seasonal
+        self.s3 = s3  # linear
         self.labels = capacity_assignments

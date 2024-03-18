@@ -164,8 +164,8 @@ class LossFactorAnalysis:
                     f"changes: {diffs[-1][0]:.3e}, {diffs[-1][1]:.3e}, {diffs[-1][2]:.3e}"
                 )
             # check exit conditions
-            if counter < 10:
-                # get at least 10 samples
+            if counter < 20:
+                # get at least 20 samples
                 continue
             elif counter > max_samples:
                 # don't go over max_samples
@@ -241,12 +241,14 @@ class LossFactorAnalysis:
             }
             return out
 
-    def plot_pie(self):
+    def plot_pie(self, figsize=None):
         """
         Create a pie plot of losses
 
         :return: matplotlib figure
         """
+        if figsize is not None:
+            plt.figure(figsize=figsize)
         plt.pie(
             [
                 np.clip(-self.degradation_energy_loss, 0, np.inf),
