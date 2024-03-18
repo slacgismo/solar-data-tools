@@ -208,6 +208,9 @@ class DataHandler:
 
             Authors: Bennet Meyers and Sara Miskovich, SLAC
 
+            (Tip: if you have a mosek [https://www.mosek.com/] license and have it
+            installed on your system, try setting solver='MOSEK' for a speedup)
+
             This material is based upon work supported by the U.S. Department
             of Energy's Office of Energy Efficiency and Renewable Energy (EERE)
             under the Solar Energy Technologies Office Award Number 38529.\n
@@ -245,7 +248,7 @@ class DataHandler:
         ######################################################################
         t[0] = time()
         if verbose:
-            progress = tqdm(desc="task list", total=7)
+            progress = tqdm(desc="task list", total=7, ncols=80)
         if self.data_frame_raw is not None:
             # If power_col not passed, assume that the first column contains the
             # data to be processed
