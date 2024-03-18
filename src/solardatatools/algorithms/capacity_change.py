@@ -15,8 +15,7 @@ power production data sets. The algorithm works as follows:
 """
 
 import numpy as np
-from solardatatools.signal_decompositions import l1_l1d1_l2d2p365
-from sklearn.cluster import DBSCAN
+from src.solardatatools.signal_decompositions import l1_l1d1_l2d2p365
 
 
 class CapacityChange:
