@@ -241,12 +241,14 @@ class LossFactorAnalysis:
             }
             return out
 
-    def plot_pie(self):
+    def plot_pie(self, figsize=None):
         """
         Create a pie plot of losses
 
         :return: matplotlib figure
         """
+        if figsize is not None:
+            plt.figure(figsize=figsize)
         plt.pie(
             [
                 np.clip(-self.degradation_energy_loss, 0, np.inf),
