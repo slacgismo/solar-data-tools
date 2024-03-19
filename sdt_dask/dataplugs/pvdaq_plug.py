@@ -14,6 +14,7 @@ class PVDAQPlug(DataPlug):
 
     def _pull_data(self, key, year):
         # print(f"Pulling site ID {key}...")
+        print(f"Pulling site ID {key} for year {year}...")
         self.df = get_pvdaq_data(sysid=key, year=year, api_key=self.api_key)
 
     def _clean_data(self):
@@ -33,9 +34,13 @@ class PVDAQPlug(DataPlug):
         # In this case the process to get the data is simple since it's all
         # done in the get_pvdaq_data function, but in some cases it could be
         # more complex
+        print(keys)
         self._pull_data(*keys)
         self._clean_data()
 
         return self.df
+    def test():
+        print("test")
+        return "test"
 
 
