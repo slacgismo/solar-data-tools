@@ -1,6 +1,5 @@
 """Class for S3 bucket from the AWS DB"""
 
-from io import StringIO
 import pandas as pd
 import boto3
 from solardatatools.time_axis_manipulation import make_time_series

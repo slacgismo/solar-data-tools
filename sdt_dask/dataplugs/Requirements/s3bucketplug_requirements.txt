@@ -1,0 +1,3 @@
+solardatatools
+pandas
+boto3
