@@ -6,11 +6,11 @@ This module contains functions for obtaining data from various sources.
 """
 import math
 from warnings import warn
-from src.solardatatools.time_axis_manipulation import (
+from solardatatools.time_axis_manipulation import (
     standardize_time_axis,
     fix_daylight_savings_with_known_tz,
 )
-from src.solardatatools.utilities import progress
+from solardatatools.utilities import progress
 
 from time import time, perf_counter
 from io import StringIO

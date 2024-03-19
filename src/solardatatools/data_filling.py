@@ -7,7 +7,7 @@ This module contains functions for filling missing data in a PV power matrix
 
 import numpy as np
 import pandas as pd
-from src.solardatatools.algorithms import SunriseSunset
+from solardatatools.algorithms import SunriseSunset
 
 
 def zero_nighttime(data_matrix, night_mask=None, daytime_threshold=0.005):

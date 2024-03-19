@@ -18,7 +18,7 @@ from scipy.stats import mode
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MaxAbsScaler
 from time import time
-from src.solardatatools.utilities import progress
+from solardatatools.utilities import progress
 
 
 class PVPROPostProcessor:

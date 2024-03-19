@@ -6,7 +6,7 @@ that correspond to clear sky output..
 
 """
 import numpy as np
-from src.solardatatools.utilities import find_runs
+from solardatatools.utilities import find_runs
 
 
 def find_clear_times(

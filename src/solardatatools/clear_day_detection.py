@@ -6,8 +6,8 @@ This module contains functions for detecting clear days in historical PV solar d
 """
 
 import numpy as np
-from src.solardatatools.signal_decompositions import tl1_l2d2p365
-from src.solardatatools.utilities import basic_outlier_filter
+from solardatatools.signal_decompositions import tl1_l2d2p365
+from solardatatools.utilities import basic_outlier_filter
 
 
 class ClearDayDetection:

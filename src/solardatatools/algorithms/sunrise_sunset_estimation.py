@@ -21,9 +21,9 @@ Bennet Meyers, 7/2/20
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from src.solardatatools.daytime import detect_sun
-from src.solardatatools.sunrise_sunset import rise_set_rough, rise_set_smoothed
-from src.solardatatools.signal_decompositions import tl1_l2d2p365
+from solardatatools.daytime import detect_sun
+from solardatatools.sunrise_sunset import rise_set_rough, rise_set_smoothed
+from solardatatools.signal_decompositions import tl1_l2d2p365
 
 
 class SunriseSunset:

@@ -1,1 +1,1 @@
-from src.solardatatools.data_handler import DataHandler
+from solardatatools.data_handler import DataHandler

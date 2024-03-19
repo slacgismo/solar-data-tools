@@ -15,24 +15,24 @@ from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import traceback, sys
-from src.solardatatools.time_axis_manipulation import (
+from solardatatools.time_axis_manipulation import (
     make_time_series,
     standardize_time_axis,
     remove_index_timezone,
     get_index_timezone,
 )
-from src.solardatatools.matrix_embedding import make_2d
-from src.solardatatools.data_quality import (
+from solardatatools.matrix_embedding import make_2d
+from solardatatools.data_quality import (
     make_density_scores,
     make_linearity_scores,
     make_quality_flags,
 )
-from src.solardatatools.data_filling import zero_nighttime, interp_missing
-from src.solardatatools.clear_day_detection import ClearDayDetection
-from src.solardatatools.plotting import plot_2d
-from src.solardatatools.clear_time_labeling import find_clear_times
-from src.solardatatools.solar_noon import avg_sunrise_sunset
-from src.solardatatools.algorithms import (
+from solardatatools.data_filling import zero_nighttime, interp_missing
+from solardatatools.clear_day_detection import ClearDayDetection
+from solardatatools.plotting import plot_2d
+from solardatatools.clear_time_labeling import find_clear_times
+from solardatatools.solar_noon import avg_sunrise_sunset
+from solardatatools.algorithms import (
     CapacityChange,
     TimeShift,
     SunriseSunset,
@@ -41,7 +41,7 @@ from src.solardatatools.algorithms import (
 from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
-from src.solardatatools.polar_transform import PolarTransform
+from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:

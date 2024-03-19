@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
-from src.solardatatools.polar_transform import PolarTransform
+from solardatatools.polar_transform import PolarTransform
 
 my_round = lambda x, c: c * np.round(x / c, 0)
 

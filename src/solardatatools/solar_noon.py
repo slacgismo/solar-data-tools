@@ -12,8 +12,8 @@ tends to give a better estimate of solar noon than the sunrise/sunset approach.
 """
 
 import numpy as np
-from src.solardatatools.daytime import detect_sun
-from src.solardatatools.sunrise_sunset import rise_set_rough
+from solardatatools.daytime import detect_sun
+from solardatatools.sunrise_sunset import rise_set_rough
 
 
 def energy_com(data):

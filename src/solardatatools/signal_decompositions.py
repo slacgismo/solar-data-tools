@@ -26,9 +26,9 @@ of Gaussian residuals
     - constrained to have first val at 0 and last val at 1
 """
 
-from src.solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365,\
+from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365,\
     _osd_tl1_l2d2p365, _osd_l2_l1d2_constrained
-from src.solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365, _cvx_l1_l1d1_l2d2p365,\
+from solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365, _cvx_l1_l1d1_l2d2p365,\
     _cvx_tl1_l2d2p365, _cvx_l2_l1d2_constrained
 
 

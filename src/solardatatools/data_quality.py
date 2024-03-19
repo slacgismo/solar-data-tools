@@ -7,7 +7,7 @@ This module contains functions for identifying corrupt or bad quality data.
 
 import numpy as np
 from scipy.stats import mode
-from src.solardatatools.signal_decompositions import tl1_l2d2p365
+from solardatatools.signal_decompositions import tl1_l2d2p365
 
 
 def make_quality_flags(

@@ -17,8 +17,8 @@ The algorithm works as follows:
 
 import numpy as np
 from sklearn.model_selection import train_test_split
-from src.solardatatools.solar_noon import energy_com, avg_sunrise_sunset
-from src.solardatatools.signal_decompositions import l2_l1d1_l2d2p365
+from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
+from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
 
 
 class TimeShift:
