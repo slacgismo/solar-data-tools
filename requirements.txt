@@ -19,4 +19,4 @@ osqp
 clarabel
 qss
 tqdm
-spcqe @ git+https://github.com/cvxgrp/spcqe.git
+spcqe
