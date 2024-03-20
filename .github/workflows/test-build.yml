@@ -22,7 +22,7 @@ jobs:
       - name: Create the distribution
         run: |
           git fetch --prune --unshallow --tags
-          sudo python setup.py sdist bdist_wheel
+          sudo python3 -m build --wheel
 
   build-conda:
     runs-on: ubuntu-latest
