@@ -1,6 +1,9 @@
 [build-system]
-requires = ["setuptools>=64", "setuptools_scm>=8"]
-build-backend = "setuptools.build_meta"
+requires = [
+  "hatchling >=1.12.2",
+  "hatch-vcs >=0.2.0",
+]
+build-backend = "hatchling.build"
 
 [project]
 name = "solar-data-tools"
@@ -53,8 +56,17 @@ classifiers = [
 ]
 dynamic = ["version"]
 
-[tool.setuptools]
-py-modules = ["solardatatools"]
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build]
+only-packages = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/solardatatools"]
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/solardatatools/_version.py"
 
 [project.optional-dependencies]
 docs = [
