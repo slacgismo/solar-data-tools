@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Twine
-        run: sudo pip install twine
+      - name: Install Twine and Build
+        run: sudo pip install twine build
 
       - name: Create the distribution
         run: |
@@ -65,5 +65,5 @@ jobs:
         run: |
           conda install anaconda-client
           conda config --set anaconda_upload no --set solver libmamba
-          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge --numpy
+          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge
           echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
