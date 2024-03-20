@@ -28,24 +28,32 @@ of Gaussian residuals
 import sys
 import numpy as np
 
-from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365,\
-    _osd_tl1_l2d2p365, _osd_l2_l1d2_constrained
-from solardatatools._cvx_signal_decompositions import  _cvx_l2_l1d1_l2d2p365, _cvx_l1_l1d1_l2d2p365,\
-    _cvx_tl1_l2d2p365, _cvx_l2_l1d2_constrained
+from solardatatools._osd_signal_decompositions import (
+    _osd_l2_l1d1_l2d2p365,
+    _osd_l1_l1d1_l2d2p365,
+    _osd_tl1_l2d2p365,
+    _osd_l2_l1d2_constrained,
+)
+from solardatatools._cvx_signal_decompositions import (
+    _cvx_l2_l1d1_l2d2p365,
+    _cvx_l1_l1d1_l2d2p365,
+    _cvx_tl1_l2d2p365,
+    _cvx_l2_l1d2_constrained,
+)
 
 
 def l2_l1d1_l2d2p365(
-        signal,
-        use_ixs=None,
-        w0=10,
-        w1=50,
-        w2=1e5,
-        yearly_periodic=False,
-        return_all=False, # for unit tests only
-        solver="QSS",
-        sum_card=False, # OSD only 
-        transition_locs=None, # CVX only
-        verbose=False
+    signal,
+    use_ixs=None,
+    w0=10,
+    w1=50,
+    w2=1e5,
+    yearly_periodic=False,
+    return_all=False,  # for unit tests only
+    solver="QSS",
+    sum_card=False,  # OSD only
+    transition_locs=None,  # CVX only
+    verbose=False,
 ):
     """
     Used in: solardatatools/algorithms/time_shifts.py
@@ -85,7 +93,20 @@ def l2_l1d1_l2d2p365(
             yearly_periodic=yearly_periodic,
             return_all=return_all,
             transition_locs=transition_locs,
-            verbose=verbose
+            verbose=verbose,
+        )
+    elif yearly_periodic:
+        res = _osd_l2_l1d1_l2d2p365(
+            signal=signal,
+            use_ixs=use_ixs,
+            w0=w0,
+            w1=w1,
+            w2=w2,
+            yearly_periodic=yearly_periodic,
+            return_all=return_all,
+            solver="CLARABEL",
+            sum_card=sum_card,
+            verbose=verbose,
         )
     else:
         res = _osd_l2_l1d1_l2d2p365(
@@ -98,22 +119,22 @@ def l2_l1d1_l2d2p365(
             return_all=return_all,
             solver=solver,
             sum_card=sum_card,
-            verbose=verbose
+            verbose=verbose,
         )
 
     return res
 
 
 def tl1_l2d2p365(
-        signal,
-        use_ixs=None,
-        tau=0.75,
-        w0=1,
-        w1=500,
-        yearly_periodic=True,
-        return_all=False,
-        solver="OSQP",
-        verbose=False
+    signal,
+    use_ixs=None,
+    tau=0.75,
+    w0=1,
+    w1=500,
+    yearly_periodic=True,
+    return_all=False,
+    solver="OSQP",
+    verbose=False,
 ):
     """
     Used in:
@@ -151,7 +172,7 @@ def tl1_l2d2p365(
             w1=w1,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
-            verbose=verbose
+            verbose=verbose,
         )
     else:
         res = _osd_tl1_l2d2p365(
@@ -163,7 +184,7 @@ def tl1_l2d2p365(
             yearly_periodic=yearly_periodic,
             return_all=return_all,
             solver=solver,
-            verbose=verbose
+            verbose=verbose,
         )
 
     return res
@@ -173,11 +194,11 @@ def l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
     w0=2e-6,  # l1 term, scaled
-    w1=40e-6, # l1d1 term, scaled
-    w2=6e-3, # seasonal term, scaled
+    w1=40e-6,  # l1d1 term, scaled
+    w2=6e-3,  # seasonal term, scaled
     return_all=False,
     solver=None,
-    sum_card=False, # OSD only
+    sum_card=False,  # OSD only
     verbose=False,
 ):
     """
@@ -205,10 +226,7 @@ def l1_l1d1_l2d2p365(
     if solver == "MOSEK":
         # MOSEK weights set in CVXPY function
         res = _cvx_l1_l1d1_l2d2p365(
-            signal=signal,
-            use_ixs=use_ixs,
-            return_all=return_all,
-            verbose=verbose
+            signal=signal, use_ixs=use_ixs, return_all=return_all, verbose=verbose
         )
     else:
         res = _osd_l1_l1d1_l2d2p365(
@@ -220,19 +238,15 @@ def l1_l1d1_l2d2p365(
             return_all=return_all,
             solver=solver,
             sum_card=sum_card,
-            verbose=verbose
+            verbose=verbose,
         )
 
     return res
 
-  
-def l2_l1d2_constrained(signal,
-                             w0=1,
-                             w1=5,
-                             return_all=False,
-                             solver="OSQP",
-                             verbose=False
-                             ):
+
+def l2_l1d2_constrained(
+    signal, w0=1, w1=5, return_all=False, solver="OSQP", verbose=False
+):
     """
     Used in solardatatools/algorithms/clipping.py
 
@@ -250,19 +264,10 @@ def l2_l1d2_constrained(signal,
     """
     if solver == "MOSEK":
         # MOSEK weights set in CVXPY function
-        res = _cvx_l2_l1d2_constrained(
-            signal,
-            return_all=return_all,
-            verbose=verbose
-        )
+        res = _cvx_l2_l1d2_constrained(signal, return_all=return_all, verbose=verbose)
     else:
         res = _osd_l2_l1d2_constrained(
-            signal,
-            w0=w0,
-            w1=w1,
-            return_all=return_all,
-            solver=solver,
-            verbose=verbose
+            signal, w0=w0, w1=w1, return_all=return_all, solver=solver, verbose=verbose
         )
 
     return res
