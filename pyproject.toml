@@ -63,10 +63,10 @@ source = "vcs"
 only-packages = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/solardatatools"]
+packages = ["solardatatools"]
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/solardatatools/_version.py"
+version-file = "_version.py"
 
 [project.optional-dependencies]
 docs = [
