@@ -82,14 +82,13 @@ class ConfigurationEstimator:
             solar_noon_method == "optimized_estimates"
             or daylight_method == "optimized_estimates"
         ):
-            ss = SunriseSunset()
+            ss = self.data_handler.daytime_analysis
 
         if solar_noon_method == "rise_set_average":
             self.solarnoon = avg_sunrise_sunset(self.data_matrix)
         elif solar_noon_method == "energy_com":
             self.solarnoon = energy_com(self.data_matrix)
         if solar_noon_method == "optimized_estimates":
-            ss.run_optimizer(data=self.data_matrix)
             self.solarnoon = np.nanmean(
                 [ss.sunrise_estimates, ss.sunset_estimates], axis=0
             )
