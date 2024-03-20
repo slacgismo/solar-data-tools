@@ -25,6 +25,8 @@ of Gaussian residuals
     - l1d2: piecewise linear heuristic
     - constrained to have first val at 0 and last val at 1
 """
+import sys
+import numpy as np
 
 from solardatatools._osd_signal_decompositions import _osd_l2_l1d1_l2d2p365, _osd_l1_l1d1_l2d2p365,\
     _osd_tl1_l2d2p365, _osd_l2_l1d2_constrained
