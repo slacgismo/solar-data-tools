@@ -83,7 +83,7 @@ def l2_l1d1_l2d2p365(
     :param verbose: Sets verbosity
     :return: A tuple with two 1d numpy arrays containing the two signal component estimates
     """
-    if solver == "MOSEK":
+    if solver == "MOSEK" or solver == "CLARABEL":
         res = _cvx_l2_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
