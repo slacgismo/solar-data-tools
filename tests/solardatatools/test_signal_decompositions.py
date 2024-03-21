@@ -519,11 +519,11 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
             signal,
-            w0=1e-10,
-            w1=10e-7,
-            w2=1e-2,
+            w0=1,
+            w1=2,
+            w2=1e3,
             sum_card=True,
-            solver=self.solver,
+            solver="CLARABEL",
             return_all=True,
         )
 
