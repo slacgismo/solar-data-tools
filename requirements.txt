@@ -18,3 +18,5 @@ sig-decomp
 osqp
 clarabel
 qss
+tqdm
+spcqe
