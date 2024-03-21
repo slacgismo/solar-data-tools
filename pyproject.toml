@@ -59,9 +59,6 @@ dynamic = ["version"]
 [tool.hatch.version]
 source = "vcs"
 
-[tool.hatch.build]
-only-packages = true # Do I need this?
-
 [tool.hatch.build.targets.wheel]
 packages = ["solardatatools"]
 
