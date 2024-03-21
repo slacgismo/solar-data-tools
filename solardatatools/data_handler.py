@@ -46,7 +46,7 @@ register_matplotlib_converters()
 from solardatatools.polar_transform import PolarTransform
 
 
-class DataHandler:
+class DataHandlers:
     def __init__(
         self,
         data_frame=None,
