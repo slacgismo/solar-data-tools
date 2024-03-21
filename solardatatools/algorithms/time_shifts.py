@@ -38,6 +38,7 @@ class TimeShift:
         self.best_ix = None
         self.w1_vals = None
         self.baseline = None
+        self.correction_estimate = None
         self.periodic_detector = None
         self.__recursion_depth = 0
 
@@ -52,6 +53,7 @@ class TimeShift:
         periodic_detector=False,
         solver=None,
         sum_card=False,
+        round_shifts_to_hour=True,
     ):
         if solar_noon_estimator == "com":
             metric = energy_com(data)
@@ -67,7 +69,7 @@ class TimeShift:
         if w1 is None:
             # TODO: investigate if two separate ranges are needed
             #  for MOSEK vs QSS and possibly simplify
-            if solver == "MOSEK":
+            if solver == "MOSEK" or solver == "CLARABEL":
                 w1s = np.logspace(-1, 2, 11)
             else:
                 w1s = np.logspace(0.5, 3.5, 21)
@@ -146,7 +148,12 @@ class TimeShift:
         my_set = set(s1)
         key_func = lambda x: abs(x - 12)
         closest_element = min(my_set, key=key_func)
-        roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
+        if not round_shifts_to_hour:
+            roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
+        else:
+            roll_by_index = np.round(
+                np.round(closest_element - s1) * data.shape[0] / 24, 0
+            )
         correction_metric = np.average(np.abs(roll_by_index))
         if correction_metric < 0.01:
             roll_by_index[:] = 0
@@ -169,6 +176,7 @@ class TimeShift:
         self.s2 = s2
         self.index_set = index_set
         self.baseline = closest_element
+        self.correction_estimate = roll_by_index * 24 * 60 / data.shape[0]
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
