@@ -72,7 +72,7 @@ class TimeShift:
             if solver == "MOSEK" or solver == "CLARABEL":
                 w1s = np.logspace(-1, 2, 11)
             else:
-                w1s = np.logspace(0.5, 3.5, 21)
+                w1s = np.logspace(0.5, 3.5, 11)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
                 metric,
                 w1s,
