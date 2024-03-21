@@ -1,19 +1,17 @@
 import os
 import pandas as pd
 from dask import delayed
-from dask.distributed import Client, performance_report
+from dask.distributed import performance_report
 from solardatatools import DataHandler
 import sys
 sys.path.append('../..')
-from dask_cloudprovider.aws import FargateCluster
 from sdt_dask.dataplugs.pvdaq_plug import PVDAQPlug
 
 # Define the pipeline run for as single dataset
-# TODO: use keyword unpacking
-def run_pipeline(datahandler, solver, solver_convex, fix_shifts, verbose=False):
+def run_pipeline(datahandler, **kwargs):
     # Need to call this separately to have it run correctly in task graph 
     # since it doesn't return anything
-    datahandler.run_pipeline(solver=solver, solver_convex=solver_convex, fix_shifts=fix_shifts, verbose=verbose)
+    datahandler.run_pipeline(**kwargs)
     return datahandler
 
 class SDTDask:
@@ -22,7 +20,7 @@ class SDTDask:
         self.data_plug = data_plug
         self.client = client
         
-    def execute(self, KEYS):
+    def execute(self, KEYS, **kwargs):
         # Call above functions in a for loop over the keys
         # and collect results in a DataFrame
         reports = []
@@ -30,17 +28,13 @@ class SDTDask:
 
         # KEYS = [(34, 2011), (35, 2015), (51,2012)] # site ID and year pairs
         for key in KEYS:
-            # TODO: to see if a key is valid, explicit
+            # TODO: to check if a key is valid explicitly
 
-            # TODO: dataset failed to run, python error
-
+            # TODO: if dataset failed to run, throw python error
 
             df = delayed(self.data_plug.get_data)(key)
             dh = delayed(DataHandler)(df)
-            dh_run = delayed(run_pipeline)(dh, solver="OSQP", solver_convex="OSQP", fix_shifts=True, verbose=True)
-            # dh_run = delayed(run_pipeline)(dh, solver="OSQP", solver_convex="OSQP", verbose=True)
-            # argument unpacking
-            # dh_run = delayed(run_pipeline)(dh, solver="OSQP", solver_convex="OSQP", verbose=True)
+            dh_run = delayed(run_pipeline)(dh, **kwargs)
         
             report = dh_run.report
             runtime = dh_run.total_time
