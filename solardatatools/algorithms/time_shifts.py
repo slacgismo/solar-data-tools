@@ -276,6 +276,7 @@ class TimeShift:
             ax[0].axvline(best_w1, ls="--", color="red")
             ax[0].set_title("holdout validation")
             ax[1].plot(w1s, self.jumps_per_year, marker=".")
+            ax[1].set_yscale("log")
             ax[1].axvline(best_w1, ls="--", color="red")
             ax[1].set_title("jumps per year")
             ax[2].plot(w1s, rn, marker=".")
