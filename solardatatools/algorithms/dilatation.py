@@ -12,6 +12,7 @@ DEFAULT = {
     "nvals_dil": 101,
 }
 
+
 class Dilatation:
     def __init__(self, data_handler, **config):
         self.dh = data_handler
@@ -19,40 +20,46 @@ class Dilatation:
         self.ndays = data_handler.raw_data_matrix.shape[1]
         self.idx_ori = None
         self.idx_dil = None
-        self.signal_ori = data_handler.raw_data_matrix.ravel(order='F')
+        self.signal_ori = data_handler.raw_data_matrix.ravel(order="F")
         self.signal_dil = None
         if len(config) == 0:
             self.config = DEFAULT
         else:
             self.config = config
+        self.nvals_dil = self.config["nvals_dil"]
         self.run()
-    
+
     def run(self):
         # original index as 1D array of floats (hours since midnight of the first day)
-        self.idx_ori = np.linspace(0, self.ndays*24, self.ndays*self.nvals_ori + 1)
+        self.idx_ori = np.linspace(0, self.ndays * 24, self.ndays * self.nvals_ori + 1)
         # dilated index as 1D float array of floats (hours since midnight of the first day)
         self.idx_dil = build_dilated_idx(
             self.dh.daytime_analysis.sunrise_estimates,
             self.dh.daytime_analysis.sunset_estimates,
             self.idx_ori,
-            self.config["nvals_dil"])
+            self.config["nvals_dil"],
+        )
         # dilated signal
         self.signal_dil = dilate_signal(self.idx_dil, self.idx_ori, self.signal_ori)
-    
+
     def plot_heatmap(
         self,
-        space='original',
+        space="original",
         figsize=(12, 6),
         scale_to_kw=True,
         year_lines=True,
         units=None,
     ):
-        if space == 'original':
-            mat = self.signal_ori.reshape((self.nvals_ori, self.ndays), order='F')
-        elif space == 'dilated':
-            mat = self.signal_dil[1:].reshape((self.config["nvals_dil"], self.ndays), order='F')
+        if space == "original":
+            mat = self.signal_ori.reshape((self.nvals_ori, self.ndays), order="F")
+        elif space == "dilated":
+            mat = self.signal_dil[1:].reshape(
+                (self.config["nvals_dil"], self.ndays), order="F"
+            )
         else:
-            raise ValueError("Invalid value for space. Choose from: ['original', 'dilated']")
+            raise ValueError(
+                "Invalid value for space. Choose from: ['original', 'dilated']"
+            )
         if units is None:
             if scale_to_kw and self.dh.power_units == "W":
                 mat /= 1000
@@ -66,9 +73,11 @@ class Dilatation:
             year_lines=year_lines,
             units=units,
         )
-        
 
-def build_dilated_idx(sunrises, sunsets, signal_idx_ori, nvals_dil=DEFAULT["nvals_dil"]):
+
+def build_dilated_idx(
+    sunrises, sunsets, signal_idx_ori, nvals_dil=DEFAULT["nvals_dil"]
+):
     """
     This function builds a float index from 00:00 first day to the last sunset of the last day (eg. 18:37)
     for the dilated signal. The last point of the index is the end of the last time bin (00:00 next day).
@@ -79,12 +88,15 @@ def build_dilated_idx(sunrises, sunsets, signal_idx_ori, nvals_dil=DEFAULT["nval
     :param nvals_dil: int, number of values per day for the dilated signal. Default is 101.
     :return: ndarray, 1D array with the dilated index (length nvals_dil*ndays + 2).
     """
-    sunrise_idx_ori = sunrises + 24*np.arange(len(sunrises))
-    sunset_idx_ori = sunsets + 24*np.arange(len(sunsets))
-    signal_idx_dil = np.linspace(sunrise_idx_ori, sunset_idx_ori, nvals_dil).ravel(order='F')
-    signal_idx_dil = np.append(0, signal_idx_dil) # Adding first midnight
-    signal_idx_dil = np.append(signal_idx_dil, signal_idx_ori[-1]) # Last bin end
+    sunrise_idx_ori = sunrises + 24 * np.arange(len(sunrises))
+    sunset_idx_ori = sunsets + 24 * np.arange(len(sunsets))
+    signal_idx_dil = np.linspace(sunrise_idx_ori, sunset_idx_ori, nvals_dil).ravel(
+        order="F"
+    )
+    signal_idx_dil = np.append(0, signal_idx_dil)  # Adding first midnight
+    signal_idx_dil = np.append(signal_idx_dil, signal_idx_ori[-1])  # Last bin end
     return signal_idx_dil
+
 
 def dilate_signal(signal_idx_dil, signal_idx_ori, signal_ori):
     """
@@ -95,9 +107,14 @@ def dilate_signal(signal_idx_dil, signal_idx_ori, signal_ori):
     :param signal_ori: ndarray, 1D array with the original signal values (length m-1).
     :return: ndarray, 1D array with the dilated signal values (length n-1).
     """
-    _signal_ori = np.append(signal_ori, signal_ori[-1]) # Adding last dummy value to interpolate
-    signal_dil = interpolate(signal_idx_dil, signal_idx_ori, _signal_ori, alignment='left')
+    _signal_ori = np.append(
+        signal_ori, signal_ori[-1]
+    )  # Adding last dummy value to interpolate
+    signal_dil = interpolate(
+        signal_idx_dil, signal_idx_ori, _signal_ori, alignment="left"
+    )
     return signal_dil
+
 
 def undilate_signal(signal_idx_ori, signal_idx_dil, signal_dil):
     """
@@ -108,11 +125,18 @@ def undilate_signal(signal_idx_ori, signal_idx_dil, signal_dil):
     :param signal_dil: ndarray, 1D array with the dilated signal values (length n-1).
     :return: ndarray, 1D array with the original signal values (length m-1).
     """
-    _signal_dil = np.append(signal_dil, signal_dil[-1]) # Adding last dummy value to interpolate
-    signal_ori = interpolate(signal_idx_ori, signal_idx_dil, _signal_dil, alignment='left')
+    _signal_dil = np.append(
+        signal_dil, signal_dil[-1]
+    )  # Adding last dummy value to interpolate
+    signal_ori = interpolate(
+        signal_idx_ori, signal_idx_dil, _signal_dil, alignment="left"
+    )
     return signal_ori
 
-def undilate_quantiles(signal_idx_ori, signal_idx_dil, quantiles_dil, nvals_dil=DEFAULT["nvals_dil"]):
+
+def undilate_quantiles(
+    signal_idx_ori, signal_idx_dil, quantiles_dil, nvals_dil=DEFAULT["nvals_dil"]
+):
     """
     This function undilates a 2D matrix of quantiles from the dilated time grid to the regular time grid.
 
@@ -125,14 +149,21 @@ def undilate_quantiles(signal_idx_ori, signal_idx_dil, quantiles_dil, nvals_dil=
     # we remove the first and last points of the dilated signal index to get the number of days
     ndays = (len(signal_idx_dil) - 2) // nvals_dil
     # we add one zero value at the beginning of every every night
-    new_signal_idx_dil = extrapolate_signal_after_sunset(signal_idx_dil, nvals_dil, ndays, method='linear')
+    new_signal_idx_dil = extrapolate_signal_after_sunset(
+        signal_idx_dil, nvals_dil, ndays, method="linear"
+    )
     _quantile_dil = np.zeros(nvals_dil * ndays + 2)
-    quantiles_ori = np.zeros((signal_idx_ori.shape[0]-1, quantiles_dil.shape[1]))
+    quantiles_ori = np.zeros((signal_idx_ori.shape[0] - 1, quantiles_dil.shape[1]))
     for i in range(quantiles_dil.shape[1]):
-        _quantile_dil[:-1] = quantiles_dil[:,i]
-        new_quantile_dil = extrapolate_signal_after_sunset(_quantile_dil, nvals_dil, ndays, method='zero_padding')
-        quantiles_ori[:,i] = interpolate(signal_idx_ori, new_signal_idx_dil, new_quantile_dil, alignment='left')
+        _quantile_dil[:-1] = quantiles_dil[:, i]
+        new_quantile_dil = extrapolate_signal_after_sunset(
+            _quantile_dil, nvals_dil, ndays, method="zero_padding"
+        )
+        quantiles_ori[:, i] = interpolate(
+            signal_idx_ori, new_signal_idx_dil, new_quantile_dil, alignment="left"
+        )
     return quantiles_ori
+
 
 def extrapolate_signal_after_sunset(signal, nvals, ndays, method):
     """
@@ -148,20 +179,23 @@ def extrapolate_signal_after_sunset(signal, nvals, ndays, method):
     """
     # Signal has length nvals * ndays + 2
     matrix = np.zeros((nvals + 1, ndays))
-    matrix[:-1] = signal[1:-1].reshape((nvals, ndays), order='F')
-    if method == 'linear':
+    matrix[:-1] = signal[1:-1].reshape((nvals, ndays), order="F")
+    if method == "linear":
         matrix[-1] = matrix[-2] + (matrix[-2] - matrix[-3])
-    elif method == 'zero_padding':
+    elif method == "zero_padding":
         matrix[-1] = 0
     else:
-        raise ValueError("Invalid value for method. Choose from: ['linear', 'zero_padding']")
+        raise ValueError(
+            "Invalid value for method. Choose from: ['linear', 'zero_padding']"
+        )
     new_signal = np.zeros((nvals + 1) * ndays + 2)
     new_signal[0] = signal[0]
-    new_signal[1:-1] = matrix.ravel(order='F')
+    new_signal[1:-1] = matrix.ravel(order="F")
     new_signal[-1] = signal[-1]
     return new_signal
 
-def interpolate(tnew, t, x, alignment='left'):
+
+def interpolate(tnew, t, x, alignment="left"):
     """
     This function interpolates a signal for a new set of points while maintaining constant signal energy.
 
@@ -175,7 +209,7 @@ def interpolate(tnew, t, x, alignment='left'):
     # make sure everything is float, flip if alignment is right
     tnew_float, t_float, x_float = initialize_arrays(tnew, t, x, alignment)
     # find the indices where each element in tnew would be inserted into t to maintain order
-    indices = np.searchsorted(t_float, tnew_float, side='right')
+    indices = np.searchsorted(t_float, tnew_float, side="right")
     # interpolate signal values assuming a step-like function
     xnew = x_float[indices - 1]
     ttnew = np.insert(t_float, indices, tnew_float)
@@ -186,10 +220,11 @@ def interpolate(tnew, t, x, alignment='left'):
     y = compute_integral_interpolation(ttnew, xxnew, new_indices)
     # divide by the time step to maintain constant integral (energy)
     dts = np.diff(ttnew[new_indices])
-    y = y / dts 
-    if alignment == 'right':
+    y = y / dts
+    if alignment == "right":
         y = np.flip(y)
     return y
+
 
 def check_sanity(tnew, t, x, alignment):
     """
@@ -216,19 +251,21 @@ def check_sanity(tnew, t, x, alignment):
         raise ValueError("tnew values must be within the range of t values.")
     if t.shape != x.shape:
         raise ValueError("t must have the same shape as x.")
-    if alignment not in ['left', 'right']:
+    if alignment not in ["left", "right"]:
         raise ValueError("Invalid value for alignment. Choose from: ['left', 'right']")
 
+
 def initialize_arrays(tnew, t, x, alignment):
-    if alignment == 'left':
+    if alignment == "left":
         tnew_float = tnew.astype(float)
         t_float = t.astype(float)
         x_float = x.astype(float)
-    if alignment == 'right':
+    if alignment == "right":
         tnew_float = -np.flip(tnew).astype(float)
         t_float = -np.flip(t).astype(float)
         x_float = np.flip(x).astype(float)
     return tnew_float, t_float, x_float
+
 
 def compute_integral_interpolation(ttnew, xxnew, new_indices):
     """
@@ -249,10 +286,9 @@ def compute_integral_interpolation(ttnew, xxnew, new_indices):
     # set NaNs back to Na
     was_nan = np.isnan(xxnew)
     # the last point is not used in the interpolation, it shouldn't propagate NaNs
-    was_nan[-1] = False 
+    was_nan[-1] = False
     cumulative_integrals[was_nan] = np.nan
     # the new value at each new time point is the difference between the cumulative integrals
     # at this point and the following one
     y = np.diff(cumulative_integrals[new_indices])
     return y
-
