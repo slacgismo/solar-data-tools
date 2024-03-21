@@ -1,8 +1,6 @@
 name: Test Build
 
 on:
-  push:
-    branches: [pkg-update]
   pull_request:
     branches: [main]
 jobs:
