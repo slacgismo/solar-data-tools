@@ -19,5 +19,7 @@ sig-decomp
 osqp
 clarabel
 qss
+tqdm
+spcqe
 dask
 graphviz
