@@ -1,3 +1,4 @@
+solar-data-tools
 scipy>=1.11
 numpy>=1.22.0
 pandas
@@ -20,3 +21,5 @@ clarabel
 qss
 tqdm
 spcqe
+dask
+graphviz
