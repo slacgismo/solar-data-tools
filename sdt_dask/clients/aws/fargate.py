@@ -62,7 +62,7 @@ finally:
                 image = image,
                 vpc = vpc,
                 region_name = region_name,
-                environment = {},
+                environment = environment,
                 n_workers = n_workers,
                 worker_nthreads = threads_per_worker
             )

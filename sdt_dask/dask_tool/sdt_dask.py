@@ -16,7 +16,7 @@ def run_pipeline(datahandler, **kwargs):
 
 class SDTDask:
 
-    def __init__(self, data_plug, client, **keywords):
+    def __init__(self, data_plug, client):
         self.data_plug = data_plug
         self.client = client
         
