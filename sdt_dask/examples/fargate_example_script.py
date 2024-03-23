@@ -1,10 +1,6 @@
 # Need to check python path variables
 import sys
 
-# Appending path to successfully import solar data tool modules
-sys.path.append('..\\..')
-sys.path.append('..\\..\\..')
-
 import glob, os
 import pandas as pd
 from dask import delayed

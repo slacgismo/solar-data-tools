@@ -38,6 +38,7 @@ class TimeShift:
         self.best_ix = None
         self.w1_vals = None
         self.baseline = None
+        self.correction_estimate = None
         self.periodic_detector = None
         self.__recursion_depth = 0
 
@@ -51,7 +52,8 @@ class TimeShift:
         threshold=0.005,
         periodic_detector=False,
         solver=None,
-        sum_card=False
+        sum_card=False,
+        round_shifts_to_hour=True,
     ):
         if solar_noon_estimator == "com":
             metric = energy_com(data)
@@ -67,17 +69,29 @@ class TimeShift:
         if w1 is None:
             # TODO: investigate if two separate ranges are needed
             #  for MOSEK vs QSS and possibly simplify
-            if solver == "MOSEK":
+            if solver == "MOSEK" or solver == "CLARABEL":
                 w1s = np.logspace(-1, 2, 11)
             else:
                 w1s = np.logspace(0.5, 3.5, 11)
             hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
-                metric, w1s, use_ixs, w2, periodic_detector, solver=solver, sum_card=sum_card
+                metric,
+                w1s,
+                use_ixs,
+                w2,
+                periodic_detector,
+                solver=solver,
+                sum_card=sum_card,
             )
             if tv_metric[best_ix] >= 0.009:
                 # rerun the optimizer with a new random data selection
                 hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
-                    metric, w1s, use_ixs, w2, periodic_detector, solver=solver, sum_card=sum_card
+                    metric,
+                    w1s,
+                    use_ixs,
+                    w2,
+                    periodic_detector,
+                    solver=solver,
+                    sum_card=sum_card,
                 )
             # if np.isclose(hn[best_ix], hn[-1]):
             #     best_ix = np.argmax(hn * rn)
@@ -91,7 +105,13 @@ class TimeShift:
             w1s = self.w1_vals
             best_ix = self.best_ix
         s1, s2 = self.estimate_components(
-            metric, best_w1, w2, use_ixs, periodic_detector, solver=solver, sum_card=sum_card
+            metric,
+            best_w1,
+            w2,
+            use_ixs,
+            periodic_detector,
+            solver=solver,
+            sum_card=sum_card,
         )
         # find indices of transition points
         index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
@@ -103,7 +123,7 @@ class TimeShift:
             periodic_detector,
             solver=solver,
             sum_card=sum_card,
-            transition_locs=index_set
+            transition_locs=index_set,
         )
         jumps_per_year = len(index_set) / (len(metric) / 365)
         cond1 = jumps_per_year >= 5
@@ -128,7 +148,12 @@ class TimeShift:
         my_set = set(s1)
         key_func = lambda x: abs(x - 12)
         closest_element = min(my_set, key=key_func)
-        roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
+        if not round_shifts_to_hour:
+            roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
+        else:
+            roll_by_index = np.round(
+                np.round(closest_element - s1) * data.shape[0] / 24, 0
+            )
         correction_metric = np.average(np.abs(roll_by_index))
         if correction_metric < 0.01:
             roll_by_index[:] = 0
@@ -151,10 +176,13 @@ class TimeShift:
         self.s2 = s2
         self.index_set = index_set
         self.baseline = closest_element
+        self.correction_estimate = roll_by_index * 24 * 60 / data.shape[0]
         self.corrected_data = Dout
         self.__recursion_depth = 0
 
-    def optimize_w1(self, metric, w1s, use_ixs, w2, periodic_detector, solver=None, sum_card=False):
+    def optimize_w1(
+        self, metric, w1s, use_ixs, w2, periodic_detector, solver=None, sum_card=False
+    ):
         # set up train/test split with sklearn
         ixs = np.arange(len(metric))
         ixs = ixs[use_ixs]
@@ -172,7 +200,13 @@ class TimeShift:
         # iterate over possible values of w1 parameter
         for i, v in enumerate(w1s):
             s1, s2 = self.estimate_components(
-                metric, v, w2, train, periodic_detector, solver=solver, sum_card=sum_card
+                metric,
+                v,
+                w2,
+                train,
+                periodic_detector,
+                solver=solver,
+                sum_card=sum_card,
             )
             y = metric
             # collect results
@@ -183,29 +217,14 @@ class TimeShift:
             jumps_per_year = count_jumps / (len(metric) / 365)
             jpy[i] = jumps_per_year
             rms_s2[i] = np.sqrt(np.mean(np.square(s2)))
-
-        def zero_one_scale(x):
-            return (x - np.min(x)) / (np.max(x) - np.min(x))
-
-        hn = zero_one_scale(test_r)  # holdout error metrix
-        rn = zero_one_scale(train_r)
+        ### Select best weight as the largest weight that gets within 1% of the lowest holdout error ###
         ixs = np.arange(len(w1s))
-        # Detecting more than 5 time shifts per year is extremely uncommon,
-        # and is considered non-physical
-        hn_min_baseline = np.nanmin(hn[jpy <= 5])
-        if not periodic_detector:
-            hn_thresh = hn <= hn_min_baseline + 0.1
-            slct = hn_thresh
-        else:
-            hn_thresh = hn <= hn_min_baseline + 0.05
-            slct = np.logical_and(hn_thresh, rms_s2 <= 0.25)
-        subset_ixs = ixs[slct]
-        if len(subset_ixs)>0:
-            # choose index of lowest holdout error
-            best_ix = np.max(subset_ixs)
-        else:
-            raise("Timeshift detector weight optimization failed. Please check subroutine optimize_w1 ln 199.")
-        return hn, rn, tv_metric, jpy, best_ix
+        # find lowest holdout value
+        min_test_err = np.min(test_r[ixs])
+        # add a buffer of 1%
+        cond = test_r <= min_test_err * 1.01
+        best_ix = np.max(ixs[cond])
+        return test_r, train_r, tv_metric, jpy, best_ix
 
     def estimate_components(
         self,
@@ -257,6 +276,7 @@ class TimeShift:
             ax[0].axvline(best_w1, ls="--", color="red")
             ax[0].set_title("holdout validation")
             ax[1].plot(w1s, self.jumps_per_year, marker=".")
+            ax[1].set_yscale("log")
             ax[1].axvline(best_w1, ls="--", color="red")
             ax[1].set_title("jumps per year")
             ax[2].plot(w1s, rn, marker=".")
