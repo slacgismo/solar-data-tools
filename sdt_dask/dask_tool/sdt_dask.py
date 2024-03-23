@@ -3,9 +3,6 @@ import pandas as pd
 from dask import delayed
 from dask.distributed import performance_report
 from solardatatools import DataHandler
-import sys
-sys.path.append('../..')
-from sdt_dask.dataplugs.pvdaq_plug import PVDAQPlug
 
 # Define the pipeline run for as single dataset
 def run_pipeline(datahandler, **kwargs):
@@ -26,7 +23,7 @@ class SDTDask:
         reports = []
         runtimes = []
 
-        # KEYS = [(34, 2011), (35, 2015), (51,2012)] # site ID and year pairs
+        # KEYS example: [(34, 2011), (35, 2015), (51,2012)] # site ID and year pairs
         for key in KEYS:
             # TODO: to check if a key is valid explicitly
 
