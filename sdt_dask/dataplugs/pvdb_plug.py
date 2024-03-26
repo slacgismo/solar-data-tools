@@ -21,7 +21,8 @@ class PVDBPlug(DataPlug):
         self.df = load_redshift_data(**query)
 
     def _clean_data(self):
-        """Clean the retrieved data and set 'ts' column as the index."""
+        """Clean the retrieved data and set 'ts' column as the index.
+        """
         self.df['ts'] = pd.to_datetime(self.df['ts'])
         self.df.set_index('ts', inplace=True)
         self.df = self.df[[self.power_col]]
@@ -32,7 +33,8 @@ class PVDBPlug(DataPlug):
         their custom dataplugs.
 
         :param keys: Tuple containing the required inputs: a unique set of
-            historical power generation measurements
+            historical power generation measurements, which should be a 
+            siteid and a sensor id 
         :return: Returns a pandas DataFrame with a timestamp column and
             a power column
         """

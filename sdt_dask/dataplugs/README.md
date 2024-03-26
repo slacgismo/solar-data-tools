@@ -11,11 +11,12 @@ To create your own DataPlug, you must provide two key files: a Python module (`y
 2. **Define Initialization Parameters**: Customize the __init__ method to accept parameters specific to your data source. These parameters can vary widely depending on the nature of the data source, such as file paths, API keys, database credentials, or any other configuration necessary for data access.
 3. **Implement `get_data` Method**: This method is the core of your DataPlug, tasked with retrieving and cleaning the data before returning a pandas DataFrame. The method should accept a keys argument as a tuple, which contains the necessary identifiers or parameters to fetch the specific dataset. This flexible approach allows for a wide range of data retrieval scenarios, accommodating various data sources and user requirements.
 
-The keys tuple might include unique identifiers, timestamps, filenames, or any combination of parameters that your data source requires to locate and retrieve the desired data.
+4. **Important - Non-Serializable Object**:
+When distributing tasks across Dask workers, avoid using pre-initialized instances of objects that maintain state, open connections, or hold resources that cannot be serialized (e.g., botocore.client.S3 instances). These objects should not be serialized or transferred across processes due to their internal state and open connections. Instead, create and utilize such instances within the scope of each task. This guidance ensures that each task independently manages its resources, enhancing process safety and stability. This principle applies broadly to all non-serializable objects used in distributed computing tasks.
 
-Ensure that the method's input arguments (keys) and the return type (pandas DataFrame) adhere to this specification to maintain compatibility with the SDT Dask tool.
+5. **(Optional) Additional Methods**: Beyond get_data, you may implement any number of private or public methods to aid in data retrieval, transformation, or cleaning. Examples include methods for parsing file names, performing complex queries on databases, or applying specific data cleaning operations tailored to your data source.
 
-4. **(Optional) Additional Methods**: Beyond get_data, you may implement any number of private or public methods to aid in data retrieval, transformation, or cleaning. Examples include methods for parsing file names, performing complex queries on databases, or applying specific data cleaning operations tailored to your data source.
+
 
 Example structure:
 
