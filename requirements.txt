@@ -8,13 +8,10 @@ seaborn
 requests
 pvlib
 cvxpy
-cmake
 pykml
 haversine
 smart_open
 sig-decomp
-osqp
 clarabel
-qss
 tqdm
 spcqe

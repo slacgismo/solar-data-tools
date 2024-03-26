@@ -35,9 +35,7 @@ dependencies = [
     "haversine",
     "smart_open",
     "sig-decomp",
-    "osqp",
-    "clarabel",
-    "qss"
+    "clarabel"
 ]
 
 classifiers = [

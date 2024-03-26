@@ -5,7 +5,8 @@ package:
   version: {{ environ.get('VERSION_FROM_GIT_TAG') }}
 
 source:
-  git_url: https://github.com/slacgismo/solar-data-tools
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: b1ad8c71d2431a892d6ba0f75471fae43b1c6154b0747785921670780e00446d
 
 build:
   noarch: python
@@ -13,42 +14,33 @@ build:
   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
 
 requirements:
-  build:
-    - cmake
-
   host:
     - pip
     - python
+
+  run:
+    - pip
+    - python
     - scipy
-    - numpy >=1.22
+    - numpy
     - pandas
-    - seaborn
-    - requests
     - scikit-learn
     - jupyter
     - matplotlib
-    - pvlib
-    - cvxpy>=1.1.0
-    - pykml
-    - haversine
-    - boto3
-    - Mosek
-    - clarabel
-
-  run:
-    - scipy
-    - numpy >=1.22
-    - pandas
     - seaborn
     - requests
-    - scikit-learn
     - pvlib
     - cvxpy
-    - python
+    - pykml
+    - haversine
+    - smart_open
+    - sig-decomp
     - clarabel
+    - tqdm
+    - spcqe
 
 about:
-  home: https://github.com/bmeyers/solar-data-tools
+  home: https://github.com/slacgismo/solar-data-tools
   license: BSD
   license_family: BSD
   license_file:

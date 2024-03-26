@@ -1,5 +1,5 @@
-# conda env create -f pvi-user.yml
-name: pvi-user
+# conda env create -f pvi-dev.yml
+name: pvi-dev
 channels:
   - anaconda
   - conda-forge
@@ -19,10 +19,11 @@ dependencies:
   - requests
   - pvlib
   - cvxpy
-  - cmake
   - pykml
   - haversine
-  - qss
-  - sig-decomp
   - smart_open
+  - sig-decomp
+  - clarabel
+  - tqdm
+  - spcqe
 
