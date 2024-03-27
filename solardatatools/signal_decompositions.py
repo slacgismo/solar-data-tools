@@ -93,6 +93,7 @@ def l2_l1d1_l2d2p365(
             yearly_periodic=yearly_periodic,
             return_all=return_all,
             transition_locs=transition_locs,
+            solver=solver,
             verbose=verbose,
         )
     elif yearly_periodic:
@@ -172,6 +173,7 @@ def tl1_l2d2p365(
             w1=w1,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
+            solver=solver,
             verbose=verbose,
         )
     else:
@@ -226,7 +228,8 @@ def l1_l1d1_l2d2p365(
     if solver == "MOSEK":
         # MOSEK weights set in CVXPY function
         res = _cvx_l1_l1d1_l2d2p365(
-            signal=signal, use_ixs=use_ixs, return_all=return_all, verbose=verbose
+            signal=signal, use_ixs=use_ixs, return_all=return_all,
+            solver=solver, verbose=verbose
         )
     else:
         res = _osd_l1_l1d1_l2d2p365(
@@ -264,7 +267,8 @@ def l2_l1d2_constrained(
     """
     if solver == "MOSEK":
         # MOSEK weights set in CVXPY function
-        res = _cvx_l2_l1d2_constrained(signal, return_all=return_all, verbose=verbose)
+        res = _cvx_l2_l1d2_constrained(signal, return_all=return_all,
+                                       solver=solver, verbose=verbose)
     else:
         res = _osd_l2_l1d2_constrained(
             signal, w0=w0, w1=w1, return_all=return_all, solver=solver, verbose=verbose
