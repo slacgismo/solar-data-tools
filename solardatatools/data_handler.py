@@ -1141,11 +1141,6 @@ time zone errors     {report['time zone correction'] != 0}
             use_ixs = self.daily_flags.clear
         else:
             use_ixs = self.daily_flags.no_errors
-        ### NEW 3/20/24: overwrite use of qss on this function. Forcing CLARABEL here uses the old-style
-        # iteratively reweighted model, rather than the nonconvex piecewise constant model. In testing,
-        # the older model (which is not technically covered by the monograph) seems to work better.
-        if solver != "MOSEK":
-            solver = "CLARABEL"
         ########## Updates to timeshift algorithm, 6/2023 ##########
         # If running with any solver other than QSS: solve convex problem
         # If running with QSS without a set w1: run w1 meta-opt with convex problem,
