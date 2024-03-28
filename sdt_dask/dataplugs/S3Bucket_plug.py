@@ -17,10 +17,15 @@ class S3Bucket(DataPlug):
         """
         self.bucket_name = bucket_name
 
+    def _create_s3_client(self):
+        # Creating a new session for each call to ensure thread safety
+        session = boto3.session.Session()
+        s3_client = session.client('s3')
+        return s3_client
+
     def _pull_data(self, key):
-        
-        s3_client = boto3.client('s3')
-        print(f"Loading file from S3 bucket: {key}...")
+
+        s3_client = self._create_s3_client()
         obj = s3_client.get_object(Bucket=self.bucket_name, Key=key)
 
         # Assume file is CSV
@@ -58,7 +63,7 @@ class S3Bucket(DataPlug):
         """
         KEYS = []
 
-        s3_client = boto3.client('s3')
+        s3_client = self._create_s3_client()
         objects = s3_client.list_objects_v2(Bucket=self.bucket_name)
         
         if 'Contents' in objects:
