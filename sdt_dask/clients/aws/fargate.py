@@ -14,22 +14,23 @@ except ModuleNotFoundError as error:
 
 finally:
     class Fargate(Clients):
-        """
-        Fargate Class for Dask on AWS Fargate
 
-        This class simplifies the process of setting up a Fargate cluster and
-        connecting a Dask client to it, enabling distributed execution
-        using AWS Fargate.
-
-        Requires:
-        - dask
-        - dask_cloudprovider
-
-        **Important:** Ensure you have appropriate IAM permissions to manage
-        AWS Fargate resources.
-        """
-        def __init__(self):
-            pass
+        def __init__(self,
+                     image: str = "",
+                     tags: dict = {}, # optional
+                     vpc: str = "",
+                     region_name: str = "",
+                     environment: dict = {},
+                     n_workers: int = 10,
+                     threads_per_worker: int = 2
+                     ):
+            self.image = image
+            self.tags = tags
+            self.vpc = vpc
+            self.region_name = region_name
+            self.environment = environment
+            self.n_workers = n_workers
+            self.threads_per_worker = threads_per_worker
         def _check_versions(self):
             data = self.client.get_versions(check=True)
             scheduler_pkgs = data['scheduler']['packages']
@@ -40,50 +41,29 @@ finally:
                     msg = 'Please Update the client version to match the Scheduler version'
                     raise EnvironmentError(f"{c_pkg} version Mismatch:\n\tScheduler: {s_ver} vs Client: {c_ver}\n{msg}")
 
-        def init_client(self, 
-                       image: str = "", 
-                       tags: dict = {}, # optional
-                       vpc: str = "",
-                       region_name: str = "",
-                       environment: dict = {}, 
-                       n_workers: int = 10, 
-                       threads_per_worker: int = 2
-                    ) -> Client:
-            """
-            Initializes a Dask Client instance that leverages AWS Fargate for distributed execution.
+        def init_client(self) -> tuple:
+            try:
+                print("[i] Initilializing Fargate Cluster ...")
 
-            Args:
-                image (str, required): Docker image to use for the Fargate tasks. Defaults to "".
-                tags (dict, optional): Dictionary of tags to associate with the Fargate cluster. Defaults to an empty dictionary.
-                vpc (str, required): VPC ID to launch the Fargate cluster in. Defaults to "".
-                region_name (str, required): AWS region to launch the Fargate cluster in. Defaults to "".
-                environment (dict, required): Environment variables to set for the Fargate tasks. Defaults to an empty dictionary.
-                n_workers (int, optional): Number of worker nodes in the Fargate cluster. Defaults to 10.
-                threads_per_worker (int, optional): Number of threads per worker in the Fargate cluster. Defaults to 2.
+                cluster = FargateCluster(
+                    tags = self.tags,
+                    image = self.image,
+                    vpc = self.vpc,
+                    region_name = self.region_name,
+                    environment = self.environment,
+                    n_workers = self.n_workers,
+                    worker_nthreads = self.threads_per_worker
+                )
 
-            Returns:
-                Client: The initialized Dask client object connected to the Fargate cluster.
-            """
-            print("[i] Initilializing Fargate Cluster ...")
+                print("[i] Initialized Fargate Cluster")
+                print("[i] Initilializing Dask Client ...")
 
-            cluster = FargateCluster(
-                tags = tags,
-                image = image,
-                vpc = vpc,
-                region_name = region_name,
-                environment = environment,
-                n_workers = n_workers,
-                worker_nthreads = threads_per_worker
-            )
+                self.client = Client(cluster)
 
-            print("[i] Initialized Fargate Cluster")
-            print("[i] Initilializing Dask Client ...")
+                self._check_versions()
 
-            self.client = Client(cluster)
+                print(f"[>] Dask Dashboard: {self.client.dashboard_link}")
 
-            self._check_versions()
-
-            print(f"[>] Dask Dashboard: {self.client.dashboard_link}")
-
-            return self.client
-            
+                return self.client, cluster
+            except Exception as e:
+                raise Exception(e)
