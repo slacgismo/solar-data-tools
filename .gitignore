@@ -304,3 +304,6 @@ sdt_dask/results/summary_report.csv
 sdt_dask/results/dask-report.html
 sdt_dask/examples/summary_report.csv
 /sdt_dask/dataplugs/spwr_sensor_0
+/sdt_dask/dataplugs/example_data
+/sdt_dask/results
+/sdt_dask/dataplugs/example_data

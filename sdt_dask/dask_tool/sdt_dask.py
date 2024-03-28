@@ -26,8 +26,14 @@ def run_pipeline(datahandler, **kwargs):
     """
     # TODO: add loss analysis
     # TODO: if dataset failed to run, throw python error
-    datahandler.run_pipeline(**kwargs)
-    return datahandler
+    try:
+        datahandler.run_pipeline(**kwargs)
+        datahandler.run_loss_factor_analysis()
+        return datahandler
+    except Exception as e:
+        print(f"Error running pipeline: {e}")
+        return None
+    
 
 class SDTDask:
     """A class to run the SolarDataTools pipeline on a Dask cluster.
@@ -60,6 +66,29 @@ class SDTDask:
 
         reports = []
         runtimes = []
+        losses = []
+
+        class Data:
+            def __init__(self, report, loss_report, runtime):
+                self.report = report
+                self.loss_report = loss_report
+                self.runtime = runtime
+
+        def helper(datahandler, key):
+            report = None
+            loss_report = None
+            runtime = None
+            try:
+                report = datahandler.report(return_values=True, verbose=False)
+                loss_report = datahandler.loss_analysis.report()
+                runtime = datahandler.total_time
+            except Exception as e:
+                print(e)
+            
+            return Data(report, loss_report, runtime)
+
+        def helper_data(datas):
+            return [data if data is not None else {} for data in datas]
 
         for key in KEYS:
             # TODO: to check if a key is valid explicitly
@@ -68,16 +97,18 @@ class SDTDask:
             dh = delayed(DataHandler)(df)
             dh_run = delayed(run_pipeline)(dh, **kwargs)
         
-            report = dh_run.report
-            runtime = dh_run.total_time
-        
-            report = delayed(report)(return_values=True, verbose=False)
-            runtime = delayed(runtime)
+            data = delayed(helper)(dh_run, key)
 
-            reports.append(report)
-            runtimes.append(runtime)
+            reports.append(data.report)
+            losses.append(data.loss_report)
+            runtimes.append(data.runtime)
     
+        reports = delayed(helper_data)(reports)
+        losses = delayed(helper_data)(losses)
         self.df_reports = delayed(pd.DataFrame)(reports)
+        self.loss_reports = delayed(pd.DataFrame)(losses)
+        # append losses to the report
+        self.df_reports = delayed(pd.concat)([self.df_reports, self.loss_reports], axis=1)
         self.df_reports = delayed(self.df_reports.assign)(runtime=runtimes, keys=KEYS)
 
     def visualize(self, filename="sdt_graph.png"):

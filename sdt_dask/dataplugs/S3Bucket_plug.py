@@ -7,16 +7,25 @@ from sdt_dask.dataplugs.dataplug import DataPlug
 
 
 class S3Bucket(DataPlug):
-    """
+    """ Dataplug class for retrieving data from an S3 bucket.
     aws configurations for the AWS CLI must be set up in local environment
     """
     def __init__(self, bucket_name):
+        """Initialize the S3Bucket object with the bucket name.
+
+        :param bucket_name: The name of the S3 bucket. (type: str)
+        """
         self.bucket_name = bucket_name
 
+    def _create_s3_client(self):
+        # Creating a new session for each call to ensure thread safety
+        session = boto3.session.Session()
+        s3_client = session.client('s3')
+        return s3_client
+
     def _pull_data(self, key):
-        
-        s3_client = boto3.client('s3')
-        print(f"Loading file from S3 bucket: {key}...")
+
+        s3_client = self._create_s3_client()
         obj = s3_client.get_object(Bucket=self.bucket_name, Key=key)
 
         # Assume file is CSV
@@ -32,7 +41,14 @@ class S3Bucket(DataPlug):
         Users should keep the args and returns as defined here when writing
         their custom dataplugs.
 
-        :param key: Filename (without the extension suffix)--typically designating in tuple
+        Note: if this example dataplug is used, the data in the S3 bucket should
+        be in CSV format and the format should be consistent across all files: a
+        timestamp column and a power column.
+
+        :param key: Filename (which could be get by _pull_keys method) inside
+            the tuple
+        :return: Returns a pandas DataFrame with a timestamp column and
+            a power column
         """
         self._pull_data(key[0])
         self._clean_data()
@@ -47,7 +63,7 @@ class S3Bucket(DataPlug):
         """
         KEYS = []
 
-        s3_client = boto3.client('s3')
+        s3_client = self._create_s3_client()
         objects = s3_client.list_objects_v2(Bucket=self.bucket_name)
         
         if 'Contents' in objects:
