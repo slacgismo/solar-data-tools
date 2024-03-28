@@ -80,18 +80,12 @@ class SDTDask:
             runtime = None
             try:
                 report = datahandler.report(return_values=True, verbose=False)
-            except Exception as e:
-                print(e)
-            try:
                 loss_report = datahandler.loss_analysis.report()
-            except Exception as e:
-                print(e)
-            try:
-                run_time = datahandler.total_time
+                runtime = datahandler.total_time
             except Exception as e:
                 print(e)
             
-            return Data(report, loss_report, run_time)
+            return Data(report, loss_report, runtime)
 
         def helper_data(datas):
             return [data if data is not None else {} for data in datas]
