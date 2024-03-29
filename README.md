@@ -93,9 +93,16 @@ See [notebooks](/notebooks) folder for examples.
 
 ### 3 ways of setting up, either approach works:
 
-#### 1) Recommended: Set up `conda` environment with provided `.yml` file
+#### 1) Recommended: Install with pip
 
-We recommend setting up a fresh Python virtual environment in which to use `solar-data-tools`. We recommend using the [Conda](https://docs.conda.io/projects/conda/en/latest/index.html) package management system, and creating an environment with the environment configuration file named `pvi-user.yml`, provided in the top level of this repository. This will install the `statistical-clear-sky` package as well.
+In a fresh Python virtual environment, simply run
+
+
+```bash
+$ pip install solar-data-tools
+```
+
+#### 2) Creat conda virtual environment from file
 
 Creating the env:
 
@@ -123,32 +130,17 @@ $ conda env update -f pvi-user.yml
 
 Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
 
-
-#### 2) PIP Package
-
-```sh
-$ pip install solar-data-tools
-```
-
-Alternative: Clone repo from GitHub
-
-Mimic the pip package by setting up locally.
-
-```bash
-$ pip install -e path/to/root/folder
-```
-
-#### 3) Anaconda Package
+#### 3) General Anaconda Package
 
 ```sh
-$ conda install -c slacgismo solar-data-tools
+$ conda install slacgismo::solar-data-tools
 ```
 
 ### Solvers
 
-#### QSS & OSQP
+#### QSS & CLARABEL
 
-By default, [QSS](https://github.com/cvxgrp/qss) and OSQP solvers are used for non-convex and convex problems, respectively. Both are supported by [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools, and both are open source. 
+By default, [QSS](https://github.com/cvxgrp/qss) and CLARABEL solvers are used for non-convex and convex problems, respectively. Both are supported by [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools, and both are open source. 
 
 #### MOSEK
 
