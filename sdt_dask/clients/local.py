@@ -40,6 +40,8 @@ finally:
             # memory per worker >= 5 GB but total memory use should be less than the system memory available
             if self.n_workers * self.threads_per_worker > self.cpu_count:
                 raise Exception(f"workers and threads exceed local resources, {self.cpu_count} cores present")
+            elif self.memory_per_worker < 5:
+                raise Exception(f"memory per worker too small, minimum memory size per worker 5 GB")
             if self.n_workers * self.memory_per_worker > self.memory:
                 self.dask_config.set({'distributed.worker.memory.spill': True})
                 print(f"[!] memory per worker exceeds system memory ({self.memory} GB), activating memory spill fraction\n")
@@ -49,7 +51,8 @@ finally:
             self._check()
             
             if self.system == "windows":
-                self.client = Client(processes=False,
+                self.dask_config.set({'distributed.worker.memory.terminate': False})
+                self.client = Client(processes=True,
                     n_workers=self.n_workers,
                     threads_per_worker=self.threads_per_worker, 
                     memory_limit=f"{self.memory_per_worker:.2f}GiB"
