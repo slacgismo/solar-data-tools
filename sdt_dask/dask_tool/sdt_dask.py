@@ -12,27 +12,41 @@ from dask import delayed
 from dask.distributed import performance_report
 from solardatatools import DataHandler
 
+def capture_exception_to_attribute_runpipeline(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            for arg in args:
+                if isinstance(arg, DataHandler):
+                    arg.run_pipeline_error = str(e)
+                    break
+            print(f"Error captured at run pipeline and stored in DataHandler: {e}\n")
+            return arg
+    return wrapper
+
+@capture_exception_to_attribute_runpipeline
 def run_pipeline(datahandler, **kwargs):
-    """function to run the pipeline on a datahandler object
+    datahandler.run_pipeline(**kwargs)
+    return datahandler
 
-    user can pass any keyword arguments to the pipeline
+def capture_exception_to_attribute_runlossanalysis(func):
+    def wrapper(*args):
+        try:
+            return func(*args)
+        except Exception as e:
+            for arg in args:
+                if isinstance(arg, DataHandler):
+                    arg.run_loss_analysis_error = str(e)
+                    break
+            print(f"Error captured at loss analysis and stored in DataHandler: {e}\n")
+            return arg
+    return wrapper
 
-    Args:
-        datahandler (:obj:`DataHandler`): The datahandler object.
-        **kwargs: Optional parameters.
-
-    Returns:
-        DataHandler: The datahandler object after running the pipeline.
-    """
-    # TODO: add loss analysis
-    # TODO: if dataset failed to run, throw python error
-    try:
-        datahandler.run_pipeline(**kwargs)
-        datahandler.run_loss_factor_analysis()
-        return datahandler
-    except Exception as e:
-        print(f"Error running pipeline: {e}")
-        return None
+@capture_exception_to_attribute_runlossanalysis
+def run_loss_analysis(datahandler):
+    datahandler.run_loss_factor_analysis()
+    return datahandler
     
 
 class SDTDask:
@@ -67,28 +81,63 @@ class SDTDask:
         reports = []
         runtimes = []
         losses = []
+        run_pipeline_errors = []
+        run_loss_analysis_errors = []
+        run_pipeline_report_errors = []
+        loss_analysis_report_errors = []
 
         class Data:
-            def __init__(self, report, loss_report, runtime):
+            def __init__(self, report, loss_report, runtime, run_pipeline_errors, run_loss_analysis_errors, run_pipeline_report_errors, loss_analysis_report_errors):
                 self.report = report
                 self.loss_report = loss_report
                 self.runtime = runtime
+                self.run_pipeline_errors = run_pipeline_errors
+                self.run_loss_analysis_errors = run_loss_analysis_errors
+                self.run_pipeline_report_errors = run_pipeline_report_errors
+                self.loss_analysis_report_errors = loss_analysis_report_errors
 
         def helper(datahandler, key):
             report = None
             loss_report = None
             runtime = None
+            run_pipeline_error = None
+            run_loss_analysis_error = None
+            run_pipeline_report_error = None
+            loss_analysis_report_error = None
             try:
                 report = datahandler.report(return_values=True, verbose=False)
+            except Exception as e:
+                datahandler.run_pipeline_report_error = str(e)
+
+            try:
                 loss_report = datahandler.loss_analysis.report()
+            except Exception as e:
+                datahandler.loss_analysis_report_error = str(e)
+
+            try:
                 runtime = datahandler.total_time
             except Exception as e:
                 print(e)
             
-            return Data(report, loss_report, runtime)
+            if hasattr(datahandler, "run_pipeline_error"):
+                run_pipeline_error = datahandler.run_pipeline_error
+
+            if hasattr(datahandler, "run_loss_analysis_error"):
+                run_loss_analysis_error = datahandler.run_loss_analysis_error
+
+            if hasattr(datahandler, "run_pipeline_report_error"):
+                run_pipeline_report_error = datahandler.run_pipeline_report_error
+
+            if hasattr(datahandler, "loss_analysis_report_error"):
+                loss_analysis_report_error = datahandler.loss_analysis_report_error
+            
+            return Data(report, loss_report, runtime, run_pipeline_error, run_loss_analysis_error, run_pipeline_report_error, loss_analysis_report_error)
 
         def helper_data(datas):
             return [data if data is not None else {} for data in datas]
+        
+        def helper_error(datas):
+            return [data if data is not None else "No Error" for data in datas]
 
         for key in KEYS:
             # TODO: to check if a key is valid explicitly
@@ -96,20 +145,30 @@ class SDTDask:
             df = delayed(self.data_plug.get_data)(key)
             dh = delayed(DataHandler)(df)
             dh_run = delayed(run_pipeline)(dh, **kwargs)
+            dh_run = delayed(run_loss_analysis)(dh_run)
         
             data = delayed(helper)(dh_run, key)
 
             reports.append(data.report)
             losses.append(data.loss_report)
             runtimes.append(data.runtime)
+            run_pipeline_errors.append(data.run_pipeline_errors)
+            run_loss_analysis_errors.append(data.run_loss_analysis_errors)
+            run_pipeline_report_errors.append(data.run_pipeline_report_errors)
+            loss_analysis_report_errors.append(data.loss_analysis_report_errors)
     
         reports = delayed(helper_data)(reports)
         losses = delayed(helper_data)(losses)
+        run_pipeline_errors = delayed(helper_error)(run_pipeline_errors)
+        run_loss_analysis_errors = delayed(helper_error)(run_loss_analysis_errors)
+        run_pipeline_report_errors = delayed(helper_error)(run_pipeline_report_errors)
+        loss_analysis_report_errors = delayed(helper_error)(loss_analysis_report_errors)
         self.df_reports = delayed(pd.DataFrame)(reports)
         self.loss_reports = delayed(pd.DataFrame)(losses)
         # append losses to the report
         self.df_reports = delayed(pd.concat)([self.df_reports, self.loss_reports], axis=1)
-        self.df_reports = delayed(self.df_reports.assign)(runtime=runtimes, keys=KEYS)
+        self.df_reports = delayed(self.df_reports.assign)(runtime=runtimes, key=KEYS)
+        self.df_reports = delayed(self.df_reports.assign)(run_pipeline_error=run_pipeline_errors, run_loss_analysis_error=run_loss_analysis_errors, run_pipeline_report_error=run_pipeline_report_errors, loss_analysis_report_error=loss_analysis_report_errors)
 
     def visualize(self, filename="sdt_graph.png"):
         # visualize the pipeline, user should have graphviz installed
