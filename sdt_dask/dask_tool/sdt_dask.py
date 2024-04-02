@@ -51,14 +51,12 @@ def run_loss_analysis(datahandler):
 
 class SDTDask:
     """A class to run the SolarDataTools pipeline on a Dask cluster.
+        Will handle invalid data keys and failed datasets.
 
-    Will handle invalid data keys and failed datasets.
-
-    Attributes:
-        data_plug (:obj:`DataPlug`): The data plug object.
-        client (:obj:`Client`): The Dask client object.
-        output_path (str): The path to save the results.
-
+        :param keys: 
+            data_plug (:obj:`DataPlug`): The data plug object.
+            client (:obj:`Client`): The Dask client object.
+            output_path (str): The path to save the results.
     """
 
     def __init__(self, data_plug, client, output_path="../results/"):
@@ -72,7 +70,7 @@ class SDTDask:
         Call run_pipeline functions in a for loop over the keys
         and collect results in a DataFrame
 
-        Args:
+        :param keys:
             KEYS (list): List of tuples
             **kwargs: Optional parameters.
 
@@ -97,7 +95,7 @@ class SDTDask:
                 self.run_pipeline_report_errors = run_pipeline_report_errors
                 self.loss_analysis_report_errors = loss_analysis_report_errors
 
-        def helper(datahandler, key):
+        def helper(datahandler):
             report = None
             loss_report = None
             runtime = None
@@ -105,6 +103,8 @@ class SDTDask:
             run_loss_analysis_error = None
             run_pipeline_report_error = None
             loss_analysis_report_error = None
+            if datahandler is None:
+                return Data(report, loss_report, runtime, run_pipeline_error, run_loss_analysis_error, run_pipeline_report_error, loss_analysis_report_error)
             try:
                 report = datahandler.report(return_values=True, verbose=False)
             except Exception as e:
@@ -137,28 +137,35 @@ class SDTDask:
         def helper_data(datas):
             return [data if data is not None else {} for data in datas]
         
-        def helper_error(datas):
-            return [data if data is not None else "No Error" for data in datas]
+        def helper_error(errors):
+            return [err if err is not None else "No Error" for err in errors]
         
-        def safe_get_data(key):
+        class DataHandlerData():
+            def __init__(self, dh, error):
+                self.dh = dh
+                self.error = error
+
+        def safe_get_data(data_plug, key):
+            datahandler = None
+            error = None
             try:
-                result = self.data_plug.get_data(key)
+                result = data_plug.get_data(key)
                 dh = DataHandler(result)
-                get_data_errors.append(None)
-                return dh
+                datahandler = dh
             except Exception as e:
-                error_message = str(e)
-                get_data_errors.append(error_message)
-                return None
+                error = str(e)
+            return DataHandlerData(datahandler, error)
 
         for key in KEYS:
-            # TODO: to check if a key is valid explicitly
 
-            dh = delayed(safe_get_data)(key)
-            dh_run = delayed(run_pipeline)(dh, **kwargs)
+            dh_data = delayed(safe_get_data)(self.data_plug, key)
+
+            get_data_errors.append(dh_data.error)
+
+            dh_run = delayed(run_pipeline)(dh_data.dh, **kwargs)
             dh_run = delayed(run_loss_analysis)(dh_run)
         
-            data = delayed(helper)(dh_run, key)
+            data = delayed(helper)(dh_run)
 
             reports.append(data.report)
             losses.append(data.loss_report)
@@ -170,6 +177,7 @@ class SDTDask:
     
         reports = delayed(helper_data)(reports)
         losses = delayed(helper_data)(losses)
+        get_data_errors = delayed(helper_error)(get_data_errors)
         run_pipeline_errors = delayed(helper_error)(run_pipeline_errors)
         run_loss_analysis_errors = delayed(helper_error)(run_loss_analysis_errors)
         run_pipeline_report_errors = delayed(helper_error)(run_pipeline_report_errors)
@@ -178,8 +186,16 @@ class SDTDask:
         self.loss_reports = delayed(pd.DataFrame)(losses)
         # append losses to the report
         self.df_reports = delayed(pd.concat)([self.df_reports, self.loss_reports], axis=1)
-        self.df_reports = delayed(self.df_reports.assign)(runtime=runtimes, key=KEYS)
-        self.df_reports = delayed(self.df_reports.assign)(run_pipeline_error=run_pipeline_errors, run_loss_analysis_error=run_loss_analysis_errors, run_pipeline_report_error=run_pipeline_report_errors, loss_analysis_report_error=loss_analysis_report_errors)
+        columns = {
+            "runtime": runtimes,
+            "key": KEYS,
+            "get_data_errors": get_data_errors,
+            "run_pipeline_errors": run_pipeline_errors,
+            "run_loss_analysis_errors": run_loss_analysis_errors,
+            "run_pipeline_report_errors": run_pipeline_report_errors,
+            "loss_analysis_report_errors": loss_analysis_report_errors
+        }
+        self.df_reports = delayed(self.df_reports.assign)(**columns)
 
     def visualize(self, filename="sdt_graph.png"):
         # visualize the pipeline, user should have graphviz installed
