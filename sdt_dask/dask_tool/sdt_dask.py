@@ -21,7 +21,7 @@ def capture_exception_to_attribute_runpipeline(func):
                 if isinstance(arg, DataHandler):
                     arg.run_pipeline_error = str(e)
                     break
-            print(f"Error captured at run pipeline and stored in DataHandler: {e}\n")
+            #print(f"Error captured at run pipeline and stored in DataHandler: {e}\n")
             return arg
     return wrapper
 
@@ -39,7 +39,7 @@ def capture_exception_to_attribute_runlossanalysis(func):
                 if isinstance(arg, DataHandler):
                     arg.run_loss_analysis_error = str(e)
                     break
-            print(f"Error captured at loss analysis and stored in DataHandler: {e}\n")
+            #print(f"Error captured at loss analysis and stored in DataHandler: {e}\n")
             return arg
     return wrapper
 
@@ -95,7 +95,7 @@ class SDTDask:
                 self.run_pipeline_report_errors = run_pipeline_report_errors
                 self.loss_analysis_report_errors = loss_analysis_report_errors
 
-        def helper(datahandler):
+        def reports(datahandler):
             report = None
             loss_report = None
             runtime = None
@@ -104,7 +104,8 @@ class SDTDask:
             run_pipeline_report_error = None
             loss_analysis_report_error = None
             if datahandler is None:
-                return Data(report, loss_report, runtime, run_pipeline_error, run_loss_analysis_error, run_pipeline_report_error, loss_analysis_report_error)
+                return Data(report, loss_report, runtime, "get_data error leading nothing to run", "get_data error leading nothing to analyze", "get_data error leading nothing to report", "get_data error leading nothing to report")
+            
             try:
                 report = datahandler.report(return_values=True, verbose=False)
             except Exception as e:
@@ -165,7 +166,7 @@ class SDTDask:
             dh_run = delayed(run_pipeline)(dh_data.dh, **kwargs)
             dh_run = delayed(run_loss_analysis)(dh_run)
         
-            data = delayed(helper)(dh_run)
+            data = delayed(reports)(dh_run)
 
             reports.append(data.report)
             losses.append(data.loss_report)
@@ -186,6 +187,7 @@ class SDTDask:
         self.loss_reports = delayed(pd.DataFrame)(losses)
         # append losses to the report
         self.df_reports = delayed(pd.concat)([self.df_reports, self.loss_reports], axis=1)
+        # add the runtimes, keys, and all error infos to the report
         columns = {
             "runtime": runtimes,
             "key": KEYS,
