@@ -81,6 +81,7 @@ class SDTDask:
         reports = []
         runtimes = []
         losses = []
+        get_data_errors = []
         run_pipeline_errors = []
         run_loss_analysis_errors = []
         run_pipeline_report_errors = []
@@ -138,12 +139,22 @@ class SDTDask:
         
         def helper_error(datas):
             return [data if data is not None else "No Error" for data in datas]
+        
+        def safe_get_data(key):
+            try:
+                result = self.data_plug.get_data(key)
+                dh = DataHandler(result)
+                get_data_errors.append(None)
+                return dh
+            except Exception as e:
+                error_message = str(e)
+                get_data_errors.append(error_message)
+                return None
 
         for key in KEYS:
             # TODO: to check if a key is valid explicitly
 
-            df = delayed(self.data_plug.get_data)(key)
-            dh = delayed(DataHandler)(df)
+            dh = delayed(safe_get_data)(key)
             dh_run = delayed(run_pipeline)(dh, **kwargs)
             dh_run = delayed(run_loss_analysis)(dh_run)
         
