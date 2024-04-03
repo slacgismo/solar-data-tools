@@ -29,13 +29,5 @@ jobs:
               sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
               $pythonLocation/bin/python3 -m pip list
 
-          - name: Setup Mosek License File
-            run: |
-              sudo mkdir /root/mosek
-              mkdir $HOME/mosek
-              aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
-              sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
-
-# Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
             run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
