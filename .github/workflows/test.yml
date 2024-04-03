@@ -25,9 +25,6 @@ jobs:
           - name: Install Dependencies
             run: |
               sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
-              sudo $pythonLocation/bin/python3 -m pip install awscli coverage
-              sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
-              $pythonLocation/bin/python3 -m pip list
 
           - name: Run Unit Tests
-            run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
+            run: sudo $pythonLocation/bin/python3 -m unittest

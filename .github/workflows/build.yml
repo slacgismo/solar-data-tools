@@ -71,8 +71,7 @@ jobs:
           conda install anaconda-client
           conda config --set anaconda_upload no --set solver libmamba
           echo yes | anaconda login --username ${{ secrets.ANACONDA_CLOUD_USERNAME }} --password ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
-          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge -c stanfordcvxgrp
-          echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
+          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge -c stanfordcvxgrp          echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
 
       - name: Upload the Anaconda Package
         id: condaload
