@@ -36,7 +36,7 @@ requirements:
     - clarabel
     - qss
     - tqdm
-   # - spcqe
+    - spcqe
 
 test:
   imports:
@@ -60,3 +60,4 @@ extra:
     - derins
     - thistleman
     - alejandro350
+    - pluflou
