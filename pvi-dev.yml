@@ -1,0 +1,29 @@
+# conda env create -f pvi-dev.yml
+name: pvi-dev
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+  - stanfordcvxgrp
+  - slacgismo
+  - mosek
+dependencies:
+  - python=3.10
+  - scipy
+  - numpy
+  - pandas
+  - scikit-learn
+  - jupyter
+  - matplotlib
+  - seaborn
+  - requests
+  - pvlib
+  - cvxpy
+  - pykml
+  - haversine
+  - smart_open
+  - sig-decomp
+  - clarabel
+  - tqdm
+  - spcqe
+

@@ -10,51 +10,49 @@ source:
 build:
   noarch: python
   number: 0
-  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+  script: {{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv
 
 requirements:
-  build:
-    - cmake
-
   host:
     - pip
     - python
+  run:
+    - pip
+    - python
     - scipy
-    - numpy >=1.22
+    - numpy
     - pandas
-    - seaborn
-    - requests
     - scikit-learn
     - jupyter
     - matplotlib
-    - pvlib
-    - cvxpy>=1.1.0
-    - pykml
-    - haversine
-    - boto3
-    - Mosek
-    - clarabel
-
-  run:
-    - scipy
-    - numpy >=1.22
-    - pandas
     - seaborn
     - requests
-    - scikit-learn
     - pvlib
     - cvxpy
-    - python
+    - pykml
+    - haversine
+    - smart_open
+    - sig-decomp
     - clarabel
+    - qss
+    - tqdm
+    - spcqe
+
+test:
+  imports:
+    - solardatatools
+  commands:
+    - pip check
+  requires:
+    - pip
 
 about:
-  home: https://github.com/bmeyers/solar-data-tools
-  license: BSD
+  home: https://github.com/slacgismo/solar-data-tools
+  license: BSD-2-Clause
+  license_file: LICENSE
   license_family: BSD
-  license_file:
   summary: Tools for performing common tasks on solar PV data signals
   doc_url:
-  dev_url:
 
 extra:
   recipe-maintainers:
@@ -62,3 +60,4 @@ extra:
     - derins
     - thistleman
     - alejandro350
+    - pluflou
