@@ -13,5 +13,6 @@ haversine
 smart_open
 sig-decomp
 clarabel
+qss
 tqdm
 spcqe

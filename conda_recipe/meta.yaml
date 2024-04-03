@@ -5,19 +5,17 @@ package:
   version: {{ environ.get('VERSION_FROM_GIT_TAG') }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: b1ad8c71d2431a892d6ba0f75471fae43b1c6154b0747785921670780e00446d
+  git_url: https://github.com/slacgismo/solar-data-tools
 
 build:
   noarch: python
   number: 0
-  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+  script: {{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv
 
 requirements:
   host:
     - pip
     - python
-
   run:
     - pip
     - python
@@ -36,17 +34,25 @@ requirements:
     - smart_open
     - sig-decomp
     - clarabel
+    - qss
     - tqdm
-    - spcqe
+   # - spcqe
+
+test:
+  imports:
+    - solardatatools
+  commands:
+    - pip check
+  requires:
+    - pip
 
 about:
   home: https://github.com/slacgismo/solar-data-tools
-  license: BSD
+  license: BSD-2-Clause
+  license_file: LICENSE
   license_family: BSD
-  license_file:
   summary: Tools for performing common tasks on solar PV data signals
   doc_url:
-  dev_url:
 
 extra:
   recipe-maintainers:
