@@ -8,14 +8,10 @@ seaborn
 requests
 pvlib
 cvxpy>=1.3.2
-cmake
 pykml
 haversine
-boto3
 smart_open
-cassandra-driver
 sig-decomp
-osqp
 clarabel
 qss
 tqdm
