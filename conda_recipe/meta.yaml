@@ -6,7 +6,7 @@ package:
 
 source:
   # git_url: https://github.com/slacgismo/solar-data-tools
-  path: ..
+  path: .. # checked out repo instead of main repo branch
 
 build:
   noarch: python
@@ -44,6 +44,10 @@ test:
     - solardatatools
   commands:
     - pip check
+    - python -m unittest
+  files:
+    - solardatatools/fixtures/*
+    - tests/fixtures/*
   requires:
     - pip
 
