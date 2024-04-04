@@ -1,8 +1,6 @@
 name: Test Build
 
-on:
-  pull_request:
-    branches: [main]
+on: [push]
 jobs:
   build-pypi:
     runs-on: ubuntu-latest
