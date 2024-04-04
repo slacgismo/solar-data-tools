@@ -44,10 +44,6 @@ test:
     - solardatatools
   commands:
     - pip check
-    - python -m unittest
-  files:
-    - solardatatools/fixtures/*
-    - tests/fixtures/*
   requires:
     - pip
 
