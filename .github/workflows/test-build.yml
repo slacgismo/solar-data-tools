@@ -20,7 +20,7 @@ jobs:
       - name: Create the distribution
         run: |
           git fetch --prune --unshallow --tags
-          sudo python3 -m build --wheel
+          sudo python3 -m build
 
   build-conda:
     runs-on: ubuntu-latest

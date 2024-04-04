@@ -5,7 +5,7 @@ package:
   version: {{ environ.get('VERSION_FROM_GIT_TAG') }}
 
 source:
-  git_url: https://github.com/slacgismo/solar-data-tools
+  git_url: https://github.com/pluflou/solar-data-tools
 
 build:
   noarch: python
