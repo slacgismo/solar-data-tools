@@ -1,6 +1,8 @@
 name: Test Build
 
-on: [push]
+on:
+  release:
+    types: [created]
 jobs:
   build-pypi:
     runs-on: ubuntu-latest
