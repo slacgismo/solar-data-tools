@@ -5,7 +5,8 @@ package:
   version: {{ environ.get('VERSION_FROM_GIT_TAG') }}
 
 source:
-  git_url: https://github.com/pluflou/solar-data-tools
+  # git_url: https://github.com/slacgismo/solar-data-tools
+  path: .. # checked out repo instead of main repo branch
 
 build:
   noarch: python
@@ -43,6 +44,10 @@ test:
     - solardatatools
   commands:
     - pip check
+    - python -m unittest
+  files:
+    - solardatatools/fixtures/*
+    - tests/fixtures/*
   requires:
     - pip
 
