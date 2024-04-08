@@ -64,6 +64,6 @@ finally:
 
                 print(f"[>] Dask Dashboard: {self.client.dashboard_link}")
 
-                return self.client, cluster
+                return self.client
             except Exception as e:
                 raise Exception(e)
