@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from solardatatools.dataio import load_redshift_data
 from sdt_dask.dataplugs.dataplug import DataPlug
