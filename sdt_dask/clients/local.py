@@ -33,6 +33,8 @@ finally:
                 self.dask_config.set({'distributed.worker.memory.spill': False})
                 self.dask_config.set({'distributed.worker.memory.pause': False})
                 self.dask_config.set({'distributed.worker.memory.target': 0.8})
+                self.dask_config.set({'distributed.worker.memory.terminate': False})
+
 
         def _check(self):
             self._get_sys_var()
@@ -51,7 +53,6 @@ finally:
             self._check()
             
             if self.system == "windows":
-                self.dask_config.set({'distributed.worker.memory.terminate': False})
                 self.client = Client(processes=True,
                     n_workers=self.n_workers,
                     threads_per_worker=self.threads_per_worker, 
