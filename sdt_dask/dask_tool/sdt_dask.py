@@ -80,13 +80,23 @@ class SDTDask:
                 return None
             try:
                 datahandler.run_pipeline(**kwargs)
+                if datahandler.num_days <= 365:
+                    datahandler.run_loss_analysis_error = "The length of data is less than or equal to 1 year, loss analysis will fail thus is not performed."
+                    datahandler.loss_analysis_report_error = "Loss analysis is not performed"
+                    return datahandler
             except Exception as e:
                 datahandler.run_pipeline_error = str(e)
-            # TODO: check year to see if loss analysis is necessary
+                datahandler.run_loss_analysis_error = "Failed because of run_pipeline error"
+                datahandler.run_pipeline_report_error = "Failed because of run_pipeline error"
+                datahandler.loss_analysis_report_error = "Failed because of run_pipeline error"
+                return datahandler
+
             try: 
                 datahandler.run_loss_factor_analysis()
             except Exception as e:  
                 datahandler.run_loss_analysis_error = str(e)
+                datahandler.loss_analysis_report_error = "Failed because of run_loss_analysis error"
+                return datahandler
 
             return datahandler
 
@@ -102,27 +112,27 @@ class SDTDask:
                 errors = DaskErrors("get_data error leading nothing to run", "get_data error leading nothing to analyze", "get_data error leading nothing to report", "get_data error leading nothing to report")
                 return Data(report, loss_report, runtime, errors)
             
-            try:
-                report = datahandler.report(return_values=True, verbose=False)
-            except Exception as e:
-                datahandler.run_pipeline_report_error = str(e)
-
-            try:
-                loss_report = datahandler.loss_analysis.report()
-            except Exception as e:
-                datahandler.loss_analysis_report_error = str(e)
+            if hasattr(datahandler, "run_pipeline_error"):
+                run_pipeline_error = datahandler.run_pipeline_error
+            else:
+                try:
+                    report = datahandler.report(return_values=True, verbose=False)
+                except Exception as e:
+                    datahandler.run_pipeline_report_error = str(e)
+            
+            if hasattr(datahandler, "run_loss_analysis_error"):
+                run_loss_analysis_error = datahandler.run_loss_analysis_error
+            else:
+                try:
+                    loss_report = datahandler.loss_analysis.report()
+                except Exception as e:
+                    datahandler.loss_analysis_report_error = str(e)
 
             try:
                 runtime = datahandler.total_time
             except Exception as e:
                 print(e)
             
-            if hasattr(datahandler, "run_pipeline_error"):
-                run_pipeline_error = datahandler.run_pipeline_error
-
-            if hasattr(datahandler, "run_loss_analysis_error"):
-                run_loss_analysis_error = datahandler.run_loss_analysis_error
-
             if hasattr(datahandler, "run_pipeline_report_error"):
                 run_pipeline_report_error = datahandler.run_pipeline_report_error
 
@@ -154,14 +164,6 @@ class SDTDask:
                     err = getattr(error, key)
                     if err is not None:
                         errors_dict[key].append(err)
-                        if key == "run_pipeline_errors":
-                            errors_dict["run_pipeline_report_errors"].append("Failed because of run_pipeline error")
-                            errors_dict["run_loss_analysis_errors"].append("Failed because of run_pipeline error")
-                            errors_dict["loss_analysis_report_errors"].append("Failed because of run_pipeline error")
-                            break
-                        elif key == "run_loss_analysis_errors":
-                            errors_dict["loss_analysis_report_errors"].append("Failed because of run_loss_analysis error")
-                            break
                     else:
                         errors_dict[key].append("No Error")
             return errors_dict
@@ -210,7 +212,7 @@ class SDTDask:
             columns[key] = errors_dict[key]
 
         for i in range(len(KEYS[0])):
-            columns[f"key_{i}"] = [key[i] for key in KEYS]
+            columns[f"key_field_{i}"] = [key[i] for key in KEYS]
 
         self.df_reports = delayed(df_reports.assign)(**columns)
 
