@@ -137,7 +137,7 @@ TAGS = {
     "project": "pvinsight"
 }
 VPC = "vpc-ab2ff6d3"  # for us-west-2
-IMAGE = "nimishy/sdt-windows:latest"
+IMAGE = "nimishy/sdt-cloud-win:latest"
 
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 ENVIRONMENT = {
