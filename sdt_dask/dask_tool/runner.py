@@ -30,7 +30,7 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-class SDTDask:
+class Runner:
     """A class to run the SolarDataTools pipeline on a Dask cluster.
         Will handle invalid data keys and failed datasets.
 
@@ -266,10 +266,7 @@ class SDTDask:
         # visualize the pipeline, user should have graphviz installed
         self.df_reports.visualize(filename)
 
-    def get_result(self):
-        self.get_report()
-
-    def get_report(self):
+    def get_result(self, dask_report="dask-report.html", summary_report="summary_report.csv"):
         # test if the filepath exist, if not create it
         time_stamp = strftime("%Y%m%d-%H%M%S")
         if not os.path.exists(self.output_path):
@@ -277,11 +274,11 @@ class SDTDask:
             os.makedirs(self.output_path)
         # Compute tasks on cluster and save results
         logger.info(f"saving reports to {self.output_path}")
-        with performance_report(self.output_path + f"/dask-report"
-                                                   f"-{time_stamp}.html"):
+
+        with performance_report(self.output_path + "/" + time_stamp + "-" + dask_report):
             summary_table = self.client.compute(self.df_reports)
             df = summary_table.result()
-            df.to_csv(self.output_path + f"/summary-report-{time_stamp}.csv")
+            df.to_csv(self.output_path + "/" + time_stamp + "-" + summary_report)
 
         logger.info("Shutting down Dask Client")
         self.client.shutdown()

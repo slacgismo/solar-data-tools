@@ -45,6 +45,8 @@ from sdt_dask.dask_tool.sdt_dask import SDTDask
 from sdt_dask.dataplugs.pvdb_plug import PVDBPlug
 from sdt_dask.dataplugs.csv_plug import LocalFiles
 
+import pandas as pd
+
 time_stamp = strftime("%Y%m%d-%H%M%S")
 
 """
@@ -141,7 +143,6 @@ TAGS = {
 VPC = "vpc-ab2ff6d3"  # for us-west-2
 IMAGE = "nimishy/sdt-windows:latest"
 IMAGE = "nimishy/sdt-cloud-win:latest"
-IMAGE = "nimishy/p_3.10.11_dask:latest"
 
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 ENVIRONMENT = {
@@ -156,27 +157,20 @@ WORKERS = int(options.workers)
 THREADS_PER_WORKER = int(options.threads)
 VERBOSE = bool(options.verbose)
 
-bucket = "pvinsight-dask-baseline"
+# Defined PVDB dataplug
+data_plug = PVDBPlug()
 
-__logger__.info('Grabbing files from bucket: %s', bucket)
+# read keys from files
+site_num_file = "./pvdb_data/num_sensors_per_site_ac_power.csv"
+site_sensor_file = "./pvdb_data/all_sensors_per_site_ac_power.csv"
+df = pd.read_csv(site_num_file)
+KEYS = []
+for row in df.itertuples():
+    site_id = row.site
+    num = row.number
+    for i in range(num):
+        KEYS.append((site_id, i))
 
-# Defined S3 Bucket dataplug
-data_plug = S3Bucket(bucket_name=bucket)
-
-# Required for S3 Bucket pull keys as a list given as output
-key_list = data_plug._pull_keys()
-KEYS = [(key,) for key in key_list]
-#data_plug.get_data(KEYS[0])
-
-# data_plug = PVDBPlug()
-# KEYS = [("TABJC1027159", 0), ("TAAI01129193", 0)]
-
-# path = "../dataplugs/example_data/"
-# path = "../dataplugs/spwr_sensor_0/"
-# data_plug = LocalFiles(path_to_files=path)
-# KEYS = [(os.path.basename(fname)[:-4],) for fname in glob.glob(path + "*")]
-
-__logger__.info('Grabbed %s files from %s', len(KEYS), bucket)
 
 # Sets the dask fargate client and dask tool
 # Uses the dask tool for computation
@@ -204,8 +198,18 @@ if __name__ == '__main__':
         dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
 
         # Dask Tool Task Compute
-        output_html = f"new_rev_far_dask-report_{options.workers}w-{options.threads}t-{time_stamp}.html"
-        output_csv = f"new_rev_far_summary_report_{options.workers}w-{options.threads}t-{time_stamp}.csv"
+        output_html = f"pvdb_rev_far_dask-report_{options.workers}w-{options.threads}t-{time_stamp}.html"
+        output_csv = f"pvdb_rev_far_summary_report_{options.workers}w-{options.threads}t-{time_stamp}.csv"
         dask_tool.get_result(dask_report = output_html, summary_report = output_csv)
+        
+        # open the output_csv and append a key column
+        df = pd.read_csv("../results/" + output_csv)
+        sensor_df = pd.read_csv(site_sensor_file)
+
+        # Add the new column
+        df['sensor'] = sensor_df['sensor']
+
+        # Write the updated DataFrame back to the CSV file
+        df.to_csv("../results/" + output_csv, index=False)
     except Exception as e:
         __logger__.exception(e)

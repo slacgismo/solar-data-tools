@@ -325,5 +325,6 @@ tags
 # End of https://www.toptal.com/developers/gitignore/api/vim
 /sdt_dask/dataplugs/example_data
 /sdt_dask/dataplugs/spwr_sensor_0
+/sdt_dask/examples/pvdb_data
 /sdt_dask/results
 
