@@ -41,7 +41,7 @@ import glob, os, sys, logging, argparse
 from time import strftime
 from sdt_dask.dataplugs.S3Bucket_plug import S3Bucket
 from sdt_dask.clients.aws.fargate import Fargate
-from sdt_dask.dask_tool.sdt_dask import SDTDask
+from sdt_dask.dask_tool.runner import Runner
 from sdt_dask.dataplugs.pvdb_plug import PVDBPlug
 from sdt_dask.dataplugs.csv_plug import LocalFiles
 
@@ -143,6 +143,7 @@ TAGS = {
 VPC = "vpc-ab2ff6d3"  # for us-west-2
 IMAGE = "nimishy/sdt-windows:latest"
 IMAGE = "nimishy/sdt-cloud-win:latest"
+IMAGE = "nimishy/p_3.10.11_dask:latest"
 
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 ENVIRONMENT = {
@@ -171,7 +172,6 @@ for row in df.itertuples():
     for i in range(num):
         KEYS.append((site_id, i))
 
-
 # Sets the dask fargate client and dask tool
 # Uses the dask tool for computation
 if __name__ == '__main__':
@@ -192,7 +192,7 @@ if __name__ == '__main__':
                         WORKERS, THREADS_PER_WORKER)
 
         # Dask Tool initialization and set up
-        dask_tool = SDTDask(data_plug=data_plug,
+        dask_tool = Runner(data_plug=data_plug,
                             client=client,
                             output_path="../results/")
         dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
@@ -200,16 +200,9 @@ if __name__ == '__main__':
         # Dask Tool Task Compute
         output_html = f"pvdb_rev_far_dask-report_{options.workers}w-{options.threads}t-{time_stamp}.html"
         output_csv = f"pvdb_rev_far_summary_report_{options.workers}w-{options.threads}t-{time_stamp}.csv"
-        dask_tool.get_result(dask_report = output_html, summary_report = output_csv)
         
-        # open the output_csv and append a key column
-        df = pd.read_csv("../results/" + output_csv)
         sensor_df = pd.read_csv(site_sensor_file)
-
-        # Add the new column
-        df['sensor'] = sensor_df['sensor']
-
-        # Write the updated DataFrame back to the CSV file
-        df.to_csv("../results/" + output_csv, index=False)
+        dask_tool.get_result(dask_report = output_html, summary_report = output_csv, additional_columns = sensor_df.iloc[:, :2])
+        
     except Exception as e:
         __logger__.exception(e)

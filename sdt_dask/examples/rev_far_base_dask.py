@@ -41,7 +41,7 @@ import glob, os, sys, logging, argparse
 from time import strftime
 from sdt_dask.dataplugs.S3Bucket_plug import S3Bucket
 from sdt_dask.clients.aws.fargate import Fargate
-from sdt_dask.dask_tool.sdt_dask import SDTDask
+from sdt_dask.dask_tool.runner import Runner
 from sdt_dask.dataplugs.pvdb_plug import PVDBPlug
 from sdt_dask.dataplugs.csv_plug import LocalFiles
 
@@ -198,7 +198,7 @@ if __name__ == '__main__':
                         WORKERS, THREADS_PER_WORKER)
 
         # Dask Tool initialization and set up
-        dask_tool = SDTDask(data_plug=data_plug,
+        dask_tool = Runner(data_plug=data_plug,
                             client=client,
                             output_path="../results/")
         dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
