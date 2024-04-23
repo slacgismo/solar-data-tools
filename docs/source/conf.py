@@ -33,6 +33,7 @@ author = "Bennet Meyers"
 extensions = [
     "sphinx_design",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "nbsphinx" # for notebooks integration
 ]

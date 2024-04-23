@@ -1,3 +1,7 @@
 *********
 User Docs
 *********
+
+.. toctree::
+
+   api
