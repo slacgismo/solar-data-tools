@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from solardatatools.dataio import load_redshift_data
+from solardatatools.time_axis_manipulation import make_time_series
 from sdt_dask.dataplugs.dataplug import DataPlug
 
 class PVDBPlug(DataPlug):
@@ -24,9 +25,7 @@ class PVDBPlug(DataPlug):
     def _clean_data(self):
         """Clean the retrieved data and set 'ts' column as the index.
         """
-        self.df['ts'] = pd.to_datetime(self.df['ts'])
-        self.df.set_index('ts', inplace=True)
-        self.df = self.df[[self.power_col]]
+        self.df, _ = make_time_series(self.df)
 
     def get_data(self, keys: tuple[str, int]) -> pd.DataFrame:
         """This is the main function that the Dask tool will interact with.
