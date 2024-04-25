@@ -13,6 +13,7 @@ class PVDAQPlug(DataPlug):
         self.power_col = power_col
 
     def _pull_data(self, key, year):
+        # print(f"Pulling site ID {key}...")
         self.df = get_pvdaq_data(sysid=key, year=year, api_key=self.api_key)
 
     def _clean_data(self):

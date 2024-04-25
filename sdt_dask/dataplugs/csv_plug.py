@@ -29,7 +29,7 @@ class LocalFiles(DataPlug):
         # Convert index from int to datetime object
         self.df, _ = make_time_series(self.df)
 
-    def get_data(self, key: tuple[str]) -> pd.DataFrame:
+    def get_data(self, key: str) -> pd.DataFrame:
         """This is the main function that the Dask tool will interact with.
         Users should keep the args and returns as defined here when writing
         their custom dataplugs.
@@ -39,7 +39,7 @@ class LocalFiles(DataPlug):
         :return: Returns a pandas DataFrame with a timestamp column and
             a power column
         """
-        self._read_file(key[0])
+        self._read_file(key)
         self._clean_data()
 
         return self.df

@@ -1,4 +1,4 @@
-solar-data-tools @ git+https://github.com/zhanghaoc/solar-data-tools@develop-dask
+solar-data-tools @ git+https://github.com/slacgismo/solar-data-tools@develop-dask
 accessible-pygments==0.0.4
 aiobotocore==2.4.2
 aiohttp==3.8.3
