@@ -189,6 +189,24 @@ class Runner:
             except Exception as e:
                 error = str(e)
             return DataHandlerData(datahandler, error)
+        
+        def prepare_final_report(reports, losses, runtimes, get_data_errors, errors):
+            df_reports = generate_report(reports, losses)
+            errors_dict = generate_errors(errors)
+
+            columns = {
+                "runtime": runtimes,
+                "get_data_errors": get_data_errors,
+            }
+
+            for key in DaskErrors.get_attrs():
+                columns[key] = errors_dict[key]
+
+            for i in range(len(KEYS[0])):
+                columns[f"key_field_{i}"] = [key[i] for key in KEYS]
+
+            return df_reports.assign(**columns)
+
 
         for key in KEYS:
 
@@ -202,25 +220,7 @@ class Runner:
             get_data_errors.append(dh_data.error)
             errors.append(data.errors)
 
-        # append losses to the report
-        df_reports = delayed(generate_report)(reports, losses)
-        # generate error dictionary for dataframe
-        errors_dict = delayed(generate_errors)(errors)
-
-        # add the runtimes, keys, and all error infos to the report
-        columns = {
-            "runtime": runtimes,
-            "get_data_errors": get_data_errors,
-        }
-
-        # go through all member in Errors and add them to the report
-        for key in DaskErrors.get_attrs():
-            columns[key] = errors_dict[key]
-
-        for i in range(len(KEYS[0])):
-            columns[f"key_field_{i}"] = [key[i] for key in KEYS]
-
-        self.df_reports = delayed(df_reports.assign)(**columns)
+        self.df_reports = delayed(prepare_final_report)(reports, losses, runtimes, get_data_errors, errors)
 
     def visualize(self, filename="sdt_graph.png"):
         # visualize the pipeline, user should have graphviz installed
