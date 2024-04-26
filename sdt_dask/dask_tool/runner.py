@@ -79,16 +79,27 @@ class Runner:
                 # return [attr for attr in dir(DaskErrors) if not callable(getattr(DaskErrors,attr)) and not attr.startswith("__")]
                 return ["get_data_errors", "run_pipeline_errors", "run_pipeline_report_errors", "run_loss_analysis_errors", "loss_analysis_report_errors"]
 
-        def run(dh_data, **kwargs):
+        def run(data_plug, key, **kwargs):
             report = None
             loss_report = None
             runtime = None
-            datahandler = dh_data.dh
-            get_data_errors = dh_data.error
             run_pipeline_error = None
             run_loss_analysis_error = None
             run_pipeline_report_error = None
             loss_analysis_report_error = None
+
+            datahandler = None
+            error = "No Error"
+            try:
+                result = data_plug.get_data(key)
+                dh = DataHandler(result)
+                datahandler = dh
+            except Exception as e:
+                error = str(e)
+
+            dh_data = DataHandlerData(datahandler, error)
+            datahandler = dh_data.dh
+            get_data_errors = dh_data.error
 
             if datahandler is None:
                 errors = DaskErrors(get_data_errors, "get_data error leading nothing to run", "get_data error leading nothing to analyze", "get_data error leading nothing to report", "get_data error leading nothing to report")
@@ -167,16 +178,6 @@ class Runner:
                 self.dh = dh
                 self.error = error
 
-        def safe_get_data(data_plug, key):
-            datahandler = None
-            error = "No Error"
-            try:
-                result = data_plug.get_data(key)
-                dh = DataHandler(result)
-                datahandler = dh
-            except Exception as e:
-                error = str(e)
-            return DataHandlerData(datahandler, error)
         
         def prepare_final_report(reports, losses, runtimes, get_data_errors, errors):
             df_reports = generate_report(reports, losses)
@@ -198,8 +199,7 @@ class Runner:
 
         for key in KEYS:
 
-            dh_data = delayed(safe_get_data)(self.data_plug, key)
-            data = delayed(run)(dh_data, **kwargs)
+            data = delayed(run)(self.data_plug, key, **kwargs)
 
             reports.append(data.report)
             losses.append(data.loss_report)
