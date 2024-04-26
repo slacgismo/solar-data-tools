@@ -61,91 +61,79 @@ class Runner:
 
 
         class DaskErrors:
+            get_data_errors = None
             run_pipeline_errors = None
             run_pipeline_report_errors = None
             run_loss_analysis_errors = None
             loss_analysis_report_errors = None
-            def __init__(self, run_pipeline_errors, run_loss_analysis_errors, run_pipeline_report_errors, loss_analysis_report_errors):
+            def __init__(self, get_data_errors, run_pipeline_errors, run_loss_analysis_errors, run_pipeline_report_errors, loss_analysis_report_errors):
+                self.get_data_errors = get_data_errors
                 self.run_pipeline_errors = run_pipeline_errors
                 self.run_pipeline_report_errors = run_pipeline_report_errors
                 self.run_loss_analysis_errors = run_loss_analysis_errors
                 self.loss_analysis_report_errors = loss_analysis_report_errors
 
+
             @staticmethod
             def get_attrs():
                 # return [attr for attr in dir(DaskErrors) if not callable(getattr(DaskErrors,attr)) and not attr.startswith("__")]
-                return ["run_pipeline_errors", "run_pipeline_report_errors", "run_loss_analysis_errors", "loss_analysis_report_errors"]
+                return ["get_data_errors", "run_pipeline_errors", "run_pipeline_report_errors", "run_loss_analysis_errors", "loss_analysis_report_errors"]
 
-
-        def run(datahandler, **kwargs):
-            run_pipeline_error = None
-
-            if datahandler is None:
-                return None
-            try:
-                datahandler.run_pipeline(**kwargs)
-                if datahandler.num_days <= 365:
-                    datahandler.run_loss_analysis_error = "The length of data is less than or equal to 1 year, loss analysis will fail thus is not performed."
-                    datahandler.loss_analysis_report_error = "Loss analysis is not performed"
-                    return datahandler
-            except Exception as e:
-                datahandler.run_pipeline_error = str(e)
-                datahandler.run_loss_analysis_error = "Failed because of run_pipeline error"
-                datahandler.run_pipeline_report_error = "Failed because of run_pipeline error"
-                datahandler.loss_analysis_report_error = "Failed because of run_pipeline error"
-                return datahandler
-
-            try:
-                datahandler.run_loss_factor_analysis()
-            except Exception as e:
-                datahandler.run_loss_analysis_error = str(e)
-                datahandler.loss_analysis_report_error = "Failed because of run_loss_analysis error"
-
-                return datahandler
-
-            return datahandler
-
-        def handle_report(datahandler):
+        def run(dh_data, **kwargs):
             report = None
             loss_report = None
             runtime = None
+            datahandler = dh_data.dh
+            get_data_errors = dh_data.error
             run_pipeline_error = None
             run_loss_analysis_error = None
             run_pipeline_report_error = None
             loss_analysis_report_error = None
-            if datahandler is None:
-                errors = DaskErrors("get_data error leading nothing to run", "get_data error leading nothing to analyze", "get_data error leading nothing to report", "get_data error leading nothing to report")
 
+            if datahandler is None:
+                errors = DaskErrors(get_data_errors, "get_data error leading nothing to run", "get_data error leading nothing to analyze", "get_data error leading nothing to report", "get_data error leading nothing to report")
+                return Data(report, loss_report, runtime, errors)
+            try:
+                datahandler.run_pipeline(**kwargs)
+                if datahandler.num_days <= 365:
+                    run_loss_analysis_error = "The length of data is less than or equal to 1 year, loss analysis will fail thus is not performed."
+                    loss_analysis_report_error = "Loss analysis is not performed"
+
+            except Exception as e:
+                run_pipeline_error = str(e)
+                run_loss_analysis_error = "Failed because of run_pipeline error"
+                run_pipeline_report_error = "Failed because of run_pipeline error"
+                loss_analysis_report_error = "Failed because of run_pipeline error"
+                errors = DaskErrors(get_data_errors, run_pipeline_error, run_pipeline_report_error, run_loss_analysis_error, loss_analysis_report_error)
                 return Data(report, loss_report, runtime, errors)
 
-            if hasattr(datahandler, "run_pipeline_error"):
-                run_pipeline_error = datahandler.run_pipeline_error
-            else:
+            if run_pipeline_error is None:
                 try:
                     report = datahandler.report(return_values=True, verbose=False)
                 except Exception as e:
-                    datahandler.run_pipeline_report_error = str(e)
+                    run_pipeline_report_error = str(e)
+                
+                try:
+                    runtime = datahandler.total_time
+                except Exception as e:
+                    print(e)
 
-            if hasattr(datahandler, "run_loss_analysis_error"):
-                run_loss_analysis_error = datahandler.run_loss_analysis_error
-            else:
+            if run_loss_analysis_error is None:
+                try:
+                    datahandler.run_loss_factor_analysis()
+                except Exception as e:
+                    run_loss_analysis_error = str(e)
+                    loss_analysis_report_error = "Failed because of run_loss_analysis error"
+
+                    errors = DaskErrors(get_data_errors, run_pipeline_error, run_pipeline_report_error, run_loss_analysis_error, loss_analysis_report_error)
+                    return Data(report, loss_report, runtime, errors)
+                
                 try:
                     loss_report = datahandler.loss_analysis.report()
                 except Exception as e:
-                    datahandler.loss_analysis_report_error = str(e)
+                    loss_analysis_report_error = str(e)
 
-            try:
-                runtime = datahandler.total_time
-            except Exception as e:
-                print(e)
-
-            if hasattr(datahandler, "run_pipeline_report_error"):
-                run_pipeline_report_error = datahandler.run_pipeline_report_error
-
-            if hasattr(datahandler, "loss_analysis_report_error"):
-                loss_analysis_report_error = datahandler.loss_analysis_report_error
-
-            errors = DaskErrors(run_pipeline_error, run_loss_analysis_error, run_pipeline_report_error, loss_analysis_report_error)
+            errors = DaskErrors(get_data_errors, run_pipeline_error, run_loss_analysis_error, run_pipeline_report_error, loss_analysis_report_error)
             return Data(report, loss_report, runtime, errors)
 
         def generate_report(reports, losses):
@@ -211,13 +199,11 @@ class Runner:
         for key in KEYS:
 
             dh_data = delayed(safe_get_data)(self.data_plug, key)
-            dh_run = delayed(run)(dh_data.dh, **kwargs)
-            data = delayed(handle_report)(dh_run)
+            data = delayed(run)(dh_data, **kwargs)
 
             reports.append(data.report)
             losses.append(data.loss_report)
             runtimes.append(data.runtime)
-            get_data_errors.append(dh_data.error)
             errors.append(data.errors)
 
         self.df_reports = delayed(prepare_final_report)(reports, losses, runtimes, get_data_errors, errors)
