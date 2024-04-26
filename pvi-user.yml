@@ -34,4 +34,5 @@ dependencies:
   - solar-data-tools
   - pv-system-profiler
   - statistical-clear-sky
-
+  - tqdm
+  - spcqe
