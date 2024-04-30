@@ -1,5 +1,5 @@
 """
-AWS test script for Dask using S3Bucket data plug
+Azure test script for Dask using S3Bucket data plug
 
 It takes in the following arguments:
     -l:string   log level         (default='warning')
@@ -10,32 +10,28 @@ It takes in the following arguments:
     -r:string   result path       (default='../results/')
 
 Example command to run this test script:
-    python rev_far_base_dask.py -l info -w 2 -t 2
+    python rev_azu_base_dask.py -l info -w 2 -t 2
 
-Before running the script, make sure to set up the environment variables:
-    PA_NUMBER
+Before running the script, make sure to set up the environment variables for Azure:
+    RESOURCE_GROUP
+    VNET
+    SECURITY_GROUP
+    &
     AWS_DEFAULT_REGION
     AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY
+    (for S3Bucket data plug use)
 """
-import glob, os, sys, logging, argparse
+
+import os, sys, logging, argparse
 
 from time import strftime
+from sdt_dask.clients.azure.azure import Azure
 from sdt_dask.dataplugs.S3Bucket_plug import S3Bucket
-from sdt_dask.clients.aws.fargate import Fargate
 from sdt_dask.dask_tool.runner import Runner
-from sdt_dask.dataplugs.pvdb_plug import PVDBPlug
-from sdt_dask.dataplugs.csv_plug import LocalFiles
 
 time_stamp = strftime("%Y%m%d-%H%M%S")
 
-"""
-Parser Implementation for the following:
-  log level   (default='warning')
-  workers     (default=4)
-  threads     (default=2)
-  verbose     (default=False)
-"""
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-l",
@@ -102,6 +98,7 @@ levels = {
     'warn': logging.WARN
 }
 level = levels[options.log.lower()]
+
 # check whether result path exists, if not create it
 if not os.path.exists(f"{options.result_path}/{options.workers}w-{options.threads}t/"):
     os.makedirs(f"{options.result_path}/{options.workers}w-{options.threads}t/")
@@ -134,24 +131,15 @@ __logger__.info('Saving Logs to %s', log_file)
 
 __logger__.debug('arguments: %s', vars(options))
 
-PA_NUMBER = os.getenv("project_pa_number")
-TAGS = {
-    "project-pa-number": PA_NUMBER,
-    "project": "pvinsight"
-}
-VPC = "vpc-ab2ff6d3"  # for us-west-2
-IMAGE = "nimishy/sdt-windows:latest"
-IMAGE = "nimishy/sdt-cloud-win:latest"
-IMAGE = "nimishy/p_3.10.11_dask:latest"
+resource_group = os.getenv("RESOURCE_GROUP")
+vnet = os.getenv("VNET")
+security_group = os.getenv("SECURITY_GROUP")
+image = "nimishy/sdt-cloud-win:latest"
 
-AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
-ENVIRONMENT = {
-    'AWS_ACCESS_KEY_ID': os.getenv('AWS_ACCESS_KEY_ID'),
-    'AWS_SECRET_ACCESS_KEY': os.getenv('AWS_SECRET_ACCESS_KEY')
-}
-
-__logger__.debug('Environment: %s', ENVIRONMENT)
-__logger__.debug('Tags: %s', TAGS)
+__logger__.info('Resource Group: %s', resource_group)
+__logger__.info('VNet: %s', vnet)
+__logger__.info('Security Group: %s', security_group)
+__logger__.info('Docker Image: %s', image)
 
 WORKERS = int(options.workers)
 THREADS_PER_WORKER = int(options.threads)
@@ -167,7 +155,6 @@ data_plug = S3Bucket(bucket_name=bucket)
 # Required for S3 Bucket pull keys as a list given as output
 key_list = data_plug._pull_keys()
 KEYS = [(key,) for key in key_list]
-
 __logger__.info('Grabbed %s files from %s', len(KEYS), bucket)
 
 # Sets the dask fargate client and dask tool
@@ -175,17 +162,22 @@ __logger__.info('Grabbed %s files from %s', len(KEYS), bucket)
 if __name__ == '__main__':
     try:
         # Dask Fargate client Setup
-        client_setup = Fargate(image=IMAGE,
-                               tags=TAGS,
-                               vpc=VPC,
-                               region_name=AWS_DEFAULT_REGION,
-                               environment=ENVIRONMENT,
-                               n_workers=WORKERS,
-                               threads_per_worker=THREADS_PER_WORKER
-                               )
+        worker_options = {
+            "nthreads": THREADS_PER_WORKER,
+            "memory_limit": "15.63GiB" # using the maximum memory limit for Azure VM
+        }
+        client_setup = Azure(
+            resource_group=resource_group,
+            vnet=vnet,
+            security_group=security_group,
+            n_workers=WORKERS,
+            worker_options=worker_options,
+            docker_image=image
+        )
         # Dask Local Client Initialization
         client = client_setup.init_client()
-        __logger__.info('Fargate Dask Client Initialized with %s worker(s)'
+
+        __logger__.info('Azure Dask Client Initialized with %s worker(s)'
                         ' and %s thread(s)',
                         WORKERS, THREADS_PER_WORKER)
 
@@ -196,8 +188,6 @@ if __name__ == '__main__':
         dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
 
         # Dask Tool Task Compute
-        output_html = f"new_rev_far_dask-report_{options.workers}w-{options.threads}t-{time_stamp}.html"
-        output_csv = f"new_rev_far_summary_report_{options.workers}w-{options.threads}t-{time_stamp}.csv"
-        dask_tool.get_result(dask_report = output_html, summary_report = output_csv)
+        dask_tool.get_result()
     except Exception as e:
         __logger__.exception(e)

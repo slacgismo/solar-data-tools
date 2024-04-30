@@ -1,56 +1,25 @@
 """
-Code for local baseline test
+Local test script for Dask using local data plug
 
-Uses the local csv dataplug
-Uses the SDTDask Tool
-Uses the Local client plug
+It takes in the following arguments:
+    -l:string   log level         (default='warning')
+    -w:int      worker number     (default=4)
+    -t:int      thread number     (default=2)
+    -v:bool     verbose           (default=False)
+    -r:string   result path       (default='../results/')
 
-Notice:
-The dask tool report and summary will get overwritten,
-please rename or save those files separately before
-rerunning this code.
-
-The -l/--log option sets the log level (string)
-    Options: debugs, info, warning, error, critical, warn
-
-The -w/--workers option sets the number of workers for the
-local dask client
-
-The -t/--threads option sets the number of threads per
-worker for the dask client
-
-The -m/--memory option sets the memory size per worker
-
-The -v/--verbose option sets the verbose flag for the client
-and the run_pipeline function.
-This information allows the user to configure the dask client
-and set the workers, threads and memory according to their
-system resources and debug the run_pipeline.
-
-TODO:
-    Before running change the path to the folder with the data set
-    as seen in line no. 146.
-
-Example:
-    python .\rev_loc_base_dask.py -l info -w 1 -t 1 -m 5 -v
-OR
-    python rev_loc_base_dask.py -l info -w 1 -t 1 -m 5
+Example command to run this test script:
+    python rev_loc_base_dask.py -l info -w 2 -t 2
 """
 import glob, os, sys, logging, argparse
 
 from time import gmtime, strftime
 from sdt_dask.dataplugs.csv_plug import LocalFiles
 from sdt_dask.clients.local import Local
-from sdt_dask.dask_tool.sdt_dask import SDTDask
+from sdt_dask.dask_tool.runner import Runner
 
 time_stamp = strftime("%Y%m%d-%H%M%S")
 
-# Parser Implementation for the following:
-#   log level   (default='warning')
-#   workers     (default=4)
-#   threads     (default=2)
-#   memory      (default=5)
-#   verbose     (default=False)
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-l",
@@ -97,6 +66,16 @@ parser.add_argument(
         "Enable verbose for the dask client. "
         "Example --verbose"),
 )
+
+parser.add_argument(
+    "-r",
+    "--result_path",
+    default="../results/",
+    help=(
+        "Provide the result path. "
+        "Example --result ../results/', default='../results/'"),
+)
+
 options = parser.parse_args()
 levels = {
     'debug': logging.DEBUG,
@@ -106,9 +85,14 @@ levels = {
     'critical': logging.CRITICAL,
     'warn': logging.WARN
 }
+
 level = levels[options.log.lower()]
-log_file = (f"../results/rev_loc_{options.workers}w-"
+# check whether result path exists, if not create it
+if not os.path.exists(f"{options.result_path}/{options.workers}w-{options.threads}t/"):
+    os.makedirs(f"{options.result_path}/{options.workers}w-{options.threads}t/")
+log_file = (f"{options.result_path}/{options.workers}w-{options.threads}t/rev_azu_{options.workers}w-"
             f"{options.threads}t-{time_stamp}.log")
+
 
 # Function for the logger handler and formatter for this file
 # formats the loggers as well, formatter doesn't support color logs
@@ -170,9 +154,9 @@ if __name__ == '__main__':
                         WORKERS, THREADS_PER_WORKER, MEMORY)
 
         # Dask Tool initialization and set up
-        dask_tool = SDTDask(data_plug=data_plug,
+        dask_tool = Runner(data_plug=data_plug,
                             client=client,
-                            output_path="../results/")
+                            output_path=f"{options.result_path}/{options.workers}w-{options.threads}t/")
         dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
 
         # Dask Tool Task Compute
