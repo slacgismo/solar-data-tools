@@ -1,45 +1,25 @@
 """
-Code for fargate baseline test
+AWS test script for Dask using redshift data plug
 
-Uses the local csv dataplug
-Uses the SDTDask Tool
-Uses the Fargate client plug
+It takes in the following arguments:
+    -l:string   log level         (default='warning')
+    -w:int      worker number     (default=4)
+    -t:int      thread number     (default=2)
+    -v:bool     verbose           (default=False)
+    -r:string   result path       (default='../results/')
 
-IMPORTANT:
-DO NOT UPLOAD/SHARE THE LOG FILES AS THEY CONTAIN SENSITIVE
-INFORMATION INCLUDING THE AWS_ACCESS_KEY_ID.
+Example command to run this test script:
+    python rev_far_pvdb_dask.py -l info -w 20 -t 2
 
-THE NORMAL LOGS CONTAIN THE ACCESS KEY ID
-THE DEBUG LOGS CONTAIN ALL INFORMATION INCLUDING CREDENTIALS
-
-Notice:
-The dask tool report and summary will get overwritten,
-please rename or save those files separately before
-rerunning this code.
-
-The -l/--log option sets the log level (string)
-    Options: debugs, info, warning, error, critical, warn
-
-The -w/--workers option sets the number of workers for the
-local dask client
-
-The -t/--threads option sets the number of threads per
-worker for the dask client
-
-The -v/--verbose option sets the verbose flag for the run_pipeline
-function. This information allows the user to  debug the run_pipeline.
-
-TODO:
-    Check Environment variables in from line no. XXX - XXX
-Example:
-    python .\rev_far_base_dask.py -l info -w 1 -t 1 -v
-OR
-    python rev_far_base_dask.py -l info -w 1 -t 1
+Before running the script, make sure to set up the environment variables:
+    PA_NUMBER
+    AWS_DEFAULT_REGION
+    AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY
 """
 import glob, os, sys, logging, argparse
 
 from time import strftime
-from sdt_dask.dataplugs.S3Bucket_plug import S3Bucket
 from sdt_dask.clients.aws.fargate import Fargate
 from sdt_dask.dask_tool.runner import Runner
 from sdt_dask.dataplugs.pvdb_plug import PVDBPlug
@@ -93,6 +73,16 @@ parser.add_argument(
         "Enable verbose for run_pipeline. "
         "Example --verbose"),
 )
+
+parser.add_argument(
+    "-r",
+    "--result_path",
+    default="../results/",
+    help=(
+        "Provide the result path. "
+        "Example --result_path ../results/', default='../results/'"),
+)
+
 options = parser.parse_args()
 levels = {
     'debug': logging.DEBUG,
@@ -102,8 +92,12 @@ levels = {
     'critical': logging.CRITICAL,
     'warn': logging.WARN
 }
+
 level = levels[options.log.lower()]
-log_file = (f"../results/rev_far_{options.workers}w-"
+# check whether result path exists, if not create it
+if not os.path.exists(f"{options.result_path}/{options.workers}w-{options.threads}t/"):
+    os.makedirs(f"{options.result_path}/{options.workers}w-{options.threads}t/")
+log_file = (f"{options.result_path}/{options.workers}w-{options.threads}t/rev_azu_{options.workers}w-"
             f"{options.threads}t-{time_stamp}.log")
 
 
@@ -133,8 +127,6 @@ __logger__.info('Saving Logs to %s', log_file)
 
 __logger__.debug('arguments: %s', vars(options))
 
-# TODO:
-#   Verify and change the environment variables
 PA_NUMBER = os.getenv("project_pa_number")
 TAGS = {
     "project-pa-number": PA_NUMBER,
@@ -194,7 +186,7 @@ if __name__ == '__main__':
         # Dask Tool initialization and set up
         dask_tool = Runner(data_plug=data_plug,
                             client=client,
-                            output_path="../results/")
+                            output_path=f"{options.result_path}/{options.workers}w-{options.threads}t/")
         dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
 
         # Dask Tool Task Compute
