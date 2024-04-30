@@ -7,8 +7,8 @@ from dask.distributed import Client
 
 class FargateClient(ClientPlug):
     """Fargate Client Class for configuring dask client on ECS Cluster using
-    Fargate. The Class takes in parameters to set up the LocalCluster and the
-    Dask Client is initialized using the LocalCluster
+    Fargate. The Class takes in parameters to set up the FargateCluster and the
+    Dask Client is initialized using the FargateCluster
 
     Used in:
         sdt_dask/examples/rev_far_base_dask.py
@@ -26,7 +26,7 @@ class FargateClient(ClientPlug):
         https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
     :type memory: int
     :param kwargs: Keyword arguments for the Dask FargateCluster, for more
-        information on the LocalCluster arguments see
+        information on the FargateCluster arguments see
         https://cloudprovider.dask.org/en/latest/aws.html
     :type kwargs: dict
     """
@@ -46,7 +46,8 @@ class FargateClient(ClientPlug):
             configuration
         :rtype: `dask.distributed.Client` object
         """
-        print("Initializing Fargate Cluster ...")
+        print(f"Initializing Fargate Cluster with {self.workers} workers, "
+              f"{self.threads} threads and {self.memory}MiB per worker...")
 
         self.cluster = FargateCluster(n_workers=self.workers,
                                       worker_nthreads=self.threads,
