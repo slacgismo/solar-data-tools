@@ -22,7 +22,7 @@ import glob, os, sys, logging, argparse
 
 from time import strftime
 from sdt_dask.dataplugs.S3Bucket_plug import S3Bucket
-from sdt_dask.clients.aws.fargate import Fargate
+from sdt_dask.clients.aws.fargate_client import FargateClient
 from sdt_dask.dask_tool.runner import Runner
 from sdt_dask.dataplugs.pvdb_plug import PVDBPlug
 from sdt_dask.dataplugs.csv_plug import LocalFiles
@@ -175,13 +175,13 @@ __logger__.info('Grabbed %s files from %s', len(KEYS), bucket)
 if __name__ == '__main__':
     try:
         # Dask Fargate client Setup
-        client_setup = Fargate(image=IMAGE,
+        client_setup = FargateClient(image=IMAGE,
                                tags=TAGS,
                                vpc=VPC,
                                region_name=AWS_DEFAULT_REGION,
                                environment=ENVIRONMENT,
-                               n_workers=WORKERS,
-                               threads_per_worker=THREADS_PER_WORKER
+                               workers=WORKERS,
+                               threads=THREADS_PER_WORKER
                                )
         # Dask Local Client Initialization
         client = client_setup.init_client()

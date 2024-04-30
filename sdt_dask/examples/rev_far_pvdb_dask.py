@@ -20,7 +20,7 @@ Before running the script, make sure to set up the environment variables:
 import glob, os, sys, logging, argparse
 
 from time import strftime
-from sdt_dask.clients.aws.fargate import Fargate
+from sdt_dask.clients.aws.fargate_client import FargateClient
 from sdt_dask.dask_tool.runner import Runner
 from sdt_dask.dataplugs.pvdb_plug import PVDBPlug
 from sdt_dask.dataplugs.csv_plug import LocalFiles
@@ -163,19 +163,19 @@ for row in df.itertuples():
     num = row.number
     for i in range(num):
         KEYS.append((site_id, i))
-
+        
 # Sets the dask fargate client and dask tool
 # Uses the dask tool for computation
 if __name__ == '__main__':
     try:
         # Dask Fargate client Setup
-        client_setup = Fargate(image=IMAGE,
+        client_setup = FargateClient(image=IMAGE,
                                tags=TAGS,
                                vpc=VPC,
                                region_name=AWS_DEFAULT_REGION,
                                environment=ENVIRONMENT,
-                               n_workers=WORKERS,
-                               threads_per_worker=THREADS_PER_WORKER
+                               workers=WORKERS,
+                               threads=THREADS_PER_WORKER
                                )
         # Dask Local Client Initialization
         client = client_setup.init_client()
@@ -193,8 +193,7 @@ if __name__ == '__main__':
         output_html = f"pvdb_rev_far_dask-report_{options.workers}w-{options.threads}t-{time_stamp}.html"
         output_csv = f"pvdb_rev_far_summary_report_{options.workers}w-{options.threads}t-{time_stamp}.csv"
         
-        sensor_df = pd.read_csv(site_sensor_file)
-        dask_tool.get_result(dask_report = output_html, summary_report = output_csv, additional_columns = sensor_df.iloc[:, :2])
+        dask_tool.get_result(dask_report = output_html, summary_report = output_csv)
         
     except Exception as e:
         __logger__.exception(e)
