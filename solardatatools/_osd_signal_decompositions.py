@@ -1,27 +1,28 @@
 """ Signal Decompositions Module for OSD
 
-This module contains standardized signal decomposition models for use in the
-SDT algorithms using the OSD modeling language. The defined signal decompositions are:
 
-1) '_osd_l2_l1d1_l2d2p365': separating a piecewise constant component from a smooth
-and seasonal component, with Gaussian noise
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-2) '_osd_tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
-an asymmetric laplacian noise model, fitting a local quantile instead of a
-local average
-    - tl1: 'tilted l1-norm,' also known as quantile cost function
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-3) '_osd_l1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
-of Gaussian residuals
-    - l1: l1-norm
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) '_osd_l2_l1d2_constrained':
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d2: piecewise linear heuristic
+This module contains standardized signal decomposition models for use in the SDT algorithms using
+the OSD modeling language. The defined signal decompositions are:
+
+1. `_osd_l2_l1d1_l2d2p365`: separating a piecewise constant component from a smooth and seasonal component, with Gaussian noise
+    - `l2`: gaussian noise, sum-of-squares small or l2-norm squared
+    - `l1d1`: piecewise constant heuristic, l1-norm of first order differences
+    - `l2d2p365`: small second order diffs (smooth) and 365-periodic
+
+2. `_osd_tl1_l2d2p365`: similar to (2), estimating a smooth, seasonal component with an asymmetric laplacian noise model, fitting a local quantile instead of a local average
+    - `tl1`: 'tilted l1-norm,' also known as quantile cost function
+    - `l2d2p365`: small second order diffs (smooth) and 365-periodic
+
+3. `_osd_l1_l1d1_l2d2p365`: like (1) but with an asymmetric residual cost instead of Gaussian residuals
+    - `l1`: l1-norm
+    - `l1d1`: piecewise constant heuristic, l1-norm of first order differences
+    - `l2d2p365`: small second order diffs (smooth) and 365-periodic
+
+4. `_osd_l2_l1d2_constrained`:
+    - `l2`: gaussian noise, sum-of-squares small or l2-norm squared
+    - `l1d2`: piecewise linear heuristic
     - constrained to have first val at 0 and last val at 1
+
 """
 import sys
 import numpy as np

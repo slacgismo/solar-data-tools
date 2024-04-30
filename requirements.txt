@@ -24,3 +24,4 @@ pydata-sphinx-theme
 sphinx-design
 nbsphinx
 pandoc
+myst-parser

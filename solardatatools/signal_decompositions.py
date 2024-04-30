@@ -7,23 +7,22 @@ SDT algorithms. The defined signal decompositions are:
 
 1) 'l2_l1d1_l2d2p365': separating a piecewise constant component from a smooth
 and seasonal component, with Gaussian noise
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
+- l2: gaussian noise, sum-of-squares small or l2-norm squared
+- l1d1: piecewise constant heuristic, l1-norm of first order differences
+- l2d2p365: small second order diffs (smooth) and 365-periodic
 2) 'tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
-an asymmetric laplacian noise model, fitting a local quantile instead of a
-local average
-    - tl1: 'tilted l1-norm,' also known as quantile cost function
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
+an asymmetric laplacian noise model, fitting a local quantile instead of a local average
+- tl1: 'tilted l1-norm,' also known as quantile cost function
+- l2d2p365: small second order diffs (smooth) and 365-periodic
 3) 'l1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
 of Gaussian residuals
-    - l1: l1-norm
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
+- l1: l1-norm
+- l1d1: piecewise constant heuristic, l1-norm of first order differences
+- l2d2p365: small second order diffs (smooth) and 365-periodic
 4) 'l2_l1d2_constrained':
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d2: piecewise linear heuristic
-    - constrained to have first val at 0 and last val at 1
+- l2: gaussian noise, sum-of-squares small or l2-norm squared
+- l1d2: piecewise linear heuristic
+- constrained to have first val at 0 and last val at 1
 """
 import sys
 import numpy as np
@@ -139,10 +138,10 @@ def tl1_l2d2p365(
 ):
     """
     Used in:
-        solardatatools/algorithms/sunrise_sunset_estimation.py
-        solardatatools/clear_day_detection.py
-        solardatatools/data_quality.py
-        solardatatools/sunrise_sunset.py
+    solardatatools/algorithms/sunrise_sunset_estimation.py
+    solardatatools/clear_day_detection.py
+    solardatatools/data_quality.py
+    solardatatools/sunrise_sunset.py
 
 
     This is a convex problem and the default solver across SDT is OSQP.
@@ -152,8 +151,8 @@ def tl1_l2d2p365(
     :param use_ixs: List of booleans indicating indices to use in signal.
     None is default (uses the entire signal).
     :param tau: Quantile regression parameter,between zero and one, and it sets
-     the approximate quantile of the residual distribution that the model is fit to
-     See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
+    the approximate quantile of the residual distribution that the model is fit to
+    See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
     :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the smoothness of the
     seasonal signal
