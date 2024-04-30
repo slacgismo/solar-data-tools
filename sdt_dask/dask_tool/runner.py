@@ -3,7 +3,7 @@
 This module provides a class to run the SolarDataTools pipeline on a Dask cluster.
 It takes a data plug and a dask client as input and runs the pipeline on the data plug
 
-See the README and tool_demo_SDTDask.ipynb for more information
+See the README and example notebook for more information
 
 """
 import os
@@ -16,13 +16,15 @@ from solardatatools import DataHandler
 
 
 class Runner:
-    """A class to run the SolarDataTools pipeline on a Dask cluster.
+    """ A class to run the SolarDataTools pipeline on a Dask cluster.
         Will handle invalid data keys and failed datasets.
 
-        :param keys:
-            data_plug (:obj:`DataPlug`): The data plug object.
-            client (:obj:`Client`): The Dask client object.
-            output_path (str): The path to save the results.
+        :param data_plug: a handler to the data plug object.
+        :type data_plug: class:`DataPlug`
+        :param client: a handler to the Dask client object.
+        :type client: class:`Client`
+        :param output_path: the path to save the results.
+        :type output_path: str
     """
 
     def __init__(self, data_plug, client, output_path="../results/"):
@@ -31,24 +33,26 @@ class Runner:
         self.output_path = output_path
 
     def set_up(self, KEYS, **kwargs):
-        """function to set up the pipeline on the data plug
+        """ A function to set up the pipeline on the data plug
 
         Call run_pipeline functions in a for loop over the keys
         and collect results in a DataFrame
 
-        :param keys:
-            KEYS (list): List of tuples
-            **kwargs: Optional parameters.
-
+        :param KEYS: List of tuples match dataplug format
+        :type KEYS: list
+        :param kwargs: additional arguments to pass to the run_pipeline function
+        :type kwargs: dict
         """
 
         reports = []
         runtimes = []
         losses = []
-        get_data_errors = []
         errors = []
 
         class Data:
+            """ A class to store the results of the pipeline run on a single key
+            The object is delayed to be computed.
+            """
             reports = None
             loss_reports = None
             runtime = None
@@ -61,6 +65,8 @@ class Runner:
 
 
         class DaskErrors:
+            """ A class to store the errors of the pipeline run on a single key
+            """
             get_data_errors = None
             run_pipeline_errors = None
             run_pipeline_report_errors = None
@@ -76,10 +82,19 @@ class Runner:
 
             @staticmethod
             def get_attrs():
-                # return [attr for attr in dir(DaskErrors) if not callable(getattr(DaskErrors,attr)) and not attr.startswith("__")]
                 return ["get_data_errors", "run_pipeline_errors", "run_pipeline_report_errors", "run_loss_analysis_errors", "loss_analysis_report_errors"]
 
         def run(data_plug, key, **kwargs):
+            """ A function to get data from dataplug, run sdt pipeline and 
+            loss analysis on a single key. Will catch errors and store them in the DaskErrors object.
+
+            :param data_plug: a handler to the data plug object.
+            :type data_plug: class:`DataPlug`
+            :param key: a key to get data from the data plug
+            :type key: tuple
+            :param kwargs: additional arguments to pass to the run_pipeline function
+            :type kwargs: dict
+            """
             report = None
             loss_report = None
             runtime = None
@@ -148,6 +163,8 @@ class Runner:
             return Data(report, loss_report, runtime, errors)
 
         def generate_report(reports, losses):
+            """ Generate a dataframe from a list of reports and losses
+            """
             reports = helper_data(reports)
             losses = helper_data(losses)
             df_reports = pd.DataFrame(reports)
@@ -155,12 +172,13 @@ class Runner:
             return pd.concat([df_reports, loss_reports], axis=1)
 
         def helper_data(datas):
+            """ Replace None with empty dictionary to create DataFrame
+            """
             return [data if data is not None else {} for data in datas]
 
         def generate_errors(errors):
-            # input is a list of Errors objects
-            # output is a attribute-list dictionary
-            # go through all member in Errors
+            """ Generate a dictionary of errors from a list of DaskErrors objects
+            """ 
             errors_dict = {}
             for key in DaskErrors.get_attrs():
                 errors_dict[key] = []
@@ -179,13 +197,23 @@ class Runner:
                 self.error = error
 
         
-        def prepare_final_report(reports, losses, runtimes, get_data_errors, errors):
+        def prepare_final_report(reports, losses, runtimes, errors):
+            """ A function to generate final summary report, will add runtime and errors to the report
+
+            :param reports: a list of reports, each report is a dictionary
+            :type reports: list
+            :param losses: a list of losses, each loss is a dictionary
+            :type losses: list
+            :param runtimes: a list of runtimes, each runtime is a float
+            :type runtimes: list
+            :param errors: a list of errors, each error is DaskErrors object
+            :type errors: list
+            """
             df_reports = generate_report(reports, losses)
             errors_dict = generate_errors(errors)
 
             columns = {
                 "runtime": runtimes,
-                "get_data_errors": get_data_errors,
             }
 
             for key in DaskErrors.get_attrs():
@@ -196,7 +224,7 @@ class Runner:
 
             return df_reports.assign(**columns)
 
-
+        # for each key, use Dask delayed to run the pipeline
         for key in KEYS:
 
             data = delayed(run)(self.data_plug, key, **kwargs)
@@ -206,24 +234,25 @@ class Runner:
             runtimes.append(data.runtime)
             errors.append(data.errors)
 
-        self.df_reports = delayed(prepare_final_report)(reports, losses, runtimes, get_data_errors, errors)
+        self.df_reports = delayed(prepare_final_report)(reports, losses, runtimes, errors)
 
     def visualize(self, filename="sdt_graph.png"):
-        # visualize the pipeline, user should have graphviz installed
+        """ Visualize the pipeline, user should have graphviz installed
+        """
         self.df_reports.visualize(filename)
 
-    def get_result(self, dask_report="dask-report.html", summary_report="summary_report.csv", additional_columns=pd. DataFrame()):
-        # test if the filepath exist, if not create it
+    def get_result(self, dask_report="dask-report.html", summary_report="summary_report.csv"):
+        """ Compute the tasks on the cluster and save the results
+        """
         time_stamp = strftime("%Y%m%d-%H%M%S")
+        # test if the filepath exist, if not create it
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
-        # Compute tasks on cluster and save results
 
+        # Compute tasks on cluster and save results
         with performance_report(self.output_path + "/" + f"{time_stamp}-" + dask_report):
             summary_table = self.client.compute(self.df_reports)
             df = summary_table.result()
-            if not additional_columns.empty:
-                df = pd.concat([df, additional_columns], axis=1)
             df.to_csv(self.output_path + "/" + f"{time_stamp}-" + summary_report)
 
         self.client.shutdown()
