@@ -8,7 +8,15 @@ jobs:
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v3
-            
+
+# Necessary action when needing to use AWS credentials.
+          - name: Configure AWS Credentials
+            uses: aws-actions/configure-aws-credentials@v1
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: us-west-1
+              
           - name: Install Python
             uses: actions/setup-python@v3
             with:
@@ -17,6 +25,17 @@ jobs:
           - name: Install Dependencies
             run: |
               sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
-
+              sudo $pythonLocation/bin/python3 -m pip install awscli coverage
+              sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
+              $pythonLocation/bin/python3 -m pip list
+              
+          - name: Setup Mosek License File
+            run: |
+              sudo mkdir /root/mosek
+              mkdir $HOME/mosek
+              aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
+              sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
+              
+# Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
-            run: sudo $pythonLocation/bin/python3 -m unittest
+            run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
