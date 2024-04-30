@@ -39,4 +39,3 @@ jobs:
 # Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
           - name: Run Unit Tests
             run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
-            
