@@ -2,7 +2,7 @@ try:
     import os
     from dask.distributed import Client
     from dask_cloudprovider.azure import AzureVMCluster
-    from sdt_dask.clients.clients import Clients
+    from sdt_dask.clients.clientplug import ClientPlug
 
 except ModuleNotFoundError as error:
     packages = "\tos\n\tdask.distributed\n\tdask_cloudprovider.azure"
@@ -10,7 +10,7 @@ except ModuleNotFoundError as error:
     raise ModuleNotFoundError(msg)
 
 finally:
-    class Azure(Clients):
+    class Azure(ClientPlug):
         def __init__(self,
                     resource_group: str = "",
                     vnet: str = "",
@@ -18,7 +18,7 @@ finally:
                     region_name: str = "westus2",
                     vm_size: str = "Standard_D4s_v3",
                     public_ingress: bool = True,
-                    disk_size: int = 100,
+                    disk_size: int = 30,
                     n_workers: int = 5,
                     worker_options: dict = {
                         "nthreads": 2,

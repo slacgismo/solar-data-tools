@@ -16,11 +16,6 @@ Before running the script, make sure to set up the environment variables for Azu
     RESOURCE_GROUP
     VNET
     SECURITY_GROUP
-    &
-    AWS_DEFAULT_REGION
-    AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY
-    (for S3Bucket data plug use)
 """
 
 import os, sys, logging, argparse
