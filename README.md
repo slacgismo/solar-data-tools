@@ -116,7 +116,7 @@ $ conda create -n pvi-user-conda slacgismo::solar-data-tools
 Starting the environment:
 
 ```bash
-$ conda activate pvi_user
+$ conda activate pvi-user
 ```
 
 Stopping the environment:
