@@ -66,6 +66,9 @@ docs = [
     "sphinx-changelog>=1.2.0",
     "sphinx_design",
 ]
+mosek = [
+    "mosek"
+]
 
 [project.urls]
 Homepage = "https://github.com/slacgismo/solar-data-tools"
