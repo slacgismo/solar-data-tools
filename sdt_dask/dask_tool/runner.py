@@ -44,10 +44,8 @@ class Runner:
         :type kwargs: dict
         """
 
-        reports = []
-        runtimes = []
-        losses = []
-        errors = []
+        
+        datas = []
 
         class Data:
             """ A class to store the results of the pipeline run on a single key
@@ -104,17 +102,14 @@ class Runner:
             loss_analysis_report_error = None
 
             datahandler = None
-            error = "No Error"
+            get_data_errors = "No Error"
             try:
                 result = data_plug.get_data(key)
                 dh = DataHandler(result)
                 datahandler = dh
             except Exception as e:
-                error = str(e)
+                get_data_errors = str(e)
 
-            dh_data = DataHandlerData(datahandler, error)
-            datahandler = dh_data.dh
-            get_data_errors = dh_data.error
 
             if datahandler is None:
                 errors = DaskErrors(get_data_errors, "get_data error leading nothing to run", "get_data error leading nothing to analyze", "get_data error leading nothing to report", "get_data error leading nothing to report")
@@ -165,6 +160,7 @@ class Runner:
         def generate_report(reports, losses):
             """ Generate a dataframe from a list of reports and losses
             """
+            
             reports = helper_data(reports)
             losses = helper_data(losses)
             df_reports = pd.DataFrame(reports)
@@ -191,13 +187,8 @@ class Runner:
                         errors_dict[key].append("No Error")
             return errors_dict
 
-        class DataHandlerData():
-            def __init__(self, dh, error):
-                self.dh = dh
-                self.error = error
-
         
-        def prepare_final_report(reports, losses, runtimes, errors):
+        def prepare_final_report(datas):
             """ A function to generate final summary report, will add runtime and errors to the report
 
             :param reports: a list of reports, each report is a dictionary
@@ -209,6 +200,18 @@ class Runner:
             :param errors: a list of errors, each error is DaskErrors object
             :type errors: list
             """
+            
+            reports = []
+            runtimes = []
+            losses = []
+            errors = []
+
+            for data in datas:
+                reports.append(data.report)
+                runtimes.append(data.runtime)
+                losses.append(data.loss_report)
+                errors.append(data.errors)
+
             df_reports = generate_report(reports, losses)
             errors_dict = generate_errors(errors)
 
@@ -229,12 +232,9 @@ class Runner:
 
             data = delayed(run)(self.data_plug, key, **kwargs)
 
-            reports.append(data.report)
-            losses.append(data.loss_report)
-            runtimes.append(data.runtime)
-            errors.append(data.errors)
+            datas.append(data)
 
-        self.df_reports = delayed(prepare_final_report)(reports, losses, runtimes, errors)
+        self.df_reports = delayed(prepare_final_report)(datas)
 
     def visualize(self, filename="sdt_graph.png"):
         """ Visualize the pipeline, user should have graphviz installed
