@@ -46,12 +46,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Dependencies
+      - name: Install Python Dependencies
         run: |
-          sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
-          sudo $pythonLocation/bin/python3 -m pip install awscli coverage
-          sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
-          $pythonLocation/bin/python3 -m pip list
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv pip install --system --break-system-packages -r requirements.txt
+          uv pip install --system --break-system-packages pytest pytest-cov pytest-github-report pytest-github-actions-annotate-failures
 
       - name: Run Unit Tests
-        run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
+        env:
+          pytest_github_report: true
+          pytest_verbosity: 2
+        run: pytest -v --cov=src --cov-report=xml --cov-report=term-missing --color=yes tests/
