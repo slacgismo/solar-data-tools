@@ -91,48 +91,43 @@ See [notebooks](/notebooks) folder for examples.
 
 ## Install & Setup
 
-### 3 ways of setting up, either approach works:
+#### Recommended: Install with pip
 
-#### 1) Recommended: Install with pip
-
-In a fresh Python virtual environment, simply run
-
+In a fresh Python virtual environment, simply run:
 
 ```bash
 $ pip install solar-data-tools
 ```
 
-#### 2) Creat conda virtual environment from file
-
-Creating the env:
+or if you would like to use MOSEK, install the optional dependency as well:
 
 ```bash
-$ conda env create -f pvi-user.yml
+$ pip install "solar-data-tools[mosek]"
 ```
 
-Starting the env:
+#### Install with conda
+
+Creating the environment and directly installing the package and its dependencies:
+
+```bash
+$ conda create -n pvi-user-conda slacgismo::solar-data-tools
+```
+
+Starting the environment:
 
 ```bash
 $ conda activate pvi_user
 ```
 
-Stopping the env
+Stopping the environment:
 
 ```bash
 $ conda deactivate
 ```
 
-Updating the env with latest
+Or alternatively install the package in an already existing environment:
 
 ```bash
-$ conda env update -f pvi-user.yml
-```
-
-Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
-
-#### 3) General Anaconda Package
-
-```sh
 $ conda install slacgismo::solar-data-tools
 ```
 
@@ -144,7 +139,9 @@ By default, [QSS](https://github.com/cvxgrp/qss) and CLARABEL solvers are used f
 
 #### MOSEK
 
-MOSEK is a commercial software package. It is more stable and offers faster solve times. The included YAML/requirements.txt file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
+MOSEK is a commercial software package. Since it is more stable and offers faster solve times, we provide continuing support for it, however you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running `pip install "solar-data-tools[mosek]"`. If installing from conda, you will have to manually install MOSEK if you desire to use it as conda does not support optional dependencies like pip. 
+
+More information about MOSEK and how to obtain a license is available here:
 
 * [mosek](https://www.mosek.com/resources/getting-started/)
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
@@ -209,7 +206,3 @@ We use [Semantic Versioning](http://semver.org/) for versioning. For the version
 * **Bennet Meyers** - *Initial work and Main research work* - [Bennet Meyers GitHub](https://github.com/bmeyers)
 
 See also the list of [contributors](https://github.com/bmeyers/solar-data-tools/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICENSE) file for details

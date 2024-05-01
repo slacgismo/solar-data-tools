@@ -1,41 +1,60 @@
 name: Tests
 
-on: [push]
+on:
+  pull_request:
+    branches:
+      - "main"
+env:
+  # todo(nimish): extend to matrix of python versions/OS
+  AWS_REGION: "us-west-1"
+  USE_MOSEK: "false"
+
 jobs:
-    run-tests:
-        runs-on: ubuntu-latest
-        environment: test
-        steps:
-          - name: Checkout Repository
-            uses: actions/checkout@v3
+  run-tests:
+    runs-on: ubuntu-latest
+    environment: test
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: env.USE_MOSEK == 'true'
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-# Necessary action when needing to use AWS credentials.
-          - name: Configure AWS Credentials
-            uses: aws-actions/configure-aws-credentials@v1
-            with:
-              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws-region: us-west-1
+      - name: Setup Mosek License File
+        if: env.USE_MOSEK == 'true'
+        env:
+          MOSEK_LICENSE: "s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic"
+        run: |
+          sudo mkdir /root/mosek
+          mkdir $HOME/mosek
+          aws s3 cp ${{env.MOSEK_LICENSE}} $HOME/mosek/mosek.lic
+          sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
 
-          - name: Install Python
-            uses: actions/setup-python@v3
-            with:
-              python-version: '3.10'
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          fetch-tags: true
 
-          - name: Install Dependencies
-            run: |
-              sudo $pythonLocation/bin/python3 -m pip install -r requirements.txt
-              sudo $pythonLocation/bin/python3 -m pip install awscli coverage
-              sudo $pythonLocation/bin/python3 -m pip install setuptools --upgrade
-              $pythonLocation/bin/python3 -m pip list
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-          - name: Setup Mosek License File
-            run: |
-              sudo mkdir /root/mosek
-              mkdir $HOME/mosek
-              aws s3 cp s3://slac.gismo.ci.artifacts/mosek.license/mosek.lic $HOME/mosek/mosek.lic
-              sudo cp $HOME/mosek/mosek.lic /root/mosek/mosek.lic
+      - name: Install Python Dependencies
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv pip install --system --break-system-packages -r requirements.txt
+          uv pip install --system --break-system-packages pytest pytest-cov pytest-github-report pytest-github-actions-annotate-failures
 
-# Current unit test is not consistent. Occasionally fails despite usually passing. Needs to be fixed.
-          - name: Run Unit Tests
-            run: sudo $pythonLocation/bin/python3 -m coverage run -m unittest
+      - name: Run Unit Tests
+        env:
+          pytest_github_report: true
+          pytest_verbosity: 2
+        run: pytest -v --cov=src --cov-report=xml --cov-report=term-missing --color=yes tests/
