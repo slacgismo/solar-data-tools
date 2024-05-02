@@ -55,10 +55,7 @@ dynamic = ["version"]
 [tool.setuptools_scm]
 
 [tool.setuptools.packages.find]
-exclude = ["notebooks"]
-
-[tool.setuptools.package-data]
-solardatatools = ["fixtures/*"]
+include = ["solardatatools*",  "pvsystemprofiler*", "statistical_clear_sky*"]
 
 [project.optional-dependencies]
 docs = [

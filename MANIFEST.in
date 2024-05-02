@@ -1,0 +1,8 @@
+include solardatatools/fixtures/*
+prune statistical-clear-sky/fixtures
+prune notebooks
+prune docs
+prune tests
+prune data
+prune dataviewer
+prune conda_recipe
