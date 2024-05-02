@@ -122,8 +122,7 @@ def check_enviornment_variables():
     return TAGS, ENVIRONMENT, AWS_DEFAULT_REGION
 
 VPC = "vpc-ab2ff6d3"  # for us-west-2
-IMAGE = "nimishy/sdt-windows:latest"
-IMAGE = "nimishy/sdt-cloud-win:latest"
+
 IMAGE = "nimishy/p_3.10.11_dask:latest"
 
 
@@ -139,7 +138,6 @@ if __name__ == '__main__':
     # Required for S3 Bucket pull keys as a list given as output
     key_list = data_plug._pull_keys()
     KEYS = [(key,) for key in key_list]
-    KEYS = KEYS[:3]
 
     # Dask Fargate client Setup
     client_setup = FargateClient(workers=WORKERS,
