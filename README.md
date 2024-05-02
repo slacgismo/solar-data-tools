@@ -87,7 +87,7 @@ and plotting as well.
 
 There is close integration between this repository and the [Statistical Clear Sky](https://github.com/slacgismo/StatisticalClearSky) repository, which provides a "clear sky model" of system output, given only measured power as an input.
 
-See [notebooks](/notebooks) folder for examples.
+See [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks) folder for examples.
 
 ## Install & Setup
 
