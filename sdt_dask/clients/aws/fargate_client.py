@@ -1,6 +1,7 @@
 """
 Class for the fargate client plug to be used with the SDT Dask Tool (Runner)
 """
+import dask.config
 from sdt_dask.clients.clientplug import ClientPlug
 from dask_cloudprovider.aws import FargateCluster
 from dask.distributed import Client
@@ -21,7 +22,7 @@ class FargateClient(ClientPlug):
     :type threads: int
     :param memory: The amount of memory to be used by each worker, default CPU
         is 4vCPU and the memory can be specified between 8 and 30, the largest
-        Dataframe size observed is 5.66 GiB, defaults to 8.0, for more
+        Dataframe size observed is 5.66 GiB, defaults to 16 GB, for more
         information on ECS CPU and memory ranges visit
         https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
     :type memory: int
@@ -30,11 +31,12 @@ class FargateClient(ClientPlug):
         https://cloudprovider.dask.org/en/latest/aws.html
     :type kwargs: dict
     """
-    def __init__(self, workers: int = 2, threads: int = 2, memory: int = 8, **kwargs):
+    def __init__(self, workers: int = 2, threads: int = 2, memory: int = 16, **kwargs):
         self.workers = workers
         self.threads = threads
         self.memory = memory * 1024
         self.kwargs = kwargs
+        self.dask_config = dask.config
         self.client = None
         self.cluster = None
 

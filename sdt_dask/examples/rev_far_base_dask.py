@@ -47,7 +47,7 @@ parser.add_argument(
 parser.add_argument(
     "-m",
     "--memory",
-    default=8,
+    default=16,
     help=(
         "Declare memory limit per worker. from 8 to 30 for 4vCPU "
         "Example --memory 8, default=8"),
@@ -126,17 +126,21 @@ IMAGE = "nimishy/sdt-windows:latest"
 IMAGE = "nimishy/sdt-cloud-win:latest"
 IMAGE = "nimishy/p_3.10.11_dask:latest"
 
-# Defined S3 Bucket dataplug
-data_plug = S3Bucket(bucket_name=BUCKET)
 
-# Required for S3 Bucket pull keys as a list given as output
-key_list = data_plug._pull_keys()
-KEYS = [(key,) for key in key_list]
 
 # Sets the dask fargate client and dask tool
 # Uses the dask tool for computation
 if __name__ == '__main__':
     TAGS, ENVIRONMENT, AWS_DEFAULT_REGION = check_enviornment_variables()
+
+    # Defined S3 Bucket dataplug
+    data_plug = S3Bucket(bucket_name=BUCKET)
+
+    # Required for S3 Bucket pull keys as a list given as output
+    key_list = data_plug._pull_keys()
+    KEYS = [(key,) for key in key_list]
+    KEYS = KEYS[:3]
+
     # Dask Fargate client Setup
     client_setup = FargateClient(workers=WORKERS,
                                  threads=THREADS,
