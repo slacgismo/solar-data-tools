@@ -4,13 +4,13 @@ AWS test script for Dask using S3Bucket data plug
 It takes in the following arguments:
     -w:int      worker number     (default=4)
     -t:int      thread number     (default=2)
-    -m:int      memory            (default=8)
+    -m:int      memory            (default=16)
     -v:bool     verbose           (default=False)
     -b:string   bucket name       (default='pvinsight-dask-baseline')
     -r:string   result path       (default='../results/')
 
 Example command to run this test script:
-    python rev_far_base_dask.py -l info -w 2 -t 2
+    python rev_far_base_dask.py -w 2 -t 2
 
 Before running the script, make sure to set up the environment variables:
     project_pa_number

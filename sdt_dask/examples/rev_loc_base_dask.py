@@ -4,6 +4,7 @@ Local test script for Dask using local data plug
 It takes in the following arguments:
     -w:int      worker number     (default=4)
     -t:int      thread number     (default=2)
+    -m:int      memory            (default=5)
     -v:bool     verbose           (default=False)
     -f:string   file path         (default=None)
     -r:string   result path       (default='../results/')

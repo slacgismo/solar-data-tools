@@ -30,7 +30,7 @@ class AzureClient(ClientPlug):
         https://cloudprovider.dask.org/en/latest/azure.html
     :type kwargs: dict
     """
-    def __init__(self, workers: int = 5, threads: int = 2, memory: float = 15.36, **kwargs):
+    def __init__(self, workers: int = 5, threads: int = 2, memory: float = 15.63, **kwargs):
             self.workers = workers
             self.threads = threads
             self.memory = memory

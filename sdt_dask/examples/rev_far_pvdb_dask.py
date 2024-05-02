@@ -2,14 +2,14 @@
 AWS test script for Dask using redshift data plug
 
 It takes in the following arguments:
-    -l:string   log level         (default='warning')
     -w:int      worker number     (default=4)
     -t:int      thread number     (default=2)
+    -m:int      memory            (default=16)
     -v:bool     verbose           (default=False)
     -r:string   result path       (default='../results/')
 
 Example command to run this test script:
-    python rev_far_pvdb_dask.py -l info -w 20 -t 2
+    python rev_far_pvdb_dask.py -w 20 -t 2
 
 Before running the script, make sure to set up the environment variables:
     PA_NUMBER

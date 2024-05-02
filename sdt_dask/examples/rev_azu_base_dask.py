@@ -10,7 +10,7 @@ It takes in the following arguments:
     -r:string   result path       (default='../results/')
 
 Example command to run this test script:
-    python rev_azu_base_dask.py -l info -w 2 -t 2
+    python rev_azu_base_dask.py -w 2 -t 2
 
 Before running the script, make sure to set up the environment variables for Azure:
     RESOURCE_GROUP
@@ -20,7 +20,7 @@ Before running the script, make sure to set up the environment variables for Azu
 
 import os, argparse
 from time import strftime
-from sdt_dask.clients.azure.azure import Azure
+from sdt_dask.clients.azure.azure_client import AzureClient
 from sdt_dask.dataplugs.S3Bucket_plug import S3Bucket
 from sdt_dask.dask_tool.runner import Runner
 
@@ -49,7 +49,7 @@ parser.add_argument(
 parser.add_argument(
     "-m",
     "--memory",
-    default=15.36,
+    default=15.63,
     help=(
         "Declare memory limit per worker. "
         "Example --memory 15.36', default=15.36"),
@@ -86,15 +86,10 @@ parser.add_argument(
 options = parser.parse_args()
 
 
-resource_group = os.getenv("RESOURCE_GROUP")
-vnet = os.getenv("VNET")
-security_group = os.getenv("SECURITY_GROUP")
+resource_group=os.getenv("RESOURCE_GROUP")
+vnet=os.getenv("VNET")
+security_group=os.getenv("SECURITY_GROUP")
 image = "nimishy/sdt-cloud-win:latest"
-
-print('Resource Group: %s', resource_group)
-print('VNet: %s', vnet)
-print('Security Group: %s', security_group)
-print('Docker Image: %s', image)
 
 WORKERS = int(options.workers)
 THREADS = int(options.threads)
@@ -116,22 +111,28 @@ data_plug = S3Bucket(bucket_name=BUCKET)
 key_list = data_plug._pull_keys()
 KEYS = [(key,) for key in key_list]
 
-
 # Sets the dask fargate client and dask tool
 # Uses the dask tool for computation
 if __name__ == '__main__':
     # Dask Fargate client Setup
-    client_setup = Azure(workers=WORKERS,
+    client_setup = AzureClient(workers=WORKERS,
                          threads=THREADS,
                          memory=MEMORY,
                          resource_group=resource_group,
-                         region_name="westus2",
-                         vm_size="Standard_D4s_v3",
-                         public_ingress=True,
                          vnet=vnet,
                          security_group=security_group,
-                         n_workers=WORKERS,
-                         docker_image=image)
+                         docker_image=image,
+                         location="westus2",
+                         vm_size="Standard_D4s_v3",
+                         public_ingress=True,
+                         disk_size=30,
+                         # Environment variables needed to let VM have access to the S3 bucket
+                         env_vars={ 
+                            "AWS_ACCESS_KEY_ID": os.getenv["AWS_ACCESS_KEY_ID"],
+                            "AWS_SECRET_ACCESS_KEY": os.getenv["AWS_SECRET_ACCESS_KEY"],
+                            "AWS_REGION": os.getenv["AWS_REGION"]
+                        }
+                        )
     # Dask Local Client Initialization
     client = client_setup.init_client()
 
