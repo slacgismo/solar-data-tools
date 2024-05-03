@@ -25,7 +25,7 @@
 <tr>
   <td>Build Status</td>
   <td>
-    <a href="https://solar-data-tools.readthedocs.io/en/stable/">
+    <a href="https://solar-data-tools.readthedocs.io/">
         <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
     </a>
         <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml">
@@ -36,17 +36,6 @@
         <img src="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
     </a>
   </td>
-</tr>
-<tr>
-    <td>Code Quality</td>
-    <td>
-        <a href="https://lgtm.com/projects/g/slacgismo/solar-data-tools/context:python">
-            <img alt="Language grade: Python" src="https://img.shields.io/lgtm/grade/python/g/slacgismo/solar-data-tools.svg?logo=lgtm&logoWidth=18"/>
-        </a>
-        <a href="https://lgtm.com/projects/g/slacgismo/solar-data-tools/alerts/">
-            <img alt="Total alerts" src="https://img.shields.io/lgtm/alerts/g/slacgismo/solar-data-tools.svg?logo=lgtm&logoWidth=18"/>
-        </a>
-    </td>
 </tr>
 <tr>
     <td>Publications</td>
@@ -85,9 +74,7 @@ a data set, common data transforms, and fixing time stamp issues. These tools ar
 automatic and require little if any input from the user. Libraries are included to help with data IO
 and plotting as well.
 
-There is close integration between this repository and the [Statistical Clear Sky](https://github.com/slacgismo/StatisticalClearSky) repository, which provides a "clear sky model" of system output, given only measured power as an input.
-
-See [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks) folder for examples.
+See the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder for examples.
 
 ## Install & Setup
 
@@ -107,10 +94,13 @@ $ pip install "solar-data-tools[mosek]"
 
 #### Install with conda
 
-Creating the environment and directly installing the package and its dependencies:
+>[!WARNING]
+> When installing solar-data-tools using conda, you will need to add three channels, conda-forge, slacgismo, and stanfordcvxgrp, to your conda config (or alternatively specify them using the `-c` flag as shown in the examples below). Failure to do so will result in the installation of an outdated solar-data-tools version. Note that we will be moving solar-data-tools to conda-forge soon, which will simplify the installation process. Check back soon for an update! For more on conda channels, see the [conda docs](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html).
+
+Creating the environment and directly installing the package and its dependencies from the appropriate conda channels:
 
 ```bash
-$ conda create -n pvi-user-conda slacgismo::solar-data-tools
+$ conda create -n pvi-user solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp 
 ```
 
 Starting the environment:
@@ -128,7 +118,7 @@ $ conda deactivate
 Or alternatively install the package in an already existing environment:
 
 ```bash
-$ conda install slacgismo::solar-data-tools
+$ conda install solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp 
 ```
 
 ### Solvers
