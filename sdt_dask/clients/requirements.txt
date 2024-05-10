@@ -1,0 +1,3 @@
+solar-data-tools @ git+https://github.com/zhanghaoc/solar-data-tools@develop-dask
+dask[complete]
+dask-cloudprovider[all]

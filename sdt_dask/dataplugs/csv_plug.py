@@ -6,7 +6,8 @@ from sdt_dask.dataplugs.dataplug import DataPlug
 
 
 class LocalFiles(DataPlug):
-    """Dataplug class for retrieving data from some source. It's recommended
+    """
+    Dataplug class for retrieving data from some source. It's recommended
     that user-created dataplug inherit from this class to ensure compatibility.
 
     The initialization argument for each class will be different depending on
@@ -18,7 +19,11 @@ class LocalFiles(DataPlug):
         self.ext = ext
 
     def _read_file(self, filename):
-        print(f"Loading file {filename}...")
+        """
+        Read the file and store it in the class attribute df
+
+        :param filename: Name of the file to read
+        """
         file = self.path + filename + self.ext
         if self.ext == ".csv":
             self.df = pd.read_csv(file)
@@ -26,11 +31,15 @@ class LocalFiles(DataPlug):
             raise "File type not supported."
 
     def _clean_data(self):
-        # Convert index from int to datetime object
+        """
+        Clean the data and convert the index to a datetime object by calling
+        the make_time_series function from the solardatatools package
+        """
         self.df, _ = make_time_series(self.df)
 
     def get_data(self, key: tuple[str]) -> pd.DataFrame:
-        """This is the main function that the Dask tool will interact with.
+        """
+        This is the main function that the Dask tool will interact with.
         Users should keep the args and returns as defined here when writing
         their custom dataplugs.
 

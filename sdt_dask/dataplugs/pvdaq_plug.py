@@ -5,7 +5,8 @@ from sdt_dask.dataplugs.dataplug import DataPlug
 
 
 class PVDAQPlug(DataPlug):
-    """Dataplug class for retrieving data from the PVDAQ DB.
+    """
+    Dataplug class for retrieving data from the PVDAQ DB.
     Note that the DEMO_KEY has a rate limit of 30/h, 50/d per IP address.
     """
     def __init__(self, api_key="DEMO_KEY", power_col="ac_power"):
@@ -13,6 +14,10 @@ class PVDAQPlug(DataPlug):
         self.power_col = power_col
 
     def _pull_data(self, key, year):
+        """
+        Pull the data from the PVDAQ database using the get_pvdaq_data function
+        from the solardatatools package.
+        """
         self.df = get_pvdaq_data(sysid=key, year=year, api_key=self.api_key)
 
     def _clean_data(self):

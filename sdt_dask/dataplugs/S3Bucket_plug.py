@@ -7,24 +7,33 @@ from sdt_dask.dataplugs.dataplug import DataPlug
 
 
 class S3Bucket(DataPlug):
-    """ Dataplug class for retrieving data from an S3 bucket.
+    """ 
+    Dataplug class for retrieving data from an S3 bucket.
     aws configurations for the AWS CLI must be set up in local environment
     """
     def __init__(self, bucket_name):
-        """Initialize the S3Bucket object with the bucket name.
+        """
+        Initialize the S3Bucket object with the bucket name.
 
-        :param bucket_name: The name of the S3 bucket. (type: str)
+        :param bucket_name: The name of the S3 bucket to pull data from
         """
         self.bucket_name = bucket_name
 
     def _create_s3_client(self):
+        """
+        Creating a new session for each call to ensure thread safety
+        """
         # Creating a new session for each call to ensure thread safety
         session = boto3.session.Session()
         s3_client = session.client('s3')
         return s3_client
 
     def _pull_data(self, key):
+        """
+        Pull the data from the S3 bucket and store it in the class attribute df
 
+        :param key: Name of the file to read
+        """
         s3_client = self._create_s3_client()
         obj = s3_client.get_object(Bucket=self.bucket_name, Key=key)
 
@@ -32,7 +41,10 @@ class S3Bucket(DataPlug):
         self.df = pd.read_csv(obj['Body'])
 
     def _clean_data(self):
-        # Convert index from int to datetime object
+        """
+        Clean the data and convert the index to a datetime object by calling
+        the make_time_series function from the solardatatools package
+        """
         self.df, _ = make_time_series(self.df)
 
     def get_data(self, key: tuple[str]) -> pd.DataFrame:
@@ -57,7 +69,7 @@ class S3Bucket(DataPlug):
 
     def _pull_keys(self) -> list:
         """
-        Retrieves a list of file keys from a specified S3 bucket.
+        Retrieves a list of file keys from the specified S3 bucket.
 
         :return: A list of strings representing the file keys without their extensions. (type: list)
         """
