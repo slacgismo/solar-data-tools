@@ -14,13 +14,13 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Twine
-        run: sudo pip install twine
+      - name: Install Twine and Build
+        run: sudo pip install twine build
 
       - name: Create the distribution
         run: |
           git fetch --prune --unshallow --tags
-          sudo python setup.py sdist bdist_wheel
+          sudo python3 -m build
 
   build-conda:
     runs-on: ubuntu-latest
@@ -48,7 +48,7 @@ jobs:
       - name: Install the Conda Dependencies
         run: |
           conda config --set always_yes yes --set auto_update_conda false
-          conda install conda=24.1.2
+          conda update conda
           conda install -n base conda-libmamba-solver
           conda install python=3.10 conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
           git fetch --prune --unshallow --tags
@@ -63,5 +63,5 @@ jobs:
         run: |
           conda install anaconda-client
           conda config --set anaconda_upload no --set solver libmamba
-          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge --numpy 1.22.0
+          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c anaconda -c pvlib -c slacgismo -c conda-forge -c stanfordcvxgrp
           echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT

@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=64.0", "setuptools-scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solar-data-tools"
+description = "Tools for performing common tasks on solar PV data signals"
+readme = "README.md"
+license.file = "LICENSE"
+authors = [
+  { name = "Bennet Meyers", email = "bennetm@stanford.edu" },
+]
+maintainers = [
+  { name = "Sara Miskovich", email = "smiskov@slac.stanford.edu" },
+]
+keywords = ["solar", "pv", "photovoltaic"]
+requires-python = ">=3.6"
+
+dependencies = [
+    "scipy",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "jupyter",
+    "matplotlib",
+    "seaborn",
+    "requests",
+    "pvlib",
+    "cvxpy",
+    "pykml",
+    "haversine",
+    "smart_open",
+    "sig-decomp",
+    "clarabel",
+    "qss",
+    "tqdm",
+    "spcqe"
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+dynamic = ["version"]
+[tool.setuptools_scm]
+
+[tool.setuptools.packages.find]
+include = ["solardatatools*",  "pvsystemprofiler*", "statistical_clear_sky*"]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "sphinx-changelog>=1.2.0",
+    "sphinx_design",
+]
+mosek = [
+    "mosek"
+]
+
+[project.urls]
+Homepage = "https://github.com/slacgismo/solar-data-tools"
+Documentation = "https://solar-data-tools.readthedocs.io/"
+"Bug Tracker" = "https://github.com/slacgismo/solar-data-tools/issues"
+Discussions = "https://github.com/slacgismo/solar-data-tools/discussions"
