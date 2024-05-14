@@ -203,14 +203,14 @@ def _cvx_l1_l1d1_l2d2p365(
     Used in solardatatools/algorithms/capacity_change.py
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
-    None is default (uses the entire signal).
+        None is default (uses the entire signal).
     :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the total variation in
-    the final output signal
+        the final output signal
     :param w2: The regularization parameter to control the smoothness of the
-    seasonal signal
+        seasonal signal
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition
     :param verbose: Sets verbosity
@@ -277,7 +277,7 @@ def _cvx_l2_l1d2_constrained(
     This is a convex problem and the default solver across SDT is OSQP.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param w0: Weight on the residual component
     :param w1: The regularization parameter on l1d2 component
     :param return_all: Returns all components and the objective value. Used for tests.

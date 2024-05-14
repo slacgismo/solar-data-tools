@@ -2,7 +2,7 @@
 """ Clear Time Labeling Module
 
 This module contains a function to find time periods in a data matrix
-that correspond to clear sky output..
+that correspond to clear sky output.
 
 """
 import numpy as np

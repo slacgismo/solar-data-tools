@@ -39,6 +39,8 @@ extensions = [
     "nbsphinx" # for notebooks integration
 ]
 
+autosummary_generate = True
+
 source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -51,6 +53,7 @@ templates_path = [
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
     "_build",
+    "_templates",
     "Thumbs.db",
     ".DS_Store"
 ]
@@ -81,4 +84,7 @@ html_theme_options = {
     "navbar_align": "left",
     "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
     "show_version_warning_banner": True,
-}
+    "github_url": "https://github.com/slacgismo/solar-data-tools",
+    "show_toc_level": 1,
+    "footer_items": ["copyright", "sphinx-version", "sidebar-ethical-ads"],}
+

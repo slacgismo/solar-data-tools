@@ -5,6 +5,6 @@ Getting Started
 .. toctree::
    :maxdepth: 1
 
-   install
-   usage
-   notebooks/demo_default
+   getting_started/install
+   getting_started/usage
+   getting_started/notebooks/demo_default

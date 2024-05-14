@@ -5,8 +5,8 @@ Project details
 .. toctree::
    :maxdepth: 1
 
-   tech_details
-   versioning
-   authors
-   acknowledgment
-   license
+   project_details/tech_details
+   project_details/versioning
+   project_details/authors
+   project_details/acknowledgment
+   project_details/license
