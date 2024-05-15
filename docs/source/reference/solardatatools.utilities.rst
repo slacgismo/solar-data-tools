@@ -1,5 +1,5 @@
-solardatatools.utilities module
-===============================
+Utilities
+=========
 
 .. automodule:: solardatatools.utilities
    :members:

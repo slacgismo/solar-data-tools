@@ -35,6 +35,8 @@ Submodules
    solardatatools.pvpro_post_processing
    solardatatools.sensor_identification
    solardatatools.signal_decompositions
+   solardatatools._osd_signal_decompositions
+   solardatatools._cvx_signal_decompositions
    solardatatools.solar_noon
    solardatatools.sunrise_sunset
    solardatatools.time_axis_manipulation

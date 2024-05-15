@@ -1,5 +1,5 @@
-solardatatools.sensor\_identification module
-============================================
+Sensor Identification
+=====================
 
 .. automodule:: solardatatools.sensor_identification
    :members:

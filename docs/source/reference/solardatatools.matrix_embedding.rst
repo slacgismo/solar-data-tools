@@ -1,5 +1,5 @@
-solardatatools.matrix\_embedding module
-=======================================
+Matrix Embedding
+================
 
 .. automodule:: solardatatools.matrix_embedding
    :members:

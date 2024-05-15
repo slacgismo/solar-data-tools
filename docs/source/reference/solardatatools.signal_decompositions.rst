@@ -1,5 +1,5 @@
-solardatatools.signal\_decompositions module
-============================================
+Signal Decompositions
+=====================
 
 .. automodule:: solardatatools.signal_decompositions
    :members:

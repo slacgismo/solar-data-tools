@@ -1,5 +1,5 @@
-solardatatools.solar\_noon module
-=================================
+Solar Noon
+==========
 
 .. automodule:: solardatatools.solar_noon
    :members:

@@ -1,5 +1,5 @@
-solardatatools.algorithms.clipping module
-=========================================
+Clipping
+========
 
 .. automodule:: solardatatools.algorithms.clipping
    :members:

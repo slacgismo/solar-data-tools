@@ -1,5 +1,5 @@
-solardatatools.dataio module
-============================
+Data IO
+=======
 
 .. automodule:: solardatatools.dataio
    :members:

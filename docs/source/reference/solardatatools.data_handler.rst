@@ -1,5 +1,5 @@
-solardatatools.data\_handler module
-===================================
+Data Handler
+============
 
 .. automodule:: solardatatools.data_handler
    :members:

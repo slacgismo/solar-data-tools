@@ -1,5 +1,5 @@
-solardatatools.algorithms.dilation module
-=========================================
+Dilation
+========
 
 .. automodule:: solardatatools.algorithms.dilation
    :members:

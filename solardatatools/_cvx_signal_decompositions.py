@@ -21,6 +21,7 @@ This module contains standardized signal decomposition models for use in the SDT
    - `l2`: Gaussian noise, sum-of-squares small or l2-norm squared
    - `l1d2`: Piecewise linear heuristic
    - Constrained to have first value at 0 and last value at 1
+
 """
 import sys
 import numpy as np
@@ -152,15 +153,15 @@ def _cvx_tl1_l2d2p365(
         solardatatools/sunrise_sunset.py
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
-    None is default (uses the entire signal).
+        None is default (uses the entire signal).
     :param tau: Quantile regression parameter,between zero and one, and it sets
-     the approximate quantile of the residual distribution that the model is fit to
-     See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
+        the approximate quantile of the residual distribution that the model is fit to
+        See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
     :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the smoothness of the
-    seasonal signal
+        seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition

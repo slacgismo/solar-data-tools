@@ -1,5 +1,5 @@
-solardatatools.clear\_day\_detection module
-===========================================
+Clear Day Detection
+===================
 
 .. automodule:: solardatatools.clear_day_detection
    :members:

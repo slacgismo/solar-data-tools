@@ -1,5 +1,5 @@
-Polar Transform Module
-======================
+Polar Transform
+===============
 
 .. automodule:: solardatatools.polar_transform
    :members:

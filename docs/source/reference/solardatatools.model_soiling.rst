@@ -1,5 +1,5 @@
-Model Soiling Module
-====================
+Model Soiling
+=============
 
 .. automodule:: solardatatools.model_soiling
    :members:

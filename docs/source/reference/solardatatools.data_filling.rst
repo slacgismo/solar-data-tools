@@ -1,5 +1,5 @@
-solardatatools.data\_filling module
-===================================
+Data Filling
+============
 
 .. automodule:: solardatatools.data_filling
    :members:

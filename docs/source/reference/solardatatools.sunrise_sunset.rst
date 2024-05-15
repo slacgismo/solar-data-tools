@@ -1,5 +1,5 @@
-solardatatools.sunrise\_sunset module
-=====================================
+Sunrise Sunset
+==============
 
 .. automodule:: solardatatools.sunrise_sunset
    :members:

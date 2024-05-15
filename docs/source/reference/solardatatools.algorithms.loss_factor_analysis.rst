@@ -1,5 +1,5 @@
-solardatatools.algorithms.loss\_factor\_analysis module
-=======================================================
+Loss Factor Analysis
+====================
 
 .. automodule:: solardatatools.algorithms.loss_factor_analysis
    :members:

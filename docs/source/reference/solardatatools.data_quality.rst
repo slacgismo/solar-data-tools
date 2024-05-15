@@ -1,5 +1,5 @@
-solardatatools.data\_quality module
-===================================
+Data Quality
+============
 
 .. automodule:: solardatatools.data_quality
    :members:

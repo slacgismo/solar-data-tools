@@ -28,25 +28,25 @@ class PVPROPostProcessor:
     :param file_name: Name of the data file to be imported (must be .csv)
     :type file_name: str
     :param period: How many data points in the file make up a full year of data
-    (for instance, in 5-day interval data, the period is 73)
+        (for instance, in 5-day interval data, the period is 73)
     :type period: int
     :param index_col: column in the input data to be used as the index
     :type index_col: int, optional
     :param dates: a list of integer column indices to be parsed as dates
     :type dates: list, optional
     :param df_prep: A T/F switch to determine whether the dataframe preparation
-    steps should be performed
+        steps should be performed
     :type df_prep: bool, optional
     :param include: Input to include a key term in selected column names
     :type include: str, optional
     :param exclude: Input to exclude a key term from selected column names
     :type exclude: str, optional
     :param verbose: A T/F switch to show percentage of data points on the
-    boundaries
+        boundaries
     :type verbose: bool, optional
     :param bp: A T/F switch to choose whether to look for data points on the
-    boundaries
-    "type bp: bool, optional
+        boundaries
+    :type bp: bool, optional
     """
 
     def __init__(
@@ -178,7 +178,7 @@ class PVPROPostProcessor:
         are on the boundary in any of the system parameters.
 
         :param verbose: A T/F switch to show percentage of data points on the
-        boundaries
+            boundaries
         :type verbose: bool, optional
         """
 
@@ -225,7 +225,7 @@ class PVPROPostProcessor:
         """Scales a dataframe to have max value 1.
 
         :return: self.scaler, which saves all of the values involved in scaling
-        the data frame
+            the data frame
         :rtype: array
         """
 
@@ -243,7 +243,7 @@ class PVPROPostProcessor:
         values nan.
 
         :return: df_l, a scaled to max 1 data frame in log space
-        "rtype: Pandas DataFrame
+        :rtype: Pandas DataFrame
         """
 
         df_scaled = self.scale_max_1()
@@ -286,28 +286,28 @@ class PVPROPostProcessor:
         using the key (label + '_' + model).
 
         :param label: Column name that indicates which system parameter is
-        being optimized.
+            being optimized.
         :type label: str
         :param lambda4: Weight which determines the strength of smoothing on
-        the periodic component
+            the periodic component
         :type lambda4: float
         :param lambda5: Weight which determines the strength of smoothing on
-        the degradation component
+            the degradation component
         :type lambda5: float
         :param model: Names the model to use for the degradation component, can
-        be 'linear', 'monotonic',
-        'smooth_monotonic', or 'piecewise_linear'
+            be 'linear', 'monotonic',
+            'smooth_monotonic', or 'piecewise_linear'
         :type model: str
         :param lambda2: Weight on the Laplacian noise term
         :type lambda2: float, optional
         :param verbose: T/F switch to determine whether cvxpy prints a verbose
-        output of the solve
+            output of the solve
         :type verbose: bool, optional
         :param known: Option to input a mask on the data inputted into the
-        solver
+            solver
         :type known: bool mask, optional
         :param solver: Indicates which solver cvxpy should call to perform the
-        optimization problem
+            optimization problem
         :type solver: str, optional
         """
 
@@ -455,28 +455,28 @@ class PVPROPostProcessor:
         are the same as those in optimize().
 
         :param label: Column name that indicates which system parameter is
-        being optimized.
+            being optimized.
         :type label: str
         :param lambda2: Weight on the Laplacian noise term
         :type lambda2: float, optional
         :param lambda4: Weight which determines the strength of smoothing on
-        the periodic component
+            the periodic component
         :type lambda4: float
         :param lambda5: Weight which determines the strength of smoothing on
-        the degradation component
+            the degradation component
         :type lambda5: float
         :param model: Names the model to use for the degradation component, can
-        be 'linear', 'monotonic',
-        'smooth_monotonic', or 'piecewise_linear'
+            be 'linear', 'monotonic',
+            'smooth_monotonic', or 'piecewise_linear'
         :type model: str
         :param verbose: T/F switch to determine whether cvxpy prints a verbose
-        output of the solve
+            output of the solve
         :type verbose: bool, optional
         :param known: Option to input a mask on the data inputted into the
-        solver
+            solver
         :type known: bool mask, optional
         :param solver: Indicates which solver cvxpy should call to perform the
-        optimization problem
+            optimization problem
         :type solver: str, optional
         """
 
@@ -521,20 +521,20 @@ class PVPROPostProcessor:
         :param lambda2: Weight on the Laplacian noise term
         :type lambda2: float, optional
         :param lambda4: Weight which determines the strength of smoothing on
-        the periodic component
+            the periodic component
         :type lambda4: float
         :param lambda5: Weight which determines the strength of smoothing on
-        the degradation component
+            the degradation component
         :type lambda5: float
         :param model: Names the model to use for the degradation component, can
-        be 'linear', 'monotonic',
-        'smooth_monotonic', or 'piecewise_linear'
+            be 'linear', 'monotonic',
+            'smooth_monotonic', or 'piecewise_linear'
         :type model: str
         :param known: Option to input a mask on the data inputted into the
-        solver
+            solver
         :type known: bool mask, optional
         :param solver: Indicates which solver cvxpy should call to perform the
-        optimization problem
+            optimization problem
         :type solver: str, optional
         """
 
@@ -601,11 +601,11 @@ class PVPROPostProcessor:
         """Plots the SD of one system parameter in the scaled log space.
 
         :param label: Column name that indicates which system parameter is
-        being optimized
+            being optimized
         :type label: str
         :param model: Names the model to use for the degradation component, can
-        be 'linear', 'monotonic',
-        'smooth_monotonic', or 'piecewise_linear'
+            be 'linear', 'monotonic',
+            'smooth_monotonic', or 'piecewise_linear'
         :type model: str, optional
         :return: Plot of the SD in scaled log space
         :rtype: figure
@@ -679,11 +679,11 @@ class PVPROPostProcessor:
         """Plots the SD of one system parameter in the original space.
 
         :param label: Column name that indicates which system parameter is
-        being optimized
+            being optimized
         :type label: str
         :param model: Names the model to use for the degradation component, can
-        be 'linear', 'monotonic',
-        'smooth_monotonic', or 'piecewise_linear'
+            be 'linear', 'monotonic',
+            'smooth_monotonic', or 'piecewise_linear'
         :type model: str, optional
         :return: Plot of the SD in original space
         :rtype: figure
@@ -767,15 +767,15 @@ class PVPROPostProcessor:
         :param lambda4: A list of periodic component weight values to loop over
         :type lambda4: list
         :param lambda5: A list of degradation component weight values to loop
-        over
+            over
         :type lambda5: list
         :param num_runs: Number of runs to perform; more runs yields more
-        generalizable results at the cost of time
+            generalizable results at the cost of time
         :type num_runs: int
         :param lambda2: Laplacian noise weight term value
         :type lambda2: float, optional
         :param solver: Indicates which solver cvxpy should call to perform the
-        optimization problem
+            optimization problem
         :type solver: str, optional
         """
 

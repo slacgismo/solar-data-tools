@@ -1,5 +1,5 @@
-Plotting Module
-===============
+Plotting
+========
 
 .. automodule:: solardatatools.plotting
    :members:

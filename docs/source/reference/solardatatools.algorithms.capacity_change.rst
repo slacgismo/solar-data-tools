@@ -1,5 +1,5 @@
-solardatatools.algorithms.capacity\_change module
-=================================================
+Capacity Change
+===============
 
 .. automodule:: solardatatools.algorithms.capacity_change
    :members:

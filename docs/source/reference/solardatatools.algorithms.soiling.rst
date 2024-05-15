@@ -1,5 +1,5 @@
-solardatatools.algorithms.soiling module
-========================================
+Soiling
+=======
 
 .. automodule:: solardatatools.algorithms.soiling
    :members:

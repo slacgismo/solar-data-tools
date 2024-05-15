@@ -1,5 +1,5 @@
-solardatatools.clear\_time\_labeling module
-===========================================
+Clear Time Labeling
+===================
 
 .. automodule:: solardatatools.clear_time_labeling
    :members:

@@ -1,5 +1,5 @@
-solardatatools.daytime module
-=============================
+Daytime
+=======
 
 .. automodule:: solardatatools.daytime
    :members:
