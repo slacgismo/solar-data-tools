@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
         with:
@@ -38,8 +38,7 @@ jobs:
           python-version: "3.10"
 
       # Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
-      - name: Install Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-activate-base: true
           activate-environment: ""
