@@ -65,8 +65,6 @@ jobs:
           conda install anaconda-client
           conda clean --all
           conda config --set anaconda_upload no --set solver libmamba
-          echo "Listing all the conda packages. --Thistleman"
-          conda --list
-          echo "End of list. --Thistleman"
+          pip install cvxpy
           VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c pvlib -c slacgismo -c conda-forge -c stanfordcvxgrp
           echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
