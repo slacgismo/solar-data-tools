@@ -44,7 +44,9 @@ jobs:
 
       - name: Install the Conda Dependencies
         run: |
-          conda install conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
+          conda install pip
+          pip install cvxpy
+          conda install conda-build colorama ruamel ruamel.yaml rich jsonschema -c conda-forge
           git fetch --prune --unshallow --tags
           pip install -e .
 
