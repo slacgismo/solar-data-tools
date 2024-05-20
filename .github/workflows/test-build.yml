@@ -41,7 +41,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-activate-base: true
-          activate-environment: ""
+          activate-environment: "sdt"
           miniconda-version: "latest"
 
       - name: Install the Conda Dependencies
