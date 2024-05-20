@@ -36,17 +36,14 @@ jobs:
       # Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-activate-base: false
-          activate-environment: sdt
           miniconda-version: "latest"
           auto-update-conda: true
           python-version: 3.11
+          channels: conda-forge,anaconda
+          conda-solver: libmamba
 
       - name: Install the Conda Dependencies
         run: |
-          conda config --set always_yes yes --set auto_update_conda false
-          conda update conda
-          conda install -n base conda-libmamba-solver
           conda install conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
           git fetch --prune --unshallow --tags
           pip install -e .
@@ -58,8 +55,8 @@ jobs:
       - name: Build the Anaconda Package
         id: condabuild
         run: |
-          conda install anaconda-client cvxpy -c conda-forge
+          conda install anaconda-client -c conda-forge
           conda clean --all
-          conda config --set anaconda_upload no --set solver libmamba
+          conda config --set anaconda_upload no
           VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c pvlib -c slacgismo -c conda-forge -c stanfordcvxgrp
           echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
