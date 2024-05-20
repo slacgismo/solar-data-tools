@@ -40,16 +40,18 @@ jobs:
       # Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-activate-base: true
-          activate-environment: "sdt"
+          auto-activate-base: false
+          activate-environment: sdt
           miniconda-version: "latest"
+          auto-update-conda: true
+          python-version: 3.10
 
       - name: Install the Conda Dependencies
         run: |
           conda config --set always_yes yes --set auto_update_conda false
           conda update conda
           conda install -n base conda-libmamba-solver
-          conda install python=3.11 conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
+          conda install conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
           git fetch --prune --unshallow --tags
           pip install -e .
 
