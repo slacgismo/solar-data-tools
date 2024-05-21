@@ -11,7 +11,7 @@ source:
 build:
   noarch: python
   number: 0
-  script: echo "Python interpreter: {{ PYTHON }}"
+  script: {{ PYTHON }} --version
 
 requirements:
   host:
