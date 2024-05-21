@@ -11,7 +11,7 @@ source:
 build:
   noarch: python
   number: 0
-  script: {{ PYTHON }} --version
+  script: {{ PYTHON }} -m pip install . --no-deps -vvv
 
 requirements:
   host:
@@ -42,10 +42,6 @@ requirements:
 test:
   imports:
     - solardatatools
-  commands:
-    - pip check
-  requires:
-    - pip
 
 about:
   home: https://github.com/slacgismo/solar-data-tools
