@@ -18,5 +18,5 @@ def fit_longitude(eot, solarnoon, days, gmt_offset, loss='l2'):
     cost = cost_func(sn_h[use_days] - solarnoon[use_days])
     objective = cvx.Minimize(cost)
     problem = cvx.Problem(objective)
-    problem.solve()
+    problem.solve(solver=cvx.ECOS)
     return lon.value.item()
