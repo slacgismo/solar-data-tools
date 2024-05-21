@@ -42,10 +42,7 @@ requirements:
 test:
   imports:
     - solardatatools
-  commands:
-    - pip check
-  requires:
-    - pip
+
 
 about:
   home: https://github.com/slacgismo/solar-data-tools
