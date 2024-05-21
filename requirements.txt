@@ -1,6 +1,5 @@
-solar-data-tools
-scipy>=1.11
-numpy>=1.22.0
+scipy
+numpy
 pandas
 scikit-learn
 jupyter
@@ -8,15 +7,11 @@ matplotlib
 seaborn
 requests
 pvlib
-cvxpy>=1.3.2
-cmake
+cvxpy
 pykml
 haversine
-boto3
 smart_open
-cassandra-driver
 sig-decomp
-osqp
 clarabel
 qss
 tqdm

@@ -25,7 +25,7 @@
 <tr>
   <td>Build Status</td>
   <td>
-    <a href="https://solar-data-tools.readthedocs.io/en/stable/">
+    <a href="https://solar-data-tools.readthedocs.io/">
         <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
     </a>
         <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml">
@@ -36,17 +36,6 @@
         <img src="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
     </a>
   </td>
-</tr>
-<tr>
-    <td>Code Quality</td>
-    <td>
-        <a href="https://lgtm.com/projects/g/slacgismo/solar-data-tools/context:python">
-            <img alt="Language grade: Python" src="https://img.shields.io/lgtm/grade/python/g/slacgismo/solar-data-tools.svg?logo=lgtm&logoWidth=18"/>
-        </a>
-        <a href="https://lgtm.com/projects/g/slacgismo/solar-data-tools/alerts/">
-            <img alt="Total alerts" src="https://img.shields.io/lgtm/alerts/g/slacgismo/solar-data-tools.svg?logo=lgtm&logoWidth=18"/>
-        </a>
-    </td>
 </tr>
 <tr>
     <td>Publications</td>
@@ -85,55 +74,51 @@ a data set, common data transforms, and fixing time stamp issues. These tools ar
 automatic and require little if any input from the user. Libraries are included to help with data IO
 and plotting as well.
 
-There is close integration between this repository and the [Statistical Clear Sky](https://github.com/slacgismo/StatisticalClearSky) repository, which provides a "clear sky model" of system output, given only measured power as an input.
-
-See [notebooks](/notebooks) folder for examples.
+See the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder for examples.
 
 ## Install & Setup
 
-### 3 ways of setting up, either approach works:
+#### Recommended: Install with pip
 
-#### 1) Recommended: Install with pip
-
-In a fresh Python virtual environment, simply run
-
+In a fresh Python virtual environment, simply run:
 
 ```bash
 $ pip install solar-data-tools
 ```
 
-#### 2) Creat conda virtual environment from file
-
-Creating the env:
+or if you would like to use MOSEK, install the optional dependency as well:
 
 ```bash
-$ conda env create -f pvi-user.yml
+$ pip install "solar-data-tools[mosek]"
 ```
 
-Starting the env:
+#### Install with conda
+
+>[!WARNING]
+> When installing solar-data-tools using conda, you will need to add three channels, conda-forge, slacgismo, and stanfordcvxgrp, to your conda config (or alternatively specify them using the `-c` flag as shown in the examples below). Failure to do so will result in the installation of an outdated solar-data-tools version. Note that we will be moving solar-data-tools to conda-forge soon, which will simplify the installation process. Check back soon for an update! For more on conda channels, see the [conda docs](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html).
+
+Creating the environment and directly installing the package and its dependencies from the appropriate conda channels:
 
 ```bash
-$ conda activate pvi_user
+$ conda create -n pvi-user solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp 
 ```
 
-Stopping the env
+Starting the environment:
+
+```bash
+$ conda activate pvi-user
+```
+
+Stopping the environment:
 
 ```bash
 $ conda deactivate
 ```
 
-Updating the env with latest
+Or alternatively install the package in an already existing environment:
 
 ```bash
-$ conda env update -f pvi-user.yml
-```
-
-Additional documentation on setting up the Conda environment is available [here](https://github.com/slacgismo/pvinsight-onboarding/blob/main/README.md).
-
-#### 3) General Anaconda Package
-
-```sh
-$ conda install slacgismo::solar-data-tools
+$ conda install solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp 
 ```
 
 ### Solvers
@@ -144,7 +129,9 @@ By default, [QSS](https://github.com/cvxgrp/qss) and CLARABEL solvers are used f
 
 #### MOSEK
 
-MOSEK is a commercial software package. It is more stable and offers faster solve times. The included YAML/requirements.txt file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
+MOSEK is a commercial software package. Since it is more stable and offers faster solve times, we provide continuing support for it, however you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running `pip install "solar-data-tools[mosek]"`. If installing from conda, you will have to manually install MOSEK if you desire to use it as conda does not support optional dependencies like pip. 
+
+More information about MOSEK and how to obtain a license is available here:
 
 * [mosek](https://www.mosek.com/resources/getting-started/)
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
@@ -209,7 +196,3 @@ We use [Semantic Versioning](http://semver.org/) for versioning. For the version
 * **Bennet Meyers** - *Initial work and Main research work* - [Bennet Meyers GitHub](https://github.com/bmeyers)
 
 See also the list of [contributors](https://github.com/bmeyers/solar-data-tools/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICENSE) file for details
