@@ -6,8 +6,8 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
-Subpackages
------------
+Algorithms
+----------
 
 .. toctree::
    :maxdepth: 4
