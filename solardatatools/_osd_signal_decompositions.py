@@ -27,21 +27,34 @@ import sys
 import numpy as np
 
 from gfosd import Problem
-from gfosd.components import SumAbs, SumSquare, SumCard, SumQuantile, Aggregate, AverageEqual,\
-    Periodic, Inequality, FirstValEqual, LastValEqual, NoCurvature, NoSlope
+from gfosd.components import (
+    SumAbs,
+    SumSquare,
+    SumCard,
+    SumQuantile,
+    Aggregate,
+    AverageEqual,
+    Periodic,
+    Inequality,
+    FirstValEqual,
+    LastValEqual,
+    NoCurvature,
+    NoSlope,
+    Fourier,
+)
 
 
 def _osd_l2_l1d1_l2d2p365(
-        signal,
-        w0=10,
-        w1=50,
-        w2=1e5,
-        return_all=False,
-        yearly_periodic=False,
-        solver="QSS",
-        use_ixs=None,
-        sum_card=False,
-        verbose=False
+    signal,
+    w0=10,
+    w1=50,
+    w2=1e5,
+    return_all=False,
+    yearly_periodic=False,
+    solver="QSS",
+    use_ixs=None,
+    sum_card=False,
+    verbose=False,
 ):
     """
     Used in: solardatatools/algorithms/time_shifts.py
@@ -70,7 +83,7 @@ def _osd_l2_l1d1_l2d2p365(
     :return: A tuple with two 1d numpy arrays containing the two signal component estimates
     """
     if solver != "QSS":
-        sum_card=False
+        sum_card = False
 
     if sum_card:
         # Scale objective
@@ -84,8 +97,8 @@ def _osd_l2_l1d1_l2d2p365(
         w2 /= 1e4
 
     c1 = SumSquare(weight=w0)
-
-    c2 = SumSquare(weight=w2, diff=2)
+    T = len(signal)
+    c2 = Fourier(3, T, 365.2425, weight=1e-3)
 
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
@@ -93,8 +106,9 @@ def _osd_l2_l1d1_l2d2p365(
         c3 = SumAbs(weight=w1, diff=1)
 
     if len(signal) >= 365:
-        c2 = Aggregate([SumSquare(weight=w2, diff=2), AverageEqual(0, period=365), Periodic(365)])
-        if yearly_periodic and not sum_card: # SumCard does not work well with Aggregate class
+        if (
+            yearly_periodic and not sum_card
+        ):  # SumCard does not work well with Aggregate class
             c3 = Aggregate([c3, Periodic(365)])
         elif yearly_periodic and sum_card:
             print("Cannot use Periodic Class with SumCard.")
@@ -104,7 +118,7 @@ def _osd_l2_l1d1_l2d2p365(
     problem = Problem(signal, classes, use_set=use_ixs)
     problem.decompose(solver=solver, verbose=verbose, eps_rel=1e-6, eps_abs=1e-6)
 
-    s_error =  problem.decomposition[0]
+    s_error = problem.decomposition[0]
     s_seas = problem.decomposition[1]
     s_hat = problem.decomposition[2]
 
@@ -115,15 +129,15 @@ def _osd_l2_l1d1_l2d2p365(
 
 
 def _osd_tl1_l2d2p365(
-        signal,
-        use_ixs=None,
-        tau=0.75,
-        w0=1,
-        w1=500,
-        yearly_periodic=True,
-        return_all=False,
-        solver="OSQP",
-        verbose=False
+    signal,
+    use_ixs=None,
+    tau=0.75,
+    w0=1,
+    w1=500,
+    yearly_periodic=True,
+    return_all=False,
+    solver="OSQP",
+    verbose=False,
 ):
     """
     Used in:
@@ -151,10 +165,8 @@ def _osd_tl1_l2d2p365(
     :return: A tuple with three 1d numpy arrays containing the three signal component estimates
     """
     c1 = SumQuantile(tau=tau, weight=w0)
-    c2 = SumSquare(weight=w1, diff=2)
-
-    if len(signal) > 365 and yearly_periodic:
-        c2 = Aggregate([c2, Periodic(365)])
+    T = len(signal)
+    c2 = Fourier(3, T, 365.2425, weight=1e-3)
 
     classes = [c1, c2]
 
@@ -173,12 +185,12 @@ def _osd_l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
     w0=2e-6,  # l1 term, scaled
-    w1=40e-6, # l1d1 term, scaled
-    w2=6e-3, # seasonal term, scaled
+    w1=40e-6,  # l1d1 term, scaled
+    w2=6e-3,  # seasonal term, scaled
     return_all=False,
     solver=None,
     sum_card=False,
-    verbose=False
+    verbose=False,
 ):
     """
     Used in solardatatools/algorithms/capacity_change.py
@@ -202,19 +214,17 @@ def _osd_l1_l1d1_l2d2p365(
     :param verbose: Sets verbosity
     :return: A tuple with three 1d numpy arrays containing the three signal component estimates
     """
-    if solver!="QSS":
-        sum_card=False
+    if solver != "QSS":
+        sum_card = False
 
     c1 = SumAbs(weight=w0)
-
-    c2 = SumSquare(weight=w2, diff=2)
+    T = len(signal)
+    c2 = Fourier(3, T, 365.2425, weight=1e-3)
+    # TODO: evaluate the weight used here
     if len(signal) >= 365:
-        c2 = Aggregate([c2,
-                        AverageEqual(0, period=365),
-                        Periodic(365)
-                        ])
+        pass
     else:
-        w1 /= 5 # PWC weight needs adjusting when dataset is short
+        w1 /= 5  # PWC weight needs adjusting when dataset is short
 
     if sum_card:
         c3 = SumCard(weight=w1, diff=1)
@@ -222,9 +232,7 @@ def _osd_l1_l1d1_l2d2p365(
         c3 = SumAbs(weight=w1, diff=1)
 
     # Linear term to describe yearly degradation of seasonal component
-    c4 =  Aggregate([NoCurvature(),
-                     FirstValEqual(0)
-                     ])
+    c4 = Aggregate([NoCurvature(), FirstValEqual(0)])
 
     classes = [c1, c2, c3, c4]
 
@@ -242,12 +250,7 @@ def _osd_l1_l1d1_l2d2p365(
 
 
 def _osd_l2_l1d2_constrained(
-        signal,
-        w0=1,
-        w1=5,
-        return_all=False,
-        solver="OSQP",
-        verbose=False
+    signal, w0=1, w1=5, return_all=False, solver="OSQP", verbose=False
 ):
     """
     Used in solardatatools/algorithms/clipping.py
@@ -265,11 +268,7 @@ def _osd_l2_l1d2_constrained(
      and the weight
     """
     c1 = SumSquare(weight=w0)
-    c2 = Aggregate([
-        SumAbs(weight=w1, diff=2),
-        FirstValEqual(0),
-        LastValEqual(1)
-    ])
+    c2 = Aggregate([SumAbs(weight=w1, diff=2), FirstValEqual(0), LastValEqual(1)])
 
     classes = [c1, c2]
 
