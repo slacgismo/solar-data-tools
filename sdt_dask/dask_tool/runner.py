@@ -169,51 +169,39 @@ class Runner:
                     data_df["run_loss_analysis_report error"] = str(e)
 
             return data_df
-        ### START: DASK DELAYED ###
-        # results = []
-        #
-        # # For larger number of files it is recommended to use dask collections
-        # # instead of a for loop **
-        # # Reference:
-        # #   https://docs.dask.org/en/latest/delayed-best-practices.html#avoid-too-many-tasks
-        # for key in KEYS:
-        #     data_tuple_0 = delayed(get_data)(key)
-        #     # data_tuple_0 = delayed(data_tuple_0)
-        #     data_tuple_1 = delayed(run_pipeline)(data_tuple_0, fix_shifts=True,
-        #                                          verbose=False)
-        #     # data_tuple_1 = delayed(data_tuple_1)
-        #
-        #     result_df = delayed(run_loss_analysis)(data_tuple_1)
-        #     results.append(result_df)
-        #
-        # self.df_reports = delayed(pd.concat)(results)
-        ### END: DASK DELAYED ###
 
-        ### START: DASK FUTURES ###
-        scattered_keys = self.client.scatter(KEYS)
-        dfs = self.client.map(get_data, scattered_keys)
-        df_run = self.client.map(run_pipeline, dfs, fix_shifts=True, verbose=False)
-        self.df_results = self.client.map(run_loss_analysis, df_run)
-        ### END: DASK FUTURES ###
-
-
+        results = []
+        
+        # For larger number of files it is recommended to use dask collections
+        # instead of a for loop **
+        # Reference:
+        #   https://docs.dask.org/en/latest/delayed-best-practices.html#avoid-too-many-tasks
+        for key in KEYS:
+            data_tuple_0 = delayed(get_data)(key)
+            # data_tuple_0 = delayed(data_tuple_0)
+            data_tuple_1 = delayed(run_pipeline)(data_tuple_0, fix_shifts=True,
+                                                 verbose=False)
+            # data_tuple_1 = delayed(data_tuple_1)
+        
+            result_df = delayed(run_loss_analysis)(data_tuple_1)
+            results.append(result_df)
+        
+        self.df_results = delayed(pd.concat)(results)
 
     def visualize(self, filename="sdt_graph.png"):
         # visualize the pipeline, user should have graphviz installed
         self.df_results.visualize(filename)
 
-    def get_result(self, dask_report="dask-report.html", summary_report="summary_report.csv", additional_columns=pd. DataFrame()):
+    def get_result(self, dask_report="dask-report.html", summary_report="summary_report.csv"):
         # test if the filepath exist, if not create it
         time_stamp = strftime("%Y%m%d-%H%M%S")
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
+            
         # Compute tasks on cluster and save results
-
         with performance_report(self.output_path + "/" + f"{time_stamp}-" + dask_report):
-            dfs = self.client.gather(self.df_results)
-            df = pd.concat(dfs)
-            if not additional_columns.empty:
-                df = pd.concat([df, additional_columns], axis=1)
+            summary_table = self.client.compute(self.df_results)
+            df = summary_table.result()
             df.to_csv(self.output_path + "/" + f"{time_stamp}-" + summary_report)
 
         self.client.shutdown()
