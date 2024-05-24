@@ -69,7 +69,7 @@ Before you submit a pull request, check that it meets these guidelines:
 ## Code of Conduct
 
 Please note that the Solar Data Tools project is released with a
-[Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project you agree to abide by its terms.
+[Code of Conduct](getting_started/code_of_conduct.md). By contributing to this project you agree to abide by its terms.
 
 ## Pre-commit Hooks
 Must enable pre-commit hook before pushing any contributions:
