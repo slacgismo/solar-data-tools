@@ -109,5 +109,6 @@ class PolarTransform:
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
-        sns.heatmap(self.transformed_data, ax=ax, cbar=cbar, cmap=cmap, alpha=alpha)
+        # Plot clipped (non-neg) data
+        sns.heatmap(np.clip(self.transformed_data, 0, np.inf), ax=ax, cbar=cbar, cmap=cmap, alpha=alpha)
         return plt.gcf()
