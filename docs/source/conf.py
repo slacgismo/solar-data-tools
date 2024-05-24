@@ -14,15 +14,19 @@ import pydata_sphinx_theme
 import os
 import sys
 from datetime import date
+import solardatatools
 
 sys.path.insert(0, os.path.abspath("../.."))
-
 
 # -- Project information -----------------------------------------------------
 
 project = "Solar Data Tools"
 copyright = '%s, Bennet Meyers' % date.today().year
 author = "Bennet Meyers"
+# The full version tuple, including alpha/beta/rc tags.
+version = solardatatools.__version__
+# The short X.Y.Z version.
+release = version[:5]
 
 
 # -- General configuration ---------------------------------------------------
@@ -69,7 +73,7 @@ html_theme = "pydata_sphinx_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-#html_title = f"{project} v{release}"
+html_title = f"{project} v{release}"
 html_static_path = ['_static']
 html_css_files = ["solardatatools.css"]
 html_copy_source = False

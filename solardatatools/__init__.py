@@ -1,3 +1,4 @@
+from ._version import version as __version__
 from solardatatools.time_axis_manipulation import standardize_time_axis
 from solardatatools.matrix_embedding import make_2d
 from solardatatools.time_axis_manipulation import fix_daylight_savings_with_known_tz
