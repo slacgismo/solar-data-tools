@@ -18,6 +18,7 @@
 *.png
 notebooks/*.pkl
 notebooks/data/*
+docs/source/getting_started/notebooks/inputs
 
 ### Database ###
 *.accdb
