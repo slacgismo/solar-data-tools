@@ -188,9 +188,9 @@ class Runner:
         
         self.df_results = delayed(pd.concat)(results)
 
-    def visualize(self, filename="sdt_graph.png"):
+    def visualize(self, filename="sdt_graph.png", **kwargs):
         # visualize the pipeline, user should have graphviz installed
-        self.df_results.visualize(filename)
+        self.df_results.visualize(filename, **kwargs)
 
     def get_result(self, dask_report="dask-report.html", summary_report="summary_report.csv"):
         # test if the filepath exist, if not create it
