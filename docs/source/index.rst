@@ -11,7 +11,7 @@ Solar Data Tools
 Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in a data set, common data transforms, and fixing time stamp issues. These tools are designed to be automatic and require little if any input from the user. Libraries are included to help with data IO and plotting as well.
 This work is supported by the U.S. Department of Energy's Office of Energy Efficiency and Renewable Energy (EERE) under the Solar Energy Technologies Office Award Number 38529.
 
-.. Important:: These documentation pages are under construction.
+.. Important:: These documentation pages are under construction. Contributions are welcome (and much appreciated!), and you can find our contribution guidelines `here <index_dev.md>`__.
 
 .. toctree::
    :maxdepth: 1
@@ -48,7 +48,8 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
         :shadow: md
 
         The user guide provides in-depth information on the key concepts
-        of Solar Data Tools with useful background information and explanation.
+        of Solar Data Tools with useful background information and explanation,
+        as well as a comprehensive API reference.
 
         +++
 
@@ -59,7 +60,7 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
 
             To the user guide
 
-    .. grid-item-card:: Contributor's Guide
+    .. grid-item-card:: Contribution Guidelines
         :img-top: ../source/images/contributor.svg
         :class-card: intro-card
         :shadow: md
@@ -75,7 +76,7 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
             :color: primary
             :expand:
 
-            To the contributor's guide
+            To the contribution guidelines
 
     .. grid-item-card:: Project details
         :img-top: ../source/images/api.svg
