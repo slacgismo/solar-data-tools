@@ -138,8 +138,11 @@ More information about MOSEK and how to obtain a license is available here:
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
 ## Usage
-
-Users will primarily interact with this software through the `DataHandler` class. If you would like to specify a solver, just pass the keyword argument `solver` to `dh.pipeline` with the solver of choice. Passing QSS will keep the convex problems solver as OSQP, unless `solver_convex=QSS` is passed as well. Setting `solver=MOSEK` will set the solver to MOSEK for convex and non-convex problems by default.
+Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
+Tools uses CLARABEL and QSS as the solvers for convex and non-convex problems, respectively. If you would like 
+to specify a solver, just pass the keyword argument `solver` (for non-convex) or `solver_convex` (for convex) 
+to `DataHandler.pipeline` with the solver of choice. Setting `solver=MOSEK` will set the solver to MOSEK for both
+convex and non-convex problems by default.
 
 ```python
 from solardatatools import DataHandler
@@ -150,21 +153,23 @@ pv_system_data = get_pvdaq_data(sysid=35, api_key='DEMO_KEY', year=[2011, 2012, 
 dh = DataHandler(pv_system_data)
 dh.run_pipeline(power_col='dc_power')
 ```
-If everything is working correctly, you should see something like the following
+If everything is working correctly, you should see a run summary like the following
 
 ```
-total time: 24.27 seconds
+total time: 25.99 seconds
 --------------------------------
 Breakdown
 --------------------------------
-Preprocessing              11.14s
-Cleaning                   0.94s
-Filtering/Summarizing      12.19s
-    Data quality           0.25s
-    Clear day detect       1.75s
-    Clipping detect        7.77s
-    Capacity change detect 2.42s
+Preprocessing              6.76s
+Cleaning                   0.41s
+Filtering/Summarizing      18.83s
+    Data quality           0.21s
+    Clear day detect       0.44s
+    Clipping detect        15.51s
+    Capacity change detect 2.67s
 ```
+
+You can also find more in-depth tutorials and guides in [our documentation](https://solar-data-tools.readthedocs.io/).
 
 ## Contributors
 

@@ -74,14 +74,13 @@ Please note that the Solar Data Tools project is released with a
 ## Pre-commit Hooks
 Must enable pre-commit hook before pushing any contributions:
 
-.. code-block:: bash
-
+```bash
     pip install pre-commit
     pre-commit install
-
+```
 
 Run pre-commit hook on all files:
 
-.. code-block:: python
-
+```bash
     pre-commit run --all-files
+```
