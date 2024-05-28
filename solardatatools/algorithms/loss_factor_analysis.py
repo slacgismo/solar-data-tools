@@ -3,7 +3,7 @@
 This module is for estimation of degradation and soiling losses from unlabeled
 daily energy production data. Model is of the form
 
-y_t = x_t * d_t * s_t * c_t * w_t, for t \in K
+y_t = x_t * d_t * s_t * c_t * w_t, for t in K
 
 where y_t [kWh] is the measured real daily energy on each day, x_t [kWh] is an ideal yearly baseline of performance,
 and d_t, s_t, and w_t are the loss factors for degradation, soiling, capacity changes, and weather respectively. K is
@@ -16,6 +16,8 @@ Author: Bennet Meyers
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy.sparse as sp
+from scipy.signal import sawtooth, find_peaks
 from gfosd import Problem
 import gfosd.components as comp
 from gfosd.components.base_graph_class import GraphComponent
@@ -132,7 +134,7 @@ class LossFactorAnalysis:
             if verbose:
                 progress.update()
             tau = np.random.uniform(0.85, 0.95)
-            weight = np.random.uniform(0.5, 5)
+            weight = np.random.uniform(0.1, 1)
             good_ixs = np.arange(len(self.use_ixs))[self.use_ixs]
             num_values = int(len(good_ixs) * fraction_hold)
             # select random index locations for removal
@@ -408,10 +410,11 @@ class LossFactorAnalysis:
         deg_type="linear",
         include_soiling=True,
         weight_seasonal=10e-2,
-        weight_soiling_stiffness=1e0,
+        weight_soiling_stiffness=5e-1,
         weight_soiling_sparsity=1e-2,
         weight_deg_nonlinear=10e4,
         deg_rate=None,
+        use_capacity_change_labels=True,
     ):
         """
         Constuct the signal decomposition problem for estimation of loss factors in PV energy data.
@@ -446,18 +449,18 @@ class LossFactorAnalysis:
         c1 = comp.SumQuantile(tau=tau)
         # Smooth periodic term
         length = len(self.log_energy)
-        periods = [365.2425]  # average length of a year in days
-        _B = make_basis_matrix(num_harmonics, length, periods)
-        _D = make_regularization_matrix(num_harmonics, weight_seasonal, periods)
-        c2 = comp.Basis(basis=_B, penalty=_D)
+        period = 365.2425  # average length of a year in days
+        c2 = comp.Fourier(num_harmonics, length, period, weight=weight_seasonal)
         # Soiling term
         if include_soiling:
+            sawtooth_dict = make_sawtooth_dictionary(length)
             c3 = comp.Aggregate(
                 [
                     comp.Inequality(vmax=0),
-                    comp.SumAbs(weight=weight_soiling_stiffness, diff=2),
-                    comp.SumQuantile(
-                        tau=0.98, weight=10 * weight_soiling_sparsity, diff=1
+                    comp.Basis(
+                        basis=sawtooth_dict,
+                        penalty="abs",
+                        weight=weight_soiling_stiffness,
                     ),
                     comp.SumAbs(weight=weight_soiling_sparsity),
                 ]
@@ -488,8 +491,8 @@ class LossFactorAnalysis:
             )
         elif deg_select.value == "none":
             c4 = SetEqual(val=np.zeros(length))
-        # capacity change term — leverage previous analysis from SDT pipeline
-        if self.capacity_change_labels is not None:
+        # capacity change term: leverage previous analysis from SDT pipeline
+        if use_capacity_change_labels and self.capacity_change_labels is not None:
             basis_M = np.zeros((length, len(set(self.capacity_change_labels))))
             for lb in set(self.capacity_change_labels):
                 slct = np.array(self.capacity_change_labels) == lb
@@ -692,3 +695,27 @@ class SetEqual(GraphComponent):
 
     def _make_c(self):
         self._c = self._val
+
+
+def make_sawtooth_dictionary(T):
+    ks = np.arange(2, 32)
+    phases = [0, np.pi]
+    dictionary = [-1 * np.ones(T).reshape((-1, 1))]
+    for _k in ks:
+        for ph in phases:
+            dictionary.append(make_st(_k, ph, T))
+    dictionary = np.concatenate(dictionary, axis=1)
+    return sp.lil_array(dictionary)
+
+
+def make_st(k, phase, t):
+    start = -phase
+    end = k * 2 * np.pi - phase
+    wf = sawtooth(np.linspace(start, end, t), 0) / 2 - 0.5
+    peaks = find_peaks(wf)
+    indices = np.r_[np.s_[None], peaks[0], np.s_[None]]
+    num_segments = len(peaks[0]) + 1
+    out = np.zeros((t, num_segments))
+    for s in np.arange(num_segments):
+        out[indices[s] : indices[s + 1], s] = wf[indices[s] : indices[s + 1]]
+    return out
