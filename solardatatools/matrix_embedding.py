@@ -38,7 +38,7 @@ def make_2d(
     if df is not None:
         days = df.resample("D").first().index
         try:
-            n_steps = int(24 * 60 * 60 / df.index.freq.delta.seconds)
+            n_steps = int(24 * 60 * 60 / df.index.to_series().diff().median().seconds)
         except AttributeError:
             # No frequency defined for index. Attempt to infer
             freq_ns = np.median(df.index[1:] - df.index[:-1])
@@ -56,7 +56,7 @@ def make_2d(
         # Trim leading or trailing missing days, which can occur when data frame
         # contains data from multiple sources or sensors that have missing
         # values at different times.
-        empty_days = np.alltrue(np.isnan(D), axis=0)
+        empty_days = np.all(np.isnan(D), axis=0)
         i, j = find_start_end(empty_days)
         D = D[:, i:j]
         day_axis = pd.date_range(start=start, end=end, freq="1D")
