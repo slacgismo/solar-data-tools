@@ -144,7 +144,18 @@ class LossFactorAnalysis:
             new_ixs = ~np.logical_or(~self.use_ixs, msk)
             self.use_ixs = new_ixs
             # remake modified problem
-            self.problem = self.make_problem(tau=tau, weight_soiling_stiffness=weight)
+            self.problem = self.make_problem(
+                tau=tau,
+                weight_soiling_stiffness=weight,
+                num_harmonics=self.user_settings["num_harmonics"],
+                deg_type=self.user_settings["deg_type"],
+                include_soiling=self.user_settings["include_soiling"],
+                weight_seasonal=self.user_settings["weight_seasonal"],
+                weight_soiling_sparsity=self.user_settings["weight_soiling_sparsity"],
+                use_capacity_change_labels=self.user_settings[
+                    "use_capacity_change_labels"
+                ],
+            )
             # run signal decomposition and shapley attribution
             self.estimate_losses()
             # record running results
