@@ -310,16 +310,21 @@ class LossFactorAnalysis:
         fig = waterfall_plot(data, index)
         return fig
 
-    def plot_decomposition(self, figsize=(16, 8.5)):
+    def plot_decomposition(self, plot_capacity_component=True, figsize=(16, 8.5)):
         """
         Creates a figure with subplots illustrating the estimated signal components found through decomposition
 
         :param figsize: size of figure (tuple)
         :return: matplotlib figure
         """
-        _fig_decomp = self.problem.plot_decomposition(
-            exponentiate=True, figsize=figsize
-        )
+        if plot_capacity_component:
+            _fig_decomp = self.problem.plot_decomposition(
+                exponentiate=True, figsize=figsize
+            )
+        else:
+            _fig_decomp = self.problem.plot_decomposition(
+                exponentiate=True, figsize=figsize, skip=1
+            )
         _ax = _fig_decomp.axes
         _ax[0].plot(
             np.arange(len(self.energy_data))[~self.use_ixs],
@@ -328,12 +333,19 @@ class LossFactorAnalysis:
             marker=".",
             ls="none",
         )
-        _ax[0].set_title("weather and system outages")
-        _ax[1].set_title("capacity changes")
-        _ax[2].set_title("soiling")
-        _ax[3].set_title("degradation")
-        _ax[4].set_title("baseline")
-        _ax[5].set_title("measured energy (green) and model minus weather")
+        if plot_capacity_component:
+            _ax[0].set_title("weather and system outages")
+            _ax[1].set_title("capacity changes")
+            _ax[2].set_title("soiling")
+            _ax[3].set_title("degradation")
+            _ax[4].set_title("baseline")
+            _ax[5].set_title("measured energy (green) and model minus weather")
+        else:
+            _ax[0].set_title("weather and system outages")
+            _ax[1].set_title("soiling")
+            _ax[2].set_title("degradation")
+            _ax[3].set_title("baseline")
+            _ax[4].set_title("measured energy (green) and model minus weather")
         plt.tight_layout()
         return _fig_decomp
 
