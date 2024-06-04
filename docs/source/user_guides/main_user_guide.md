@@ -1,5 +1,9 @@
 # Solar Data Tools User Guide
 
+```{danger}
+This page is under development!
+```
+
 This guide serves as a reference for the typical Solar Data Tools user. We will go over the main 
 classes and methods that the packages offers, with examples and relevant details for you to get started.
 
@@ -12,7 +16,6 @@ the functions listed in the API reference are more internal/helper functions tha
 If any part of this guide is unclear, or you'd like to improve on these docs, please consider [submitting an Issue or a PR](../index_dev.md)!
 
 ## Getting started with the `DataHandler` class
-available kwargs etc
 
 ## Running the pipeline
 
