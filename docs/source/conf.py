@@ -90,6 +90,7 @@ html_theme_options = {
     "show_version_warning_banner": True,
     "github_url": "https://github.com/slacgismo/solar-data-tools",
     "show_toc_level": 1,
-    "footer_start": ["copyright", "sphinx-version"]
+    "footer_start": ["copyright", "sphinx-version"],
+    "navigation_with_keys" : False
 }
 
