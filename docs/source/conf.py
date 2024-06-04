@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import subprocess
 import pydata_sphinx_theme
 import os
 import sys
@@ -23,11 +24,18 @@ sys.path.insert(0, os.path.abspath("../.."))
 project = "Solar Data Tools"
 copyright = '%s, Bennet Meyers' % date.today().year
 author = "Bennet Meyers"
-# The full version tuple, including alpha/beta/rc tags.
-version = solardatatools.__version__
-# The short X.Y.Z version.
-release = version[:5]
-
+# Get version from git tags
+# (so this will always show latest tagged version and not local/dev version)
+# Get all the git tags from the cmd line that follow our versioning pattern
+git_tags = subprocess.Popen(
+    ["git", "tag", "--list", "v*[0-9]", "--sort=version:refname"],
+    stdout=subprocess.PIPE,
+)
+tags = git_tags.stdout.read()
+git_tags.stdout.close()
+tags = tags.decode("utf-8").split("\n")
+tags.sort()
+release = tags[-1][1:]
 
 # -- General configuration ---------------------------------------------------
 
