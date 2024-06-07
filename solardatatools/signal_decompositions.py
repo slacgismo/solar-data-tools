@@ -131,7 +131,6 @@ def tl1_l2d2p365(
     use_ixs=None,
     tau=0.75,
     w0=1,
-    w1=500,
     yearly_periodic=True,
     return_all=False,
     solver="OSQP",
@@ -170,7 +169,6 @@ def tl1_l2d2p365(
             use_ixs=use_ixs,
             tau=tau,
             w0=w0,
-            w1=w1,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
             solver=solver,
@@ -182,7 +180,6 @@ def tl1_l2d2p365(
             use_ixs=use_ixs,
             tau=tau,
             w0=w0,
-            w1=w1,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
             solver=solver,
@@ -228,8 +225,11 @@ def l1_l1d1_l2d2p365(
     if solver == "MOSEK":
         # MOSEK weights set in CVXPY function
         res = _cvx_l1_l1d1_l2d2p365(
-            signal=signal, use_ixs=use_ixs, return_all=return_all,
-            solver=solver, verbose=verbose
+            signal=signal,
+            use_ixs=use_ixs,
+            return_all=return_all,
+            solver=solver,
+            verbose=verbose,
         )
     else:
         res = _osd_l1_l1d1_l2d2p365(
@@ -267,8 +267,9 @@ def l2_l1d2_constrained(
     """
     if solver == "MOSEK":
         # MOSEK weights set in CVXPY function
-        res = _cvx_l2_l1d2_constrained(signal, return_all=return_all,
-                                       solver=solver, verbose=verbose)
+        res = _cvx_l2_l1d2_constrained(
+            signal, return_all=return_all, solver=solver, verbose=verbose
+        )
     else:
         res = _osd_l2_l1d2_constrained(
             signal, w0=w0, w1=w1, return_all=return_all, solver=solver, verbose=verbose

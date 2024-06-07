@@ -693,10 +693,11 @@ time zone errors     {report['time zone correction'] != 0}
         deg_type="linear",
         include_soiling=True,
         weight_seasonal=10e-2,
-        weight_soiling_stiffness=2e0,
+        weight_soiling_stiffness=5e-1,
         weight_soiling_sparsity=2e-2,
         weight_deg_nonlinear=10e4,
         deg_rate=None,
+        use_capacity_change_labels=True,
     ):
         """
 
@@ -716,6 +717,7 @@ time zone errors     {report['time zone correction'] != 0}
                 weight_soiling_sparsity=weight_soiling_sparsity,
                 weight_deg_nonlinear=weight_deg_nonlinear,
                 deg_rate=deg_rate,
+                use_capacity_change_labels=use_capacity_change_labels,
             )
             if deg_rate is None:
                 self.loss_analysis.estimate_degradation_rate(verbose=verbose)
