@@ -1,6 +1,7 @@
 ## Instructions to getting started locally:
 
-Navigate to ./docs and run (make sure pvi-user conda env is active)
+Install the package as editable with the docs optional dependencies: `pip install -e ".[docs]"`.
+Then, navigate to `./docs` and run 
 
 ```sh
 $ make html
@@ -9,9 +10,9 @@ $ open _build/html/index.html
 
 ## Updating the documentation:
 
-All the documentation files live in docs/source. Index.rst is the landing page. Under contents is a list of all the sections to this documentation which are linked to their own rst files.
+All the documentation files live in docs/source. Index.rst is the landing page. Under contents is a list of all the sections to this documentation which are linked to their own rst or md files. We use `MyST` to integrate markdown into our docs pages.
 
-In order to add a new section, first update the index.rst to have the name of the section under contents. Then create a "section_name".rst file making sure that the "section_name" matches the one in index.rst. If it makes it easier, https://cloudconvert.com/md-to-rst, allows to convert mark down files to rst format.
+In order to add a new section, first update the index.rst to have the name of the section under contents. Then create a "section_name".rst file making sure that the "section_name" matches the one in index.rst. Alternatively you can write Markdown files following the MyST guidelines for rst integration.
 
 ## Auto generate API Documentation Based on Python Files in solardatatools directory
 
@@ -29,7 +30,7 @@ $ make html
 $ open _build/html/index.html
 ```
 
-## Changes merged to master auto update on [solar-data-tools docs](https://solar-data-tool.readthedocs.io/en/latest/) via a web hook
+## Changes merged to main auto update on [solar-data-tools docs](https://solar-data-tool.readthedocs.io/en/latest/) via a web hook
 
 
 ## Link for [getting started with sphinx](https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html)

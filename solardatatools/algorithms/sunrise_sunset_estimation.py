@@ -439,9 +439,9 @@ def clock_to_solar(clock_time, lon, doy, gmt_offset, eot="duffie"):
 def eot_da_rosa(day_of_year):
     """
     The equation of time as defined in:
-        Haghdadi, Navid, et al. "A method to estimate the location and
-        orientation of distributed photovoltaic systems from their generation
-        output data." Renewable Energy 108 (2017): 390-400.
+    'Haghdadi, Navid, et al. "A method to estimate the location and
+    orientation of distributed photovoltaic systems from their generation
+    output data." Renewable Energy 108 (2017): 390-400.'
     These are equations (7) and (8) in the paper.
     :param day_of_year: the day of year, can be int, float, or numpy array
     :return: the difference between clock time and solar time for a given day of year
@@ -457,8 +457,8 @@ def eot_da_rosa(day_of_year):
 def eot_duffie(day_of_year):
     """
     The equation of time as defined in:
-        Duffie, John A., and William A. Beckman. Solar engineering of thermal
-        processes. New York: Wiley, 1991.
+    'Duffie, John A., and William A. Beckman. Solar engineering of thermal
+    processes. New York: Wiley, 1991.'
     These are equations (1.4.2) and (1.5.3) in the book
     :param day_of_year: the day of year, can be int, float, or numpy array
     :return: the difference between clock time and solar time for a given day of year

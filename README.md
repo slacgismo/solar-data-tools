@@ -1,4 +1,4 @@
-# solar-data-tools
+<img src="docs/source/_static/SDT_v1_secondary_blue_text.png" width="600">
 
 <table>
 <tr>
@@ -69,12 +69,14 @@
 </tr>
 </table>
 
-Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in
-a data set, common data transforms, and fixing time stamp issues. These tools are designed to be
-automatic and require little if any input from the user. Libraries are included to help with data IO
-and plotting as well.
+Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It provides
+methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
+to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. Solar Data Tools
+was developed to enable analysis of _unlabeled_ PV data, i.e. with no model, no meteorological data, and no performance index required,
+by taking a statistical signal processing approach in the algorithms used in the package’s main data processing pipeline.
+Head over to our Getting Started pages in our [docs](https://solar-data-tools.readthedocs.io/) for a demo of Solar Data Tools!
 
-See the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder for examples.
+You can also check the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder in this repo for more examples.
 
 ## Install & Setup
 
@@ -138,8 +140,11 @@ More information about MOSEK and how to obtain a license is available here:
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
 ## Usage
-
-Users will primarily interact with this software through the `DataHandler` class. If you would like to specify a solver, just pass the keyword argument `solver` to `dh.pipeline` with the solver of choice. Passing QSS will keep the convex problems solver as OSQP, unless `solver_convex=QSS` is passed as well. Setting `solver=MOSEK` will set the solver to MOSEK for convex and non-convex problems by default.
+Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
+Tools uses CLARABEL and QSS as the solvers for convex and non-convex problems, respectively. If you would like 
+to specify a solver, just pass the keyword argument `solver` (for non-convex) or `solver_convex` (for convex) 
+to `DataHandler.pipeline` with the solver of choice. Setting `solver=MOSEK` will set the solver to MOSEK for both
+convex and non-convex problems by default.
 
 ```python
 from solardatatools import DataHandler
@@ -150,21 +155,50 @@ pv_system_data = get_pvdaq_data(sysid=35, api_key='DEMO_KEY', year=[2011, 2012, 
 dh = DataHandler(pv_system_data)
 dh.run_pipeline(power_col='dc_power')
 ```
-If everything is working correctly, you should see something like the following
+If everything is working correctly, you should see a run summary like the following
 
 ```
-total time: 24.27 seconds
+total time: 25.99 seconds
 --------------------------------
 Breakdown
 --------------------------------
-Preprocessing              11.14s
-Cleaning                   0.94s
-Filtering/Summarizing      12.19s
-    Data quality           0.25s
-    Clear day detect       1.75s
-    Clipping detect        7.77s
-    Capacity change detect 2.42s
+Preprocessing              6.76s
+Cleaning                   0.41s
+Filtering/Summarizing      18.83s
+    Data quality           0.21s
+    Clear day detect       0.44s
+    Clipping detect        15.51s
+    Capacity change detect 2.67s
 ```
+
+You can also find more in-depth tutorials and guides in [our documentation](https://solar-data-tools.readthedocs.io/).
+
+## Citing Solar Data Tools
+
+If you use Solar Data Tools in your research, please cite:
+
+**Recommended citations**
+
+  Bennet E. Meyers, Elpiniki Apostolaki-Iosifidou and Laura Schelhas, "Solar Data Tools: Automatic Solar 
+  Data Processing Pipeline," 2020 47th IEEE Photovoltaic Specialists Conference (PVSC), Calgary, AB, Canada, 2020,
+  pp. 0655-0656, doi: [10.1109/PVSC45281.2020.9300847](https://doi.org/10.1109/PVSC45281.2020.9300847).
+
+  Bennet E. Meyers, Sara A. Miskovich, Duncan Ragsdale, Mitchell Victoriano, Aramis Dufour, 
+  Nimish Telang, Nimish Yadav, Elpiniki Apostolaki-Iosifidou, Claire Berschauer, Chengcheng Ding, 
+  Jonathan Goncalves, Victor-Haoyang Lian, Tristan Lin, Alejandro Londono-Hurtado, Junlin Luo, Xiao Ming, 
+  David Jose Florez Rodriguez, Derin Serbetcioglu, Shixian Sheng, Jose St Louis, Tadatoshi Takahashi, and Haoxi Zhang. (2024). 
+  slacgismo/solar-data-tools. Zenodo. doi: [10.5281/zenodo.5056959](https://zenodo.org/doi/10.5281/zenodo.5056959)
+
+**Citing technical details (_e.g._, SDT algorithms)**
+
+  Bennet E. Meyers, PVInsight (Final Technical Report). United States. [https://doi.org/10.2172/1897181](https://doi.org/10.2172/1897181)
+
+**Citing a specific version**
+
+You can also cite the DOI corresponding to the specific version of
+Solar Data Tools that you used. Solar Data Tools DOIs are listed at
+[here](https://zenodo.org/search?q=parent.id%3A5056959&f=allversions%3Atrue&l=list&p=1&s=10&sort=version).
+
 
 ## Contributors
 
