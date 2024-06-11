@@ -1,4 +1,4 @@
-<img src="docs/source/_static/SDT_v1_primary_blue_text.png" width="600">
+<img src="docs/source/_static/SDT_v1_secondary_blue_text.png" width="600">
 
 <table>
 <tr>
