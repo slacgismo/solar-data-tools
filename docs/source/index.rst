@@ -1,5 +1,5 @@
-Solar Data Tools
-=================
+.. image:: _static/SDT_v1_primary_blue_text.png
+  :width: 600
 
 |PyPI release| |Anaconda Cloud release|
 

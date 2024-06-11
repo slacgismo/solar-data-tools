@@ -102,3 +102,11 @@ html_theme_options = {
     "navigation_with_keys" : False
 }
 
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_theme_options = {
+   "logo": {
+      "image_light": "_static/SDT_v1_primary_blue_text_small.png",
+      "image_dark": "_static/SDT_v1_primary_blue_text_small.png",
+   }
+}
