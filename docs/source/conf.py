@@ -105,8 +105,13 @@ html_theme_options = {
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 html_theme_options = {
-   "logo": {
-      "image_light": "_static/SDT_v1_primary_blue_text_small.png",
-      "image_dark": "_static/SDT_v1_primary_blue_text_small.png",
-   }
+    "logo": {
+        # In a left-to-right context, screen readers will read the alt text
+        # first, then the text, so this example will be read as "P-G-G-P-Y
+        # (short pause) Home A pretty good geometry package"
+        "alt_text": f"{project} v{release}",
+        "text": f"v{release}",
+        "image_light": "_static/SDT_v1_primary_blue_text_small.png",
+        "image_dark": "_static/SDT_v1_primary_blue_text_small.png",
+    }
 }
