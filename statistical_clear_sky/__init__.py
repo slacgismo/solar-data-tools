@@ -3,4 +3,8 @@ from statistical_clear_sky.algorithm.iterative_fitting import IterativeFitting a
 
 from warnings import warn
 
-warn("Starting in Solar Data Tools 1.5.0, the Statistical Clear Sky package will be deprecated.", FutureWarning)
+warn(
+    "The Statistical Clear Sky package is deprecated. Starting in Solar Data Tools 2.0, it will be removed.",
+    DeprecationWarning,
+    stacklevel=2
+)
