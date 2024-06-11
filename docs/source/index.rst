@@ -1,6 +1,14 @@
 .. image:: _static/SDT_v1_primary_blue_text.png
   :width: 600
 
+.. image:: _static/SDT_v1_primary_white_text.png
+    :width: 600
+    :class: only-dark
+
+.. image:: _static/SDT_v1_primary_blue_text.png
+    :width: 600
+    :class: only-light
+
 |PyPI release| |Anaconda Cloud release|
 
 .. |PyPI release| image:: https://img.shields.io/pypi/v/solar-data-tools.svg

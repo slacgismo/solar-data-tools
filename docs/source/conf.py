@@ -112,6 +112,6 @@ html_theme_options = {
         "alt_text": f"{project} v{release}",
         "text": f"v{release}",
         "image_light": "_static/SDT_v1_primary_blue_text_small.png",
-        "image_dark": "_static/SDT_v1_primary_blue_text_small.png",
+        "image_dark": "_static/SDT_v1_primary_white_text_small.png",
     }
 }
