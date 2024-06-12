@@ -16,8 +16,8 @@ clarabel
 qss
 tqdm
 spcqe
-dask
+dask[complete]
 distributed
-dask-cloudprovider
+dask-cloudprovider[all]
 graphviz
 bokeh

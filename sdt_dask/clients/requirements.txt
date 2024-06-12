@@ -1,3 +1,6 @@
-solar-data-tools @ git+https://github.com/zhanghaoc/solar-data-tools@develop-dask
+solar-data-tools @ git+https://github.com/slacgismo/solar-data-tools@develop-dask
 dask[complete]
+distributed
 dask-cloudprovider[all]
+graphviz
+bokeh
