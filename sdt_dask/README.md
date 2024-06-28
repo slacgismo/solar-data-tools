@@ -2,7 +2,7 @@
 
 >[!WARNING]
 > This feature is under active development. If you'd like to use this, contribute, or have any 
-> questions, feel free to open an issue or contribute. You can find our Contribution Guidelines 
+> questions, feel free to open an issue or submit a PR. You can find our Contribution Guidelines 
 > [here](https://solar-data-tools.readthedocs.io/en/dev/index_dev.html).
 
 We developed the Solar Data Tools (SDT) Dask Tool to provide users with a convenient way to run the SDT 
@@ -10,9 +10,8 @@ pipelines and analyses on large amounts of data in a scalable and parallelized w
 or on various computing infrastructures. You can read more about the goals of the project and the development process 
 in our PVSC paper [here](https://drive.google.com/file/d/1uczjlfNChn6qM8hn6ary5NLaR2QmLEhz/view?usp=drive_link).
 
-This tool is a configurable system, accessible and relatively easy to run for users with different computational environments.
-We use Dask to provide cloud deployment and parallelization of our pipelines, but you don't need to have Dask experience to run it. The tool has
-of three main components, two of which need to be defined by the user--where the data comes from ("dataplug") and where to run the pipelines ("client"), and the third is
+This tool is a configurable system that is accessible and relatively easy to run for users with different computational environments.
+We use Dask to provide cloud deployment and parallelization of our pipelines, but you don't need to have Dask experience to run it. The tool has three main components, two of which need to be defined by the use: where the data comes from ("dataplug") and where to run the pipelines ("client"). The third is
 the Dask runner that uses the other two components to pull the data and execute the SDT pipelines and computations. 
 
 To get started, take a look at the local run example [here](./examples/tool_demo_local.ipynb) or the AWS Fargate example [here](./examples/tool_demo_fargate.ipynb). Additionally,
