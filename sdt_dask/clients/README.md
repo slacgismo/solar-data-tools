@@ -1,4 +1,4 @@
-This README provides guidance on creating your own Client Plugs or use our existing 
+`This README provides guidance on creating your own Client Plugs or use our existing 
 ClientPlugs within the SDT Runner tool. ClientPlugs are classes used by SDT runner 
 tool to compute data on various sources. Follow these instructions to 
 create your own ClientPlug or use the existing client plug examples. The demo code 
@@ -123,12 +123,32 @@ client = client_setup.init_client()
 Note: For more information on Azure VM Cluster arguments refer [this](https://cloudprovider.dask.org/en/latest/azure.html)
 
 ## Docker Image
-Each CLoud Cluster (Fargate/Azure) requires a docker image with the necessary 
-packages for the installed on it. The example below explains step by step on 
+
+### SDT Docker image
+Running on the cloud with the clients we've provided (Fargate/Azure) requires a Docker image with the necessary 
+packages for the installed on it. We have created an image for you to use if you'd like to run with no special packages 
+for dataplugs (we include `boto3` in the environment). To use this image, simply pass `smiskov/sdt-v1:latest` to the `image` arguments 
+when instantiating the clients. 
+
+Note that your local environment (Python package versions) needs to match the provided Docker image (`smiskov/sdt-v1:latest`) if you'd like to use it to run on the cloud.
+The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_list.txt). The main points of mismatch are typically the following packages:
+```bash
+    "numpy==1.26.4", 
+    "dask==2024.5.2", 
+    "distributed==2024.5.2", 
+    "dask-cloudprovider[all]==2022.10.0",
+```
+
+If any additional package needed or if you require other versions, you will need create you own image. 
+We provide a sample Dockerfile [here](./clients/Dockerfile), and more instructions below.
+
+
+### Creating your own
+The example below explains step by step on 
 creating a basic Docker image for the current version of `develop-dask` branch 
 of the git repo.
 
-### Example:
+#### Example:
 In a terminal inside the directory where the docker file is present run the 
 command: 
 ```shell
@@ -145,29 +165,19 @@ A basic `DockerFile` content:
 
 `DockerFile`:
 ```dockerfile
-FROM python:3.10.11 as base
-
-RUN apt-get update -qq
-RUN apt-get install build-essential cmake sudo curl nano git -y
+FROM python:3.10 as base
 
 WORKDIR /root
 RUN mkdir sdt
 WORKDIR /root/sdt
 
-COPY requirements.txt /root/sdt/.
+COPY ../../requirements.txt /root/sdt/.
 
 RUN pip install -r requirements.txt
 ```
-A sample `requiremnets.txt` can be viewed in `clients/requirements.txt` and is as follows
+A sample `requiremnets.txt` can be viewed in `clients/requirements.txt`.
 
-`requirements.txt`:
-```text
-solar-data-tools @ git+https://github.com/zhanghaoc/solar-data-tools@develop-dask
-dask[complete]
-dask-cloudprovider[all]
-```
-
-The docker image can now be used by plugging the image into the cluster as 
+The Docker image can now be used by plugging the image into the cluster as 
 demonstrated below.
 
 FargateClient:

@@ -26,8 +26,8 @@ To install the development version of this tool, in a fresh Python environment w
 $ pip install -e ".[dask]"
 ```
 
-Note that it's important to have this Python version if you'd like to use the provided Docker image to run on AWS or Azure.
-The full list of packages along with their versions installed in the provided image is listed in [here](./clients/sdt-v1_full_pip_list.txt).
+Note that it's important to have your local environment (Python package versions) match the provided Docker image (`smiskov/sdt-v1:latest`) if you'd like to use it to run on AWS or Azure.
+The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_list.txt).
 Otherwise, feel free to create you own image. We provide a sample Dockerfile [here](./clients/Dockerfile).
 
 Any additional package needed for the dataplugs should be installed separately (e.g. boto3).
