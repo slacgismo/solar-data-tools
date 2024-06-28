@@ -18,6 +18,20 @@ the Dask runner that uses the other two components to pull the data and execute 
 To get started, take a look at the local run example [here](./examples/tool_demo_local.ipynb) or the AWS Fargate example [here](./examples/tool_demo_fargate.ipynb). Additionally,
 each component has a README.md with more information. See the dataplugs README [here](dataplugs/README.md) and the clients README [here](clients/README.md).
 
+## Installation
+
+To install the development version of this tool, in a fresh Python environment with Python 3.10 installed, run from the root of the project:
+
+```bash
+$ pip install -e ".[dask]"
+```
+
+Note that it's important to have this Python version if you'd like to use the provided Docker image to run on AWS or Azure.
+The full list of packages along with their versions installed in the provided image is listed in [here](./clients/sdt-v1_full_pip_list.txt).
+Otherwise, feel free to create you own image. We provide a sample Dockerfile [here](./clients/Dockerfile).
+
+Any additional package needed for the dataplugs should be installed separately (e.g. boto3).
+
 ## Basic Usage 
 
 To use the tool, you'll need a Runner class. You will need to provide a Dask Client to instantiate, and optionally the directory where you'd like the output saved. 

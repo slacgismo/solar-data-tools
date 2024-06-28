@@ -67,8 +67,9 @@ mosek = [
     "mosek"
 ]
 dask = [
-    "dask",
-    "distributed",
+    "numpy==1.26.4 ", # to match provided sdt docker image
+    "dask==2024.5.2", # to match provided sdt docker image
+    "distributed==2024.5.2", # to match provided sdt docker image
     "dask-cloudprovider[all]",
     "graphviz", # for task graph visual
     "bokeh" # for task graph visual
