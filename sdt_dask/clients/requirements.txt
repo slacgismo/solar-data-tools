@@ -1,0 +1,8 @@
+solar-data-tools @ git+https://github.com/slacgismo/solar-data-tools@develop-dask
+numpy==1.26.4
+dask[complete]==2024.5.2
+distributed==2024.5.2
+dask-cloudprovider[all]
+graphviz
+bokeh
+boto3
