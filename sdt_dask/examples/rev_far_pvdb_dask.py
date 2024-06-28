@@ -133,9 +133,10 @@ TAGS = {
     "project": "pvinsight"
 }
 VPC = "vpc-ab2ff6d3"  # for us-west-2
-IMAGE = "nimishy/sdt-windows:latest"
-IMAGE = "nimishy/sdt-cloud-win:latest"
-IMAGE = "nimishy/p_3.10.11_dask:latest"
+# IMAGE = "nimishy/sdt-windows:latest"
+# IMAGE = "nimishy/sdt-cloud-win:latest"
+# IMAGE = "nimishy/p_3.10.11_dask:latest"
+IMAGE = "smiskov/sdt-v1:latest"
 
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 ENVIRONMENT = {
@@ -184,10 +185,12 @@ if __name__ == '__main__':
                         WORKERS, THREADS_PER_WORKER)
 
         # Dask Tool initialization and set up
-        dask_tool = Runner(data_plug=data_plug,
-                            client=client,
+        dask_tool = Runner(client=client,
                             output_path=f"{options.result_path}/{options.workers}w-{options.threads}t/")
-        dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
+        dask_tool.set_up(KEYS, 
+                         data_plug=data_plug,
+                         fix_shifts=True, 
+                         verbose=VERBOSE)
 
         # Dask Tool Task Compute
         output_html = f"pvdb_rev_far_dask-report_{options.workers}w-{options.threads}t-{time_stamp}.html"

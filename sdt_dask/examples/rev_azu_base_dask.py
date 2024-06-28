@@ -89,7 +89,7 @@ options = parser.parse_args()
 resource_group=os.getenv("RESOURCE_GROUP")
 vnet=os.getenv("VNET")
 security_group=os.getenv("SECURITY_GROUP")
-image = "nimishy/sdt-cloud-win:latest"
+image = "smiskov/sdt-v1:latest"
 
 WORKERS = int(options.workers)
 THREADS = int(options.threads)
@@ -137,10 +137,9 @@ if __name__ == '__main__':
     client = client_setup.init_client()
 
     # Dask Tool initialization and set up
-    dask_tool = Runner(data_plug=data_plug,
-                       client=client,
+    dask_tool = Runner(client=client,
                        output_path=f"{RESULT_DIR}")
-    dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
+    dask_tool.set_up(KEYS, data_plug=data_plug, fix_shifts=True, verbose=VERBOSE)
 
     # Dask Tool Task Compute
     dask_tool.get_result()

@@ -123,7 +123,7 @@ def check_enviornment_variables():
 
 VPC = "vpc-ab2ff6d3"  # for us-west-2
 
-IMAGE = "nimishy/p_3.10.11_dask:latest"
+IMAGE = "smiskov/sdt-v1:latest"
 
 
 
@@ -152,10 +152,8 @@ if __name__ == '__main__':
     client = client_setup.init_client()
 
     # Dask Tool initialization and set up
-    dask_tool = Runner(data_plug=data_plug,
-                       client=client,
-                       output_path=RESULT_DIR)
-    dask_tool.set_up(KEYS, fix_shifts=True, verbose=VERBOSE)
+    dask_tool = Runner(client=client, output_path=RESULT_DIR)
+    dask_tool.set_up(KEYS, data_plug=data_plug, fix_shifts=True, verbose=VERBOSE)
 
     time_stamp = strftime("%Y%m%d-%H%M%S")
 
