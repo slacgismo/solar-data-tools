@@ -282,32 +282,51 @@ class LossFactorAnalysis:
         plt.title("System loss breakdown")
         return plt.gcf()
 
-    def plot_waterfall(self):
+    def plot_waterfall(self, plot_capacity_component=True, figsize=(10, 4)):
         """
         Create a waterfall plot of losses
 
         :return: matplotlib figure
         """
-        index = [
-            "baseline",
-            "weather",
-            "outages",
-            "capacity changes",
-            "soiling",
-            "degradation",
-        ]
-        bl = np.sum(self.energy_model[0])
-        data = {
-            "amount": [
-                bl,
-                self.weather_energy_loss,
-                self.outage_energy_loss,
-                self.capacity_change_loss,
-                self.soiling_energy_loss,
-                self.degradation_energy_loss,
+        if plot_capacity_component:
+            index = [
+                "baseline",
+                "weather",
+                "outages",
+                "capacity changes",
+                "soiling",
+                "degradation",
             ]
-        }
-        fig = waterfall_plot(data, index)
+            bl = np.sum(self.energy_model[0])
+            data = {
+                "amount": [
+                    bl,
+                    self.weather_energy_loss,
+                    self.outage_energy_loss,
+                    self.capacity_change_loss,
+                    self.soiling_energy_loss,
+                    self.degradation_energy_loss,
+                ]
+            }
+        else:
+            index = [
+                "baseline",
+                "weather",
+                "outages",
+                "soiling",
+                "degradation",
+            ]
+            bl = np.sum(self.energy_model[0])
+            data = {
+                "amount": [
+                    bl,
+                    self.weather_energy_loss,
+                    self.outage_energy_loss,
+                    self.soiling_energy_loss,
+                    self.degradation_energy_loss,
+                ]
+            }
+        fig = waterfall_plot(data, index, figsize=figsize)
         return fig
 
     def plot_decomposition(self, plot_capacity_component=True, figsize=(16, 8.5)):
