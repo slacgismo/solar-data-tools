@@ -184,7 +184,7 @@ class DataHandler:
         start_day_ix=None,
         end_day_ix=None,
         w1=None,
-        w2=1e5,
+        w2=1e-3,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
@@ -1071,8 +1071,7 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                w1=40e-6,  # scaled weights for QSS
-                w2=6561e-6,
+                w1=1e0,
                 solver=solver,
             )
         if len(set(self.capacity_analysis.labels)) > 1:
@@ -1120,8 +1119,8 @@ time zone errors     {report['time zone correction'] != 0}
     def auto_fix_time_shifts(
         self,
         round_shifts_to_hour=True,
-        w1=5,
-        w2=1e5,
+        w1=None,
+        w2=1e-3,
         estimator="com",
         threshold=0.005,
         periodic_detector=False,
