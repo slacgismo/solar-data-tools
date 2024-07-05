@@ -47,7 +47,7 @@ class TimeShift:
         data,
         use_ixs=None,
         w1=None,
-        w2=200,
+        w2=1e-3,
         solar_noon_estimator="com",
         threshold=0.005,
         periodic_detector=False,
@@ -66,6 +66,7 @@ class TimeShift:
             use_ixs = np.logical_and(use_ixs, ~np.isnan(metric))
         self.use_ixs = use_ixs
         # Optimize w1
+        # print('in w1 optimization loop. solver is:', solver)
         if w1 is None:
             # TODO: investigate if two separate ranges are needed
             #  for MOSEK vs QSS and possibly simplify
@@ -82,17 +83,17 @@ class TimeShift:
                 solver=solver,
                 sum_card=sum_card,
             )
-            if tv_metric[best_ix] >= 0.009:
-                # rerun the optimizer with a new random data selection
-                hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
-                    metric,
-                    w1s,
-                    use_ixs,
-                    w2,
-                    periodic_detector,
-                    solver=solver,
-                    sum_card=sum_card,
-                )
+            # if tv_metric[best_ix] >= 0.009:
+            #     # rerun the optimizer with a new random data selection
+            #     hn, rn, tv_metric, jpy, best_ix = self.optimize_w1(
+            #         metric,
+            #         w1s,
+            #         use_ixs,
+            #         w2,
+            #         periodic_detector,
+            #         solver=solver,
+            #         sum_card=sum_card,
+            #     )
             # if np.isclose(hn[best_ix], hn[-1]):
             #     best_ix = np.argmax(hn * rn)
             best_w1 = w1s[best_ix]
@@ -104,6 +105,7 @@ class TimeShift:
             jpy = self.jumps_per_year
             w1s = self.w1_vals
             best_ix = self.best_ix
+        # Solve first convex signal decomposition problem
         s1, s2 = self.estimate_components(
             metric,
             best_w1,
@@ -113,8 +115,11 @@ class TimeShift:
             solver=solver,
             sum_card=sum_card,
         )
+        # Identify transition points, and resolve second convex signal decomposition problem
         # find indices of transition points
-        index_set = np.arange(len(s1) - 1)[np.round(np.diff(s1, n=1), 3) != 0]
+        seg_diff = segment_diffs(s1)
+        new_diff = make_pooled_dsig(np.diff(s1), seg_diff)
+        transition_locs = np.where(np.abs(new_diff) >= 0.05)[0]
         s1, s2 = self.estimate_components(
             metric,
             best_w1,
@@ -123,9 +128,9 @@ class TimeShift:
             periodic_detector,
             solver=solver,
             sum_card=sum_card,
-            transition_locs=index_set,
+            transition_locs=transition_locs,
         )
-        jumps_per_year = len(index_set) / (len(metric) / 365)
+        jumps_per_year = len(transition_locs) / (len(metric) / 365)
         cond1 = jumps_per_year >= 5
         cond2 = w1 is None
         cond3 = self.__recursion_depth < 2
@@ -141,13 +146,22 @@ class TimeShift:
                 solar_noon_estimator=solar_noon_estimator,
                 threshold=threshold,
                 periodic_detector=periodic_detector,
+                transition_locs=transition_locs,
                 solver=solver,
             )
             return
         # Apply corrections
-        my_set = set(s1)
-        key_func = lambda x: abs(x - 12)
-        closest_element = min(my_set, key=key_func)
+        # Set baseline for corrections. We use the clock at the beginning of the records as the baseline, unless we have
+        # reason to think the values at the start are bad, like if there's a large deviation from noon or the first
+        # changepoint is very close to the start, then we find the times closest to 12-noon.
+        closest_element = s1[0]
+        if (
+            np.abs(closest_element - 12) > 0.9
+            or np.sum(s1 == closest_element) / len(s1) < 0.02
+        ):
+            my_set = set(s1)
+            key_func = lambda x: abs(x - 12)
+            closest_element = min(my_set, key=key_func)
         if not round_shifts_to_hour:
             roll_by_index = np.round((closest_element - s1) * data.shape[0] / 24, 0)
         else:
@@ -217,12 +231,13 @@ class TimeShift:
             jumps_per_year = count_jumps / (len(metric) / 365)
             jpy[i] = jumps_per_year
             rms_s2[i] = np.sqrt(np.mean(np.square(s2)))
-        ### Select best weight as the largest weight that gets within 1% of the lowest holdout error ###
-        ixs = np.arange(len(w1s))
+        ### Select best weight as the largest weight that gets within a bound, eps, of the lowest holdout error ###
         # find lowest holdout value
-        min_test_err = np.min(test_r[ixs])
-        # add a buffer of 1%
-        cond = test_r <= min_test_err * 1.01
+        min_test_err = np.min(test_r)
+        max_test_err = np.max(test_r)
+        # bound is 2% of the test error range
+        cond = test_r <= min_test_err + 0.02 * (max_test_err - min_test_err)
+        ixs = np.arange(len(w1s))
         best_ix = np.max(ixs[cond])
         return test_r, train_r, tv_metric, jpy, best_ix
 
@@ -263,17 +278,25 @@ class TimeShift:
             plt.ylabel("solar noon [hours]")
             return fig
 
-    def plot_optimization(self, figsize=None):
+    def plot_optimization(self, figsize=(8, 8)):
         if self.best_ix is not None:
             w1s = self.w1_vals
             hn = self.normalized_holdout_error
             rn = self.normalized_train_error
             best_w1 = self.best_w1
+            # find lowest holdout value
+            min_test_err = np.min(hn)
+            max_test_err = np.max(hn)
+            # bound is 2% of the test error range
+            bound = min_test_err + 0.02 * (max_test_err - min_test_err)
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(nrows=4, sharex=True, figsize=figsize)
             ax[0].plot(w1s, hn, marker=".")
             ax[0].axvline(best_w1, ls="--", color="red")
+            ax[0].axhline(min_test_err, linewidth=1, color="orange")
+            ax[0].axhline(bound, linewidth=1, color="green")
+            ax[0].set_yscale("log")
             ax[0].set_title("holdout validation")
             ax[1].plot(w1s, self.jumps_per_year, marker=".")
             ax[1].set_yscale("log")
@@ -306,3 +329,22 @@ class TimeShift:
                 ixs = roll_by_index == roll
                 Dout[:, ixs] = np.roll(data, -int(roll), axis=0)[:, ixs]
         return Dout
+
+
+def segment_diffs(signal):
+    dsig = np.diff(signal)
+    diff_ixs = np.arange(len(dsig))
+    transition_locs = diff_ixs[~np.isclose(dsig, 0, atol=1e-6)]
+    ix_segments = np.split(
+        transition_locs, np.where(np.diff(transition_locs) > 1)[0] + 1
+    )
+    return ix_segments
+
+
+def make_pooled_dsig(dsig, segments):
+    new_dsig = np.zeros_like(dsig)
+    for seg in segments:
+        newix = int(np.floor(np.max(seg)))
+        newval = np.sum(dsig[seg])
+        new_dsig[newix] = newval
+    return new_dsig
