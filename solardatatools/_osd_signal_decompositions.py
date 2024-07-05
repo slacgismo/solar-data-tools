@@ -41,15 +41,17 @@ from gfosd.components import (
     NoCurvature,
     NoSlope,
     Fourier,
+    Basis,
 )
 
 
 def _osd_l2_l1d1_l2d2p365(
     signal,
-    w0=10,
-    w1=50,
-    w2=1e5,
+    w0=1,
+    w1=1,
+    w2=1e-3,
     return_all=False,
+    transition_locs=None,
     yearly_periodic=False,
     solver="QSS",
     use_ixs=None,
@@ -85,33 +87,35 @@ def _osd_l2_l1d1_l2d2p365(
     if solver != "QSS":
         sum_card = False
 
-    if sum_card:
-        # Scale objective
-        w0 /= 1e6
-        w1 /= 1e6
-        w2 /= 1e6
-    elif solver == "QSS":
-        # Scale objective
-        w0 /= 1e4
-        w1 /= 1e4
-        w2 /= 1e4
-
     c1 = SumSquare(weight=w0)
     T = len(signal)
-    c2 = Fourier(3, T, 365.2425, weight=1e-3)
+    c2 = Aggregate([Fourier(3, T, 365.2425, weight=1e-3), AverageEqual(0)])
 
-    if sum_card:
-        c3 = SumCard(weight=w1, diff=1)
+    if transition_locs is None:
+        if sum_card:
+            c3 = SumCard(weight=w1, diff=1)
+        else:
+            c3 = SumAbs(weight=w1, diff=1)
+
+        if len(signal) >= 365:
+            if (
+                yearly_periodic and not sum_card
+            ):  # SumCard does not work well with Aggregate class
+                c3 = Aggregate([c3, Periodic(365)])
+            elif yearly_periodic and sum_card:
+                print("Cannot use Periodic Class with SumCard.")
     else:
-        c3 = SumAbs(weight=w1, diff=1)
-
-    if len(signal) >= 365:
-        if (
-            yearly_periodic and not sum_card
-        ):  # SumCard does not work well with Aggregate class
-            c3 = Aggregate([c3, Periodic(365)])
-        elif yearly_periodic and sum_card:
-            print("Cannot use Periodic Class with SumCard.")
+        final_transition_locs = np.r_[None, transition_locs, None]
+        # construct basis constraint matrix: x = Bz, where z \in R^k, and k is the number of piecewise constant segments
+        # with known breakpoints. The columns of B are zero's and one's, with one's corresponding to portions of the
+        # signal that should have the same (piecewise constant) value
+        num_cols = len(final_transition_locs) - 1
+        basis_M = np.zeros((len(signal), num_cols))
+        for _ix in range(num_cols):
+            start = final_transition_locs[_ix]
+            end = final_transition_locs[_ix + 1]
+            basis_M[start:end, _ix] = 1
+        c3 = Basis(basis_M)
 
     classes = [c1, c2, c3]
 
