@@ -105,6 +105,7 @@ def l2_l1d1_l2d2p365(
             w2=w2,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
+            transition_locs=transition_locs,
             solver="CLARABEL",
             sum_card=sum_card,
             verbose=verbose,
@@ -118,8 +119,9 @@ def l2_l1d1_l2d2p365(
             w2=w2,
             yearly_periodic=yearly_periodic,
             return_all=return_all,
-            solver=solver,
-            sum_card=sum_card,
+            transition_locs=transition_locs,
+            solver="CLARABEL",
+            sum_card=False,
             verbose=verbose,
         )
 
@@ -239,8 +241,8 @@ def l1_l1d1_l2d2p365(
             w1=w1,
             w2=w2,
             return_all=return_all,
-            solver=solver,
-            sum_card=sum_card,
+            solver="CLARABEL",
+            sum_card=False,
             verbose=verbose,
         )
 
