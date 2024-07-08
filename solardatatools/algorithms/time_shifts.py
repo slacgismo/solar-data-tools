@@ -118,38 +118,40 @@ class TimeShift:
         # Identify transition points, and resolve second convex signal decomposition problem
         # find indices of transition points
         seg_diff = segment_diffs(s1)
-        new_diff = make_pooled_dsig(np.diff(s1), seg_diff)
-        transition_locs = np.where(np.abs(new_diff) >= 0.05)[0]
-        s1, s2 = self.estimate_components(
-            metric,
-            best_w1,
-            w2,
-            use_ixs,
-            periodic_detector,
-            solver=solver,
-            sum_card=sum_card,
-            transition_locs=transition_locs,
-        )
-        jumps_per_year = len(transition_locs) / (len(metric) / 365)
-        cond1 = jumps_per_year >= 5
-        cond2 = w1 is None
-        cond3 = self.__recursion_depth < 2
-        if cond1 and cond2 and cond3:
-            # Unlikely that  there are more than 5 time shifts per year. Try a
-            # different random sampling
-            self.__recursion_depth += 1
-            self.run(
-                data,
-                use_ixs=use_ixs,
-                w1=w1,
-                w2=w2,
-                solar_noon_estimator=solar_noon_estimator,
-                threshold=threshold,
-                periodic_detector=periodic_detector,
-                transition_locs=transition_locs,
+        no_transitions = len(seg_diff[0]) == 0
+        if not no_transitions:
+            new_diff = make_pooled_dsig(np.diff(s1), seg_diff)
+            transition_locs = np.where(np.abs(new_diff) >= 0.05)[0]
+            s1, s2 = self.estimate_components(
+                metric,
+                best_w1,
+                w2,
+                use_ixs,
+                periodic_detector,
                 solver=solver,
+                sum_card=sum_card,
+                transition_locs=transition_locs,
             )
-            return
+            jumps_per_year = len(transition_locs) / (len(metric) / 365)
+            cond1 = jumps_per_year >= 5
+            cond2 = w1 is None
+            cond3 = self.__recursion_depth < 2
+            if cond1 and cond2 and cond3:
+                # Unlikely that  there are more than 5 time shifts per year. Try a
+                # different random sampling
+                self.__recursion_depth += 1
+                self.run(
+                    data,
+                    use_ixs=use_ixs,
+                    w1=w1,
+                    w2=w2,
+                    solar_noon_estimator=solar_noon_estimator,
+                    threshold=threshold,
+                    periodic_detector=periodic_detector,
+                    transition_locs=transition_locs,
+                    solver=solver,
+                )
+                return
         # Apply corrections
         # Set baseline for corrections. We use the clock at the beginning of the records as the baseline, unless we have
         # reason to think the values at the start are bad, like if there's a large deviation from noon or the first
@@ -235,8 +237,11 @@ class TimeShift:
         # find lowest holdout value
         min_test_err = np.min(test_r)
         max_test_err = np.max(test_r)
-        # bound is 2% of the test error range
-        cond = test_r <= min_test_err + 0.02 * (max_test_err - min_test_err)
+        # bound is 2% of the test error range, or 2% of the min value, whichever is larger
+        bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
+        # reduce false positives: holdout error is typically below 5e-3 for all weights when no shifts
+        bound = max(min_test_err + bound, 5e-3)
+        cond = test_r <= bound
         ixs = np.arange(len(w1s))
         best_ix = np.max(ixs[cond])
         return test_r, train_r, tv_metric, jpy, best_ix
@@ -288,7 +293,8 @@ class TimeShift:
             min_test_err = np.min(hn)
             max_test_err = np.max(hn)
             # bound is 2% of the test error range
-            bound = min_test_err + 0.02 * (max_test_err - min_test_err)
+            bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
+            bound = min_test_err + bound
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots(nrows=4, sharex=True, figsize=figsize)
