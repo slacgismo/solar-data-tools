@@ -187,9 +187,8 @@ def _osd_tl1_l2d2p365(
 def _osd_l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
-    w0=2e-6,  # l1 term, scaled
-    w1=40e-6,  # l1d1 term, scaled
-    w2=6e-3,  # seasonal term, scaled
+    w1=1e0,
+    transition_locs=None,
     return_all=False,
     solver=None,
     sum_card=False,
@@ -204,11 +203,7 @@ def _osd_l1_l1d1_l2d2p365(
     the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
     None is default (uses the entire signal).
-    :param w0: Weight on the residual component
-    :param w1: The regularization parameter to control the total variation in
-    the final output signal
-    :param w2: The regularization parameter to control the smoothness of the
-    seasonal signal
+    :param w1: The regularization parameter to control the number of breakpoints in the PWC component
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
     OSD. MOSEK will trigger CVXPY use.
@@ -220,22 +215,31 @@ def _osd_l1_l1d1_l2d2p365(
     if solver != "QSS":
         sum_card = False
 
-    c1 = SumAbs(weight=w0)
+    c1 = SumAbs(weight=1)
     T = len(signal)
     c2 = Fourier(3, T, 365.2425, weight=1e-3)
-    # TODO: evaluate the weight used here
-    if len(signal) >= 365:
-        pass
-    else:
-        w1 /= 5  # PWC weight needs adjusting when dataset is short
 
-    if sum_card:
-        c3 = SumCard(weight=w1, diff=1)
+    if transition_locs is None:
+        if sum_card:
+            c3 = SumCard(weight=w1, diff=1)
+        else:
+            c3 = SumAbs(weight=w1, diff=1)
+        c3 = Aggregate([c3, Inequality(vmax=0), SumAbs(weight=1e-3)])
     else:
-        c3 = SumAbs(weight=w1, diff=1)
+        final_transition_locs = np.r_[None, transition_locs, None]
+        # construct basis constraint matrix: x = Bz, where z \in R^k, and k is the number of piecewise constant segments
+        # with known breakpoints. The columns of B are zero's and one's, with one's corresponding to portions of the
+        # signal that should have the same (piecewise constant) value
+        num_cols = len(final_transition_locs) - 1
+        basis_M = np.zeros((len(signal), num_cols))
+        for _ix in range(num_cols):
+            start = final_transition_locs[_ix]
+            end = final_transition_locs[_ix + 1]
+            basis_M[start:end, _ix] = 1
+        c3 = Aggregate([Basis(basis_M), Inequality(vmax=0)])
 
     # Linear term to describe yearly degradation of seasonal component
-    c4 = Aggregate([NoCurvature(), FirstValEqual(0)])
+    c4 = Aggregate([NoCurvature(), FirstValEqual(0), SumSquare(weight=1e-1)])
 
     classes = [c1, c2, c3, c4]
 
