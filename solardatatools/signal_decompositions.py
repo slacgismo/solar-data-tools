@@ -194,9 +194,8 @@ def tl1_l2d2p365(
 def l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
-    w0=2e-6,  # l1 term, scaled
-    w1=40e-6,  # l1d1 term, scaled
-    w2=6e-3,  # seasonal term, scaled
+    w1=1e0,
+    transition_locs=None,
     return_all=False,
     solver=None,
     sum_card=False,  # OSD only
@@ -237,9 +236,8 @@ def l1_l1d1_l2d2p365(
         res = _osd_l1_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
-            w0=w0,
             w1=w1,
-            w2=w2,
+            transition_locs=None,
             return_all=return_all,
             solver="CLARABEL",
             sum_card=False,
