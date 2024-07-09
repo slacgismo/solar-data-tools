@@ -243,6 +243,7 @@ class DataHandler:
         self.power_units = units
         if self.__recursion_depth == 0:
             self.tz_correction = 0
+
         t = np.zeros(6)
         ######################################################################
         # Preprocessing
@@ -258,6 +259,12 @@ class DataHandler:
             if power_col not in self.data_frame_raw.columns:
                 print("Power column key not present in data frame.")
                 return
+            # Check that data frame has a reasonable amount of data, you can't have a reasonable time series with less
+            # than 24 actual measured values. This number could probably be bumped up to be honest.
+            if ~np.isnan(self.data_frame_raw[power_col].values) < 24:
+                raise ValueError(
+                    "Insufficient data to run pipeline. Please check your data frame."
+                )
             # Pandas operations to make a time axis with regular intervals.
             # If correct_tz is True, it will also align the median daily maximum
             self.data_frame, sn_deviation = standardize_time_axis(
@@ -1071,7 +1078,6 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                w1=1e0,
                 solver=solver,
             )
         if len(set(self.capacity_analysis.labels)) > 1:
