@@ -50,7 +50,7 @@ def make_time_series(
     :return: A time-series data frame
     """
     # Check to see if there is a reasonable amount of data
-    if ~np.isnan(df[value_key].values) < 24:
+    if np.sum(~np.isnan(df[value_key].values)) < 24:
         raise ValueError(
             "Insufficient data to run pipeline. Please check your data frame."
         )

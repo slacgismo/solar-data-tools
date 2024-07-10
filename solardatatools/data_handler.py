@@ -261,7 +261,7 @@ class DataHandler:
                 return
             # Check that data frame has a reasonable amount of data, you can't have a reasonable time series with less
             # than 24 actual measured values. This number could probably be bumped up to be honest.
-            if ~np.isnan(self.data_frame_raw[power_col].values) < 24:
+            if np.sum(~np.isnan(self.data_frame_raw[power_col].values)) < 24:
                 raise ValueError(
                     "Insufficient data to run pipeline. Please check your data frame."
                 )
