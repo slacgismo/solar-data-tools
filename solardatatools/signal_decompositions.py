@@ -50,7 +50,7 @@ def l2_l1d1_l2d2p365(
     w2=1e5,
     yearly_periodic=False,
     return_all=False,  # for unit tests only
-    solver="QSS",
+    solver="CLARABEL",
     sum_card=False,  # OSD only
     transition_locs=None,  # CVX only
     verbose=False,
@@ -83,7 +83,7 @@ def l2_l1d1_l2d2p365(
     :param verbose: Sets verbosity
     :return: A tuple with two 1d numpy arrays containing the two signal component estimates
     """
-    if solver == "MOSEK" or solver == "CLARABEL":
+    if solver == "MOSEK":
         res = _cvx_l2_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
@@ -106,8 +106,8 @@ def l2_l1d1_l2d2p365(
             yearly_periodic=yearly_periodic,
             return_all=return_all,
             transition_locs=transition_locs,
-            solver="CLARABEL",
-            sum_card=sum_card,
+            solver=solver,
+            sum_card=False,
             verbose=verbose,
         )
     else:
@@ -120,7 +120,7 @@ def l2_l1d1_l2d2p365(
             yearly_periodic=yearly_periodic,
             return_all=return_all,
             transition_locs=transition_locs,
-            solver="CLARABEL",
+            solver=solver,
             sum_card=False,
             verbose=verbose,
         )
@@ -135,7 +135,7 @@ def tl1_l2d2p365(
     w0=1,
     yearly_periodic=True,
     return_all=False,
-    solver="OSQP",
+    solver="CLARABEL",
     verbose=False,
 ):
     """
@@ -197,7 +197,7 @@ def l1_l1d1_l2d2p365(
     w1=1e0,
     transition_locs=None,
     return_all=False,
-    solver=None,
+    solver="CLARABEL",
     sum_card=False,  # OSD only
     verbose=False,
 ):
@@ -239,7 +239,7 @@ def l1_l1d1_l2d2p365(
             w1=w1,
             transition_locs=transition_locs,
             return_all=return_all,
-            solver="CLARABEL",
+            solver=solver,
             sum_card=False,
             verbose=verbose,
         )
@@ -248,7 +248,7 @@ def l1_l1d1_l2d2p365(
 
 
 def l2_l1d2_constrained(
-    signal, w0=1, w1=5, return_all=False, solver="OSQP", verbose=False
+    signal, w0=1, w1=5, return_all=False, solver="CLARABEL", verbose=False
 ):
     """
     Used in solardatatools/algorithms/clipping.py

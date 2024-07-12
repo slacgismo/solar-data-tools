@@ -191,7 +191,7 @@ class DataHandler:
         extra_cols=None,
         daytime_threshold=0.005,
         units="W",
-        solver="QSS",
+        solver="CLARABEL",
         solver_convex="CLARABEL",
         reset=True,
     ):
