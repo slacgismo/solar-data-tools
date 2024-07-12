@@ -236,7 +236,7 @@ def _osd_l1_l1d1_l2d2p365(
             start = final_transition_locs[_ix]
             end = final_transition_locs[_ix + 1]
             basis_M[start:end, _ix] = 1
-        c3 = Aggregate([Basis(basis_M), Inequality(vmax=0)])
+        c3 = Aggregate([Basis(basis_M), Inequality(vmax=0), FirstValEqual(0)])
 
     # Linear term to describe yearly degradation of seasonal component
     c4 = Aggregate([NoCurvature(), FirstValEqual(0), SumSquare(weight=1e-1)])
