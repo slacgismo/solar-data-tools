@@ -5,6 +5,9 @@ from statistical_clear_sky.algorithm.iterative_fitting import IterativeFitting
 
 
 class TestIterativeFitting(unittest.TestCase):
+    @unittest.skip(
+        "The Statistical Clear Sky package is deprecated. Starting in Solar Data Tools 2.0, it will be removed. Test skipped."
+    )
     def test_calculate_objective(self):
 
         input_power_signals_file_path = os.path.abspath(
