@@ -237,7 +237,7 @@ def l1_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
             w1=w1,
-            transition_locs=None,
+            transition_locs=transition_locs,
             return_all=return_all,
             solver="CLARABEL",
             sum_card=False,
