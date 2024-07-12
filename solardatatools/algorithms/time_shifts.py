@@ -134,25 +134,25 @@ class TimeShift:
                 transition_locs=transition_locs,
             )
             jumps_per_year = len(transition_locs) / (len(metric) / 365)
-            cond1 = jumps_per_year >= 5
-            cond2 = w1 is None
-            cond3 = self.__recursion_depth < 2
-            if cond1 and cond2 and cond3:
-                # Unlikely that  there are more than 5 time shifts per year. Try a
-                # different random sampling
-                self.__recursion_depth += 1
-                self.run(
-                    data,
-                    use_ixs=use_ixs,
-                    w1=w1,
-                    w2=w2,
-                    solar_noon_estimator=solar_noon_estimator,
-                    threshold=threshold,
-                    periodic_detector=periodic_detector,
-                    transition_locs=transition_locs,
-                    solver=solver,
-                )
-                return
+            # cond1 = jumps_per_year >= 5
+            # cond2 = w1 is None
+            # cond3 = self.__recursion_depth < 2
+            # if cond1 and cond2 and cond3:
+            #     # Unlikely that  there are more than 5 time shifts per year. Try a
+            #     # different random sampling
+            #     self.__recursion_depth += 1
+            #     self.run(
+            #         data,
+            #         use_ixs=use_ixs,
+            #         w1=w1,
+            #         w2=w2,
+            #         solar_noon_estimator=solar_noon_estimator,
+            #         threshold=threshold,
+            #         periodic_detector=periodic_detector,
+            #         transition_locs=transition_locs,
+            #         solver=solver,
+            #     )
+            #     return
         # Apply corrections
         # Set baseline for corrections. We use the clock at the beginning of the records as the baseline, unless we have
         # reason to think the values at the start are bad, like if there's a large deviation from noon or the first
@@ -234,17 +234,40 @@ class TimeShift:
             jumps_per_year = count_jumps / (len(metric) / 365)
             jpy[i] = jumps_per_year
             rms_s2[i] = np.sqrt(np.mean(np.square(s2)))
-        ### Select best weight as the largest weight that gets within a bound, eps, of the lowest holdout error ###
-        # find lowest holdout value
-        min_test_err = np.min(test_r)
-        max_test_err = np.max(test_r)
-        # bound is 2% of the test error range, or 2% of the min value, whichever is larger
-        bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
-        # reduce false positives: holdout error is typically below 5e-3 for all weights when no shifts
-        bound = max(min_test_err + bound, 5e-3)
-        cond = test_r <= bound
-        ixs = np.arange(len(w1s))
-        best_ix = np.max(ixs[cond])
+        # Precheck: Determine if changes are present. We observe the two conditions indicate a change:
+        # 1) there is a significant difference between the best and worst holdout error (otherwise that part of the
+        # model is unimportant).
+        # 2) Forcing the component to turn off (high weight) results in worse holdout error than including the component
+        # with no regularization (low weight).
+        holdout_metric = (np.max(test_r) - np.min(test_r)) / np.average(test_r)
+        if holdout_metric > 0.2 and test_r[-1] > test_r[0]:
+            changes_detected = True
+        else:
+            changes_detected = False
+        if not changes_detected:
+            # use largest weight
+            best_ix = len(w1s) - 1
+        else:
+            try:
+                # Try to find the 'large jump' by identifying positive outliers via the interquartile range outlier test
+                test_err_diffs = np.diff(test_r)
+                upper_quartile = np.percentile(test_err_diffs, 75)
+                lower_quartile = np.percentile(test_err_diffs, 25)
+                iqr = (upper_quartile - lower_quartile) * 1.5
+                holdout_increase_threshold = upper_quartile + iqr
+                best_ix = np.where(test_err_diffs > holdout_increase_threshold)[0][0]
+            except IndexError:
+                # Select best weight as the largest weight that gets within a bound, eps, of the lowest holdout error
+                # find lowest holdout value
+                min_test_err = np.min(test_r)
+                max_test_err = np.max(test_r)
+                # bound is 2% of the test error range, or 2% of the min value, whichever is larger
+                bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
+                # reduce false positives: holdout error is typically below 5e-3 for all weights when no shifts
+                bound = max(min_test_err + bound, 5e-3)
+                cond = test_r <= bound
+                ixs = np.arange(len(w1s))
+                best_ix = np.max(ixs[cond])
         return test_r, train_r, tv_metric, jpy, best_ix
 
     def estimate_components(
@@ -301,9 +324,9 @@ class TimeShift:
             fig, ax = plt.subplots(nrows=4, sharex=True, figsize=figsize)
             ax[0].plot(w1s, hn, marker=".")
             ax[0].axvline(best_w1, ls="--", color="red")
-            ax[0].axhline(min_test_err, linewidth=1, color="orange")
-            ax[0].axhline(bound, linewidth=1, color="green")
-            ax[0].set_yscale("log")
+            # ax[0].axhline(min_test_err, linewidth=1, color="orange")
+            # ax[0].axhline(bound, linewidth=1, color="green")
+            # ax[0].set_yscale("log")
             ax[0].set_title("holdout validation")
             ax[1].plot(w1s, self.jumps_per_year, marker=".")
             ax[1].set_yscale("log")
