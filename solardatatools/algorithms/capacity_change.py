@@ -42,14 +42,15 @@ class CapacityChange:
         solver=None,
     ):
         metric = np.nanquantile(data, q=quantile, axis=0)
+        metric_temp = np.ones_like(metric) * np.nan
         # metric /= np.max(metric)
-        metric = np.log(metric)
+        metric[~np.isnan(metric_temp)] = np.log(metric_temp[~np.isnan(metric_temp)])
         if filter is None:
             filter = ~np.isnan(metric)
         else:
             filter = np.logical_and(filter, ~np.isnan(metric))
         if w1 is None:
-            w1s = np.logspace(-2, 2, 17)
+            w1s = np.logspace(-1, 3, 17)
             test_r, train_r, best_ix = self.optimize_weight(
                 metric, filter, w1s, solver=solver
             )
@@ -60,6 +61,7 @@ class CapacityChange:
             test_r = None
             train_r = None
             w1s = None
+            changes_detected = None
         # change detector, seasonal term, linear term
         s1, s2, s3 = self.solve_sd(
             metric, filter, tuned_weight, transition_locs=None, solver=solver
@@ -80,7 +82,8 @@ class CapacityChange:
                 solver=solver,
             )
         # Get capacity assignments (label each day)
-        rounded_s1 = custom_round(s1)
+        # rounding buckets aligned to first value of component, bin widths of 0.05
+        rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
         set_labels = list(set(rounded_s1))
         capacity_assignments = [set_labels.index(i) for i in rounded_s1]
 
@@ -124,17 +127,43 @@ class CapacityChange:
             # collect results
             train_r[i] = np.average(np.abs((y - s1 - s2 - s3)[train]))
             test_r[i] = np.average(np.abs((y - s1 - s2 - s3)[test]))
-        ### Select best weight as the largest weight that gets within a bound, eps, of the lowest holdout error ###
-        # find lowest holdout value
-        min_test_err = np.min(test_r)
-        max_test_err = np.max(test_r)
-        # bound is 2% of the test error range, or 2% of the min value, whichever is larger
-        bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
-        # reduce false positives: holdout error is typically below 1e-3 for all weights when no changes are present
-        bound = max(min_test_err + bound, 1e-3)
-        cond = test_r <= bound
-        ixs = np.arange(len(w1s))
-        best_ix = np.max(ixs[cond])
+        # Precheck: Determine if changes are present. We observe the two conditions indicate a change:
+        # 1) there is a significant difference between the best and worst holdout error (otherwise that part of the
+        # model is unimportant).
+        # 2) Forcing the component to turn off (high weight) results in worse holdout error than including the component
+        # with no regularization (low weight).
+        holdout_metric = (np.max(test_r) - np.min(test_r)) / np.average(test_r)
+        if holdout_metric > 0.35 and test_r[-1] > test_r[0]:
+            changes_detected = True
+        else:
+            changes_detected = False
+
+        if not changes_detected:
+            # use largest weight
+            best_ix = np.arange(len(w1s))[-1]
+        else:
+            # Select best weight as the largest weight that doesn't increase the test error by more than the threshold
+            # The basic assumption here is that if the test error jumps up sharply when the weight is increased to the
+            # point that the piecewise constant term turns off. We make this assumption because we believe a change
+            # has been detected.
+            try:
+                # Try to find the 'large jump' by identifying positive outliers via the interquartile range outlier test
+                test_err_diffs = np.diff(test_r)
+                upper_quartile = np.percentile(test_err_diffs, 75)
+                lower_quartile = np.percentile(test_err_diffs, 25)
+                iqr = (upper_quartile - lower_quartile) * 1.5
+                holdout_increase_threshold = upper_quartile + iqr
+                best_ix = np.where(test_err_diffs > holdout_increase_threshold)[0][0]
+            except IndexError:
+                # no differences were above the threshold. try another approach.
+                # find lowest holdout value
+                min_test_err = np.min(test_r)
+                max_test_err = np.max(test_r)
+                # bound is 2% of the test error range, or 2% of the min value, whichever is larger
+                bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
+                cond = test_r <= min_test_err + bound
+                ixs = np.arange(len(w1s))
+                best_ix = np.max(ixs[cond])
         return test_r, train_r, best_ix
 
 
