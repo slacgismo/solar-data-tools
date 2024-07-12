@@ -95,7 +95,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver=self.solver, return_all=True
+            signal, w1=50, solver=self.solver, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
