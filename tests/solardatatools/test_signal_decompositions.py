@@ -40,6 +40,7 @@
     TESTS
     -----
     - test_l2_l1d2_constrained_default
+test test test
 """
 
 import unittest
@@ -378,7 +379,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test with default args
         actual_s_seas, actual_problem = sd.tl1_l2d2p365(
-            signal, tau=0.8, w1=1e5, solver=self.solver_convex, return_all=True
+            signal, tau=0.8, solver=self.solver_convex, return_all=True
         )
         actual_obj_val = actual_problem.objective_value
 
@@ -421,7 +422,6 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_s_seas, actual_problem = sd.tl1_l2d2p365(
             signal,
             tau=0.8,
-            w1=1e5,
             solver=self.solver_convex,
             use_ixs=indices,
             return_all=True,
@@ -433,6 +433,7 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertLess(mae_s_seas, self.mae_threshold)
         self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
+    @unittest.skip("Function no longer supported.")
     def test_tl1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
