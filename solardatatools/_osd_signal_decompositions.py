@@ -137,7 +137,6 @@ def _osd_tl1_l2d2p365(
     use_ixs=None,
     tau=0.75,
     w0=1,
-    yearly_periodic=True,
     return_all=False,
     solver="OSQP",
     verbose=False,
