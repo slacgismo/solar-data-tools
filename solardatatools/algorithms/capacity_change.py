@@ -133,7 +133,7 @@ class CapacityChange:
         # 2) Forcing the component to turn off (high weight) results in worse holdout error than including the component
         # with no regularization (low weight).
         holdout_metric = (np.max(test_r) - np.min(test_r)) / np.average(test_r)
-        if holdout_metric > 0.35 and test_r[-1] > test_r[0]:
+        if holdout_metric > 0.2 and test_r[-1] > test_r[0]:
             changes_detected = True
         else:
             changes_detected = False
