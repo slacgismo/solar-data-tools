@@ -54,8 +54,8 @@ from solardatatools import signal_decompositions as sd
 
 class TestSignalDecompositions(unittest.TestCase):
     def setUp(self):
-        self.solver = "QSS"
-        self.solver_convex = "OSQP"  # use OSQP for convex only problem
+        self.solver = "CLARABEL"
+        self.solver_convex = "CLARABEL"
         self.mae_threshold = 0.001
         self.obj_tolerance = 1
 
