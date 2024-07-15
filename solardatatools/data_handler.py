@@ -1847,7 +1847,7 @@ time zone errors     {report['time zone correction'] != 0}
         )
         if has_changed:
             self.polar_transform.transform(
-                agg_func=np.nanmean,
+                agg_func="mean",
                 elevation_round=elevation_round,
                 azimuth_round=azimuth_round,
             )
