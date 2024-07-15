@@ -40,7 +40,6 @@
     TESTS
     -----
     - test_l2_l1d2_constrained_default
-test test test
 """
 
 import unittest
@@ -520,9 +519,7 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
             signal,
-            w0=1,
-            w1=2,
-            w2=1e3,
+            w1=5e0,
             sum_card=True,
             solver="CLARABEL",
             return_all=True,
