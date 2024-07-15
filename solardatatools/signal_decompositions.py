@@ -182,7 +182,6 @@ def tl1_l2d2p365(
             use_ixs=use_ixs,
             tau=tau,
             w0=w0,
-            yearly_periodic=yearly_periodic,
             return_all=return_all,
             solver=solver,
             verbose=verbose,
