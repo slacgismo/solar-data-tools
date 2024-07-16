@@ -54,8 +54,8 @@ from solardatatools import signal_decompositions as sd
 
 class TestSignalDecompositions(unittest.TestCase):
     def setUp(self):
-        self.solver = "QSS"
-        self.solver_convex = "OSQP"  # use OSQP for convex only problem
+        self.solver = "CLARABEL"
+        self.solver_convex = "CLARABEL"
         self.mae_threshold = 0.001
         self.obj_tolerance = 1
 
@@ -95,7 +95,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver=self.solver, return_all=True
+            signal, w1=5, solver=self.solver, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
@@ -139,7 +139,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver=self.solver, return_all=True
+            signal, w1=5, w2=1e-3, solver=self.solver, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
@@ -184,7 +184,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver=self.solver, use_ixs=indices, return_all=True
+            signal, w1=5, w2=1e-3, solver=self.solver, use_ixs=indices, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
@@ -233,8 +233,8 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
             signal,
-            w1=50,
-            w2=1e6,
+            w1=5,
+            w2=1e-3,
             solver=self.solver,
             yearly_periodic=True,
             return_all=True,
@@ -286,8 +286,7 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
             signal,
-            w1=50,
-            w2=1e6,
+            w1=5,
             solver=self.solver,
             yearly_periodic=True,
             return_all=True,
@@ -333,7 +332,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver="OSQP", yearly_periodic=True, return_all=True
+            signal, w1=5, w2=1e-3, solver="OSQP", yearly_periodic=True, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
@@ -378,7 +377,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test with default args
         actual_s_seas, actual_problem = sd.tl1_l2d2p365(
-            signal, tau=0.8, w1=1e5, solver=self.solver_convex, return_all=True
+            signal, tau=0.8, solver=self.solver_convex, return_all=True
         )
         actual_obj_val = actual_problem.objective_value
 
@@ -421,7 +420,6 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_s_seas, actual_problem = sd.tl1_l2d2p365(
             signal,
             tau=0.8,
-            w1=1e5,
             solver=self.solver_convex,
             use_ixs=indices,
             return_all=True,
@@ -433,6 +431,7 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertLess(mae_s_seas, self.mae_threshold)
         self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
+    @unittest.skip("Function no longer supported.")
     def test_tl1_l2d2p365_long_not_yearly_periodic(self):
         """Test with signal with len>365 and yearly_periodic set to True"""
 
@@ -519,9 +518,7 @@ class TestSignalDecompositions(unittest.TestCase):
         # Run test with default args
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
             signal,
-            w0=1,
-            w1=2,
-            w2=1e3,
+            w1=5e0,
             sum_card=True,
             solver="CLARABEL",
             return_all=True,

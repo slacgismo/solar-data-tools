@@ -49,6 +49,11 @@ def make_time_series(
     :param filter_length: The number of non-null data values a single system must have to be included in the output
     :return: A time-series data frame
     """
+    # Check to see if there is a reasonable amount of data
+    if np.sum(df[value_key].values >= 0) < 24:
+        raise ValueError(
+            "Insufficient data to run pipeline. Please check your data frame."
+        )
     # Make sure that the timestamps are monotonically increasing. There may be
     # missing or repeated time stamps
     df.sort_values(timestamp_key, inplace=True)
