@@ -185,7 +185,7 @@ def _osd_l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
     w1=1e0,
-    w2=1e3,
+    w2=1e-3,
     transition_locs=None,
     return_all=False,
     solver=None,
