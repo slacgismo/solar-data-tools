@@ -120,3 +120,22 @@ def undo_time_dilate(data, mask, scale=None):
         # insert the data into the daytime index values
         output[mask[:, col_ix], col_ix] = resampled_signal
     return output
+
+
+def segment_diffs(signal):
+    dsig = np.diff(signal)
+    diff_ixs = np.arange(len(dsig))
+    transition_locs = diff_ixs[~np.isclose(dsig, 0, atol=1e-6)]
+    ix_segments = np.split(
+        transition_locs, np.where(np.diff(transition_locs) > 1)[0] + 1
+    )
+    return ix_segments
+
+
+def make_pooled_dsig(dsig, segments):
+    new_dsig = np.zeros_like(dsig)
+    for seg in segments:
+        newix = int(np.floor(np.max(seg)))
+        newval = np.sum(dsig[seg])
+        new_dsig[newix] = newval
+    return new_dsig
