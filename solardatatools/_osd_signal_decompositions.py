@@ -47,7 +47,6 @@ from gfosd.components import (
 
 def _osd_l2_l1d1_l2d2p365(
     signal,
-    w0=1,
     w1=1,
     w2=1e-3,
     return_all=False,
@@ -89,7 +88,7 @@ def _osd_l2_l1d1_l2d2p365(
 
     c1 = SumSquare(weight=w0)
     T = len(signal)
-    c2 = Aggregate([Fourier(3, T, 365.2425, weight=1e-3), AverageEqual(0)])
+    c2 = Aggregate([Fourier(3, T, 365.2425, weight=w2), AverageEqual(0)])
 
     if transition_locs is None:
         if sum_card:
@@ -187,6 +186,7 @@ def _osd_l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
     w1=1e0,
+    w2=1e3,
     transition_locs=None,
     return_all=False,
     solver=None,
@@ -216,7 +216,7 @@ def _osd_l1_l1d1_l2d2p365(
 
     c1 = SumAbs(weight=1)
     T = len(signal)
-    c2 = Fourier(3, T, 365.2425, weight=1e-3)
+    c2 = Fourier(3, T, 365.2425, weight=w2)
 
     if transition_locs is None:
         if sum_card:

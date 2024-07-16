@@ -183,8 +183,8 @@ class DataHandler:
         verbose=True,
         start_day_ix=None,
         end_day_ix=None,
-        w1=None,
-        w2=1e-3,
+        time_shift_weight_change_detector=None,
+        time_shift_weight_seasonal=1e-3,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
@@ -457,8 +457,8 @@ class DataHandler:
             try:
                 self.auto_fix_time_shifts(
                     round_shifts_to_hour=round_shifts_to_hour,
-                    w1=w1,
-                    w2=w2,
+                    w1=time_shift_weight_change_detector,
+                    w2=time_shift_weight_seasonal,
                     estimator=solar_noon_estimator,
                     threshold=daytime_threshold,
                     periodic_detector=periodic_detector,
@@ -471,8 +471,8 @@ class DataHandler:
                     old_analysis = self.time_shift_analysis
                     self.auto_fix_time_shifts(
                         round_shifts_to_hour=round_shifts_to_hour,
-                        w1=w1,
-                        w2=w2,
+                        w1=time_shift_weight_change_detector,
+                        w2=time_shift_weight_seasonal,
                         estimator=solar_noon_estimator,
                         threshold=daytime_threshold,
                         periodic_detector=True,
@@ -1127,7 +1127,7 @@ time zone errors     {report['time zone correction'] != 0}
         round_shifts_to_hour=True,
         w1=None,
         w2=1e-3,
-        estimator="com",
+        estimator="srss",
         threshold=0.005,
         periodic_detector=False,
         solver=None,
