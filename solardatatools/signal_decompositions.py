@@ -45,9 +45,8 @@ from solardatatools._cvx_signal_decompositions import (
 def l2_l1d1_l2d2p365(
     signal,
     use_ixs=None,
-    w0=10,
     w1=50,
-    w2=1e5,
+    w2=1e-3,
     yearly_periodic=False,
     return_all=False,  # for unit tests only
     solver="CLARABEL",
@@ -87,7 +86,7 @@ def l2_l1d1_l2d2p365(
         res = _cvx_l2_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
-            w0=w0,
+            w0=1,
             w1=w1,
             w2=w2,
             yearly_periodic=yearly_periodic,
@@ -100,7 +99,6 @@ def l2_l1d1_l2d2p365(
         res = _osd_l2_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
-            w0=w0,
             w1=w1,
             w2=w2,
             yearly_periodic=yearly_periodic,
@@ -114,7 +112,6 @@ def l2_l1d1_l2d2p365(
         res = _osd_l2_l1d1_l2d2p365(
             signal=signal,
             use_ixs=use_ixs,
-            w0=w0,
             w1=w1,
             w2=w2,
             yearly_periodic=yearly_periodic,
