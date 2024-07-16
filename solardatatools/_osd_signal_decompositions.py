@@ -70,7 +70,6 @@ def _osd_l2_l1d1_l2d2p365(
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
     the signal of interest
-    :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the total variation in
     the final output signal
     :param w2: The regularization parameter to control the smoothness of the
@@ -86,7 +85,7 @@ def _osd_l2_l1d1_l2d2p365(
     if solver != "QSS":
         sum_card = False
 
-    c1 = SumSquare(weight=w0)
+    c1 = SumSquare()
     T = len(signal)
     c2 = Aggregate([Fourier(3, T, 365.2425, weight=w2), AverageEqual(0)])
 
