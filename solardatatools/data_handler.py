@@ -183,15 +183,15 @@ class DataHandler:
         verbose=True,
         start_day_ix=None,
         end_day_ix=None,
-        w1=None,
-        w2=1e5,
+        time_shift_weight_change_detector=None,
+        time_shift_weight_seasonal=1e-3,
         periodic_detector=False,
         solar_noon_estimator="srss",
         correct_tz=True,
         extra_cols=None,
         daytime_threshold=0.005,
         units="W",
-        solver="QSS",
+        solver="CLARABEL",
         solver_convex="CLARABEL",
         reset=True,
     ):
@@ -243,6 +243,7 @@ class DataHandler:
         self.power_units = units
         if self.__recursion_depth == 0:
             self.tz_correction = 0
+
         t = np.zeros(6)
         ######################################################################
         # Preprocessing
@@ -258,6 +259,12 @@ class DataHandler:
             if power_col not in self.data_frame_raw.columns:
                 print("Power column key not present in data frame.")
                 return
+            # Check that data frame has a reasonable amount of data, you can't have a reasonable time series with less
+            # than 24 actual measured values. This number could probably be bumped up to be honest.
+            if np.sum(self.data_frame_raw[power_col].values >= 0) < 24:
+                raise ValueError(
+                    "Insufficient data to run pipeline. Please check your data frame."
+                )
             # Pandas operations to make a time axis with regular intervals.
             # If correct_tz is True, it will also align the median daily maximum
             self.data_frame, sn_deviation = standardize_time_axis(
@@ -450,8 +457,8 @@ class DataHandler:
             try:
                 self.auto_fix_time_shifts(
                     round_shifts_to_hour=round_shifts_to_hour,
-                    w1=w1,
-                    w2=w2,
+                    w1=time_shift_weight_change_detector,
+                    w2=time_shift_weight_seasonal,
                     estimator=solar_noon_estimator,
                     threshold=daytime_threshold,
                     periodic_detector=periodic_detector,
@@ -464,8 +471,8 @@ class DataHandler:
                     old_analysis = self.time_shift_analysis
                     self.auto_fix_time_shifts(
                         round_shifts_to_hour=round_shifts_to_hour,
-                        w1=w1,
-                        w2=w2,
+                        w1=time_shift_weight_change_detector,
+                        w2=time_shift_weight_seasonal,
                         estimator=solar_noon_estimator,
                         threshold=daytime_threshold,
                         periodic_detector=True,
@@ -1071,8 +1078,6 @@ time zone errors     {report['time zone correction'] != 0}
                 self.filled_data_matrix,
                 filter=self.daily_flags.no_errors,
                 quantile=1.00,
-                w1=40e-6,  # scaled weights for QSS
-                w2=6561e-6,
                 solver=solver,
             )
         if len(set(self.capacity_analysis.labels)) > 1:
@@ -1120,9 +1125,9 @@ time zone errors     {report['time zone correction'] != 0}
     def auto_fix_time_shifts(
         self,
         round_shifts_to_hour=True,
-        w1=5,
-        w2=1e5,
-        estimator="com",
+        w1=None,
+        w2=1e-3,
+        estimator="srss",
         threshold=0.005,
         periodic_detector=False,
         solver=None,
@@ -1842,7 +1847,7 @@ time zone errors     {report['time zone correction'] != 0}
         )
         if has_changed:
             self.polar_transform.transform(
-                agg_func=np.nanmean,
+                agg_func="mean",
                 elevation_round=elevation_round,
                 azimuth_round=azimuth_round,
             )
