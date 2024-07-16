@@ -139,7 +139,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver=self.solver, return_all=True
+            signal, w1=50, w2=1e-3, solver=self.solver, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
@@ -184,7 +184,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver=self.solver, use_ixs=indices, return_all=True
+            signal, w1=50, w2=1e-3, solver=self.solver, use_ixs=indices, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
@@ -234,7 +234,7 @@ class TestSignalDecompositions(unittest.TestCase):
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
             signal,
             w1=50,
-            w2=1e6,
+            w2=1e-3,
             solver=self.solver,
             yearly_periodic=True,
             return_all=True,
@@ -333,7 +333,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l2_l1d1_l2d2p365(
-            signal, w1=50, w2=1e6, solver="OSQP", yearly_periodic=True, return_all=True
+            signal, w1=50, w2=1e-3, solver="OSQP", yearly_periodic=True, return_all=True
         )
 
         actual_obj_val = actual_problem.objective_value
