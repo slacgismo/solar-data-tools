@@ -29,12 +29,11 @@
         <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
     </a>
         <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml">
-        <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml/badge.svg?branch=master" alt="Actions build status" />
+        <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml/badge.svg?branch=main" alt="Actions build status" />
     </a>
-    <!-- switch below from tadatoshi to gismo -->
-    <a href="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
-        <img src="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
-    </a>
+    <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/build.yml">
+        <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/build.yml/badge.svg">
+    </a> 
   </td>
 </tr>
 <tr>
@@ -125,13 +124,18 @@ $ conda install solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp
 
 ### Solvers
 
-#### QSS & CLARABEL
+#### CLARABEL
 
-By default, [QSS](https://github.com/cvxgrp/qss) and CLARABEL solvers are used for non-convex and convex problems, respectively. Both are supported by [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools, and both are open source. 
+By default, the [CLARABEL](https://clarabel.org/stable/) solver is used to solve the signal decomposition problems. CLARABEL (as well as other solvers) is compatible with [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools. Both are open source and are dependencies of Solar Data Tools. 
 
 #### MOSEK
 
-MOSEK is a commercial software package. Since it is more stable and offers faster solve times, we provide continuing support for it, however you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running `pip install "solar-data-tools[mosek]"`. If installing from conda, you will have to manually install MOSEK if you desire to use it as conda does not support optional dependencies like pip. 
+MOSEK is a commercial software package. Since it is more stable and offers faster solve times,
+we provide continuing support for it (with signal decomposition problem formulations using CVXPY). However,
+you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running 
+`pip install "solar-data-tools[mosek]"`. 
+If installing from conda, you will have to manually install MOSEK if you desire to use it as 
+conda does not support optional dependencies like pip. 
 
 More information about MOSEK and how to obtain a license is available here:
 
@@ -141,10 +145,8 @@ More information about MOSEK and how to obtain a license is available here:
 
 ## Usage
 Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
-Tools uses CLARABEL and QSS as the solvers for convex and non-convex problems, respectively. If you would like 
-to specify a solver, just pass the keyword argument `solver` (for non-convex) or `solver_convex` (for convex) 
-to `DataHandler.pipeline` with the solver of choice. Setting `solver=MOSEK` will set the solver to MOSEK for both
-convex and non-convex problems by default.
+Tools uses [CLARABEL](https://clarabel.org/stable/) as the solver all signal decomposition problems. If you would like 
+to specify another solver (such as MOSEK), just pass the keyword argument `solver` to `DataHandler.pipeline` with the solver of choice.
 
 ```python
 from solardatatools import DataHandler
@@ -202,24 +204,7 @@ Solar Data Tools that you used. Solar Data Tools DOIs are listed at
 
 ## Contributors
 
-Must enable pre-commit hook before pushing any contributions
-```
-pip install pre-commit
-pre-commit install
-```
-
-Run pre-commit hook on all files
-```
-pre-commit run --all-files
-```
-
-## Test Coverage
-
-In order to view the current test coverage metrics, run:
-```
-coverage run --source solardatatools -m unittest discover && coverage html
-open htmlcov/index.html
-```
+We welcome contributions of any form! Please see our [Contribution Guidelines](./CONTRIBUTING.md) for more information.
 
 ## Versioning
 

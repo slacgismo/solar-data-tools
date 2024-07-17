@@ -789,6 +789,29 @@ time zone errors     {report['time zone correction'] != 0}
         verbose=True,
         bootstraps=None,
     ):
+        """
+        Fit Statistical Clear Sky model.
+
+        .. deprecated:: 1.5.0
+            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
+
+        :param data_matrix:
+        :param rank:
+        :param mu_l:
+        :param mu_r:
+        :param tau:
+        :param exit_criterion_epsilon:
+        :param solver_type:
+        :param max_iteration:
+        :param calculate_degradation:
+        :param max_degradation:
+        :param min_degradation:
+        :param non_neg_constraints:
+        :param verbose:
+        :param bootstraps:
+        :return:
+
+        """
         try:
             from statistical_clear_sky import SCSF
         except ImportError:

@@ -1,3 +1,6 @@
+Solar Data Tools Documentation
+==============================
+
 .. image:: _static/SDT_v1_primary_white_text.png
     :width: 600
     :class: only-dark
@@ -32,7 +35,7 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
    index_getting_started
    index_user_docs
    index_dev
-   index_project_details
+   index_api_reference
 
 .. grid:: 1 2 2 2
     :gutter: 4
@@ -42,7 +45,7 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
     .. grid-item-card:: Getting Started
         :img-top: ../source/images/getting_started.svg
 
-        New to Solar Data Tools? Check out the getting started guides for installation and general usage information,
+        New to Solar Data Tools? Check out the getting started guides for installation and general usage information, project details,
         as well as quick links to additional examples and tutorials.
 
         +++
@@ -59,9 +62,8 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
         :class-card: intro-card
         :shadow: md
 
-        The user guide provides in-depth information on the key concepts
-        of Solar Data Tools with useful background information and explanation,
-        as well as a comprehensive API reference.
+        The user guide provides in-depth information on the key concepts and methods
+        of Solar Data Tools with useful background information and explanation.
 
         +++
 
@@ -90,18 +92,19 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
 
             To the contribution guidelines
 
-    .. grid-item-card:: Project details
+    .. grid-item-card:: API Reference
         :img-top: ../source/images/api.svg
         :class-card: intro-card
         :shadow: md
 
-        More details about the project (technical details, changelog and what's new pages).
+        The reference guide contains a detailed description of the Solar Data Tools API, describing how the methods work
+        and which parameters can be used.
 
         +++
 
-        .. button-ref:: index_project_details
+        .. button-ref:: index_api_reference
             :click-parent:
             :color: primary
             :expand:
 
-            To the project details
+            To the API reference

@@ -70,7 +70,7 @@ def _osd_l2_l1d1_l2d2p365(
     with sum_card=True.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param w1: The regularization parameter to control the total variation in
         the final output signal
     :param w2: The regularization parameter to control the smoothness of the
@@ -201,7 +201,7 @@ def _osd_l1_l1d1_l2d2p365(
     :param signal: A 1d numpy array (must support boolean indexing) containing
         the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
-    None is default (uses the entire signal).
+        None is default (uses the entire signal).
     :param w1: The regularization parameter to control the number of breakpoints in the PWC component
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition. QSS and OSQP are supported with

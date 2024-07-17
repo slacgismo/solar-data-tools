@@ -52,15 +52,15 @@ $ conda install solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp
 
 # Solvers
 
-## QSS & CLARABEL
+## CLARABEL
 
-By default, [QSS](https://github.com/cvxgrp/qss) and CLARABEL solvers are used for non-convex and convex problems, respectively. Both are supported by [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools, and both are open source. 
+By default, the CLARABEL solver is used to solve the signal decomposition problems. CLARABEL (as well as other solvers) is compatible with [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools, and both are open source. 
 
 ## MOSEK
 
 MOSEK is a commercial software package. Since it is more stable and offers faster solve times,
-we provide continuing support for it, however you will still need to obtain a license. 
-If installing with pip, you can install the optional MOSEK dependency by running 
+we provide continuing support for it (with signal decomposition problem formulations using CVXPY). However,
+you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running 
 `pip install "solar-data-tools[mosek]"`. 
 If installing from conda, you will have to manually install MOSEK if you desire to use it as 
 conda does not support optional dependencies like pip. 
