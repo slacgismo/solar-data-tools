@@ -1,6 +1,3 @@
-Solar Data Tools Documentation
-==============================
-
 .. image:: _static/SDT_v1_primary_white_text.png
     :width: 600
     :class: only-dark
@@ -9,6 +6,8 @@ Solar Data Tools Documentation
     :width: 600
     :class: only-light
 
+Welcome to the Solar Data Tools Docs!
+=====================================
 |PyPI release| |Anaconda Cloud release|
 
 .. |PyPI release| image:: https://img.shields.io/pypi/v/solar-data-tools.svg
