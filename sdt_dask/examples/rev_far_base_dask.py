@@ -123,7 +123,7 @@ def check_enviornment_variables():
 
 VPC = "vpc-ab2ff6d3"  # for us-west-2
 
-IMAGE = "smiskov/sdt-v1:latest"
+IMAGE = "slacgismo/sdt-v1:latest"
 
 
 

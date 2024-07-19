@@ -127,13 +127,12 @@ Note: For more information on Azure VM Cluster arguments refer [this](https://cl
 ### SDT Docker image
 Running on the cloud with the clients we've provided (Fargate/Azure) requires a Docker image with the necessary 
 packages for the installed on it. We have created an image for you to use if you'd like to run with no special packages 
-for dataplugs (we include `boto3` in the environment). To use this image, simply pass `smiskov/sdt-v1:latest` to the `image` arguments 
+for dataplugs (we include `boto3` in the environment). To use this image, simply pass `slacgismo/sdt-v1:latest` to the `image` arguments 
 when instantiating the clients. 
 
-Note that your local environment (Python package versions) needs to match the provided Docker image (`smiskov/sdt-v1:latest`) if you'd like to use it to run on the cloud.
-The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_list.txt). The main points of mismatch are typically the following packages:
+Note that your local environment needs to have Python 3.12 installed and needs to match the provided Docker image (`slacgismo/sdt-v1:latest`) if you'd like to use it to run on the cloud. The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_list.txt). The main points of mismatch are typically the following packages:
 ```bash
-    "numpy==1.26.4", 
+    "numpy==2.0", 
     "dask==2024.5.2", 
     "distributed==2024.5.2", 
     "dask-cloudprovider[all]==2022.10.0",
@@ -155,17 +154,17 @@ command:
 docker build -t <YOUR_IMAGE_NAME> .
 ```
 ```shell
-docker tag <YOUR_IMAGE_NAME>:latest <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest
+docker tag <YOUR_IMAGE_NAME>:tag <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag
 ```
 
 ```shell
-docker push <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest
+docker push <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag
 ```
 A basic `DockerFile` content:
 
 `DockerFile`:
 ```dockerfile
-FROM python:3.10 as base
+FROM python:3.12 as base
 
 WORKDIR /root
 RUN mkdir sdt
@@ -185,7 +184,7 @@ FargateClient:
 client_setup = FargateClient(workers=3,
                              threads=2,
                              memory=16,
-                             image="<YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest",
+                             image="<YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag",
                              tags=TAGS,
                              vpc=VPC,
                              region_name=AWS_DEFAULT_REGION,
@@ -201,7 +200,7 @@ client_setup = AzureClient(workers=3,
                            resource_group=resource_group,
                            vnet=vnet,
                            security_group=security_group,
-                           docker_image="<YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest",
+                           docker_image="<YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag",
                            location=location,
                            vm_size=cpu,
                            public_ingress=True,

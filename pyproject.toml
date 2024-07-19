@@ -34,7 +34,8 @@ dependencies = [
     "clarabel",
     "qss",
     "tqdm",
-    "spcqe"
+    "spcqe",
+    "boto3"
 ]
 
 classifiers = [
@@ -67,12 +68,12 @@ mosek = [
     "mosek"
 ]
 dask = [
-    "numpy==1.26.4", # to match provided sdt docker image
+    "numpy==2.0", # to match provided sdt docker image
     "dask==2024.5.2", # to match provided sdt docker image
     "distributed==2024.5.2", # to match provided sdt docker image
-    "dask-cloudprovider[all]",
-    "graphviz", # for task graph visual
-    "bokeh" # for task graph visual
+    "dask-cloudprovider[all]==2022.10.0",
+    "graphviz", # for local task graph visualization
+    "bokeh" # for local task graph visualization
     ]
 
 [project.urls]

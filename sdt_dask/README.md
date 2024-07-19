@@ -19,15 +19,13 @@ each component has a README.md with more information. See the dataplugs README [
 
 ## Installation
 
-To install the development version of this tool, in a fresh Python environment with Python 3.10 installed, run from the root of the project:
+To install the development version of this tool, in a fresh Python environment with Python 3.12 installed, run from the root of the project:
 
 ```bash
 $ pip install -e ".[dask]"
 ```
 
-Note that it's important to have your local environment (Python package versions) match the provided Docker image (`smiskov/sdt-v1:latest`) if you'd like to use it to run on AWS or Azure.
-The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_list.txt).
-Otherwise, feel free to create you own image. We provide a sample Dockerfile [here](./clients/Dockerfile).
+Note that your local environment needs to have Python 3.12 installed and needs to match the provided Docker image (`slacgismo/sdt-v1:latest`) if you'd like to use it to run on AWS or Azure. The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_list.txt). Otherwise, feel free to create you own image. We provide a sample Dockerfile [here](./clients/Dockerfile).
 
 Any additional package needed for the dataplugs should be installed separately (e.g. boto3).
 

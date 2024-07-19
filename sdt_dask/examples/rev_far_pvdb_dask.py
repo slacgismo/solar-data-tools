@@ -136,7 +136,7 @@ VPC = "vpc-ab2ff6d3"  # for us-west-2
 # IMAGE = "nimishy/sdt-windows:latest"
 # IMAGE = "nimishy/sdt-cloud-win:latest"
 # IMAGE = "nimishy/p_3.10.11_dask:latest"
-IMAGE = "smiskov/sdt-v1:latest"
+IMAGE = "slacgismo/sdt-v1:latest"
 
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 ENVIRONMENT = {

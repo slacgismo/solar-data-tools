@@ -21,3 +21,4 @@ distributed
 dask-cloudprovider[all]
 graphviz
 bokeh
+boto3

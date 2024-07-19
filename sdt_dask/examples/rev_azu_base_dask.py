@@ -89,7 +89,7 @@ options = parser.parse_args()
 resource_group=os.getenv("RESOURCE_GROUP")
 vnet=os.getenv("VNET")
 security_group=os.getenv("SECURITY_GROUP")
-image = "smiskov/sdt-v1:latest"
+image = "slacgismo/sdt-v1:latest"
 
 WORKERS = int(options.workers)
 THREADS = int(options.threads)
