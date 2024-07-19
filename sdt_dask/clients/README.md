@@ -130,7 +130,7 @@ packages for the installed on it. We have created an image for you to use if you
 for dataplugs (we include `boto3` in the environment). To use this image, simply pass `slacgismo/sdt-v1:latest` to the `image` arguments 
 when instantiating the clients. 
 
-Note that your local environment needs to have Python 3.12 installed and needs to match the provided Docker image (`slacgismo/sdt-v1:latest`) if you'd like to use it to run on the cloud. The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_list.txt). The main points of mismatch are typically the following packages:
+Note that your local environment needs to have Python 3.12 installed and needs to match the provided Docker image (`slacgismo/sdt-v1:latest`) if you'd like to use it to run on the cloud. The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_freeze.txt). The main points of mismatch are typically the following packages:
 ```bash
     "numpy==2.0", 
     "dask==2024.5.2", 
