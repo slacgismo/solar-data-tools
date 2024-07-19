@@ -1,4 +1,4 @@
-`This README provides guidance on creating your own Client Plugs or use our existing 
+This README provides guidance on creating your own Client Plugs or use our existing 
 ClientPlugs within the SDT Runner tool. ClientPlugs are classes used by SDT runner 
 tool to compute data on various sources. Follow these instructions to 
 create your own ClientPlug or use the existing client plug examples. The demo code 
@@ -152,7 +152,7 @@ of the git repo.
 In a terminal inside the directory where the docker file is present run the 
 command: 
 ```shell
-docker build -t <YOUR_IMAGE_NAME>.
+docker build -t <YOUR_IMAGE_NAME> .
 ```
 ```shell
 docker tag <YOUR_IMAGE_NAME>:latest <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest
