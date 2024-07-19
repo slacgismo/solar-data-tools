@@ -16,8 +16,14 @@ the functions listed in the API reference are more internal/helper functions tha
 If any part of this guide is unclear, or you'd like to improve on these docs, please consider [submitting an Issue or a PR](../index_dev.md)!
 
 ## Getting started with the `DataHandler` class
+Most users will only need to interact with the `DataHandler` class. To instantiate, a Data Handler 
+object takes a DataFrame containing the power data timeseries (with a timestamps and power columns) 
+as an input. 
 
 ## Running the pipeline
+The DataHandler.run_pipeline method is the main data processing and analysis pipeline offered by 
+Solar Data Tools. It includes preprocessing, cleaning (e.g. fixing time shifts), and scoring data 
+quality metrics (e.g. finding clear days, capacity changes and any clipping.
 
 ## Running loss factor analysis 
 

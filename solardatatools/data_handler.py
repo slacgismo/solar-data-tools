@@ -58,6 +58,17 @@ class DataHandler:
         how=lambda x: x.mean(),
         gmt_offset=None,
     ):
+        """
+
+        :param data_frame:
+        :param raw_data_matrix:
+        :param datetime_col:
+        :param convert_to_ts:
+        :param no_future_dates:
+        :param aggregate:
+        :param how:
+        :param gmt_offset:
+        """
         if data_frame is not None:
             if convert_to_ts:
                 data_frame, keys = make_time_series(data_frame)
@@ -195,6 +206,36 @@ class DataHandler:
         solver_convex="CLARABEL",
         reset=True,
     ):
+        """
+
+        :param power_col:
+        :param min_val:
+        :param max_val:
+        :param zero_night:
+        :param interp_day:
+        :param fix_shifts:
+        :param round_shifts_to_hour:
+        :param density_lower_threshold:
+        :param density_upper_threshold:
+        :param linearity_threshold:
+        :param clear_day_smoothness_param:
+        :param clear_day_energy_param:
+        :param verbose:
+        :param start_day_ix:
+        :param end_day_ix:
+        :param time_shift_weight_change_detector:
+        :param time_shift_weight_seasonal:
+        :param periodic_detector:
+        :param solar_noon_estimator:
+        :param correct_tz:
+        :param extra_cols:
+        :param daytime_threshold:
+        :param units:
+        :param solver:
+        :param solver_convex:
+        :param reset:
+        :return:
+        """
         if verbose:
             print(
                 """
@@ -587,6 +628,12 @@ class DataHandler:
         return
 
     def report(self, verbose=True, return_values=False):
+        """
+
+        :param verbose:
+        :param return_values:
+        :return:
+        """
         try:
             report = {
                 "length": self.num_days / 365,
@@ -708,6 +755,17 @@ time zone errors     {report['time zone correction'] != 0}
     ):
         """
 
+        :param verbose:
+        :param tau:
+        :param num_harmonics:
+        :param deg_type:
+        :param include_soiling:
+        :param weight_seasonal:
+        :param weight_soiling_stiffness:
+        :param weight_soiling_sparsity:
+        :param weight_deg_nonlinear:
+        :param deg_rate:
+        :param use_capacity_change_labels:
         :return:
         """
         if self._ran_pipeline:
@@ -839,6 +897,11 @@ time zone errors     {report['time zone correction'] != 0}
         self.scsf = scsf
 
     def calculate_scsf_performance_index(self):
+        """
+        .. deprecated:: 1.5.0
+            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
+        :return:
+        """
         if self.scsf is None:
             print("No SCSF model detected. Fitting now...")
             self.fit_statistical_clear_sky_model()
