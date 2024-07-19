@@ -1,4 +1,4 @@
-solar-data-tools @ git+https://github.com/slacgismo/solar-data-tools@develop-dask
+solar-data-tools
 numpy==2.0.0
 dask[complete]==2024.5.2
 distributed==2024.5.2
