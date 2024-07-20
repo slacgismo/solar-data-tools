@@ -16,3 +16,10 @@ clarabel
 qss
 tqdm
 spcqe
+# Packages below this line are for the SDT Dask tool feature
+dask
+distributed
+dask-cloudprovider[all]
+graphviz
+bokeh
+boto3
