@@ -34,8 +34,7 @@ dependencies = [
     "clarabel",
     "qss",
     "tqdm",
-    "spcqe",
-    "boto3"
+    "spcqe"
 ]
 
 classifiers = [
