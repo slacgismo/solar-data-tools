@@ -1,6 +1,6 @@
-solar-data-tools
+solar-data-tools==1.6.0
 numpy==2.0.0
-dask[complete]==2024.5.2
+dask==2024.5.2
 distributed==2024.5.2
 dask-cloudprovider[all]==2022.10.0
 graphviz==0.20.3

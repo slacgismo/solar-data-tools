@@ -1,9 +1,7 @@
-Please follow this step-by-step guide before running the solar-data-tools demo.
+If you are new to AWS, please follow this step-by-step guide before running the solar-data-tools demo.
 
 # AMI Permissions
 You need the appropriate permissions to be able to create and manage ECS clusters. If you don't already have those assigned (perhaps by your IT department), refer to this [setup guide](https://cloudprovider.dask.org/en/latest/aws.html#fargate) for more information.
-
-If a private image repository is needed (instead of using Docker, which is the recommended route), also add ECR permission (push/pull minimum permissions, full permissions if need to create new repo).
 
 # Get AWS CLI (Recommended)
 [Please see this link for details](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
@@ -29,81 +27,27 @@ Here we have 2 options
         aws_access_key_id=<_KEY_>
         aws_secret_access_key=<_SECRET_>
         ```
-# Prepare Environment
-## Required Python Packages
-```
-dask["complete"]  
-dask-cloudprovider[all]  
-solar-data-tools
-```
 
-If you have additional dependencies, install them as well (both Docker image and local environment setup will need them, which are shown below)
+# Docker Image
 
-## Docker Image
+We recommend using Docker images to run SDT on AWS clusters. For more information on the Docker 
+image we provide, see [the Docker README](./docker/README.md).
 
-1. Install your python requirements and all dependencies as steps in your dockerfile.  
-   Here's a sample dockerfile with solar-data-tools dependencies and all the packages listed above: [link](Dockerfile). 
-2. Build a docker image
-   1. Go to the directory where your Dockerfile is
-   2. ```docker build -t <YOUR_IMAGE_NAME> .```
-3. Push your docker image to a repository. 2 options here:
-   1. Dockerhub (**Highly Recommended**)
-      1. ```docker tag <YOUR_IMAGE_NAME>:latest <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest```
-      2. ```docker push <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:latest```
-   2. ECR  (**Not Recommended**)  
-      **This could lead to unexpected issues, use it only when absolutely necessary**
-      1. In your AWS console, search `ECR`
-      2. Follow the instructions to create a repository or go to an existing one
-      3. On the repository page, click `View push commands` on the up right corner
-      4. Follow the popped instructions. 
-
-For more details, please follow this [link](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html)
-
-## Local Environment
-This refers to the local environment where users run their python scripts to create a cluster and submit the job. To keep your local machine clean, we recommend using `Anaconda` to create a virtual environment and install all required packages there.
-
-1.  Install [Anaconda](https://www.anaconda.com/download/)
-2.  Create a virtual environment  
-   ```conda create --name YOUR_ENV_NAME python=PYTHON_VERSION```  
-   For example  
-   ```conda create --name my_dask_env python=3.10```  
-   **Important**: this python version must be the same used in the docker image above! Otherwise the client will fail to submit jobs to the cluster
-3.  Activate the conda environment  
-   ```conda activate YOUR_ENV_NAME```
-4.  Install packages listed above, for example
-      ```
-      # Add this channel for solar-data-tools
-      conda config --add channels slacgismo                 
-      conda install -c conda-forge dask
-      conda install -c conda-forge dask-cloudprovider
-      conda install solar-data-tools
-      ```
-5.  Install [Jupyter Notebook](https://jupyter.org/install) (Recommended)
-       -  VSCode plugin (optional): if you are using VSCode, click the sidebar *Extension*, search for *Jupyter* and install the plugin
-
-Now, let's try the demo!
-# Run Demo
-1. Get the demo script [here](../../examples/tool_demo_fargate.ipynb)
-2. Open Jupyter Notebook, set the python interpreter (in the drop down list, choose the environment we just created)
-3. **Please add your stuff before using this script (see comments for details)**
-4. Run the script and wait for cluster initialization, you can check the scheduler and workers status via AWS ECS console
-5. If it does not work, please check:
+# AWS Fargate Demo
+You can find the AWS Fargate demo notebook in the [examples folder](../../examples). Make sure your AWS
+credentials are set correctly as well as any other environment variable that your AWS subscription requires
+(e.g. tags). Some common ways to investigate if the cluster initialization fails:
    1. Is the cluster created? In ECS console, click cluster id
    2. Is the scheduler running? In cluster console, click the tab 'tasks' to find the scheduler
    3. Want detailed error messages? Click on each worker/scheduler and then the **logs** tab for specific information
 
-
 # Debugging Tips
 1. **Error during deserialization of the task graph**   
      - **Solution**:
-     Please make sure the client environment aligns with the scheduler environment!  (e.g. python versions, python packages & versions) 
-
+     Please make sure the client environment aligns with the scheduler environment!  (e.g. python versions, python packages & versions)
 2. **Windows Powershell compatibility issues with AWS** 
    - Details: docker push command shows `retrying in ... second ... EOF`
    - **Solution**: Use Git Bash on windows can save you a lot of time.
-3. **Scheduler failed to pull the image**
-   -  Details: sometimes it reports "unable to retreive ecr registry auth ... please check your task network configuration"
-   - **Solution**: If your image is in a *ECR* repository (private or public), this is the hazardous situation. Consider switching to *Dockerhub*, which has been proven to be perfectly compatible with Fargate.  
-4. **Workers failed to run**  
+3. **Workers failed to run**  
    - Details: the worker logs a report: `Worker is at 85% memory usage`
    - **Solution**: This indicates the cluster might not be powerful enough to handle the workload. Please double-check the worker node specification. Scaling up the cluster, either horizontally or vertically, should resolve the issue.

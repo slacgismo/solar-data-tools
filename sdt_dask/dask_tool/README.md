@@ -19,6 +19,6 @@ runner.set_up(keys, dataplug, fix_shifts=True, verbose=True)
 runner.get_result()
 ```
 
-Examples usage of other combinations of provided dataplugs and clients can be found in the `sdt_dask/examples` directory.
+Examples usage of other combinations of provided dataplugs and clients can be found in the [examples](../examples/) directory.
 
  

@@ -62,7 +62,7 @@ client_setup = LocalClient(workers=3,
 client = client_setup.init_client()
 ```
 
-Note: For more information on Local cluster arguments refer [this](https://docs.dask.org/en/stable/deploying-python.html#reference)
+Note: For more information on Local cluster arguments, refer to [the Dask docs.](https://docs.dask.org/en/stable/deploying-python.html#reference)
 
 ### 2. FargateClient ClientPlug (`clients/aws/fargate_client.py)
 * **Description**: Initializing Dask Client on Fargate's ECS Service
@@ -75,6 +75,9 @@ Note: For more information on Local cluster arguments refer [this](https://docs.
   * `memory`: Amount of memory in GB each worker can have. It is recommended to 
   keep the memory at 16 GB.
   * `**kwargs`: Additional arguments to authorize and configure the cluster.
+
+We recommend using Docker images to run SDT on cloud-based clusters. For more information on the Docker 
+image we provide, see [the Docker README](./docker/README.md).
 
 Note: Requires aws cli, AWS credentials to be set in environment variables, 
   
@@ -90,7 +93,7 @@ client_setup = FargateClient(workers=3,
 client = client_setup.init_client()
 ```
 
-Note: For more information on Fargate Cluster arguments refer [this](https://cloudprovider.dask.org/en/latest/aws.html)
+Note: For more information on Fargate Cluster arguments, refer to [the Dask docs.](https://cloudprovider.dask.org/en/latest/aws.html)
 
 ### 3. AzureClient ClientPlug (`client/azure/azure_client.py`)
 * **Description**: Initializing Dask Client on Azure VM Service
@@ -102,6 +105,9 @@ Note: For more information on Fargate Cluster arguments refer [this](https://clo
   * `memory`: Amount of memory in GB each worker can have. It is recommended to 
   keep the memory at 16 GB.
   * `**kwargs`: Additional arguments to authorize and configure the cluster.
+
+We recommend using Docker images to run SDT on cloud-based clusters. For more information on the Docker 
+image we provide, see [the Docker README](./docker/README.md).
 
 Note: Requires azure cli and credentials to be set in environment variables, 
   
@@ -120,93 +126,8 @@ client_setup = AzureClient(workers=3,
 client = client_setup.init_client()
 ```
 
-Note: For more information on Azure VM Cluster arguments refer [this](https://cloudprovider.dask.org/en/latest/azure.html)
+Note: For more information on Azure VM Cluster arguments, refer to [the Dask docs.](https://cloudprovider.dask.org/en/latest/azure.html)
 
-## Docker Image
-
-### SDT Docker image
-Running on the cloud with the clients we've provided (Fargate/Azure) requires a Docker image with the necessary 
-packages for the installed on it. We have created an image for you to use if you'd like to run with no special packages 
-for dataplugs (we include `boto3` in the environment). To use this image, simply pass `slacgismo/sdt-v1:latest` to the `image` arguments 
-when instantiating the clients. 
-
-Note that your local environment needs to have Python 3.12 installed and needs to match the provided Docker image (`slacgismo/sdt-v1:latest`) if you'd like to use it to run on the cloud. The full list of packages along with their versions is listed in [here](./clients/sdt-v1_full_pip_freeze.txt). The main points of mismatch are typically the following packages:
-```bash
-    "numpy==2.0", 
-    "dask==2024.5.2", 
-    "distributed==2024.5.2", 
-    "dask-cloudprovider[all]==2022.10.0",
-```
-
-If any additional package needed or if you require other versions, you will need create you own image. 
-We provide a sample Dockerfile [here](./clients/Dockerfile), and more instructions below.
-
-
-### Creating your own
-The example below explains step by step on 
-creating a basic Docker image for the current version of `develop-dask` branch 
-of the git repo.
-
-#### Example:
-In a terminal inside the directory where the docker file is present run the 
-command: 
-```shell
-docker build -t <YOUR_IMAGE_NAME> .
-```
-```shell
-docker tag <YOUR_IMAGE_NAME>:tag <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag
-```
-
-```shell
-docker push <YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag
-```
-A basic `DockerFile` content:
-
-`DockerFile`:
-```dockerfile
-FROM python:3.12 as base
-
-WORKDIR /root
-RUN mkdir sdt
-WORKDIR /root/sdt
-
-COPY ../../requirements.txt /root/sdt/.
-
-RUN pip install -r requirements.txt
-```
-A sample `requiremnets.txt` can be viewed in `clients/requirements.txt`.
-
-The Docker image can now be used by plugging the image into the cluster as 
-demonstrated below.
-
-FargateClient:
-```python
-client_setup = FargateClient(workers=3,
-                             threads=2,
-                             memory=16,
-                             image="<YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag",
-                             tags=TAGS,
-                             vpc=VPC,
-                             region_name=AWS_DEFAULT_REGION,
-                             environment=ENVIRONMENT)
-client = client_setup.init_client()
-```
-AzureClient:
-
-```python
-client_setup = AzureClient(workers=3,
-                           threads=2,
-                           memory=16,
-                           resource_group=resource_group,
-                           vnet=vnet,
-                           security_group=security_group,
-                           docker_image="<YOUR_Dockerhub_ID>/<YOUR_IMAGE_NAME>:tag",
-                           location=location,
-                           vm_size=cpu,
-                           public_ingress=True,
-                           disk_size=30)
-client = client_setup.init_client()
-```
 
 ## Configuring the Dask Client
 By default, Dask has strict configurations for worker's memory limit which includes 
@@ -267,4 +188,4 @@ client_setup.dask_config.set({'distributed.worker.memory.terminate': False})
 client = client_setup.init_client()
 ```
 
-Note: For more information on dask configuration please visit [link](https://docs.dask.org/en/latest/configuration.html)
+Note: For more information on the Dask configuration please visit [the Dask docs.](https://docs.dask.org/en/latest/configuration.html)

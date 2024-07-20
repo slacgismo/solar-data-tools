@@ -1,9 +1,12 @@
 
-This README provides guidance on creating your own DataPlugs or use our existing Dataplugs within the SDT Dask tool. DataPlugs are classes used by runner retrieve and clean data from various sources. Follow these instructions to create your own DataPlug or use the existing data plug examples. The demo code to use each example dataplug are provided under `dataplugs/examples/`
+This README provides guidance on creating your own DataPlugs or use our existing Dataplugs within the SDT Dask tool. DataPlugs are classes used by runner retrieve and clean data from various sources. Follow these instructions to create your own DataPlug or use the existing data plug examples.
 
 ## Creating Your Own DataPlug
 
-To create your own DataPlug, you must provide two key files: a Python module (`your_dataplug.py`) containing your DataPlug class and a `requirements.txt` file listing all necessary external Python packages.
+To create your own DataPlug, you must a Python module (`your_dataplug.py`) containing your DataPlug class. You also 
+must install all necessary Python packages that aren't part of the SDT requirements (if you are using Docker
+to run on the cloud, make sure to create your own image of the SDT environment and install your dataplug 
+requirements on it as well. For more info see [the Docker README](../docker/README.md).
 
 ### Implement Your DataPlug
 
@@ -12,7 +15,7 @@ To create your own DataPlug, you must provide two key files: a Python module (`y
 3. **Implement `get_data` Method**: Core method for DataPlug, it retrieves and cleans the data before returning a pandas DataFrame. The method should accept a keys argument as a tuple.
 
 4. **Important - Non-Serializable and Not-Thread-Safe Object**:
-Since get_data method is delayed and distributed to tasks across Dask workers, we should avoid sharing any non-serializable or not-thread-safe object by creating these objects inside each delayed function called. Non-serializable object refers to the object that maintain state, open connections, or hold resources, such as botocore.client.S3 instances. AND, botocore.client.S3 instances are not-thread-safe as well. You should generate new instances of resources or clients for each thread or operational context. As a example, you could look at the s3 dataplug example on how to create botocore.client.S3 instances as an example.
+Since get_data method is delayed and distributed to tasks across Dask workers, we should avoid sharing any non-serializable or not-thread-safe object by creating these objects inside each delayed function called. Non-serializable object refers to the object that maintain state, open connections, or hold resources, such as botocore.client.S3 instances and botocore.client.S3 instances. You should generate new instances of resources or clients for each thread or operational context. As an example on how to create botocore.client.S3 instances in your dataplug, you could look at the provided S3 dataplug implementation.
 
 5. **(Optional) Additional Methods**: Beyond get_data, you may implement any number of private or public methods to aid in data retrieval, transformation, or cleaning. Cleaning is a very important part that normally will be called in get_data method. Other possible examples include methods for parsing file names.
 
@@ -75,6 +78,3 @@ And also assumes the AWS configuration has been set up in local environment
 ```python 
 data_plug.get_data(("s3-file-key",))
 ```
-- **Important Notice 1.**: As mentioned above, botocore.client.S3 object include open connections and internal state, they cannot be correctly serialized and safely transferred across workers. Thus, we should initialize the client instance for each get_data requests. In general, it applies to all non-serializable objects.
-
-- **Important Notice 2.**: To ensure thread safety, a new boto3.session.Session() should be created and then creat a new client instance. This is because Boto3 client is not thread safe and should be avoided to share across threads. By first creating the session then creating the instance, it prevents potential data sharing and synchronization issues when accessing AWS resources concurrently across threads. In general, it applies to all non-thread-safe objects.
