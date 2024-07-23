@@ -1,4 +1,4 @@
-solar-data-tools>=1.5.0
+solar-data-tools==1.6.0
 aiobotocore==2.13.1
 aiohttp==3.9.5
 aioitertools==0.11.0
