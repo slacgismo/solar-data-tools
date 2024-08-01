@@ -1021,7 +1021,7 @@ time zone errors     {report['time zone correction'] != 0}
         """
         .. deprecated:: 1.5.0
             Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
-        :return:
+
         """
         if self.scsf is None:
             print("No SCSF model detected. Fitting now...")
