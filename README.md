@@ -1,4 +1,4 @@
-# solar-data-tools
+![SDT_v1_primary_blue_text](https://github.com/user-attachments/assets/99dd3103-12ea-413b-9871-1b45f8eaf95d)
 
 <table>
 <tr>
