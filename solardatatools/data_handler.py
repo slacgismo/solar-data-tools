@@ -59,16 +59,43 @@ class DataHandler:
         gmt_offset=None,
     ):
         """
+        Solar Data Tools' main class to handle and preprocess time series data.
 
-        :param data_frame:
-        :param raw_data_matrix:
-        :param datetime_col:
-        :param convert_to_ts:
-        :param no_future_dates:
-        :param aggregate:
-        :param how:
-        :param gmt_offset:
+        This class can work with both data frames and raw data matrices, allowing for
+        time series conversion, aggregation, and various other preprocessing steps.
+
+        It is initialized by passing at least either the `data_frame` parameter or the
+        `raw_data_matrix` parameter.
+
+        :param data_frame: A pandas DataFrame containing the raw data. If provided,
+                           the class will process the data frame based on the other
+                           parameters.
+        :type data_frame: pandas.DataFrame, optional
+        :param raw_data_matrix: A raw data matrix where each column is expected to
+                                represent a different time series.
+        :type raw_data_matrix: numpy.ndarray, optional
+        :param datetime_col: The name of the column containing datetime information,
+                             used to set the DataFrame's index to a DatetimeIndex.
+                             Required if the DataFrame index is not already a DatetimeIndex.
+        :type datetime_col: str, optional
+        :param convert_to_ts: If True, converts the data frame into a time series format
+                              by using the `make_time_series` function.
+        :type convert_to_ts: bool, default=False
+        :param no_future_dates: If True, filters out any future dates from the data frame
+                                based on the current datetime.
+        :type no_future_dates: bool, default=True
+        :param aggregate: A string representing a resampling rule (e.g., 'D' for day,
+                          'H' for hour). If provided, the data frame will be resampled
+                          and aggregated accordingly.
+        :type aggregate: str, optional
+        :param how: A function used to aggregate the resampled data. The function should
+                    take a pandas object and return a single value (e.g., mean, sum).
+        :type how: callable, default=lambda x: x.mean()
+        :param gmt_offset: An integer representing the GMT offset, used for timezone
+                           conversions if necessary.
+        :type gmt_offset: int, optional
         """
+
         if data_frame is not None:
             if convert_to_ts:
                 data_frame, keys = make_time_series(data_frame)
@@ -207,35 +234,82 @@ class DataHandler:
         reset=True,
     ):
         """
+        Runs the main pipeline, which preprocesses, cleans, and performs
+        quality control on PV power or irradiance time series data.
 
-        :param power_col:
-        :param min_val:
-        :param max_val:
-        :param zero_night:
-        :param interp_day:
-        :param fix_shifts:
-        :param round_shifts_to_hour:
-        :param density_lower_threshold:
-        :param density_upper_threshold:
-        :param linearity_threshold:
-        :param clear_day_smoothness_param:
-        :param clear_day_energy_param:
-        :param verbose:
-        :param start_day_ix:
-        :param end_day_ix:
-        :param time_shift_weight_change_detector:
-        :param time_shift_weight_seasonal:
-        :param periodic_detector:
-        :param solar_noon_estimator:
-        :param correct_tz:
-        :param extra_cols:
-        :param daytime_threshold:
-        :param units:
-        :param solver:
-        :param solver_convex:
-        :param reset:
-        :return:
+        The pipeline executes a series of tasks to prepare the data for further analysis.
+
+        :param power_col: The column name containing the power data to process. If `None`,
+                          the first column in the data frame is used.
+        :type power_col: str, optional
+        :param min_val: Minimum allowable value in the data. Values below this threshold
+                        are set to NaN.
+        :type min_val: float, default=-5
+        :param max_val: Maximum allowable value in the data. Values above this threshold
+                        are set to NaN.
+        :type max_val: float, optional
+        :param zero_night: Whether to set nighttime values to zero.
+        :type zero_night: bool, default=True
+        :param interp_day: Whether to interpolate missing daytime values.
+        :type interp_day: bool, default=True
+        :param fix_shifts: Whether to attempt to automatically fix time shifts in the data.
+        :type fix_shifts: bool, default=False
+        :param round_shifts_to_hour: Whether to round detected time shifts to the nearest hour.
+        :type round_shifts_to_hour: bool, default=True
+        :param density_lower_threshold: Lower threshold for data density during the
+                                        quality flagging process.
+        :type density_lower_threshold: float, default=0.6
+        :param density_upper_threshold: Upper threshold for data density during the
+                                        quality flagging process.
+        :type density_upper_threshold: float, default=1.05
+        :param linearity_threshold: Threshold for linearity checks during quality flagging.
+        :type linearity_threshold: float, default=0.1
+        :param clear_day_smoothness_param: Smoothness parameter for clear day detection.
+        :type clear_day_smoothness_param: float, default=0.9
+        :param clear_day_energy_param: Energy parameter for clear day detection.
+        :type clear_day_energy_param: float, default=0.8
+        :param verbose: Whether to print detailed information about the pipeline process.
+        :type verbose: bool, default=True
+        :param start_day_ix: The starting index for data processing. If `None`, processing
+                             starts from the first day in the dataset.
+        :type start_day_ix: int, optional
+        :param end_day_ix: The ending index for data processing. If `None`, processing
+                           continues until the last day in the dataset.
+        :type end_day_ix: int, optional
+        :param time_shift_weight_change_detector: Weight parameter for the time shift
+                                                  change detector.
+        :type time_shift_weight_change_detector: float, optional
+        :param time_shift_weight_seasonal: Weight parameter for the seasonal time shift
+                                           detector.
+        :type time_shift_weight_seasonal: float, default=1e-3
+        :param periodic_detector: Whether to use a periodic detector for time shifts.
+        :type periodic_detector: bool, default=False
+        :param solar_noon_estimator: Method to estimate solar noon. Options include
+                                     "srss" (sunrise/sunset).
+        :type solar_noon_estimator: str, default="srss"
+        :param correct_tz: Whether to correct for timezone offsets in the data.
+        :type correct_tz: bool, default=True
+        :param extra_cols: Additional columns to process, typically containing extra
+                           data features.
+        :type extra_cols: str, tuple, or list, optional
+        :param daytime_threshold: Threshold for detecting daytime in the data.
+        :type daytime_threshold: float, default=0.005
+        :param units: Units of the power data. Can be "W" (watts) or "kW" (kilowatts).
+        :type units: str, default="W"
+        :param solver: Solver to use for optimization tasks in the pipeline.
+        :type solver: str, default="CLARABEL"
+        :param solver_convex: Solver to use for convex optimization tasks.
+        :type solver_convex: str, default="CLARABEL"
+        :param reset: Whether to reset the pipeline's internal state before running.
+        :type reset: bool, default=True
+
+        :return: None
+        :rtype: NoneType
+
+        :note:
+            If using the MOSEK solver, ensure that a valid license is available.
         """
+
         if verbose:
             print(
                 """
@@ -629,10 +703,45 @@ class DataHandler:
 
     def report(self, verbose=True, return_values=False):
         """
+        Generate a report summarizing key metrics from the pipeline analysis.
+
+        The report includes metrics such as the data set length, data sampling rate,
+        quality scores, inverter clipping, and any detected capacity changes, time shift or time zone corrections.
+        The function can either print this report or return it as a dictionary.
 
         :param verbose:
+            If True, the report will be printed to the console. Defaults to True.
+        :type verbose: bool, optional
+
         :param return_values:
-        :return:
+            If True, the report will be returned as a dictionary. If False, the function only prints the report.
+            Defaults to False.
+        :type return_values: bool, optional
+
+        :returns:
+            A dictionary containing the following keys:
+
+            - "length": The length of the data set in years.
+            - "capacity": The estimated capacity in kW.
+            - "sampling": The data sampling rate in minutes.
+            - "quality score": The overall data quality score.
+            - "clearness score": The clearness score of the data.
+            - "inverter clipping": Whether inverter clipping was detected.
+            - "clipped fraction": The fraction of the data that is clipped due to inverter limitations.
+            - "capacity change": Whether capacity changes were detected.
+            - "data quality warning": Warnings regarding data quality.
+            - "time shift correction": Whether any time shifts that were corrected.
+            - "time zone correction": The amount of time zone correction applied.
+
+            The dictionary is returned only if `return_values` is True.
+        :rtype: dict, optional
+
+        :example usage:
+
+        .. code-block:: python
+
+            report = my_data_handler.report(verbose=True, return_values=True)
+            print(report['capacity'])
         """
         try:
             report = {
@@ -754,19 +863,31 @@ time zone errors     {report['time zone correction'] != 0}
         use_capacity_change_labels=True,
     ):
         """
+        Perform loss factor analysis on the processed data to estimate energy loss factors.
 
-        :param verbose:
-        :param tau:
-        :param num_harmonics:
-        :param deg_type:
-        :param include_soiling:
-        :param weight_seasonal:
-        :param weight_soiling_stiffness:
-        :param weight_soiling_sparsity:
-        :param weight_deg_nonlinear:
-        :param deg_rate:
-        :param use_capacity_change_labels:
-        :return:
+        This method performs a series of calculations to analyze the loss factors in the
+        solar power data, including energy loss due to degradation, soiling, and other factors.
+
+        The analysis is performed only if the pipeline has been successfully run. It uses the
+        `LossFactorAnalysis` class to estimate degradation rates and energy losses based on
+        various input parameters.
+
+        :param verbose: If `True`, prints detailed information about the analysis and results.
+                        Default is `True`.
+        :param tau: Smoothing parameter for the analysis. Default is `0.9`.
+        :param num_harmonics: Number of harmonics to include in the analysis. Default is `4`.
+        :param deg_type: Type of degradation model to use ("linear" or "nonlinear"). Default is "linear".
+        :param include_soiling: If `True`, includes soiling effects in the analysis. Default is `True`.
+        :param weight_seasonal: Weight for seasonal effects in the analysis. Default is `10e-2`.
+        :param weight_soiling_stiffness: Weight for soiling stiffness in the analysis. Default is `5e-1`.
+        :param weight_soiling_sparsity: Weight for soiling sparsity in the analysis. Default is `2e-2`.
+        :param weight_deg_nonlinear: Weight for nonlinear degradation in the analysis. Default is `10e4`.
+        :param deg_rate: User-provided degradation rate. If `None`, the rate is estimated from the data. Default is `None`.
+        :param use_capacity_change_labels: If `True`, uses capacity change labels in the analysis. Default is `True`.
+
+        :return: None
+            Prints the results of the loss factor analysis if `verbose` is `True`.
+        :raises: RuntimeError if the pipeline has not been run before calling this method.
         """
         if self._ran_pipeline:
             self.loss_analysis = LossFactorAnalysis(
@@ -1340,6 +1461,36 @@ time zone errors     {report['time zone correction'] != 0}
         data_matrix="filled",
         daytime_threshold=0.001,
     ):
+        """
+        Sets up the location and orientation estimation for the system using the
+        `ConfigurationEstimator` from the `pvsystemprofiler` package.
+
+        This method initializes an instance of `ConfigurationEstimator` with the
+        provided parameters and assigns it to the `parameter_estimation` attribute.
+
+        :param gmt_offset:
+            The GMT offset for the location in hours. This value adjusts for the
+            local time zone relative to GMT.
+
+        :param solar_noon_method:
+            Method for estimating solar noon. Options include "optimized_estimates"
+            (default) and other methods depending on the estimator's implementation.
+
+        :param daylight_method:
+            Method for estimating daylight hours. Options include "optimized_estimates"
+            (default) and other methods depending on the estimator's implementation.
+
+        :param data_matrix:
+            The type of data matrix to use. Default is "filled". This parameter
+            specifies how missing data should be handled.
+
+        :param daytime_threshold:
+            The threshold for determining daytime. Default is 0.001.
+
+        :return:
+            None. The method sets the `parameter_estimation` attribute of the DataHandler object
+            to an instance of `ConfigurationEstimator`.
+        """
         try:
             from pvsystemprofiler.estimator import ConfigurationEstimator
         except ImportError:
@@ -1368,6 +1519,21 @@ time zone errors     {report['time zone correction'] != 0}
         return success
 
     def estimate_longitude(self, estimator="fit_l1", eot_calculation="duffie"):
+        """
+        Estimates the longitude of the system's location.
+
+        This method uses the configured parameter estimator to calculate the longitude
+        based on the Equation of Time (EOT) calculation methods.
+
+        :param estimator: The method to use for fitting the longitude estimation.
+                          Options include "fit_l1" for L1 norm fitting. Default is "fit_l1".
+        :param eot_calculation: The method to use for calculating the Equation of Time.
+                                Options include "duffie" for Duffie method. Default is "duffie".
+
+        :return: The estimated longitude of the system's location.
+
+        :raises: ValueError if the parameter estimator is not ready for use.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_longitude(
@@ -1376,6 +1542,21 @@ time zone errors     {report['time zone correction'] != 0}
             return self.parameter_estimation.longitude
 
     def estimate_latitude(self):
+        """
+        Estimate the latitude of the system based on the current parameter estimation.
+
+        This method uses the `parameter_estimation` object to perform latitude estimation.
+        The method will only proceed if the `__help_param_est` method indicates that
+        the parameters are ready for estimation.
+
+        :return: float
+            The estimated latitude of the system in decimal degrees.
+
+        :raises AttributeError:
+            If `parameter_estimation` or its `estimate_latitude` method is not available.
+        :raises Exception:
+            If the parameters are not ready for estimation.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_latitude()
@@ -1391,6 +1572,30 @@ time zone errors     {report['time zone correction'] != 0}
         x1=0.9,
         x2=0.9,
     ):
+        """
+        Estimate the orientation of the system, including tilt and azimuth angles. It relies on
+        previously set up parameter estimation configurations.
+
+        :param latitude: Optional latitude of the system. If not provided, will use the
+                         previously estimated value.
+        :param longitude: Optional longitude of the system. If not provided, will use the
+                          previously estimated value.
+        :param tilt: Optional tilt angle of the system in degrees. If not provided, will use
+                     the previously estimated value.
+        :param azimuth: Optional azimuth angle of the system in degrees. If not provided, will
+                        use the previously estimated value.
+        :param day_interval: Optional interval in days for the estimation. If not provided,
+                             the default value will be used.
+        :param x1: Optional weight factor for the first parameter. Default is 0.9.
+        :param x2: Optional weight factor for the second parameter. Default is 0.9.
+
+        :return: A tuple containing the estimated tilt and azimuth angles. The values are in
+                 degrees.
+
+        :rtype: tuple(float, float)
+
+        :raises AttributeError: If parameter estimation has not been properly initialized.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_orientation(
@@ -1407,6 +1612,26 @@ time zone errors     {report['time zone correction'] != 0}
             return tilt, az
 
     def estimate_location_and_orientation(self, day_interval=None, x1=0.9, x2=0.9):
+        """
+        Estimates the location (latitude and longitude) and orientation (tilt and azimuth) of the system.
+
+        This method utilizes the `parameter_estimation` object to estimate the system's geographic location
+        and orientation based on the provided parameters.
+
+        :param day_interval: (Optional) The interval of days used for estimation. If `None`, defaults to internal settings.
+        :type day_interval: float or None, optional
+
+        :param x1: Weight factor for optimization. Defaults to 0.9.
+        :type x1: float, optional
+
+        :param x2: Weight factor for optimization. Defaults to 0.9.
+        :type x2: float, optional
+
+        :return: A tuple containing the estimated latitude, longitude, tilt, and azimuth of the system.
+        :rtype: tuple of (float, float, float, float)
+
+        :raises: Exception if the parameter estimation is not properly initialized.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_all(
