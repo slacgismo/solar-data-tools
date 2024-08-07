@@ -234,10 +234,11 @@ class DataHandler:
         reset=True,
     ):
         """
-        Runs the main pipeline, which preprocesses, cleans, and performs
-        quality control on PV power or irradiance time series data.
+        Runs the main Solar Data Tools pipeline.
 
-        The pipeline executes a series of tasks to prepare the data for further analysis.
+        Runs the main pipeline, which preprocesses, cleans, and performs
+        quality control on PV power or irradiance time series data. The pipeline
+        executes a series of tasks to prepare the data for further analysis.
 
         :param power_col: The column name containing the power data to process. If `None`,
                           the first column in the data frame is used.
@@ -1652,6 +1653,34 @@ time zone errors     {report['time zone correction'] != 0}
         year_lines=True,
         units=None,
     ):
+        """
+        Plot a heatmap of the data matrix, with options to scale the data,
+        add year lines, and customize the figure size and units.
+
+        :param matrix: The data matrix to plot. Options are "raw", "filled", or any key in `self.extra_matrices`.
+                       Default is "raw".
+        :type matrix: str, optional
+
+        :param flag: A flag to apply to the data matrix. If `None`, no flag is applied. Default is `None`. Options are:
+                    'good', 'bad', 'sunny', 'cloudy', and 'clipping'.
+        :type flag: str, optional
+
+        :param figsize: The size of the figure to create. Default is (12, 6).
+        :type figsize: tuple, optional
+
+        :param scale_to_kw: Whether to scale the data to kiloWatts if the power units are in Watts. Default is `True`.
+        :type scale_to_kw: bool, optional
+
+        :param year_lines: Whether to add lines indicating the start of each year. Default is `True`.
+        :type year_lines: bool, optional
+
+        :param units: The units to use for the data. If `None`, the function will determine the units based on
+                      `scale_to_kw` and `self.power_units`. Default is `None`.
+        :type units: str, optional
+
+        :return: None
+        """
+
         if matrix == "raw":
             mat = np.copy(self.raw_data_matrix)
         elif matrix == "filled":
@@ -1751,6 +1780,54 @@ time zone errors     {report['time zone correction'] != 0}
         show_legend=False,
         marker=None,
     ):
+        """
+        Plot daily signals from the data matrix.
+
+        This function generates a plot of daily signals from the data matrix, with options to
+        select specific days, apply boolean masks, and customize the appearance of the plot.
+
+        :param boolean_index: Boolean index to select specific days. Default is None.
+        :type boolean_index: numpy.s\_ or None, optional
+
+        :param start_day: The starting day for the plot. Can be an integer or a date string. Default is 0.
+        :type start_day: int or str, optional
+
+        :param num_days: The number of days to include in the plot. Default is 5.
+        :type num_days: int, optional
+
+        :param filled: Whether to use the filled data matrix. If False, uses the raw data matrix. Default is True.
+        :type filled: bool, optional
+
+        :param ravel: Whether to ravel the data matrix for plotting. Default is True.
+        :type ravel: bool, optional
+
+        :param figsize: The size of the figure to create. Default is (12, 6).
+        :type figsize: tuple, optional
+
+        :param color: The color of the plot lines. Default is None.
+        :type color: str or None, optional
+
+        :param alpha: The alpha transparency of the plot lines. Default is None.
+        :type alpha: float or None, optional
+
+        :param label: The label for the plot lines. Default is None.
+        :type label: str or None, optional
+
+        :param boolean_mask: A boolean mask to apply to the data. Default is None.
+        :type boolean_mask: numpy.s_ or None, optional
+
+        :param mask_label: Label for the boolean mask. Default is None.
+        :type mask_label: str or None, optional
+
+        :param show_clear_model: Whether to show the clear sky model in the plot. Default is True.
+        :type show_clear_model: bool, optional
+
+        :param show_legend: Whether to show the legend in the plot. Default is False.
+        :type show_legend: bool, optional
+
+        :param marker: Marker style for the plot. Default is None.
+        :type marker: str or None, optional
+        """
         if type(start_day) is not int:
             try:
                 loc = self.day_index == start_day
@@ -1817,6 +1894,31 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
+        """
+        Plot the daily signal density.
+
+        This function generates a plot that visualizes the daily signal density.
+        It can optionally flag certain days and show a seasonal density fit.
+
+        :param flag: A flag to apply to the data matrix. Options are:
+                     - "density": Flag density outlier days.
+                     - "good": Flag good days.
+                     - "bad": Flag bad days.
+                     - "clear" or "sunny": Flag clear days.
+                     - "cloudy": Flag cloudy days.
+                     - A boolean array indicating which days to flag.
+                     Default is None.
+        :type flag: str or array-like, optional
+
+        :param show_fit: Whether to show the seasonal density fit. Default is False.
+        :type show_fit: bool, optional
+
+        :param figsize: The size of the figure. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the density signal analysis.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.daily_signals.density is None:
             return
         fig = plt.figure(figsize=figsize)
@@ -1906,6 +2008,19 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_data_quality_scatter(self, figsize=(6, 5)):
+        """
+        Plot a scatter plot of data quality scores.
+
+        This function generates a scatter plot that visualizes the density and linearity scores
+        for each day in the data set. It uses the quality clustering labels to color-code the points
+        and includes decision boundaries for density and linearity thresholds.
+
+        :param figsize: The size of the figure to create. Default is (6, 5).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the scatter plot of data quality scores.
+        :rtype: matplotlib.figure.Figure
+        """
         fig = plt.figure(figsize=figsize)
         labels = self.daily_scores.quality_clustering
         for lb in set(labels):
@@ -1930,6 +2045,24 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_daily_energy(self, flag=None, figsize=(8, 6), units="Wh"):
+        """
+        Plot the daily energy production.
+
+        This function generates a plot that visualizes the daily energy production.
+        It can optionally flag certain days based on the provided flag parameter.
+
+        :param flag: A flag to apply to the data matrix. Options are "good", "bad", "clear", "sunny", or "cloudy". Default is None.
+        :type flag: str, optional
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :param units: The units to use for the energy data. Default is "Wh".
+        :type units: str, optional
+
+        :return: The figure showing the daily energy analysis.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.filled_data_matrix is None:
             return
         fig = plt.figure(figsize=figsize)
@@ -1986,6 +2119,18 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_clipping(self, figsize=(10, 8)):
+        """
+        Plot the clipping analysis results.
+
+        This function generates a plot that visualizes the clipping scores and highlights
+        the days with inverter clipping.
+
+        :param figsize: The size of the figure to create. Default is (10, 8).
+        :type figsize: tuple, optional
+
+        :return: The figure of the clipping analysis results.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.daily_scores is None:
             return
         if self.daily_scores.clipping_1 is None:
@@ -2026,24 +2171,104 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_daily_max_pdf(self, figsize=(8, 6)):
+        """
+        Plot the PDF (Probability Density Function) of the daily maximum values.
+
+        This function generates a plot that visualizes the PDF of the daily maximum values
+        from the clipping analysis.
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the PDF of the daily maximum values.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_pdf(figsize=figsize)
 
     def plot_daily_max_cdf(self, figsize=(10, 6)):
+        """
+        Plot the CDF (Cumulative Distribution Function) of the daily maximum values.
+
+        This function generates a plot that visualizes the CDF of the daily maximum values
+        from the clipping analysis.
+
+        :param figsize: The size of the figure to create. Default is (10, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the CDF of the daily maximum values.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_cdf(figsize=figsize)
 
     def plot_daily_max_cdf_and_pdf(self, figsize=(10, 6)):
+        """
+        Plot both the CDF (Cumulative Distribution Function) and PDF (Probability Density Function)
+        of the daily maximum values.
+
+        This function generates a plot that includes both the CDF and PDF of the daily maximum values
+        from the clipping analysis.
+
+        :param figsize: The size of the figure to create. Default is (10, 6).
+        :type figsize: tuple, optional
+
+        :return: The plot containing both the CDF and PDF of the daily maximum values.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_both(figsize=figsize)
 
     def plot_cdf_analysis(self, figsize=(12, 6)):
+        """
+        Plot the CDF (Cumulative Distribution Function) analysis results.
+
+        This function generates a plot that visualizes the differences in the CDF analysis
+        using the `plot_diffs` method from the `clipping_analysis` attribute.
+
+        :param figsize: The size of the figure to create. Default is (12, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the CDF analysis plot.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_diffs(figsize=figsize)
 
     def plot_capacity_change_analysis(self, figsize=(8, 6), show_clusters=True):
+        """
+        Plot the capacity change analysis results.
+
+        This function generates a plot that visualizes the results of the capacity change analysis.
+        It uses the `capacity_clustering` method to create the plot and can optionally show clusters.
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :param show_clusters: Whether to show clusters in the plot. Default is True.
+        :type show_clusters: bool, optional
+
+        :return: The figure containing the capacity change analysis plot.
+        :rtype: matplotlib.figure.Figure
+        """
         fig = self.capacity_clustering(
             plot=True, figsize=figsize, show_clusters=show_clusters
         )
         return fig
 
     def plot_time_shift_analysis_results(self, figsize=(8, 6), show_filter=True):
+        """
+        Plot the results of the time shift analysis.
+
+        This function generates a plot that visualizes the results of the time shift analysis,
+        including the daily solar noon metric, the shift detector, and the signal model. It also
+        optionally highlights the filtered days.
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :param show_filter: If `True`, highlights the filtered days in the plot. Default is `True`.
+        "type show_filter: bool, optional
+
+        :return: The plot figure.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.time_shift_analysis is not None:
             use_ixs = self.time_shift_analysis.use_ixs
             plt.figure(figsize=figsize)
@@ -2086,6 +2311,24 @@ time zone errors     {report['time zone correction'] != 0}
             print("Please run pipeline first.")
 
     def plot_circ_dist(self, flag="good", num_bins=12 * 4, figsize=(8, 8)):
+        """
+        Plot a circular distribution of days based on the specified flag.
+
+        This function generates a polar plot showing the distribution of days
+        throughout the year based on the provided flag. The plot is divided into
+        bins, and the number of days in each bin is represented as bars.
+
+        :param flag: The type of days to plot. Options are "good", "bad", "clear", "sunny", or "cloudy".
+                     Default is "good".
+        :type flag: str, optional
+
+        :param num_bins: The number of bins to divide the year into. Default is 48 (12 * 4).
+        :type num_bins: int, optional
+
+        :param figsize: The size of the figure to create. Default is (8, 8).
+        :type figsize: tuple, optional
+
+        """
         title = "Calendar distribution of "
         if flag == "good":
             slct = self.daily_flags.no_errors
@@ -2142,6 +2385,33 @@ time zone errors     {report['time zone correction'] != 0}
     def plot_polar_transform(
         self, lat, lon, tz_offset, elevation_round=1, azimuth_round=2, alpha=1.0
     ):
+        """
+        Plot the polar transformation of the data.
+
+        This function generates a polar plot of the data using the specified latitude, longitude, and time zone offset.
+        It optionally rounds the elevation and azimuth angles and sets the transparency of the plot.
+
+        :param lat: Latitude of the location.
+        :type lat: float
+
+        :param lon: Longitude of the location.
+        :type lon: float
+
+        :param tz_offset: Time zone offset from GMT.
+        :type tz_offset: int
+
+        :param elevation_round: Rounding precision for elevation angles. Default is 1.
+        :type elevation_round: int, optional
+
+        :param azimuth_round: Rounding precision for azimuth angles. Default is 2.
+        :type azimuth_round: int, optional
+
+        :param alpha: Transparency level of the plot. Default is 1.0.
+        :type alpha: float, optional
+
+        :return: The polar transformation plot.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.polar_transform is None:
             self.augment_data_frame(self.daily_flags.clear, "clear-day")
             pt = PolarTransform(
