@@ -5,7 +5,7 @@ Closes [#151](https://github.com/slacgismo/solar-data-tools/issues/151)
 This PR addresses ...
 
 **Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
-- [ ] updated or added relevant tests
-- [ ] updated relevant documentation
-- [ ] added relevant label(s)
+- [ ] Updated or added relevant tests
+- [ ] Updated relevant documentation
+- [ ] Added relevant label(s)
 - [ ] All comments are resolved
