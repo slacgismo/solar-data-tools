@@ -69,12 +69,21 @@
 </tr>
 </table>
 
-Tools for performing common tasks on solar PV data signals. These tasks include finding clear days in
-a data set, common data transforms, and fixing time stamp issues. These tools are designed to be
-automatic and require little if any input from the user. Libraries are included to help with data IO
-and plotting as well.
+Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It provides
+methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
+to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. Solar Data Tools
+was developed to enable analysis of _unlabeled_ PV data, i.e. with no model, no meteorological data, and no performance index required,
+by taking a statistical signal processing approach in the algorithms used in the package’s main data processing pipeline.
+Head over to our Getting Started pages in our [docs](https://solar-data-tools.readthedocs.io/) for a demo of Solar Data Tools!
 
-See the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder for examples.
+For an in-depth tutorial on Solar Data Tools, we recommend taking a look at the recent webinar 
+we did with the DOE's Solar Energy Technologies Office (SETO) with our colleagues at NREL, linked below:
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/XKbqIlAEwOQ/hq1.jpg)](https://www.youtube.com/watch?v=XKbqIlAEwOQ)
+
+You can also check the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder in this repo for more examples.
+
+This work is supported by the U.S. Department of Energy’s Office of Energy Efficiency and Renewable Energy (EERE) under the Solar Energy Technologies Office Award Number 38529.
 
 ## Install & Setup
 
