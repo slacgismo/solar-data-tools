@@ -1787,7 +1787,7 @@ time zone errors     {report['time zone correction'] != 0}
         select specific days, apply boolean masks, and customize the appearance of the plot.
 
         :param boolean_index: Boolean index to select specific days. Default is None.
-        :type boolean_index: numpy.s\_ or None, optional
+        :type boolean_index: List[bool] or None, optional
 
         :param start_day: The starting day for the plot. Can be an integer or a date string. Default is 0.
         :type start_day: int or str, optional
@@ -1814,7 +1814,7 @@ time zone errors     {report['time zone correction'] != 0}
         :type label: str or None, optional
 
         :param boolean_mask: A boolean mask to apply to the data. Default is None.
-        :type boolean_mask: numpy.s_ or None, optional
+        :type boolean_mask: List[bool] or None, optional
 
         :param mask_label: Label for the boolean mask. Default is None.
         :type mask_label: str or None, optional
@@ -2264,7 +2264,7 @@ time zone errors     {report['time zone correction'] != 0}
         :type figsize: tuple, optional
 
         :param show_filter: If `True`, highlights the filtered days in the plot. Default is `True`.
-        "type show_filter: bool, optional
+        :type show_filter: bool, optional
 
         :return: The plot figure.
         :rtype: matplotlib.figure.Figure

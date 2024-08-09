@@ -1,10 +1,12 @@
 .. image:: _static/SDT_v1_primary_white_text.png
     :width: 600
     :class: only-dark
+    :align: center
 
 .. image:: _static/SDT_v1_primary_blue_text.png
     :width: 600
     :class: only-light
+    :align: center
 
 Welcome to the Solar Data Tools Docs!
 =====================================
@@ -15,13 +17,19 @@ Welcome to the Solar Data Tools Docs!
 .. |Anaconda Cloud release| image:: https://anaconda.org/slacgismo/solar-data-tools/badges/version.svg
    :target: https://anaconda.org/slacgismo/solar-data-tools
 
+Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data.
+It was developed to enable analysis of unlabeled PV data, i.e. with no model, no meteorological data, and no performance
+index required, by taking a statistical signal processing approach in the algorithms used in the package’s main data
+processing pipeline. Solar Data Tools empowers PV system fleet owners or operators to analyze system performance
+a hundred times faster even when they only have access to the most basic data stream—power output of the system.
 
-Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It provides
-methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
-to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. Solar Data Tools
-was developed to enable analysis of *unlabeled* PV data, i.e. with no model, no meteorological data, and no performance index required,
-by taking a statistical signal processing approach in the algorithms used in the package’s main data processing pipeline.
-Get started `here <index_getting_started.md>`_ with installation and basic tutorials!
+Solar Data Tools provides methods for data I/O, cleaning, filtering, plotting, and analysis.
+These methods are largely automated and require little to no input from the user regardless of system type—from utility
+tracking systems to multi-pitch rooftop systems. Get started `here <index_getting_started.md>`_ with installation and basic tutorials!
+We also recommend taking a look at `this recent webinar <https://www.youtube.com/watch?reload=9&v=XKbqIlAEwOQ>`_ we did with the DOE's Solar Energy Technologies Office (SETO) with
+our colleagues at NREL, where we discuss the motivation behind the development of Solar Data Tools and demonstrate its capabilities.
+
+
 
 This work is supported by the U.S. Department of Energy's Office of Energy Efficiency and Renewable Energy (EERE) under the Solar Energy Technologies Office Award Number 38529.
 
@@ -32,7 +40,7 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
    :hidden:
 
    index_getting_started
-   index_user_docs
+   index_user_guide
    index_dev
    index_api_reference
 
@@ -66,7 +74,7 @@ This work is supported by the U.S. Department of Energy's Office of Energy Effic
 
         +++
 
-        .. button-ref:: index_user_docs
+        .. button-ref:: index_user_guide
             :click-parent:
             :color: primary
             :expand:
