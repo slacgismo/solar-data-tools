@@ -96,7 +96,7 @@ Head over to our Getting Started pages in our [documentation](https://solar-data
 we did with the DOE's Solar Energy Technologies Office (SETO) with our colleagues at NREL, linked below:
 
 <p align="center">
-  <a href="[http://www.google.com](https://www.youtube.com/watch?v=XKbqIlAEwOQ)">
+  <a href="https://www.youtube.com/watch?v=XKbqIlAEwOQ">
  <img src="https://img.youtube.com/vi/XKbqIlAEwOQ/hq1.jpg" />
   </a>
   <br/>
