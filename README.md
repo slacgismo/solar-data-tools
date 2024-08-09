@@ -1,6 +1,21 @@
-<img src="docs/source/_static/SDT_v1_secondary_blue_text.png" width="600">
+<!-- HEADER -->
+<br />
+<p align="center">
+  <a href="#">
+    <img src="docs/source/_static/SDT_v1_secondary_blue_text.png" width="600">
+  </a>
 
-<table>
+  <p align="center">
+    <br />
+    <a href="https://solar-data-tools.readthedocs.io/"><strong>Explore our documentation </strong></a>
+    ·
+    <a href="https://github.com/slacgismo/solar-data-tools/issues"><strong>Report Issue </strong></a>
+    <br />
+    <br />
+</p>
+</p>    
+
+<table  align="center" >
 <tr>
   <td>Latest Release</td>
   <td>
@@ -67,15 +82,30 @@
     </td>
 </tr>
 </table>
+    
 
-Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It provides
-methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
-to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. Solar Data Tools
+Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It
 was developed to enable analysis of _unlabeled_ PV data, i.e. with no model, no meteorological data, and no performance index required,
 by taking a statistical signal processing approach in the algorithms used in the package’s main data processing pipeline.
-Head over to our Getting Started pages in our [docs](https://solar-data-tools.readthedocs.io/) for a demo of Solar Data Tools!
+Solar Data Tools empowers PV system fleet owners or operators to analyze system performance a hundred times faster even when 
+they only have access to the most basic data stream—power output of the system.
+
+Solar Data Tools provides methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
+to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. 
+Head over to our Getting Started pages in our [documentation](https://solar-data-tools.readthedocs.io/) for a demo! For an in-depth tutorial on Solar Data Tools, we recommend taking a look at the recent webinar 
+we did with the DOE's Solar Energy Technologies Office (SETO) with our colleagues at NREL, linked below:
+
+<p align="center">
+  <a href="[http://www.google.com](https://www.youtube.com/watch?v=XKbqIlAEwOQ)">
+ <img src="https://img.youtube.com/vi/XKbqIlAEwOQ/hq1.jpg" />
+  </a>
+  <br/>
+  </img>
+</p>
 
 You can also check the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder in this repo for more examples.
+
+This work is supported by the U.S. Department of Energy’s Office of Energy Efficiency and Renewable Energy (EERE) under the Solar Energy Technologies Office Award Number 38529.
 
 ## Install & Setup
 
@@ -175,6 +205,11 @@ Filtering/Summarizing      18.83s
 
 You can also find more in-depth tutorials and guides in [our documentation](https://solar-data-tools.readthedocs.io/).
 
+
+## Contributing
+
+We welcome contributions of any form! Please see our [Contribution Guidelines](./CONTRIBUTING.md) for more information.
+
 ## Citing Solar Data Tools
 
 If you use Solar Data Tools in your research, please cite:
@@ -201,10 +236,6 @@ You can also cite the DOI corresponding to the specific version of
 Solar Data Tools that you used. Solar Data Tools DOIs are listed at
 [here](https://zenodo.org/search?q=parent.id%3A5056959&f=allversions%3Atrue&l=list&p=1&s=10&sort=version).
 
-
-## Contributors
-
-We welcome contributions of any form! Please see our [Contribution Guidelines](./CONTRIBUTING.md) for more information.
 
 ## Versioning
 
