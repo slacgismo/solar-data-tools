@@ -150,6 +150,12 @@ def load_cassandra_data(
     cluster_ip=None,
     verbose=True,
 ):
+    """
+    .. deprecated:: 1.5.0
+    dataio.load_cassandra_data is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
+    This function is deprecated. Please use load_redshift_data function instead.
+    """
+
     warn(
         "This function is deprecated. Please use load_redshift_data function instead.",
         DeprecationWarning,
