@@ -1,20 +1,17 @@
 # Solar Data Tools User Guide
 
 This guide serves as a reference for the typical Solar Data Tools user. We will go over the main 
-classes and methods that the packages offers and that are meant to be user-facing, with examples
-and relevant details for you to get started. If any part of this guide is unclear, or you'd like 
-to improve on these docs, please consider [submitting an Issue or a PR](index_dev.md)!
-
-## Main User-Facing Classes and Methods
-
-The main class that users will interact with--as you'll see in the next section--is the DataHandler class.
-<!The table below lists all the associated class methods that a typical user may call. The table also 
-lists some data I/O functions that may be useful for pulling data from publicly available sources:
+user-facing classes and methods, with examples and relevant details for you to get started. As you 
+will see, most of the methods in Solar Data Tools are automated, so you can get started with minimal
+effort and very little input from your side.
 
 For a more comprehensive list of all methods and functions, you can check the [API reference](index_api_reference.rst).
 **However, this user guide likely provides you with all the functionality you need, while the rest of 
-the functions listed in the API reference are more internal/helper functions that were not meant for users to interact with.**>
+the functions listed in the API reference are more internal/helper functions that were not meant for
+users to interact with.**
 
+If any part of this guide is unclear, or you'd like 
+to improve on these docs, please consider [submitting an Issue or a PR](index_dev.md)!
 
 ## Getting started with the `DataHandler` class
 Most users will only need to interact with the `DataHandler` class. To instantiate, a Data Handler 
@@ -23,46 +20,46 @@ as an input.
 
 Let's say we have a CSV file with power data that we want to analyze. We can load it into a DataFrame:
     
-    ```python  
-    import pandas as pd
-    from solardatatools import DataHandler
-    
-    df = pd.read_csv('path/to/your/data.csv')
-    ```
+```python  
+import pandas as pd
+from solardatatools import DataHandler
+
+df = pd.read_csv('path/to/your/data.csv')
+```
 Then we can create a DataHandler object with this DataFrame:
 
-    ```python
-    dh = DataHandler(df)
-    ```
+```python
+dh = DataHandler(df)
+```
 
 If you know that your data is affected by daylight savings, you can run the following method to correct 
 for it:
     
-    ```python
-    dh.fix_dst()
-    ```
+```python
+dh.fix_dst()
+```
 
 The DataHandler object is now ready to be used for data processing and analysis.
 
 ## Running the pipeline
-The DataHandler.run_pipeline method is the main data processing and analysis pipeline offered by 
+The `DataHandler.run_pipeline` method is the main data processing and analysis pipeline offered by 
 Solar Data Tools. It includes preprocessing, cleaning (e.g. fixing time shifts), and scoring data 
 quality metrics (e.g. finding clear days, capacity changes and any clipping.
 
 To run the pipeline, simply call the method:
 
-    ```python
-    dh.run_pipeline()
-    ```
+```python
+dh.run_pipeline()
+```
 
 This method can be passed a number of optional arguments to customize the pipeline. For example, you may
 need to specify the timezone of the data, or the solver to use for the capacity change detection.
 Most commonly, you will want to specify the power column name and whether to run a 
 timeshift correction. Here is an example of how to run the pipeline with these arguments:
 
-    ```python
-    dh.run_pipeline(power_col='power', fix_shifts=True)
-    ```
+```python
+dh.run_pipeline(power_col='power', fix_shifts=True)
+```
 
 Note that the pipeline can take a while to run, depending on the size of the dataset and the solver 
 you are using (from a couple of seconds up to a minute). 
@@ -70,26 +67,69 @@ you are using (from a couple of seconds up to a minute).
 Once the pipeline is run, the DataHandler object will have a number of attributes that you can access
 to view the results of the analysis. The top-level report is accessed by calling the `report` attribute:
 
-    ```python
-    dh.report()
-    ```
+```python
+dh.report()
+```
 
 This will print a summary of the results of the pipeline, including the data quality metrics.
 We can also make a machine-readable version, which is useful when processing many files/columns 
 for creating a summary table of all data sets.
 
-    ```python
-    dh.report(return_values=True, verbose=False)
-    ```
+```python
+dh.report(return_values=True, verbose=False)
+```
 
 ## Plotting some pipeline results
 
 The DataHandler object has a number of plotting methods that can be used to visualize the results of 
-the pipeline. For example, 
+the pipeline. Here is a full list of the plotting methods available after running the main pipeline:
+| Method | Description|
+| --- | --- |
+|    DataHandler.plot_heatmap | Plot a heatmap of the data |
+|    DataHandler.plot_circ_dist | Plot the circular distribution of the data |
+|    DataHandler.plot_daily_energy | Plot the daily energy |
+|    DataHandler.plot_daily_signals | Plot the daily signals |
+|    DataHandler.plot_density_signal | Plot the density signal | 
+|    DataHandler.plot_data_quality_scatter | Plot the data quality scatter |
+|    DataHandler.plot_capacity_change_analysis | Plot the capacity change analysis |
+|    DataHandler.plot_time_shift_analysis_results | Plot the time shift analysis results |
+|    DataHandler.plot_clipping | Plot the clipping |
+|    DataHandler.plot_cdf_analysis | Plot the CDF analysis |
+|    DataHandler.plot_daily_max_cdf_and_pdf | Plot the daily max CDF and PDF |
+|    DataHandler.plot_polar_transform | Plot the polar transform |
+
+Note that the timeshift correction method must be run (by passing `fix_shifts=True` to `run_pipeline`)
+before calling the `plot_time_shift_analysis_results` method. 
+
+Examples of some of these plotting methods are shown below in the notebooks and examples section, 
+such as the [demo](getting_started/notebooks/demo_default.ipynb) and the 
+[tutorial](getting_started/notebooks/tutorial.ipynb).
+
 ## Running loss factor analysis 
 
+Once the main pipeline is run, you can run the loss factor analysis to estimate the loss factor of 
+the system. This is done by calling the `run_loss_factor_analysis` method:
 
+```python  
+dh.run_loss_factor_analysis()
+```
+
+This method will estimate the loss factor of the system by running a Monte Carlo sampling to generate 
+a distributional estimate of the degradation rate. The results are stored in `dh.loss_analysis`.
+
+Once it terminates, you can visualize some of the results by calling the following functions:
+
+| Method                                     | Description                                                         |
+|--------------------------------------------|---------------------------------------------------------------------|
+| DataHandler.loss_analysis.loss_analysis.plot_pie | Create a pie plot to visualize the breakdown of energy loss factors |
+| DataHandler.loss_analysis.plot_waterfall   | Create waterfall plot to visualize the breakdown of energy loss factors |
+| DataHandler.loss_analysis.plot_decomposition   | Plot the estimated signal components found through decomposition    |
+
+Head over to our [demo](getting_started/notebooks/demo_default.ipynb) and
+[tutorial](getting_started/notebooks/tutorial.ipynb) to see these functions in action on real data.
 
 ## Other features
 
 ### Latitude and longitude estimation
+
+### Data I/O functions
