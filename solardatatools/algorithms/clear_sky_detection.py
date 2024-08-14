@@ -7,6 +7,7 @@ on the input data (cake) and estimated 98th percentile (Q98).
 """
 
 import numpy as np
+from dilation import Dilation  # Import the Dilation class
 
 DEFAULT_CLEAR_SKY = {
     "lam": 2,
@@ -15,10 +16,11 @@ DEFAULT_CLEAR_SKY = {
 class ClearSkyDetection:
     def __init__(self, data_handler, **config):
         self.dh = data_handler
-        self.cake = data_handler.cake  # assuming 'cake' is stored in the data_handler
-        self.Q98 = data_handler.Q98    # assuming 'Q98' is stored in the data_handler
-        self.D = self.cake.shape[0]    # Number of days
-        self.T = self.cake.shape[1]    # Number of nodes in width
+        self.dilation = Dilation(data_handler, **config)  # Create an instance of Dilation
+        self.cake = self.dilation.signal_dil  # Get the 'cake' from the Dilation instance
+        self.Q98 = data_handler.Q98  # Assuming 'Q98' is still stored in data_handler
+        self.D = self.cake.shape[0]  # Number of days
+        self.T = self.cake.shape[1]  # Number of nodes in width
         if len(config) == 0:
             self.config = DEFAULT_CLEAR_SKY
         else:
