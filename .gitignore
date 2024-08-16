@@ -1,4 +1,3 @@
-
 # Created by https://www.gitignore.io/api/data,macos,python,pycharm,database,sublimetext,jupyternotebook
 # Edit at https://www.gitignore.io/?templates=data,macos,python,pycharm,database,sublimetext,jupyternotebook
 
@@ -322,3 +321,5 @@ tags
 [._]*.un~
 
 # End of https://www.toptal.com/developers/gitignore/api/vim
+/sdt_dask/results
+

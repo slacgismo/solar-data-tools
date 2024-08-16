@@ -16,8 +16,14 @@ clarabel
 qss
 tqdm
 spcqe
+# Packages below this line are for the SDT Dask tool feature (optional)
+dask
+distributed
+dask-cloudprovider[all]
+graphviz
+bokeh
+# Packages below this line are for the documentation (optional)
 pydata-sphinx-theme
 sphinx-design
 nbsphinx
-pandoc
 myst-parser
