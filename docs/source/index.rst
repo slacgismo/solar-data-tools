@@ -26,14 +26,15 @@ a hundred times faster even when they only have access to the most basic data st
 Solar Data Tools provides methods for data I/O, cleaning, filtering, plotting, and analysis.
 These methods are largely automated and require little to no input from the user regardless of system type—from utility
 tracking systems to multi-pitch rooftop systems. Get started `here <index_getting_started.md>`_ with installation and basic tutorials!
-We also recommend taking a look at `this recent webinar <https://www.youtube.com/watch?reload=9&v=XKbqIlAEwOQ>`_ we did with the DOE's Solar Energy Technologies Office (SETO) with
-our colleagues at NREL, where we discuss the motivation behind the development of Solar Data Tools and demonstrate its capabilities.
+We also recommend taking a look at `this recent webinar <https://www.youtube.com/watch?reload=9&v=XKbqIlAEwOQ>`_ we did
+with the DOE's Solar Energy Technologies Office (SETO) with our colleagues at NREL, where we discuss the motivation behind
+the development of Solar Data Tools and demonstrate its capabilities.
 
+Contributions to these documentation pages are welcome (and much appreciated!), and you can find our contribution
+guidelines `here <index_dev.md>`__.
 
-
-This work is supported by the U.S. Department of Energy's Office of Energy Efficiency and Renewable Energy (EERE) under the Solar Energy Technologies Office Award Number 38529.
-
-.. Important:: These documentation pages are under construction. Contributions are welcome (and much appreciated!), and you can find our contribution guidelines `here <index_dev.md>`__.
+This work is supported by the U.S. Department of Energy's Office of Energy Efficiency and Renewable Energy (EERE) under
+the Solar Energy Technologies Office Award Number 38529.
 
 .. toctree::
    :maxdepth: 1

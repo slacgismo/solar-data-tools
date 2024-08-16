@@ -53,7 +53,6 @@ classifiers = [
 ]
 dynamic = ["version"]
 [tool.setuptools_scm]
-write_to = "solardatatools/_version.py"
 
 [tool.setuptools.packages.find]
 include = ["solardatatools*",  "pvsystemprofiler*", "statistical_clear_sky*"]
@@ -61,6 +60,7 @@ include = ["solardatatools*",  "pvsystemprofiler*", "statistical_clear_sky*"]
 [project.optional-dependencies]
 docs = [
     "sphinx",
+    "pydata-sphinx-theme",
     "sphinx_design",
     "nbsphinx",
     "myst-parser"

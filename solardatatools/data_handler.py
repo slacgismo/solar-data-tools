@@ -64,15 +64,15 @@ class DataHandler:
         This class can work with both data frames and raw data matrices, allowing for
         time series conversion, aggregation, and various other preprocessing steps.
 
-        It is initialized by passing at least either the `data_frame` parameter or the
-        `raw_data_matrix` parameter.
+        It is initialized by passing a Pandas dataframe to the `data_frame` parameter.
 
         :param data_frame: A pandas DataFrame containing the raw data. If provided,
                            the class will process the data frame based on the other
                            parameters.
         :type data_frame: pandas.DataFrame, optional
         :param raw_data_matrix: A raw data matrix where each column is expected to
-                                represent a different time series.
+                                represent a different time series. NOTE: This feature is no longer
+                                maintained and is not recommended for use.
         :type raw_data_matrix: numpy.ndarray, optional
         :param datetime_col: The name of the column containing datetime information,
                              used to set the DataFrame's index to a DatetimeIndex.
@@ -86,7 +86,8 @@ class DataHandler:
         :type no_future_dates: bool, default=True
         :param aggregate: A string representing a resampling rule (e.g., 'D' for day,
                           'H' for hour). If provided, the data frame will be resampled
-                          and aggregated accordingly.
+                          and aggregated accordingly. NOTE: This feature is no longer
+                          maintained and is not recommended for use.
         :type aggregate: str, optional
         :param how: A function used to aggregate the resampled data. The function should
                     take a pandas object and return a single value (e.g., mean, sum).
