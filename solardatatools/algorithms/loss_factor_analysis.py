@@ -568,7 +568,7 @@ def model_wrapper(energy_model, use_ixs):
         apply_outages = slct[-1]
         slct = slct[:-1]
         model_select = energy_model[slct]
-        daily_energy = np.product(model_select, axis=0)
+        daily_energy = np.prod(model_select, axis=0)
         if apply_outages:
             daily_energy = daily_energy[use_ixs]
         return np.sum(daily_energy)

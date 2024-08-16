@@ -56,7 +56,7 @@ dynamic = ["version"]
 write_to = "solardatatools/_version.py"
 
 [tool.setuptools.packages.find]
-include = ["solardatatools*",  "pvsystemprofiler*", "statistical_clear_sky*"]
+include = ["solardatatools*", "pvsystemprofiler*", "statistical_clear_sky*", "sdt_dask*"]
 
 [project.optional-dependencies]
 docs = [
@@ -68,6 +68,14 @@ docs = [
 mosek = [
     "mosek"
 ]
+dask = [
+    "numpy==2.0", # to match provided sdt docker image
+    "dask==2024.5.2", # to match provided sdt docker image
+    "distributed==2024.5.2", # to match provided sdt docker image
+    "dask-cloudprovider[all]==2022.10.0",
+    "graphviz", # for local task graph visualization
+    "bokeh" # for local task graph visualization
+    ]
 
 [project.urls]
 Homepage = "https://github.com/slacgismo/solar-data-tools"
