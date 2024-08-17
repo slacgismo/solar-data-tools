@@ -191,7 +191,7 @@ df = get_pvdaq_data(sysid=34, year=range(2011, 2015), api_key='DEMO_KEY')
 ```
 
 To use the `load_redshift_data` function, you will need to 
-request an API key by registering at [https://pvdb.slacgismo.org](https://pvdb.slacgismo.org)) and emailing
+request an API key by registering at [https://pvdb.slacgismo.org](https://pvdb.slacgismo.org) and emailing
 slacgismotutorials@gmail.com with your information and use case. To query the data, you also must
 provide a site ID and a sensor number (0, 1, 2 ...). An example usage is shown below:
 
