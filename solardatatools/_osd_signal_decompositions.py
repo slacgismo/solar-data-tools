@@ -1,27 +1,28 @@
-""" Signal Decompositions Module for OSD
+"""
+Signal Decompositions Module for OSD
 
-This module contains standardized signal decomposition models for use in the
-SDT algorithms using the OSD modeling language. The defined signal decompositions are:
+This module contains standardized signal decomposition models for use in the SDT algorithms using
+the OSD modeling language. The defined signal decompositions are:
 
-1) '_osd_l2_l1d1_l2d2p365': separating a piecewise constant component from a smooth
-and seasonal component, with Gaussian noise
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-2) '_osd_tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
-an asymmetric laplacian noise model, fitting a local quantile instead of a
-local average
-    - tl1: 'tilted l1-norm,' also known as quantile cost function
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-3) '_osd_l1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
-of Gaussian residuals
-    - l1: l1-norm
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) '_osd_l2_l1d2_constrained':
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d2: piecewise linear heuristic
+1. `_osd_l2_l1d1_l2d2p365`: separating a piecewise constant component from a smooth and seasonal component, with Gaussian noise
+    - `l2`: gaussian noise, sum-of-squares small or l2-norm squared
+    - `l1d1`: piecewise constant heuristic, l1-norm of first order differences
+    - `l2d2p365`: small second order diffs (smooth) and 365-periodic
+
+2. `_osd_tl1_l2d2p365`: similar to (2), estimating a smooth, seasonal component with an asymmetric laplacian noise model, fitting a local quantile instead of a local average
+    - `tl1`: 'tilted l1-norm,' also known as quantile cost function
+    - `l2d2p365`: small second order diffs (smooth) and 365-periodic
+
+3. `_osd_l1_l1d1_l2d2p365`: like (1) but with an asymmetric residual cost instead of Gaussian residuals
+    - `l1`: l1-norm
+    - `l1d1`: piecewise constant heuristic, l1-norm of first order differences
+    - `l2d2p365`: small second order diffs (smooth) and 365-periodic
+
+4. `_osd_l2_l1d2_constrained`:
+    - `l2`: gaussian noise, sum-of-squares small or l2-norm squared
+    - `l1d2`: piecewise linear heuristic
     - constrained to have first val at 0 and last val at 1
+
 """
 import sys
 import numpy as np
@@ -69,16 +70,16 @@ def _osd_l2_l1d1_l2d2p365(
     with sum_card=True.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param w1: The regularization parameter to control the total variation in
-    the final output signal
+        the final output signal
     :param w2: The regularization parameter to control the smoothness of the
-    seasonal signal
+        seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition
     :param sum_card: Boolean for using the nonconvex formulation using the cardinality penalty,
-    Supported only using OSD with the QSS solver.
+        Supported only using OSD with the QSS solver.
     :param verbose: Sets verbosity
     :return: A tuple with two 1d numpy arrays containing the two signal component estimates
     """
@@ -149,15 +150,15 @@ def _osd_tl1_l2d2p365(
     This is a convex problem and the default solver across SDT is OSQP.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
-    None is default (uses the entire signal).
+        None is default (uses the entire signal).
     :param tau: Quantile regression parameter,between zero and one, and it sets
-     the approximate quantile of the residual distribution that the model is fit to
-     See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
+        the approximate quantile of the residual distribution that the model is fit to
+        See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
     :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the smoothness of the
-    seasonal signal
+        seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition
@@ -198,15 +199,15 @@ def _osd_l1_l1d1_l2d2p365(
     This is a nonconvex problem when invoking QSS and sum_card=True.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
-    None is default (uses the entire signal).
+        None is default (uses the entire signal).
     :param w1: The regularization parameter to control the number of breakpoints in the PWC component
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-    OSD. MOSEK will trigger CVXPY use.
+        OSD. MOSEK will trigger CVXPY use.
     :param sum_card: Boolean for using the nonconvex formulation using the cardinality penalty,
-    Supported only using OSD with the QSS solver.
+        Supported only using OSD with the QSS solver.
     :param verbose: Sets verbosity
     :return: A tuple with three 1d numpy arrays containing the three signal component estimates
     """
@@ -263,14 +264,14 @@ def _osd_l2_l1d2_constrained(
     This is a convex problem and the default solver across SDT is OSQP.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param w0: Weight on the residual component
     :param w1: The regularization parameter on l1d2 component
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition
     :param verbose: Sets verbosity
     :return: A tuple with returning the signal, the l1d2 component estimate,
-     and the weight
+        and the weight
     """
     c1 = SumSquare(weight=w0)
     c2 = Aggregate([SumAbs(weight=w1, diff=2), FirstValEqual(0), LastValEqual(1)])

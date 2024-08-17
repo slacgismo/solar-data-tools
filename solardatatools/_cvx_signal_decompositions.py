@@ -1,28 +1,26 @@
 """
 Signal Decompositions Module for CVXPY
 
-This module contains standardized signal decomposition models for use in the
-SDT algorithms using CVXPY and the MOSEK solver. The defined signal decompositions are:
+This module contains standardized signal decomposition models for use in the SDT algorithms using CVXPY and the MOSEK solver. The defined signal decompositions are:
 
-1) '_cvx_l2_l1d1_l2d2p365': separating a piecewise constant component from a smooth
-and seasonal component, with Gaussian noise
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-2) '_cvx_tl1_l2d2p365': similar to (2), estimating a smooth, seasonal component with
-an asymmetric laplacian noise model, fitting a local quantile instead of a
-local average
-    - tl1: 'tilted l1-norm,' also known as quantile cost function
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-3) '_cvx_l1_l1d1_l2d2p365': like (1) but with an asymmetric residual cost instead
-of Gaussian residuals
-    - l1: l1-norm
-    - l1d1: piecewise constant heuristic, l1-norm of first order differences
-    - l2d2p365: small second order diffs (smooth) and 365-periodic
-4) '_cvx_l2_l1d2_constrained':
-    - l2: gaussian noise, sum-of-squares small or l2-norm squared
-    - l1d2: piecewise linear heuristic
-    - constrained to have first val at 0 and last val at 1
+1. `_cvx_l2_l1d1_l2d2p365`: Separating a piecewise constant component from a smooth and seasonal component, with Gaussian noise
+   - `l2`: Gaussian noise, sum-of-squares small or l2-norm squared
+   - `l1d1`: Piecewise constant heuristic, l1-norm of first-order differences
+   - `l2d2p365`: Small second-order differences (smooth) and 365-periodic
+
+2. `_cvx_tl1_l2d2p365`: Similar to (2), estimating a smooth, seasonal component with an asymmetric Laplacian noise model, fitting a local quantile instead of a local average
+   - `tl1`: 'Tilted l1-norm,' also known as quantile cost function
+   - `l2d2p365`: Small second-order differences (smooth) and 365-periodic
+
+3. `_cvx_l1_l1d1_l2d2p365`: Like (1) but with an asymmetric residual cost instead of Gaussian residuals
+   - `l1`: l1-norm
+   - `l1d1`: Piecewise constant heuristic, l1-norm of first-order differences
+   - `l2d2p365`: Small second-order differences (smooth) and 365-periodic
+
+4. `_cvx_l2_l1d2_constrained`:
+   - `l2`: Gaussian noise, sum-of-squares small or l2-norm squared
+   - `l1d2`: Piecewise linear heuristic
+   - Constrained to have first value at 0 and last value at 1
 
 """
 import sys
@@ -52,19 +50,34 @@ def _cvx_l2_l1d1_l2d2p365(
     multi-year solar PV power data sets, and therefore does an improved job of
     estimating the discretely changing signal.
 
-    :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
-    :param w0: Weight on the residual component
-    :param w1: The regularization parameter to control the total variation in
-    the final output signal
-    :param w2: The regularization parameter to control the smoothness of the
-    seasonal signal
-    :param yearly_periodic: Adds periodicity constraint to signal decomposition
-    :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition
-    :param transition_locs: List of indices where transitions are located
-    :param verbose: Sets verbosity
-    :return: A tuple with two 1d numpy arrays containing the two signal component estimates
+    Parameters
+    ----------
+    signal : array_like
+        A 1d numpy array (must support boolean indexing) containing
+        the signal of interest.
+    w0 : float
+        Weight on the residual component.
+    w1 : float
+        The regularization parameter to control the total variation in
+        the final output signal.
+    w2 : float
+        The regularization parameter to control the smoothness of the
+        seasonal signal.
+    yearly_periodic : bool, optional
+        Adds periodicity constraint to signal decomposition.
+    return_all : bool, optional
+        Returns all components and the objective value. Used for tests.
+    solver : str, optional
+        Solver to use for the decomposition.
+    transition_locs : list of int, optional
+        List of indices where transitions are located.
+    verbose : bool, optional
+        Sets verbosity.
+
+    Returns
+    -------
+    tuple of array_like
+        A tuple with two 1d numpy arrays containing the two signal component estimates.
     """
     if use_ixs is None:
         index_set = ~np.isnan(signal)
@@ -140,15 +153,15 @@ def _cvx_tl1_l2d2p365(
         solardatatools/sunrise_sunset.py
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
-    None is default (uses the entire signal).
+        None is default (uses the entire signal).
     :param tau: Quantile regression parameter,between zero and one, and it sets
-     the approximate quantile of the residual distribution that the model is fit to
-     See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
+        the approximate quantile of the residual distribution that the model is fit to
+        See: https://colab.research.google.com/github/cvxgrp/cvx_short_course/blob/master/applications/quantile_regression.ipynb
     :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the smoothness of the
-    seasonal signal
+        seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition
@@ -191,14 +204,14 @@ def _cvx_l1_l1d1_l2d2p365(
     Used in solardatatools/algorithms/capacity_change.py
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
-    None is default (uses the entire signal).
+        None is default (uses the entire signal).
     :param w0: Weight on the residual component
     :param w1: The regularization parameter to control the total variation in
-    the final output signal
+        the final output signal
     :param w2: The regularization parameter to control the smoothness of the
-    seasonal signal
+        seasonal signal
     :param return_all: Returns all components and the objective value. Used for tests.
     :param solver: Solver to use for the decomposition
     :param verbose: Sets verbosity
@@ -265,7 +278,7 @@ def _cvx_l2_l1d2_constrained(
     This is a convex problem and the default solver across SDT is OSQP.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
-    the signal of interest
+        the signal of interest
     :param w0: Weight on the residual component
     :param w1: The regularization parameter on l1d2 component
     :param return_all: Returns all components and the objective value. Used for tests.

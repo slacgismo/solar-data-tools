@@ -60,8 +60,10 @@ include = ["solardatatools*", "pvsystemprofiler*", "statistical_clear_sky*", "sd
 [project.optional-dependencies]
 docs = [
     "sphinx",
-    "sphinx-changelog>=1.2.0",
+    "pydata-sphinx-theme",
     "sphinx_design",
+    "nbsphinx",
+    "myst-parser"
 ]
 mosek = [
     "mosek"
