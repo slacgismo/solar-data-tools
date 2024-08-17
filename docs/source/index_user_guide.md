@@ -57,8 +57,7 @@ This prompts the DataHandler to convert the data to wide-form before running the
 default index and column names intended to work with GISMo's VADER Cassandra database implementation
 (see `solardatatools.time_axis_manipulation.make_time_series`).
 
-For more information on long-form vs. wide-form, you can check out [this nice writeup]
-(https://seaborn.pydata.org/tutorial/data_structure.html#long-form-vs-wide-form-data) from
+For more information on long-form vs. wide-form, you can check out [this nice writeup](https://seaborn.pydata.org/tutorial/data_structure.html#long-form-vs-wide-form-data) from
 the Seaborn documentation.
 
 ## Running the pipeline
@@ -192,7 +191,7 @@ df = get_pvdaq_data(sysid=34, year=range(2011, 2015), api_key='DEMO_KEY')
 ```
 
 To use the `load_redshift_data` function, you will need to 
-request an API key by registering at https://pvdb.slacgismo.org and emailing
+request an API key by registering at [https://pvdb.slacgismo.org](https://pvdb.slacgismo.org)) and emailing
 slacgismotutorials@gmail.com with your information and use case. To query the data, you also must
 provide a site ID and a sensor number (0, 1, 2 ...). An example usage is shown below:
 
