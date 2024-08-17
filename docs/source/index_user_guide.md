@@ -41,6 +41,26 @@ dh.fix_dst()
 
 The DataHandler object is now ready to be used for data processing and analysis.
 
+### A note on long-form vs. wide-form data
+
+Timeseries data is often in wide-form, where you have for example a DataFrame that has a timestamp 
+column and one or more data columns. That's what the DataHandler typically expects. However,
+it also can take data in long-form, such as for example what we have in the Redshift data where some sites
+have more than one inverter (see the "Data I/O functions" section below). In this case, you will
+want to instantiate the DataHandler object with the `convert_to_ts` flag set to True:
+
+```python
+dh = DataHandler(df, convert_to_ts=True)
+```     
+
+This prompts the DataHandler to convert the data to wide-form before running the pipeline, given 
+default index and column names intended to work with GISMo's VADER Cassandra database implementation
+(see `solardatatools.time_axis_manipulation.make_time_series`).
+
+For more information on long-form vs. wide-form, you can check out [this nice writeup]
+(https://seaborn.pydata.org/tutorial/data_structure.html#long-form-vs-wide-form-data) from
+the Seaborn documentation.
+
 ## Running the pipeline
 The `DataHandler.run_pipeline` method is the main data processing and analysis pipeline offered by 
 Solar Data Tools. It includes preprocessing, cleaning (e.g. fixing time shifts), and scoring data 
