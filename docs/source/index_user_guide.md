@@ -130,6 +130,58 @@ Head over to our [demo](getting_started/notebooks/demo_default.ipynb) and
 
 ## Other features
 
-### Latitude and longitude estimation
+### Orientation and Location estimation
+The DataHandler also includes methods to estimate the position of the solar panels based on the data.
+This includes the location (latitude and longitude) and orientation (tilt and azimuth) of the system.
+The available methods are:
+
+| Method                                                | Description                                                                       |
+|-------------------------------------------------------|-----------------------------------------------------------------------------------|
+| DataHandler.setup_location_and_orientation_estimation | Sets up the location and orientation estimation for the system given a GMT offset |
+| DataHandler.estimate_latitude                         | Estimates latitude                                                                |
+| DataHandler.estimate_longitude                        | Estimates longitude                                                               |
+| DataHandler.estimate_location_and_orientation         | Estimates latitude, longitude, tilt and azimuth                                   |
+| DataHandler.estimate_orientation         | Estimates tilt and azimuth                                                        |
+
+To call the estimation methods, first you need to run the `setup_location_and_orientation_estimation``
+method and provide a GMT offset value by passing it to the method. After that, you can call any of the
+four estimation methods. A demo of this feature can be found in the [tutorial](getting_started/notebooks/tutorial.ipynb)
+in cells 13-15.
 
 ### Data I/O functions
+
+The `dataio` module in Solar Data Tools includes a number of functions to pull data from various sources.
+These functions are useful for loading data into a DataFrame that can be used with the `DataHandler` class.
+The available functions are:
+
+| Method                            | Description                                                                    |
+|-----------------------------------|--------------------------------------------------------------------------------|
+| dataio.get_pvdaq_data      | Queries one or more years of raw PV system data from NREL's PVDAQ data service |
+| dataio.load_constellation_data | Loads constellation data from a specified location                             |
+| dataio.load_redshift_data  | Queries a SunPower dataset by site id and returns a Pandas DataFrame           |
+| dataio.load_pvo_data    | Loads NREL data from private S3 bucket (for use by the SLAC team only)         |
+
+
+The PVDAQ database is a public database of solar power data that can be accessed by anyone. The system 
+locations that can be accessed are shown on [this interactive map](https://openei.org/wiki/PVDAQ/PVData_Map).
+You can use the "DEMO_KEY" for querying the data, but you can also get your own API key by 
+registering [here](https://data.openei.org/submissions/4568).
+An example usage for this function for system ID 34 is shown below:
+```python
+df = get_pvdaq_data(sysid=34, year=range(2011, 2015), api_key='DEMO_KEY')
+```
+
+To use the `load_redshift_data` function, you will need to 
+request an API key by registering at https://pvdb.slacgismo.org and emailing
+slacgismotutorials@gmail.com with your information and use case. To query the data, you also must
+provide a site ID and a sensor number (0, 1, 2 ...). An example usage is shown below:
+
+```python
+query = {
+    'siteid': 'TABJC1027159',
+    'api_key': YOUR_API_KEY,
+    'sensor': 0
+}
+
+df = load_redshift_data(**query)
+```

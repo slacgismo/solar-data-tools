@@ -23,6 +23,7 @@ dask-cloudprovider[all]
 graphviz
 bokeh
 # Packages below this line are for the documentation (optional)
+sphinx
 pydata-sphinx-theme
 sphinx-design
 nbsphinx

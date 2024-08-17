@@ -28,7 +28,7 @@ import zlib
 
 def get_pvdaq_data(sysid=2, api_key="DEMO_KEY", year=2011, delim=",", standardize=True):
     """
-    This fuction queries one or more years of raw PV system data from NREL's PVDAQ data service:
+    This function queries one or more years of raw PV system data from NREL's PVDAQ data service:
             https://openei.org/wiki/PVDAQ/PVData_Map
 
     :param sysid: The system ID to query. Default is 2.
