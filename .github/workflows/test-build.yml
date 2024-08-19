@@ -65,3 +65,13 @@ jobs:
           conda config --set anaconda_upload no --set solver libmamba
           VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c slacgismo -c conda-forge -c stanfordcvxgrp --numpy 2.0
           echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
+
+  deploy-rtd:
+    steps:
+  # Do not need to build and upload artifacts, just retrigger to update tags/version on website
+      - name: Trigger RTDs build
+        uses: dfm/rtds-action@v1
+        with:
+          webhook_url: ${{ secrets.RTDS_WEBHOOK_URL }}
+          webhook_token: ${{ secrets.RTDS_WEBHOOK_TOKEN }}
+          commit_ref: ${{ github.ref }}
