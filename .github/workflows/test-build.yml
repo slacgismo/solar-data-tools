@@ -73,7 +73,7 @@ jobs:
     #needs: [build-pypi, build-conda]
     environment: test-deployment
     steps:
-    # Do not need to build and upload artifacts, just retrigger to update tags/version on website
+    # Do not need to build and upload artifacts, just re-trigger to update tags/version on website
       - name: Trigger RTDs build
         uses: dfm/rtds-action@v1
         with:
