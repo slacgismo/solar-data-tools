@@ -13,4 +13,4 @@ loss factors using Shapley values.
 The estimation of the location and orientation algorithm (also a method of the DataHandler class) is described in this
 `IEEE 2021 PVSC paper <https://ieeexplore.ieee.org/abstract/document/9518783>`_.
 
-Most of the algorithms make use of a "signal decomposition" framework that was developed in parallel with this software. You can find a monograph explaining this concept `here <https://www.nowpublishers.com/article/Details/SIG-122>`_ (mirrored `here <https://web.stanford.edu/~boyd/papers/sig_decomp_mprox.html>`_) and a "no math, no code" tutorial on signal decomposition `here <https://marimo.io/@public/signal-decomposition>`_.
+Most of the algorithms make use of a "signal decomposition" framework that was developed in parallel with this software. You can find a monograph explaining this concept `here <https://www.nowpublishers.com/article/Details/SIG-122>`__ (mirrored `here <https://web.stanford.edu/~boyd/papers/sig_decomp_mprox.html>`__) and a "no math, no code" tutorial on signal decomposition `here <https://marimo.io/@public/signal-decomposition>`__.
