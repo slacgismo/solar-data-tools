@@ -38,6 +38,11 @@ requirements:
     - qss
     - tqdm
     - spcqe
+    - dask
+    - distributed
+    - dask-cloudprovider
+    - graphviz
+    - bokeh
 
 test:
   imports:

@@ -58,6 +58,45 @@ class DataHandler:
         how=lambda x: x.mean(),
         gmt_offset=None,
     ):
+        """
+        Solar Data Tools' main class to handle and preprocess time series data.
+
+        This class can work with both data frames and raw data matrices, allowing for
+        time series conversion, aggregation, and various other preprocessing steps.
+
+        It is initialized by passing a Pandas dataframe to the `data_frame` parameter.
+
+        :param data_frame: A pandas DataFrame containing the raw data. If provided,
+                           the class will process the data frame based on the other
+                           parameters.
+        :type data_frame: pandas.DataFrame, optional
+        :param raw_data_matrix: A raw data matrix where each column is expected to
+                                represent a different time series. NOTE: This feature is no longer
+                                maintained and is not recommended for use.
+        :type raw_data_matrix: numpy.ndarray, optional
+        :param datetime_col: The name of the column containing datetime information,
+                             used to set the DataFrame's index to a DatetimeIndex.
+                             Required if the DataFrame index is not already a DatetimeIndex.
+        :type datetime_col: str, optional
+        :param convert_to_ts: If True, converts the data frame into a time series format
+                              by using the `make_time_series` function.
+        :type convert_to_ts: bool, default=False
+        :param no_future_dates: If True, filters out any future dates from the data frame
+                                based on the current datetime.
+        :type no_future_dates: bool, default=True
+        :param aggregate: A string representing a resampling rule (e.g., 'D' for day,
+                          'H' for hour). If provided, the data frame will be resampled
+                          and aggregated accordingly. NOTE: This feature is no longer
+                          maintained and is not recommended for use.
+        :type aggregate: str, optional
+        :param how: A function used to aggregate the resampled data. The function should
+                    take a pandas object and return a single value (e.g., mean, sum).
+        :type how: callable, default=lambda x: x.mean()
+        :param gmt_offset: An integer representing the GMT offset, used for timezone
+                           conversions if necessary.
+        :type gmt_offset: int, optional
+        """
+
         if data_frame is not None:
             if convert_to_ts:
                 data_frame, keys = make_time_series(data_frame)
@@ -195,6 +234,84 @@ class DataHandler:
         solver_convex="CLARABEL",
         reset=True,
     ):
+        """
+        Runs the main Solar Data Tools pipeline.
+
+        Runs the main pipeline, which preprocesses, cleans, and performs
+        quality control on PV power or irradiance time series data. The pipeline
+        executes a series of tasks to prepare the data for further analysis.
+
+        :param power_col: The column name containing the power data to process. If `None`,
+                          the first column in the data frame is used.
+        :type power_col: str, optional
+        :param min_val: Minimum allowable value in the data. Values below this threshold
+                        are set to NaN.
+        :type min_val: float, default=-5
+        :param max_val: Maximum allowable value in the data. Values above this threshold
+                        are set to NaN.
+        :type max_val: float, optional
+        :param zero_night: Whether to set nighttime values to zero.
+        :type zero_night: bool, default=True
+        :param interp_day: Whether to interpolate missing daytime values.
+        :type interp_day: bool, default=True
+        :param fix_shifts: Whether to attempt to automatically fix time shifts in the data.
+        :type fix_shifts: bool, default=False
+        :param round_shifts_to_hour: Whether to round detected time shifts to the nearest hour.
+        :type round_shifts_to_hour: bool, default=True
+        :param density_lower_threshold: Lower threshold for data density during the
+                                        quality flagging process.
+        :type density_lower_threshold: float, default=0.6
+        :param density_upper_threshold: Upper threshold for data density during the
+                                        quality flagging process.
+        :type density_upper_threshold: float, default=1.05
+        :param linearity_threshold: Threshold for linearity checks during quality flagging.
+        :type linearity_threshold: float, default=0.1
+        :param clear_day_smoothness_param: Smoothness parameter for clear day detection.
+        :type clear_day_smoothness_param: float, default=0.9
+        :param clear_day_energy_param: Energy parameter for clear day detection.
+        :type clear_day_energy_param: float, default=0.8
+        :param verbose: Whether to print detailed information about the pipeline process.
+        :type verbose: bool, default=True
+        :param start_day_ix: The starting index for data processing. If `None`, processing
+                             starts from the first day in the dataset.
+        :type start_day_ix: int, optional
+        :param end_day_ix: The ending index for data processing. If `None`, processing
+                           continues until the last day in the dataset.
+        :type end_day_ix: int, optional
+        :param time_shift_weight_change_detector: Weight parameter for the time shift
+                                                  change detector.
+        :type time_shift_weight_change_detector: float, optional
+        :param time_shift_weight_seasonal: Weight parameter for the seasonal time shift
+                                           detector.
+        :type time_shift_weight_seasonal: float, default=1e-3
+        :param periodic_detector: Whether to use a periodic detector for time shifts.
+        :type periodic_detector: bool, default=False
+        :param solar_noon_estimator: Method to estimate solar noon. Options include
+                                     "srss" (sunrise/sunset).
+        :type solar_noon_estimator: str, default="srss"
+        :param correct_tz: Whether to correct for timezone offsets in the data.
+        :type correct_tz: bool, default=True
+        :param extra_cols: Additional columns to process, typically containing extra
+                           data features.
+        :type extra_cols: str, tuple, or list, optional
+        :param daytime_threshold: Threshold for detecting daytime in the data.
+        :type daytime_threshold: float, default=0.005
+        :param units: Units of the power data. Can be "W" (watts) or "kW" (kilowatts).
+        :type units: str, default="W"
+        :param solver: Solver to use for optimization tasks in the pipeline.
+        :type solver: str, default="CLARABEL"
+        :param solver_convex: Solver to use for convex optimization tasks.
+        :type solver_convex: str, default="CLARABEL"
+        :param reset: Whether to reset the pipeline's internal state before running.
+        :type reset: bool, default=True
+
+        :return: None
+        :rtype: NoneType
+
+        :note:
+            If using the MOSEK solver, ensure that a valid license is available.
+        """
+
         if verbose:
             print(
                 """
@@ -587,6 +704,47 @@ class DataHandler:
         return
 
     def report(self, verbose=True, return_values=False):
+        """
+        Generate a report summarizing key metrics from the pipeline analysis.
+
+        The report includes metrics such as the data set length, data sampling rate,
+        quality scores, inverter clipping, and any detected capacity changes, time shift or time zone corrections.
+        The function can either print this report or return it as a dictionary.
+
+        :param verbose:
+            If True, the report will be printed to the console. Defaults to True.
+        :type verbose: bool, optional
+
+        :param return_values:
+            If True, the report will be returned as a dictionary. If False, the function only prints the report.
+            Defaults to False.
+        :type return_values: bool, optional
+
+        :returns:
+            A dictionary containing the following keys:
+
+            - "length": The length of the data set in years.
+            - "capacity": The estimated capacity in kW.
+            - "sampling": The data sampling rate in minutes.
+            - "quality score": The overall data quality score.
+            - "clearness score": The clearness score of the data.
+            - "inverter clipping": Whether inverter clipping was detected.
+            - "clipped fraction": The fraction of the data that is clipped due to inverter limitations.
+            - "capacity change": Whether capacity changes were detected.
+            - "data quality warning": Warnings regarding data quality.
+            - "time shift correction": Whether any time shifts that were corrected.
+            - "time zone correction": The amount of time zone correction applied.
+
+            The dictionary is returned only if `return_values` is True.
+        :rtype: dict, optional
+
+        :example usage:
+
+        .. code-block:: python
+
+            report = my_data_handler.report(verbose=True, return_values=True)
+            print(report['capacity'])
+        """
         try:
             report = {
                 "length": self.num_days / 365,
@@ -707,8 +865,31 @@ time zone errors     {report['time zone correction'] != 0}
         use_capacity_change_labels=True,
     ):
         """
+        Perform loss factor analysis on the processed data to estimate energy loss factors.
 
-        :return:
+        This method performs a series of calculations to analyze the loss factors in the
+        solar power data, including energy loss due to degradation, soiling, and other factors.
+
+        The analysis is performed only if the pipeline has been successfully run. It uses the
+        `LossFactorAnalysis` class to estimate degradation rates and energy losses based on
+        various input parameters.
+
+        :param verbose: If `True`, prints detailed information about the analysis and results.
+                        Default is `True`.
+        :param tau: Smoothing parameter for the analysis. Default is `0.9`.
+        :param num_harmonics: Number of harmonics to include in the analysis. Default is `4`.
+        :param deg_type: Type of degradation model to use ("linear" or "nonlinear"). Default is "linear".
+        :param include_soiling: If `True`, includes soiling effects in the analysis. Default is `True`.
+        :param weight_seasonal: Weight for seasonal effects in the analysis. Default is `10e-2`.
+        :param weight_soiling_stiffness: Weight for soiling stiffness in the analysis. Default is `5e-1`.
+        :param weight_soiling_sparsity: Weight for soiling sparsity in the analysis. Default is `2e-2`.
+        :param weight_deg_nonlinear: Weight for nonlinear degradation in the analysis. Default is `10e4`.
+        :param deg_rate: User-provided degradation rate. If `None`, the rate is estimated from the data. Default is `None`.
+        :param use_capacity_change_labels: If `True`, uses capacity change labels in the analysis. Default is `True`.
+
+        :return: None
+            Prints the results of the loss factor analysis if `verbose` is `True`.
+        :raises: RuntimeError if the pipeline has not been run before calling this method.
         """
         if self._ran_pipeline:
             self.loss_analysis = LossFactorAnalysis(
@@ -789,6 +970,29 @@ time zone errors     {report['time zone correction'] != 0}
         verbose=True,
         bootstraps=None,
     ):
+        """
+        Fit Statistical Clear Sky model.
+
+        .. deprecated:: 1.5.0
+            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
+
+        :param data_matrix:
+        :param rank:
+        :param mu_l:
+        :param mu_r:
+        :param tau:
+        :param exit_criterion_epsilon:
+        :param solver_type:
+        :param max_iteration:
+        :param calculate_degradation:
+        :param max_degradation:
+        :param min_degradation:
+        :param non_neg_constraints:
+        :param verbose:
+        :param bootstraps:
+        :return:
+
+        """
         try:
             from statistical_clear_sky import SCSF
         except ImportError:
@@ -816,6 +1020,11 @@ time zone errors     {report['time zone correction'] != 0}
         self.scsf = scsf
 
     def calculate_scsf_performance_index(self):
+        """
+        .. deprecated:: 1.5.0
+            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
+
+        """
         if self.scsf is None:
             print("No SCSF model detected. Fitting now...")
             self.fit_statistical_clear_sky_model()
@@ -1254,6 +1463,36 @@ time zone errors     {report['time zone correction'] != 0}
         data_matrix="filled",
         daytime_threshold=0.001,
     ):
+        """
+        Sets up the location and orientation estimation for the system using the
+        `ConfigurationEstimator` from the `pvsystemprofiler` package.
+
+        This method initializes an instance of `ConfigurationEstimator` with the
+        provided parameters and assigns it to the `parameter_estimation` attribute.
+
+        :param gmt_offset:
+            The GMT offset for the location in hours. This value adjusts for the
+            local time zone relative to GMT.
+
+        :param solar_noon_method:
+            Method for estimating solar noon. Options include "optimized_estimates"
+            (default) and other methods depending on the estimator's implementation.
+
+        :param daylight_method:
+            Method for estimating daylight hours. Options include "optimized_estimates"
+            (default) and other methods depending on the estimator's implementation.
+
+        :param data_matrix:
+            The type of data matrix to use. Default is "filled". This parameter
+            specifies how missing data should be handled.
+
+        :param daytime_threshold:
+            The threshold for determining daytime. Default is 0.001.
+
+        :return:
+            None. The method sets the `parameter_estimation` attribute of the DataHandler object
+            to an instance of `ConfigurationEstimator`.
+        """
         try:
             from pvsystemprofiler.estimator import ConfigurationEstimator
         except ImportError:
@@ -1282,6 +1521,21 @@ time zone errors     {report['time zone correction'] != 0}
         return success
 
     def estimate_longitude(self, estimator="fit_l1", eot_calculation="duffie"):
+        """
+        Estimates the longitude of the system's location.
+
+        This method uses the configured parameter estimator to calculate the longitude
+        based on the Equation of Time (EOT) calculation methods.
+
+        :param estimator: The method to use for fitting the longitude estimation.
+                          Options include "fit_l1" for L1 norm fitting. Default is "fit_l1".
+        :param eot_calculation: The method to use for calculating the Equation of Time.
+                                Options include "duffie" for Duffie method. Default is "duffie".
+
+        :return: The estimated longitude of the system's location.
+
+        :raises: ValueError if the parameter estimator is not ready for use.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_longitude(
@@ -1290,6 +1544,21 @@ time zone errors     {report['time zone correction'] != 0}
             return self.parameter_estimation.longitude
 
     def estimate_latitude(self):
+        """
+        Estimate the latitude of the system based on the current parameter estimation.
+
+        This method uses the `parameter_estimation` object to perform latitude estimation.
+        The method will only proceed if the `__help_param_est` method indicates that
+        the parameters are ready for estimation.
+
+        :return: float
+            The estimated latitude of the system in decimal degrees.
+
+        :raises AttributeError:
+            If `parameter_estimation` or its `estimate_latitude` method is not available.
+        :raises Exception:
+            If the parameters are not ready for estimation.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_latitude()
@@ -1305,6 +1574,30 @@ time zone errors     {report['time zone correction'] != 0}
         x1=0.9,
         x2=0.9,
     ):
+        """
+        Estimate the orientation of the system, including tilt and azimuth angles. It relies on
+        previously set up parameter estimation configurations.
+
+        :param latitude: Optional latitude of the system. If not provided, will use the
+                         previously estimated value.
+        :param longitude: Optional longitude of the system. If not provided, will use the
+                          previously estimated value.
+        :param tilt: Optional tilt angle of the system in degrees. If not provided, will use
+                     the previously estimated value.
+        :param azimuth: Optional azimuth angle of the system in degrees. If not provided, will
+                        use the previously estimated value.
+        :param day_interval: Optional interval in days for the estimation. If not provided,
+                             the default value will be used.
+        :param x1: Optional weight factor for the first parameter. Default is 0.9.
+        :param x2: Optional weight factor for the second parameter. Default is 0.9.
+
+        :return: A tuple containing the estimated tilt and azimuth angles. The values are in
+                 degrees.
+
+        :rtype: tuple(float, float)
+
+        :raises AttributeError: If parameter estimation has not been properly initialized.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_orientation(
@@ -1321,6 +1614,26 @@ time zone errors     {report['time zone correction'] != 0}
             return tilt, az
 
     def estimate_location_and_orientation(self, day_interval=None, x1=0.9, x2=0.9):
+        """
+        Estimates the location (latitude and longitude) and orientation (tilt and azimuth) of the system.
+
+        This method utilizes the `parameter_estimation` object to estimate the system's geographic location
+        and orientation based on the provided parameters.
+
+        :param day_interval: (Optional) The interval of days used for estimation. If `None`, defaults to internal settings.
+        :type day_interval: float or None, optional
+
+        :param x1: Weight factor for optimization. Defaults to 0.9.
+        :type x1: float, optional
+
+        :param x2: Weight factor for optimization. Defaults to 0.9.
+        :type x2: float, optional
+
+        :return: A tuple containing the estimated latitude, longitude, tilt, and azimuth of the system.
+        :rtype: tuple of (float, float, float, float)
+
+        :raises: Exception if the parameter estimation is not properly initialized.
+        """
         ready = self.__help_param_est()
         if ready:
             self.parameter_estimation.estimate_all(
@@ -1341,6 +1654,34 @@ time zone errors     {report['time zone correction'] != 0}
         year_lines=True,
         units=None,
     ):
+        """
+        Plot a heatmap of the data matrix, with options to scale the data,
+        add year lines, and customize the figure size and units.
+
+        :param matrix: The data matrix to plot. Options are "raw", "filled", or any key in `self.extra_matrices`.
+                       Default is "raw".
+        :type matrix: str, optional
+
+        :param flag: A flag to apply to the data matrix. If `None`, no flag is applied. Default is `None`. Options are:
+                    'good', 'bad', 'sunny', 'cloudy', and 'clipping'.
+        :type flag: str, optional
+
+        :param figsize: The size of the figure to create. Default is (12, 6).
+        :type figsize: tuple, optional
+
+        :param scale_to_kw: Whether to scale the data to kiloWatts if the power units are in Watts. Default is `True`.
+        :type scale_to_kw: bool, optional
+
+        :param year_lines: Whether to add lines indicating the start of each year. Default is `True`.
+        :type year_lines: bool, optional
+
+        :param units: The units to use for the data. If `None`, the function will determine the units based on
+                      `scale_to_kw` and `self.power_units`. Default is `None`.
+        :type units: str, optional
+
+        :return: None
+        """
+
         if matrix == "raw":
             mat = np.copy(self.raw_data_matrix)
         elif matrix == "filled":
@@ -1440,6 +1781,54 @@ time zone errors     {report['time zone correction'] != 0}
         show_legend=False,
         marker=None,
     ):
+        """
+        Plot daily signals from the data matrix.
+
+        This function generates a plot of daily signals from the data matrix, with options to
+        select specific days, apply boolean masks, and customize the appearance of the plot.
+
+        :param boolean_index: Boolean index to select specific days. Default is None.
+        :type boolean_index: List[bool] or None, optional
+
+        :param start_day: The starting day for the plot. Can be an integer or a date string. Default is 0.
+        :type start_day: int or str, optional
+
+        :param num_days: The number of days to include in the plot. Default is 5.
+        :type num_days: int, optional
+
+        :param filled: Whether to use the filled data matrix. If False, uses the raw data matrix. Default is True.
+        :type filled: bool, optional
+
+        :param ravel: Whether to ravel the data matrix for plotting. Default is True.
+        :type ravel: bool, optional
+
+        :param figsize: The size of the figure to create. Default is (12, 6).
+        :type figsize: tuple, optional
+
+        :param color: The color of the plot lines. Default is None.
+        :type color: str or None, optional
+
+        :param alpha: The alpha transparency of the plot lines. Default is None.
+        :type alpha: float or None, optional
+
+        :param label: The label for the plot lines. Default is None.
+        :type label: str or None, optional
+
+        :param boolean_mask: A boolean mask to apply to the data. Default is None.
+        :type boolean_mask: List[bool] or None, optional
+
+        :param mask_label: Label for the boolean mask. Default is None.
+        :type mask_label: str or None, optional
+
+        :param show_clear_model: Whether to show the clear sky model in the plot. Default is True.
+        :type show_clear_model: bool, optional
+
+        :param show_legend: Whether to show the legend in the plot. Default is False.
+        :type show_legend: bool, optional
+
+        :param marker: Marker style for the plot. Default is None.
+        :type marker: str or None, optional
+        """
         if type(start_day) is not int:
             try:
                 loc = self.day_index == start_day
@@ -1506,6 +1895,31 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_density_signal(self, flag=None, show_fit=False, figsize=(8, 6)):
+        """
+        Plot the daily signal density.
+
+        This function generates a plot that visualizes the daily signal density.
+        It can optionally flag certain days and show a seasonal density fit.
+
+        :param flag: A flag to apply to the data matrix. Options are:
+                     - "density": Flag density outlier days.
+                     - "good": Flag good days.
+                     - "bad": Flag bad days.
+                     - "clear" or "sunny": Flag clear days.
+                     - "cloudy": Flag cloudy days.
+                     - A boolean array indicating which days to flag.
+                     Default is None.
+        :type flag: str or array-like, optional
+
+        :param show_fit: Whether to show the seasonal density fit. Default is False.
+        :type show_fit: bool, optional
+
+        :param figsize: The size of the figure. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the density signal analysis.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.daily_signals.density is None:
             return
         fig = plt.figure(figsize=figsize)
@@ -1595,6 +2009,19 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_data_quality_scatter(self, figsize=(6, 5)):
+        """
+        Plot a scatter plot of data quality scores.
+
+        This function generates a scatter plot that visualizes the density and linearity scores
+        for each day in the data set. It uses the quality clustering labels to color-code the points
+        and includes decision boundaries for density and linearity thresholds.
+
+        :param figsize: The size of the figure to create. Default is (6, 5).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the scatter plot of data quality scores.
+        :rtype: matplotlib.figure.Figure
+        """
         fig = plt.figure(figsize=figsize)
         labels = self.daily_scores.quality_clustering
         for lb in set(labels):
@@ -1619,6 +2046,24 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_daily_energy(self, flag=None, figsize=(8, 6), units="Wh"):
+        """
+        Plot the daily energy production.
+
+        This function generates a plot that visualizes the daily energy production.
+        It can optionally flag certain days based on the provided flag parameter.
+
+        :param flag: A flag to apply to the data matrix. Options are "good", "bad", "clear", "sunny", or "cloudy". Default is None.
+        :type flag: str, optional
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :param units: The units to use for the energy data. Default is "Wh".
+        :type units: str, optional
+
+        :return: The figure showing the daily energy analysis.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.filled_data_matrix is None:
             return
         fig = plt.figure(figsize=figsize)
@@ -1675,6 +2120,18 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_clipping(self, figsize=(10, 8)):
+        """
+        Plot the clipping analysis results.
+
+        This function generates a plot that visualizes the clipping scores and highlights
+        the days with inverter clipping.
+
+        :param figsize: The size of the figure to create. Default is (10, 8).
+        :type figsize: tuple, optional
+
+        :return: The figure of the clipping analysis results.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.daily_scores is None:
             return
         if self.daily_scores.clipping_1 is None:
@@ -1715,24 +2172,104 @@ time zone errors     {report['time zone correction'] != 0}
         return fig
 
     def plot_daily_max_pdf(self, figsize=(8, 6)):
+        """
+        Plot the PDF (Probability Density Function) of the daily maximum values.
+
+        This function generates a plot that visualizes the PDF of the daily maximum values
+        from the clipping analysis.
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the PDF of the daily maximum values.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_pdf(figsize=figsize)
 
     def plot_daily_max_cdf(self, figsize=(10, 6)):
+        """
+        Plot the CDF (Cumulative Distribution Function) of the daily maximum values.
+
+        This function generates a plot that visualizes the CDF of the daily maximum values
+        from the clipping analysis.
+
+        :param figsize: The size of the figure to create. Default is (10, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the CDF of the daily maximum values.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_cdf(figsize=figsize)
 
     def plot_daily_max_cdf_and_pdf(self, figsize=(10, 6)):
+        """
+        Plot both the CDF (Cumulative Distribution Function) and PDF (Probability Density Function)
+        of the daily maximum values.
+
+        This function generates a plot that includes both the CDF and PDF of the daily maximum values
+        from the clipping analysis.
+
+        :param figsize: The size of the figure to create. Default is (10, 6).
+        :type figsize: tuple, optional
+
+        :return: The plot containing both the CDF and PDF of the daily maximum values.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_both(figsize=figsize)
 
     def plot_cdf_analysis(self, figsize=(12, 6)):
+        """
+        Plot the CDF (Cumulative Distribution Function) analysis results.
+
+        This function generates a plot that visualizes the differences in the CDF analysis
+        using the `plot_diffs` method from the `clipping_analysis` attribute.
+
+        :param figsize: The size of the figure to create. Default is (12, 6).
+        :type figsize: tuple, optional
+
+        :return: The figure containing the CDF analysis plot.
+        :rtype: matplotlib.figure.Figure
+        """
         return self.clipping_analysis.plot_diffs(figsize=figsize)
 
     def plot_capacity_change_analysis(self, figsize=(8, 6), show_clusters=True):
+        """
+        Plot the capacity change analysis results.
+
+        This function generates a plot that visualizes the results of the capacity change analysis.
+        It uses the `capacity_clustering` method to create the plot and can optionally show clusters.
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :param show_clusters: Whether to show clusters in the plot. Default is True.
+        :type show_clusters: bool, optional
+
+        :return: The figure containing the capacity change analysis plot.
+        :rtype: matplotlib.figure.Figure
+        """
         fig = self.capacity_clustering(
             plot=True, figsize=figsize, show_clusters=show_clusters
         )
         return fig
 
     def plot_time_shift_analysis_results(self, figsize=(8, 6), show_filter=True):
+        """
+        Plot the results of the time shift analysis.
+
+        This function generates a plot that visualizes the results of the time shift analysis,
+        including the daily solar noon metric, the shift detector, and the signal model. It also
+        optionally highlights the filtered days.
+
+        :param figsize: The size of the figure to create. Default is (8, 6).
+        :type figsize: tuple, optional
+
+        :param show_filter: If `True`, highlights the filtered days in the plot. Default is `True`.
+        :type show_filter: bool, optional
+
+        :return: The plot figure.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.time_shift_analysis is not None:
             use_ixs = self.time_shift_analysis.use_ixs
             plt.figure(figsize=figsize)
@@ -1775,6 +2312,24 @@ time zone errors     {report['time zone correction'] != 0}
             print("Please run pipeline first.")
 
     def plot_circ_dist(self, flag="good", num_bins=12 * 4, figsize=(8, 8)):
+        """
+        Plot a circular distribution of days based on the specified flag.
+
+        This function generates a polar plot showing the distribution of days
+        throughout the year based on the provided flag. The plot is divided into
+        bins, and the number of days in each bin is represented as bars.
+
+        :param flag: The type of days to plot. Options are "good", "bad", "clear", "sunny", or "cloudy".
+                     Default is "good".
+        :type flag: str, optional
+
+        :param num_bins: The number of bins to divide the year into. Default is 48 (12 * 4).
+        :type num_bins: int, optional
+
+        :param figsize: The size of the figure to create. Default is (8, 8).
+        :type figsize: tuple, optional
+
+        """
         title = "Calendar distribution of "
         if flag == "good":
             slct = self.daily_flags.no_errors
@@ -1831,6 +2386,33 @@ time zone errors     {report['time zone correction'] != 0}
     def plot_polar_transform(
         self, lat, lon, tz_offset, elevation_round=1, azimuth_round=2, alpha=1.0
     ):
+        """
+        Plot the polar transformation of the data.
+
+        This function generates a polar plot of the data using the specified latitude, longitude, and time zone offset.
+        It optionally rounds the elevation and azimuth angles and sets the transparency of the plot.
+
+        :param lat: Latitude of the location.
+        :type lat: float
+
+        :param lon: Longitude of the location.
+        :type lon: float
+
+        :param tz_offset: Time zone offset from GMT.
+        :type tz_offset: int
+
+        :param elevation_round: Rounding precision for elevation angles. Default is 1.
+        :type elevation_round: int, optional
+
+        :param azimuth_round: Rounding precision for azimuth angles. Default is 2.
+        :type azimuth_round: int, optional
+
+        :param alpha: Transparency level of the plot. Default is 1.0.
+        :type alpha: float, optional
+
+        :return: The polar transformation plot.
+        :rtype: matplotlib.figure.Figure
+        """
         if self.polar_transform is None:
             self.augment_data_frame(self.daily_flags.clear, "clear-day")
             pt = PolarTransform(

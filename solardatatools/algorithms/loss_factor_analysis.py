@@ -237,7 +237,7 @@ class LossFactorAnalysis:
 
     def report(self):
         """
-        Creates a machine-readible dictionary of result from the loss factor analysis
+        Creates a machine-readable dictionary of result from the loss factor analysis
         :return: dictionary
         """
         if self.total_energy_loss is not None:
@@ -568,7 +568,7 @@ def model_wrapper(energy_model, use_ixs):
         apply_outages = slct[-1]
         slct = slct[:-1]
         model_select = energy_model[slct]
-        daily_energy = np.product(model_select, axis=0)
+        daily_energy = np.prod(model_select, axis=0)
         if apply_outages:
             daily_energy = daily_energy[use_ixs]
         return np.sum(daily_energy)
@@ -658,6 +658,24 @@ def attribute_losses(energy_model, use_ixs):
 
 
 def waterfall_plot(data, index, figsize=(10, 4)):
+    """
+    Create a waterfall plot to visualize the breakdown of energy loss factors.
+
+    This function generates a waterfall plot to display the cumulative impact of sequential
+    loss factors. Each bar in the plot represents a specific loss factor..
+
+    :param data: Data to be plotted. This should be a `pandas.Series` or `pandas.DataFrame`
+                 where the index represents categories and the values represent the amounts.
+    :type data: pd.Series or pd.DataFrame
+    :param index: Index to use for the plot. Should match the length of the `data`.
+    :type index: pd.Index
+    :param figsize: Size of the figure to create, given as (width, height) in inches.
+                    Defaults to (10, 4).
+    :type figsize: tuple of int, optional
+
+    :return: The figure object containing the waterfall plot.
+    :rtype: matplotlib.figure.Figure
+    """
     # Store data and create a blank series to use for the waterfall
     trans = pd.DataFrame(data=data, index=index)
     blank = trans.amount.cumsum().shift(1).fillna(0)

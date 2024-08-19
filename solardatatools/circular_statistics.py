@@ -38,6 +38,7 @@ def rayleightest(data, axis=None, weights=None):
         weighting factor for each group such that ``np.sum(weights, axis)``
         equals the number of observations.
         See [1]_, remark 1.4, page 22, for detailed explanation.
+        See [2]_, [3]_ and [4]_ for more information.
 
     Returns
     -------
