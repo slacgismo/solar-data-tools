@@ -2,7 +2,7 @@ name: Test Build
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 jobs:
   build-pypi:
     runs-on: ubuntu-latest
