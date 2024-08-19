@@ -1,6 +1,21 @@
-<img src="docs/source/_static/SDT_v1_secondary_blue_text.png" width="600">
+<!-- HEADER -->
+<br />
+<p align="center">
+  <a href="#">
+    <img src="docs/source/_static/SDT_v1_secondary_blue_text.png" width="600">
+  </a>
 
-<table>
+  <p align="center">
+    <br />
+    <a href="https://solar-data-tools.readthedocs.io/"><strong>Explore our documentation </strong></a>
+    ·
+    <a href="https://github.com/slacgismo/solar-data-tools/issues"><strong>Report Issue </strong></a>
+    <br />
+    <br />
+</p>
+</p>    
+
+<table  align="center" >
 <tr>
   <td>Latest Release</td>
   <td>
@@ -29,12 +44,11 @@
         <img src="https://readthedocs.org/projects/solar-data-tools/badge/?version=stable" alt="documentation build status" />
     </a>
         <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml">
-        <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml/badge.svg?branch=master" alt="Actions build status" />
+        <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/test.yml/badge.svg?branch=main" alt="Actions build status" />
     </a>
-    <!-- switch below from tadatoshi to gismo -->
-    <a href="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
-        <img src="https://travis-ci.com/tadatoshi/solar-data-tools.svg?branch=development">
-    </a>
+    <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/build.yml">
+        <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/build.yml/badge.svg">
+    </a> 
   </td>
 </tr>
 <tr>
@@ -68,15 +82,30 @@
     </td>
 </tr>
 </table>
+    
 
-Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It provides
-methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
-to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. Solar Data Tools
+Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It
 was developed to enable analysis of _unlabeled_ PV data, i.e. with no model, no meteorological data, and no performance index required,
 by taking a statistical signal processing approach in the algorithms used in the package’s main data processing pipeline.
-Head over to our Getting Started pages in our [docs](https://solar-data-tools.readthedocs.io/) for a demo of Solar Data Tools!
+Solar Data Tools empowers PV system fleet owners or operators to analyze system performance a hundred times faster even when 
+they only have access to the most basic data stream—power output of the system.
+
+Solar Data Tools provides methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
+to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. 
+Head over to our Getting Started pages in our [documentation](https://solar-data-tools.readthedocs.io/) for a demo! For an in-depth tutorial on Solar Data Tools, we recommend taking a look at the recent webinar 
+we did with the DOE's Solar Energy Technologies Office (SETO) with our colleagues at NREL, linked below:
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=XKbqIlAEwOQ">
+ <img src="https://img.youtube.com/vi/XKbqIlAEwOQ/hq1.jpg" />
+  </a>
+  <br/>
+  </img>
+</p>
 
 You can also check the [notebooks](https://github.com/slacgismo/solar-data-tools/blob/main/notebooks/examples) folder in this repo for more examples.
+
+This work is supported by the U.S. Department of Energy’s Office of Energy Efficiency and Renewable Energy (EERE) under the Solar Energy Technologies Office Award Number 38529.
 
 ## Install & Setup
 
@@ -125,13 +154,18 @@ $ conda install solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp
 
 ### Solvers
 
-#### QSS & CLARABEL
+#### CLARABEL
 
-By default, [QSS](https://github.com/cvxgrp/qss) and CLARABEL solvers are used for non-convex and convex problems, respectively. Both are supported by [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools, and both are open source. 
+By default, the [CLARABEL](https://clarabel.org/stable/) solver is used to solve the signal decomposition problems. CLARABEL (as well as other solvers) is compatible with [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools. Both are open source and are dependencies of Solar Data Tools. 
 
 #### MOSEK
 
-MOSEK is a commercial software package. Since it is more stable and offers faster solve times, we provide continuing support for it, however you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running `pip install "solar-data-tools[mosek]"`. If installing from conda, you will have to manually install MOSEK if you desire to use it as conda does not support optional dependencies like pip. 
+MOSEK is a commercial software package. Since it is more stable and offers faster solve times,
+we provide continuing support for it (with signal decomposition problem formulations using CVXPY). However,
+you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running 
+`pip install "solar-data-tools[mosek]"`. 
+If installing from conda, you will have to manually install MOSEK if you desire to use it as 
+conda does not support optional dependencies like pip. 
 
 More information about MOSEK and how to obtain a license is available here:
 
@@ -141,10 +175,8 @@ More information about MOSEK and how to obtain a license is available here:
 
 ## Usage
 Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
-Tools uses CLARABEL and QSS as the solvers for convex and non-convex problems, respectively. If you would like 
-to specify a solver, just pass the keyword argument `solver` (for non-convex) or `solver_convex` (for convex) 
-to `DataHandler.pipeline` with the solver of choice. Setting `solver=MOSEK` will set the solver to MOSEK for both
-convex and non-convex problems by default.
+Tools uses [CLARABEL](https://clarabel.org/stable/) as the solver all signal decomposition problems. If you would like 
+to specify another solver (such as MOSEK), just pass the keyword argument `solver` to `DataHandler.pipeline` with the solver of choice.
 
 ```python
 from solardatatools import DataHandler
@@ -173,6 +205,11 @@ Filtering/Summarizing      18.83s
 
 You can also find more in-depth tutorials and guides in [our documentation](https://solar-data-tools.readthedocs.io/).
 
+
+## Contributing
+
+We welcome contributions of any form! Please see our [Contribution Guidelines](./CONTRIBUTING.md) for more information.
+
 ## Citing Solar Data Tools
 
 If you use Solar Data Tools in your research, please cite:
@@ -199,27 +236,6 @@ You can also cite the DOI corresponding to the specific version of
 Solar Data Tools that you used. Solar Data Tools DOIs are listed at
 [here](https://zenodo.org/search?q=parent.id%3A5056959&f=allversions%3Atrue&l=list&p=1&s=10&sort=version).
 
-
-## Contributors
-
-Must enable pre-commit hook before pushing any contributions
-```
-pip install pre-commit
-pre-commit install
-```
-
-Run pre-commit hook on all files
-```
-pre-commit run --all-files
-```
-
-## Test Coverage
-
-In order to view the current test coverage metrics, run:
-```
-coverage run --source solardatatools -m unittest discover && coverage html
-open htmlcov/index.html
-```
 
 ## Versioning
 

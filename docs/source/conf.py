@@ -81,17 +81,32 @@ html_theme = "pydata_sphinx_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_title = f"{project} v{release}"
+# html_title = f"{project} v{release}"
 html_static_path = ['_static']
 html_css_files = ["solardatatools.css"]
 html_copy_source = False
+html_favicon = "_static/SDT_v1_icon_only_dark_background_small.ico"
+#html_logo = "_static/SDT_v1_icon_only_dark_background_small.png"
+html_short_title = f"{project} v{release}"
 
 master_doc = "index"
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
+# Below is not working (having a different icon in header for light and dark modes
+# without making the browser tab say "<no title>"
+# and seems there is no way to assign an html title separately from that header
+# todo: check a way to adjust this
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
 html_theme_options = {
+    "logo": {
+        # In a left-to-right context, screen readers will read the alt text
+        # first, then the text, so this example will be read as "P-G-G-P-Y
+        # (short pause) Home A pretty good geometry package"
+        "alt_text": f"{project}",
+        "text": f"{project} v{release}",
+        "image_light": "_static/SDT_v1_icon_only_light_background_small.png",
+        "image_dark": "_static/SDT_v1_icon_only_dark_background_small.png",
+    },
     "external_links": [],
     "navbar_align": "left",
     "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
@@ -100,18 +115,4 @@ html_theme_options = {
     "show_toc_level": 1,
     "footer_start": ["copyright", "sphinx-version"],
     "navigation_with_keys" : False
-}
-
-# The name of an image file (relative to this directory) to place at the top
-# of the sidebar.
-html_theme_options = {
-    "logo": {
-        # In a left-to-right context, screen readers will read the alt text
-        # first, then the text, so this example will be read as "P-G-G-P-Y
-        # (short pause) Home A pretty good geometry package"
-        "alt_text": f"{project} v{release}",
-        "text": f"v{release}",
-        "image_light": "_static/SDT_v1_primary_blue_text_small.png",
-        "image_dark": "_static/SDT_v1_primary_blue_text_small.png",
-    }
 }

@@ -70,17 +70,3 @@ Before you submit a pull request, check that it meets these guidelines:
 
 Please note that the Solar Data Tools project is released with a
 [Code of Conduct](getting_started/code_of_conduct.md). By contributing to this project you agree to abide by its terms.
-
-## Pre-commit Hooks
-Must enable pre-commit hook before pushing any contributions:
-
-```bash
-    pip install pre-commit
-    pre-commit install
-```
-
-Run pre-commit hook on all files:
-
-```bash
-    pre-commit run --all-files
-```

@@ -16,6 +16,8 @@ Author: Bennet Meyers
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy.sparse as sp
+from scipy.signal import sawtooth, find_peaks
 from gfosd import Problem
 import gfosd.components as comp
 from gfosd.components.base_graph_class import GraphComponent
@@ -132,7 +134,7 @@ class LossFactorAnalysis:
             if verbose:
                 progress.update()
             tau = np.random.uniform(0.85, 0.95)
-            weight = np.random.uniform(0.5, 5)
+            weight = np.random.uniform(0.1, 1)
             good_ixs = np.arange(len(self.use_ixs))[self.use_ixs]
             num_values = int(len(good_ixs) * fraction_hold)
             # select random index locations for removal
@@ -142,7 +144,18 @@ class LossFactorAnalysis:
             new_ixs = ~np.logical_or(~self.use_ixs, msk)
             self.use_ixs = new_ixs
             # remake modified problem
-            self.problem = self.make_problem(tau=tau, weight_soiling_stiffness=weight)
+            self.problem = self.make_problem(
+                tau=tau,
+                weight_soiling_stiffness=weight,
+                num_harmonics=self.user_settings["num_harmonics"],
+                deg_type=self.user_settings["deg_type"],
+                include_soiling=self.user_settings["include_soiling"],
+                weight_seasonal=self.user_settings["weight_seasonal"],
+                weight_soiling_sparsity=self.user_settings["weight_soiling_sparsity"],
+                use_capacity_change_labels=self.user_settings[
+                    "use_capacity_change_labels"
+                ],
+            )
             # run signal decomposition and shapley attribution
             self.estimate_losses()
             # record running results
@@ -224,7 +237,7 @@ class LossFactorAnalysis:
 
     def report(self):
         """
-        Creates a machine-readible dictionary of result from the loss factor analysis
+        Creates a machine-readable dictionary of result from the loss factor analysis
         :return: dictionary
         """
         if self.total_energy_loss is not None:
@@ -269,44 +282,68 @@ class LossFactorAnalysis:
         plt.title("System loss breakdown")
         return plt.gcf()
 
-    def plot_waterfall(self):
+    def plot_waterfall(self, plot_capacity_component=True, figsize=(10, 4)):
         """
         Create a waterfall plot of losses
 
         :return: matplotlib figure
         """
-        index = [
-            "baseline",
-            "weather",
-            "outages",
-            "capacity changes",
-            "soiling",
-            "degradation",
-        ]
-        bl = np.sum(self.energy_model[0])
-        data = {
-            "amount": [
-                bl,
-                self.weather_energy_loss,
-                self.outage_energy_loss,
-                self.capacity_change_loss,
-                self.soiling_energy_loss,
-                self.degradation_energy_loss,
+        if plot_capacity_component:
+            index = [
+                "baseline",
+                "weather",
+                "outages",
+                "capacity changes",
+                "soiling",
+                "degradation",
             ]
-        }
-        fig = waterfall_plot(data, index)
+            bl = np.sum(self.energy_model[0])
+            data = {
+                "amount": [
+                    bl,
+                    self.weather_energy_loss,
+                    self.outage_energy_loss,
+                    self.capacity_change_loss,
+                    self.soiling_energy_loss,
+                    self.degradation_energy_loss,
+                ]
+            }
+        else:
+            index = [
+                "baseline",
+                "weather",
+                "outages",
+                "soiling",
+                "degradation",
+            ]
+            bl = np.sum(self.energy_model[0])
+            data = {
+                "amount": [
+                    bl,
+                    self.weather_energy_loss,
+                    self.outage_energy_loss,
+                    self.soiling_energy_loss,
+                    self.degradation_energy_loss,
+                ]
+            }
+        fig = waterfall_plot(data, index, figsize=figsize)
         return fig
 
-    def plot_decomposition(self, figsize=(16, 8.5)):
+    def plot_decomposition(self, plot_capacity_component=True, figsize=(16, 8.5)):
         """
         Creates a figure with subplots illustrating the estimated signal components found through decomposition
 
         :param figsize: size of figure (tuple)
         :return: matplotlib figure
         """
-        _fig_decomp = self.problem.plot_decomposition(
-            exponentiate=True, figsize=figsize
-        )
+        if plot_capacity_component:
+            _fig_decomp = self.problem.plot_decomposition(
+                exponentiate=True, figsize=figsize
+            )
+        else:
+            _fig_decomp = self.problem.plot_decomposition(
+                exponentiate=True, figsize=figsize, skip=1
+            )
         _ax = _fig_decomp.axes
         _ax[0].plot(
             np.arange(len(self.energy_data))[~self.use_ixs],
@@ -315,12 +352,19 @@ class LossFactorAnalysis:
             marker=".",
             ls="none",
         )
-        _ax[0].set_title("weather and system outages")
-        _ax[1].set_title("capacity changes")
-        _ax[2].set_title("soiling")
-        _ax[3].set_title("degradation")
-        _ax[4].set_title("baseline")
-        _ax[5].set_title("measured energy (green) and model minus weather")
+        if plot_capacity_component:
+            _ax[0].set_title("weather and system outages")
+            _ax[1].set_title("capacity changes")
+            _ax[2].set_title("soiling")
+            _ax[3].set_title("degradation")
+            _ax[4].set_title("baseline")
+            _ax[5].set_title("measured energy (green) and model minus weather")
+        else:
+            _ax[0].set_title("weather and system outages")
+            _ax[1].set_title("soiling")
+            _ax[2].set_title("degradation")
+            _ax[3].set_title("baseline")
+            _ax[4].set_title("measured energy (green) and model minus weather")
         plt.tight_layout()
         return _fig_decomp
 
@@ -408,10 +452,11 @@ class LossFactorAnalysis:
         deg_type="linear",
         include_soiling=True,
         weight_seasonal=10e-2,
-        weight_soiling_stiffness=1e0,
+        weight_soiling_stiffness=5e-1,
         weight_soiling_sparsity=1e-2,
         weight_deg_nonlinear=10e4,
         deg_rate=None,
+        use_capacity_change_labels=True,
     ):
         """
         Constuct the signal decomposition problem for estimation of loss factors in PV energy data.
@@ -446,18 +491,18 @@ class LossFactorAnalysis:
         c1 = comp.SumQuantile(tau=tau)
         # Smooth periodic term
         length = len(self.log_energy)
-        periods = [365.2425]  # average length of a year in days
-        _B = make_basis_matrix(num_harmonics, length, periods)
-        _D = make_regularization_matrix(num_harmonics, weight_seasonal, periods)
-        c2 = comp.Basis(basis=_B, penalty=_D)
+        period = 365.2425  # average length of a year in days
+        c2 = comp.Fourier(num_harmonics, length, period, weight=weight_seasonal)
         # Soiling term
         if include_soiling:
+            sawtooth_dict = make_sawtooth_dictionary(length)
             c3 = comp.Aggregate(
                 [
                     comp.Inequality(vmax=0),
-                    comp.SumAbs(weight=weight_soiling_stiffness, diff=2),
-                    comp.SumQuantile(
-                        tau=0.98, weight=10 * weight_soiling_sparsity, diff=1
+                    comp.Basis(
+                        basis=sawtooth_dict,
+                        penalty="abs",
+                        weight=weight_soiling_stiffness,
                     ),
                     comp.SumAbs(weight=weight_soiling_sparsity),
                 ]
@@ -488,8 +533,8 @@ class LossFactorAnalysis:
             )
         elif deg_select.value == "none":
             c4 = SetEqual(val=np.zeros(length))
-        # capacity change term — leverage previous analysis from SDT pipeline
-        if self.capacity_change_labels is not None:
+        # capacity change term: leverage previous analysis from SDT pipeline
+        if use_capacity_change_labels and self.capacity_change_labels is not None:
             basis_M = np.zeros((length, len(set(self.capacity_change_labels))))
             for lb in set(self.capacity_change_labels):
                 slct = np.array(self.capacity_change_labels) == lb
@@ -523,7 +568,7 @@ def model_wrapper(energy_model, use_ixs):
         apply_outages = slct[-1]
         slct = slct[:-1]
         model_select = energy_model[slct]
-        daily_energy = np.product(model_select, axis=0)
+        daily_energy = np.prod(model_select, axis=0)
         if apply_outages:
             daily_energy = daily_energy[use_ixs]
         return np.sum(daily_energy)
@@ -613,6 +658,24 @@ def attribute_losses(energy_model, use_ixs):
 
 
 def waterfall_plot(data, index, figsize=(10, 4)):
+    """
+    Create a waterfall plot to visualize the breakdown of energy loss factors.
+
+    This function generates a waterfall plot to display the cumulative impact of sequential
+    loss factors. Each bar in the plot represents a specific loss factor..
+
+    :param data: Data to be plotted. This should be a `pandas.Series` or `pandas.DataFrame`
+                 where the index represents categories and the values represent the amounts.
+    :type data: pd.Series or pd.DataFrame
+    :param index: Index to use for the plot. Should match the length of the `data`.
+    :type index: pd.Index
+    :param figsize: Size of the figure to create, given as (width, height) in inches.
+                    Defaults to (10, 4).
+    :type figsize: tuple of int, optional
+
+    :return: The figure object containing the waterfall plot.
+    :rtype: matplotlib.figure.Figure
+    """
     # Store data and create a blank series to use for the waterfall
     trans = pd.DataFrame(data=data, index=index)
     blank = trans.amount.cumsum().shift(1).fillna(0)
@@ -692,3 +755,27 @@ class SetEqual(GraphComponent):
 
     def _make_c(self):
         self._c = self._val
+
+
+def make_sawtooth_dictionary(T):
+    ks = np.arange(2, 32)
+    phases = [0, np.pi]
+    dictionary = [-1 * np.ones(T).reshape((-1, 1))]
+    for _k in ks:
+        for ph in phases:
+            dictionary.append(make_st(_k, ph, T))
+    dictionary = np.concatenate(dictionary, axis=1)
+    return sp.lil_array(dictionary)
+
+
+def make_st(k, phase, t):
+    start = -phase
+    end = k * 2 * np.pi - phase
+    wf = sawtooth(np.linspace(start, end, t), 0) / 2 - 0.5
+    peaks = find_peaks(wf)
+    indices = np.r_[np.s_[None], peaks[0], np.s_[None]]
+    num_segments = len(peaks[0]) + 1
+    out = np.zeros((t, num_segments))
+    for s in np.arange(num_segments):
+        out[indices[s] : indices[s + 1], s] = wf[indices[s] : indices[s + 1]]
+    return out

@@ -1,10 +1,8 @@
 # General Usage
 
 Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
-Tools uses CLARABEL and QSS as the solvers for convex and non-convex problems, respectively. If you would like 
-to specify a solver, just pass the keyword argument `solver` (for non-convex) or `solver_convex` (for convex) 
-to `DataHandler.pipeline` with the solver of choice. Setting `solver=MOSEK` will set the solver to MOSEK for both
-convex and non-convex problems by default.
+Tools uses CLARABEL as the solver for all signal decomposition problems. If you would like 
+to specify a solver (such as MOSEK), just pass the keyword argument `solver` to `DataHandler.pipeline` with the solver of choice.
 
 ```python
 from solardatatools import DataHandler

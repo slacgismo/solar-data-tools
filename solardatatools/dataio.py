@@ -28,8 +28,22 @@ import zlib
 
 def get_pvdaq_data(sysid=2, api_key="DEMO_KEY", year=2011, delim=",", standardize=True):
     """
-    This fuction queries one or more years of raw PV system data from NREL's PVDAQ data service:
-            https://maps.nrel.gov/pvdaq/
+    This function queries one or more years of raw PV system data from NREL's PVDAQ data service:
+            https://openei.org/wiki/PVDAQ/PVData_Map
+
+    :param sysid: The system ID to query. Default is 2.
+    :type sysid: int, optional
+    :param api_key: The API key for authentication. Default is "DEMO_KEY".
+    :type api_key: str, optional
+    :param year: The year or list of years to query. Default is 2011.
+    :type year: int or list of int, optional
+    :param delim: The delimiter used in the CSV file. Default is ",".
+    :type delim: str, optional
+    :param standardize: Whether to standardize the time axis. Default is True.
+    :type standardize: bool, optional
+
+    :return: A dataframe containing the concatenated data for all queried years.
+    :rtype: pd.DataFrame
     """
     # Force year to be a list of integers
     ti = time()
@@ -136,6 +150,11 @@ def load_cassandra_data(
     cluster_ip=None,
     verbose=True,
 ):
+    """
+    .. deprecated:: 1.5.0
+        dataio.load_cassandra_data is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
+        This function is deprecated. Please use load_redshift_data function instead.
+    """
     warn(
         "This function is deprecated. Please use load_redshift_data function instead.",
         DeprecationWarning,
@@ -201,6 +220,28 @@ def load_constellation_data(
     parse_dates=[0],
     json_file=False,
 ):
+    """
+    Load constellation data from a specified location.
+
+    This function reads a CSV file from a given location and optionally loads
+    additional JSON metadata.
+
+    :param file_id: Identifier for the file to load.
+    :type file_id: str
+    :param location: The base location where the data files are stored. Default is "s3://pv.insight.misc/pv_fleets/".
+    :type location: str, optional
+    :param data_fn_pattern: The pattern for the data file name. Default is "{}_20201006_composite.csv".
+    :type data_fn_pattern: str, optional
+    :param index_col: Column to use as the row labels of the DataFrame. Default is 0.
+    :type index_col: int, optional
+    :param parse_dates: List of column indices to parse as dates. Default is [0].
+    :type parse_dates: list, optional
+    :param json_file: Whether to load additional JSON metadata. Default is False.
+    :type json_file: bool, optional
+
+    :return: A tuple containing the DataFrame and the JSON metadata (if json_file is True), otherwise just the DataFrame.
+    :rtype: tuple[pd.DataFrame, dict] or pd.DataFrame
+    """
     df = pd.read_csv(
         location + data_fn_pattern.format(file_id),
         index_col=index_col,

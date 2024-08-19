@@ -61,12 +61,12 @@ class PolarTransform:
             normed_data.loc[day] = power_normed
         return normed_data
 
-    def transform(self, elevation_round=1, azimuth_round=2, agg_func=np.nanmean):
+    def transform(self, elevation_round=1, azimuth_round=2, agg_func="mean"):
         # Solar position subroutine requires TZ-aware time stamps or UTC time
         # stamps, but we typically have non-TZ-aware local time, without DST
         # shifts (which is the most natural for solar data). So, step 1 is to
         # convert the time to UTC.
-        times = self.data.index.shift(-self.tz_offset, "H")
+        times = self.data.index.shift(-self.tz_offset, "h")
         # run solar position subroutine
         solpos = get_solarposition(times, self.lat, self.lon)
         # reset the time from UTC to local
@@ -110,5 +110,11 @@ class PolarTransform:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
         # Plot clipped (non-neg) data
-        sns.heatmap(np.clip(self.transformed_data, 0, np.inf), ax=ax, cbar=cbar, cmap=cmap, alpha=alpha)
+        sns.heatmap(
+            np.clip(self.transformed_data, 0, np.inf),
+            ax=ax,
+            cbar=cbar,
+            cmap=cmap,
+            alpha=alpha,
+        )
         return plt.gcf()
