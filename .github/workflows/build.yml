@@ -78,3 +78,16 @@ jobs:
         id: condaload
         run: |
           anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2
+
+  deploy-rtd:
+    runs-on: ubuntu-latest
+    needs: [build-pypi, build-conda]
+    environment: deployment
+    steps:
+    # Do not need to build and upload artifacts, just re-trigger to update tags/version on website
+      - name: Trigger RTDs build
+        uses: dfm/rtds-action@v1
+        with:
+          webhook_url: ${{ secrets.RTDS_WEBHOOK_URL }}
+          webhook_token: ${{ secrets.RTDS_WEBHOOK_TOKEN }}
+          commit_ref: ${{ github.ref }}
