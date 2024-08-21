@@ -9,6 +9,7 @@ tags:
 authors: # TODO: generate full list of authors
   - name: Sara A. Miskovich
     orcid: 0000-0002-3302-838X
+    corresponding: true
     affiliation: 1
   - name: Bennet Meyers
     orcid: 0000-0002-4089-0744
