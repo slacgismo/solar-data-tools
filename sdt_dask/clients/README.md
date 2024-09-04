@@ -77,7 +77,7 @@ Note: For more information on Local cluster arguments, refer to [the Dask docs.]
   * `**kwargs`: Additional arguments to authorize and configure the cluster.
 
 We recommend using Docker images to run SDT on cloud-based clusters. For more information on the Docker 
-image we provide, see [the Docker README](./docker/README.md).
+image we provide, see [the Docker README](../../docker/README.md).
 
 Note: Requires aws cli, AWS credentials to be set in environment variables, 
   
@@ -107,7 +107,7 @@ Note: For more information on Fargate Cluster arguments, refer to [the Dask docs
   * `**kwargs`: Additional arguments to authorize and configure the cluster.
 
 We recommend using Docker images to run SDT on cloud-based clusters. For more information on the Docker 
-image we provide, see [the Docker README](./docker/README.md).
+image we provide, see [the Docker README](../../docker/README.md).
 
 Note: Requires azure cli and credentials to be set in environment variables, 
   

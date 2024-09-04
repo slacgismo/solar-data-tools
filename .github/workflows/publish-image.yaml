@@ -1,16 +1,13 @@
 name: Publish image to Docker Hub
 on:
-  push:
-    branches:
-      - deploy-docker
-#  workflow_run:
-#    workflows: [ "Deploy Main"]
-#    types:
-#      - completed
+  workflow_run:
+    workflows: [ "Deploy Main" ]
+    types:
+      - completed
 
 jobs:
   publish-image:
-    #if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
