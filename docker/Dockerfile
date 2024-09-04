@@ -4,6 +4,6 @@ WORKDIR /root
 RUN mkdir sdt
 WORKDIR /root/sdt
 
-COPY ../../requirements.txt /root/sdt/.
+COPY docker/requirements.txt /root/sdt/.
 
 RUN pip install -r requirements.txt

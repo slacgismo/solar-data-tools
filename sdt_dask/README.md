@@ -28,7 +28,7 @@ $ pip install -e ".[dask]"
 This will install the needed packages to run the tool. Note that your local environment needs to have **Python 3.12 installed 
 if you'd like to use our provided Docker image** to run on the cloud. The command above will take care of installing the specific 
 versions needed to match the installed packages on the Docker image. For more information on the Docker support we provide, 
-see [the Docker README](./docker/README.md).
+see [the Docker README](../docker/README.md).
 
 ## Basic Usage 
 
