@@ -25,5 +25,5 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ./docker/. ${{ secrets.DOCKER_USERNAME }}/sdt-v2:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/sdt-v2:latest -f ./docker/Dockerfile .
           docker push ${{ secrets.DOCKER_USERNAME }}/sdt-v2:latest
