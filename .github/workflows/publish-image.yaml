@@ -1,6 +1,8 @@
 name: Publish image to Docker Hub
 on:
-  [workflow_dispatch]
+  push:
+    branches:
+      - deploy-docker
 #  workflow_run:
 #    workflows: [build]
 #    types:
