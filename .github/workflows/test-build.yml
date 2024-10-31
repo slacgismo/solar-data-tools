@@ -42,20 +42,15 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-activate-base: true
-          python-version: 3.12
           activate-environment: ""
+          python-version: 3.12
           miniconda-version: "latest"
           channels: conda-forge,mosek,slacgismo
-
+          channel-priority: true
       - name: Install the Conda Dependencies
         shell: bash -l {0}
         run: |
-#          conda config --set always_yes yes
-#          conda update conda
-#          conda install python=3.12 conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
-#          git fetch --prune --unshallow --tags
-           pip install -e .
-
+          pip install -e .
       # echo yes before login to prevent anaconda bug breaking automation
       # git tags MUST be fetched otherwise output will be blank
       # bash variables cannot be used in github actions, must use actions specific syntax and methods
