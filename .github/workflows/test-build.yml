@@ -54,7 +54,7 @@ jobs:
 #          conda update conda
 #          conda install python=3.12 conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
 #          git fetch --prune --unshallow --tags
-          pip install -e .
+           pip install -e .
 
       # echo yes before login to prevent anaconda bug breaking automation
       # git tags MUST be fetched otherwise output will be blank
