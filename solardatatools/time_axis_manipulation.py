@@ -77,11 +77,11 @@ def make_time_series(
         df_view = df_view[
             ~df_view.index.duplicated(keep="first")
         ]  # Drop duplicate times
-        df_view.reindex(
+        df_view = df_view.reindex(
             index=time_index, method=None
         )  # Match the master index, interp missing
         #################################################################
-        meas_name = str(df_view[name_key][0])
+        meas_name = str(df_view[name_key].iloc[0])
         col_name = meas_name + "_{:02}".format(counter)
         output[col_name] = df_view[value_key]
         if (
