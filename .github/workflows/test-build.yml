@@ -42,7 +42,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-activate-base: true
-          activate-environment: ""
+          activate-environment: true
           python-version: 3.12
           miniconda-version: "latest"
           channels: conda-forge,mosek,slacgismo
