@@ -74,4 +74,5 @@ jobs:
         shell: bash -l {0}
         id: condaload
         run: |
+          conda install anaconda-client
           anaconda upload -u slacgismo  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2
