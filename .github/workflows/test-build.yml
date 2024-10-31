@@ -45,7 +45,7 @@ jobs:
           python-version: 3.12
           activate-environment: ""
           miniconda-version: "latest"
-          channels: conda-forge, mosek, slacgismo
+          channels: conda-forge,mosek,slacgismo
 
       - name: Install the Conda Dependencies
         shell: bash -l {0}
