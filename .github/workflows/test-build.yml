@@ -42,15 +42,18 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           auto-activate-base: true
+          python-version: 3.12
           activate-environment: ""
           miniconda-version: "latest"
+          channels: conda-forge, mosek, slacgismo
 
       - name: Install the Conda Dependencies
+        shell: bash -l {0}
         run: |
-          conda config --set always_yes yes --set auto_update_conda false
-          conda update conda
-          conda install python=3.12 conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
-          git fetch --prune --unshallow --tags
+#          conda config --set always_yes yes
+#          conda update conda
+#          conda install python=3.12 conda-build colorama pip ruamel ruamel.yaml rich jsonschema -c conda-forge
+#          git fetch --prune --unshallow --tags
           pip install -e .
 
       # echo yes before login to prevent anaconda bug breaking automation
@@ -58,10 +61,9 @@ jobs:
       # bash variables cannot be used in github actions, must use actions specific syntax and methods
       # channels need to be specified on build and are saved in the package for installs
       - name: Build the Anaconda Package
+        shell: bash -l {0}
         id: condabuild
         run: |
-          conda install anaconda-client
-          conda clean --all
-          conda config --set anaconda_upload no
-          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . -c mosek -c slacgismo -c conda-forge -c stanfordcvxgrp --numpy 2.0
+          conda install conda-build
+          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build .
           echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
