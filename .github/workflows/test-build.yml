@@ -29,17 +29,16 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
-    environment: test-deployment
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      # Much better than manual installation, original version Miniconda2-4.7.10-Linux-x86_64.sh is broken
-      - uses: conda-incubator/setup-miniconda@v3
+      - name: Install Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           auto-activate-base: true
           activate-environment: true
@@ -47,10 +46,12 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge,mosek,slacgismo
           channel-priority: true
+
       - name: Install the Conda Dependencies
         shell: bash -l {0}
         run: |
           pip install -e .
+
       # echo yes before login to prevent anaconda bug breaking automation
       # git tags MUST be fetched otherwise output will be blank
       # bash variables cannot be used in github actions, must use actions specific syntax and methods
@@ -60,5 +61,11 @@ jobs:
         id: condabuild
         run: |
           conda install conda-build
-          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build .
+          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)test conda build . --numpy 2.0
           echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
+
+      - name: Upload the Anaconda Package
+        shell: bash -l {0}
+        id: condaload
+        run: |
+          anaconda upload -u smiskov  /usr/share/miniconda3/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2
