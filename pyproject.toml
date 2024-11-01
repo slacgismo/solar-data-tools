@@ -53,6 +53,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 [tool.setuptools_scm]
+version_file = "solardatatools/_version.py"
 
 [tool.setuptools.packages.find]
 include = ["solardatatools*", "pvsystemprofiler*", "statistical_clear_sky*", "sdt_dask*"]
