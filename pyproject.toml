@@ -14,7 +14,7 @@ maintainers = [
   { name = "Sara Miskovich", email = "smiskov@slac.stanford.edu" },
 ]
 keywords = ["solar", "pv", "photovoltaic"]
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 
 dependencies = [
     "scipy",
