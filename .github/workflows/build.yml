@@ -57,22 +57,3 @@ jobs:
         shell: bash -l {0}
         run: |
           pip install -e .
-
-      # echo yes before login to prevent anaconda bug breaking automation
-      # git tags MUST be fetched otherwise output will be blank
-      # bash variables cannot be used in github actions, must use actions specific syntax and methods
-      # channels need to be specified on build and are saved in the package for installs
-      - name: Build the Anaconda Package
-        shell: bash -l {0}
-        id: condabuild
-        run: |
-          conda install conda-build
-          VERSION_FROM_GIT_TAG=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-) conda build . --numpy 2.0 --no-anaconda-upload
-          echo "gitversion=$(git tag --list "v*[0-9]" --sort=version:refname | tail -1 | cut -c 2-)" >> $GITHUB_OUTPUT
-
-      - name: Upload the Anaconda Package
-        shell: bash -l {0}
-        id: condaload
-        run: |
-          conda install anaconda-client
-          anaconda upload -u slacgismo /home/runner/miniconda3/envs/true/conda-bld/noarch/solar-data-tools-${{ steps.condabuild.outputs.gitversion }}-*.tar.bz2
