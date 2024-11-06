@@ -18,13 +18,10 @@ the following dependency versions installed:
 If you create your local environment using the recommended method in the installation guide (`pip install -e ".[dask]"`),
 these dependencies should already match the provided `slacgismo/sdt-v1` image. Note that your local environment needs to have Python 3.12 installed.
 
-If you'd like to see the full list of packages in this image along with their versions, you can find that
-[here](./clients/sdt-v1_full_pip_freeze.txt). 
-
 ## Creating your own image
 
 If you need to create your own image (perhaps due to the need for custom 
-dataplugs and other packages to retrieve data), we provide a sample Dockerfile [here](./clients/Dockerfile)
+dataplugs and other packages to retrieve data), we provide a sample Dockerfile [here](./Dockerfile)
 for you to get started. You'll just need to update the `docker/requirements.txt` file to add your required packages,
 including any development version of Solar Data Tools that includes your dataplug module.
 
@@ -52,7 +49,7 @@ WORKDIR /root
 RUN mkdir sdt
 WORKDIR /root/sdt
 
-COPY ../../requirements.txt /root/sdt/.
+COPY docker/requirements.txt /root/sdt/.
 
 RUN pip install -r requirements.txt
 ```
