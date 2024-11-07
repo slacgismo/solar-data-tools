@@ -24,11 +24,11 @@
     </a>
     <a href="https://anaconda.org/conda-forge/solar-data-tools-feedstock">
         <img src="https://anaconda.
-org/conda-forge/solar-data-tools-feedstock/badges/version.svg" />
+org/conda-forge/solar-data-tools/badges/version.svg" />
     </a>
     <a href="https://anaconda.org/conda-forge/solar-data-tools-feedstock">
         <img src="https://anaconda.
-org/conda-forge/solar-data-tools-feedstock/badges/latest_release_date.
+org/conda-forge/solar-data-tools/badges/latest_release_date.
 svg" />
     </a>
 </tr>
@@ -77,7 +77,7 @@ com/slacgismo/solar-data-tools/blob/main/LICENSE">
         <a href="https://anaconda.
 org/conda-forge/solar-data-tools-feedstock">
             <img src="https://anaconda.
-org/conda-forge/solar-data-tools-feedstock/badges/downloads.svg" 
+org/conda-forge/solar-data-tools/badges/downloads.svg" 
 alt="conda-forge 
 downloads" />
         </a>
