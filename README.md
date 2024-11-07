@@ -22,18 +22,17 @@
     <a href="https://pypi.org/project/solar-data-tools/">
         <img src="https://img.shields.io/pypi/v/solar-data-tools.svg" alt="latest release" />
     </a>
-    <a href="https://anaconda.org/conda-forge/solar-data-tools-feedstock">
+    <a href="https://anaconda.org/conda-forge/solar-data-tools">
         <img src="https://anaconda.org/conda-forge/solar-data-tools/badges/version.svg" />
     </a>
-    <a href="https://anaconda.org/conda-forge/solar-data-tools-feedstock">
+    <a href="https://anaconda.org/conda-forge/solar-data-tools">
         <img src="https://anaconda.org/conda-forge/solar-data-tools/badges/latest_release_date.svg" />
     </a>
 </tr>
 <tr>
   <td>License</td>
   <td>
-    <a href="https://github.
-com/slacgismo/solar-data-tools/blob/main/LICENSE">
+    <a href="https://github.com/slacgismo/solar-data-tools/blob/main/LICENSE">
         <img src="https://img.shields.io/pypi/l/solar-data-tools.svg" alt="license" />
     </a>
 </td>
@@ -71,7 +70,7 @@ com/slacgismo/solar-data-tools/blob/main/LICENSE">
 <tr>
     <td>Conda Downloads</td>
     <td>
-        <a href="https://anaconda.org/conda-forge/solar-data-tools-feedstock">
+        <a href="https://anaconda.org/conda-forge/solar-data-tools">
             <img src="https://anaconda.org/conda-forge/solar-data-tools/badges/downloads.svg" alt="conda-forge downloads" />
         </a>
     </td>
