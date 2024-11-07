@@ -17,20 +17,16 @@ $ pip install "solar-data-tools[mosek]"
 ## Install with conda
 
 ```{warning}
-When installing solar-data-tools using conda, you will need to add three channels, 
-conda-forge, slacgismo, and stanfordcvxgrp, to your conda config (or alternatively 
-specify them using the `-c` flag as shown in the examples below). Failure to do so will
-result in the installation of an outdated solar-data-tools version. Note that we will be 
-moving solar-data-tools to conda-forge soon, which will simplify the installation process. 
-Check back soon for an update! For more on conda channels, see the 
-[conda docs](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html).
+`solar-data-tools` is now available on conda-forge! You can specify 
+the channel using the `-c` flag as shown in the examples below. 
+The use of the slacgismo channel is **deprecated** and packages 
+on that channel will **not** be up-to-date with the latest releases. 
 ```
 
 Creating the environment and directly installing the package and its dependencies from the appropriate conda channels:
 
 ```bash
-$ conda create -n pvi-user solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp 
-```
+$ conda create -n pvi-user solar-data-tools -c conda-forge
 
 Starting the environment:
 
@@ -47,7 +43,7 @@ $ conda deactivate
 Or alternatively install the package in an already existing environment:
 
 ```bash
-$ conda install solar-data-tools -c conda-forge -c slacgismo -c stanfordcvxgrp 
+$ conda install solar-data-tools -c conda-forge
 ```
 
 # Solvers

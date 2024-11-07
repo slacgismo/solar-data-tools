@@ -7,15 +7,15 @@
     :width: 600
     :class: only-light
     :align: center
-
+https://github.com/enterprises/slacstanford
 Welcome to the Solar Data Tools Docs!
 =====================================
-|PyPI release| |Anaconda Cloud release|
+|PyPI release| |Conda-forge release|
 
 .. |PyPI release| image:: https://img.shields.io/pypi/v/solar-data-tools.svg
    :target: https://pypi.org/project/solar-data-tools/
-.. |Anaconda Cloud release| image:: https://anaconda.org/slacgismo/solar-data-tools/badges/version.svg
-   :target: https://anaconda.org/slacgismo/solar-data-tools
+.. |Conda-forge| image:: https://anaconda.org/conda-forge/solar-data-tools/badges/version.svg
+   :target: https://anaconda.org/conda-forge/solar-data-tools
 
 Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data.
 It was developed to enable analysis of unlabeled PV data, i.e. with no model, no meteorological data, and no performance
