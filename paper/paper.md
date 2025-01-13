@@ -11,65 +11,106 @@ authors: # TODO: generate full list of authors
     orcid: 0000-0002-3302-838X
     corresponding: true
     affiliation: 1
-  - name: Bennet Meyers
+  - name: Bennet E. Meyers
     orcid: 0000-0002-4089-0744
     corresponding: true
     affiliation: 1
+  - name: "Duncan Ragsdale"
+    affiliation: 1
+  - name: "Mitchell Victoriano"
+    affiliation: 1
+  - name: "Aramis Dufour"
+    affiliation: 2
+  - name: "Nimish Yadav"
+    affiliation: 3
+  - name: "Elpiniki Apostolaki-Iosifidou"
+    affiliation: 1
+  - name: "Claire Berschauer"
+    affiliation: 1
+  - name: "Chengcheng Ding"
+    affiliation: 3
+  - name: "Victor-Haoyang Lian"
+    affiliation: 3
+  - name: "Tristan Lin"
+    affiliation: 3
+  - name: "Junlin Luo"
+    affiliation: 3
+  - name: "Xiao Ming"
+    affiliation: 3
+  - name: "David Jose Florez Rodriguez"
+    affiliation: 3
+  - name: "Derin Serbetcioglu"
+    affiliation: 1
+  - name: "Jose St Louis"
+    affiliation: 3
+  - name: "Tadatoshi Takahashi"
+    affiliation: 1
+  - name: "Haoxi Zhang"
+    affiliation: 3
+  - name: "Jonathan Goncalves"
+    affiliation: 1
+  - name: "Nimish Telang"
+  - name: "Alejandro Londono-Hurtado"
+    affiliation: 1
+  - name: "Shixian Sheng"
+
 affiliations:
- - name: SLAC National Accelerator Laboratory, Menlo Park, CA, 94025, USA
-   index: 1
+  - name: SLAC National Accelerator Laboratory, Menlo Park, CA, 94025, USA
+    index: 1
+  - name: Stanford University, Stanford, CA, 94305, USA
+    index: 2
+  - name: Carnegie Mellon University, Pittsburgh, PA 15213, USA
+    index: 2
 date: 19 August 2024
 bibliography: paper.bib
 ---
 
 # Summary
+
 [//]: # (high level summary, for non expert audience)
 
-Solar Data Tools is an open-source Python library for analyzing 
-photovoltaic (PV) power (and irradiance) time-series data. It 
-enables automated analysis of _unlabeled_ PV data, meaning no 
-model, meteorological data, or performance index is required. The
-library uses signal decomposition techniques in its main data 
-processing pipeline.
+Effectively processing and leveraging the growing volume of photovoltaic (PV) system performance data is essential for
+the operation and maintenance of PV systems globally. However, many distributed rooftop PV systems suffer from lower
+data quality, are difficult to model, and lack access to reliable environmental data.
 
-Solar Data Tools offers
-methods for data I/O, cleaning, filtering, plotting, and data 
-quality and loss analysis. These methods are largely automated,
-requiring minimal user input regardless of the PV system 
-type.  This library is ideal for anyone working with PV data, 
-especially when meteorological information is unavailable. This 
-includes photovoltaic professionals in the private solar industry or 
-utility companies, researchers and students in the 
-solar power domain, community solar owners, and
-rooftop system owners. The primary goal of the library is to enable 
-PV system fleet owners or operators to analyze system 
-performance using only the basic power output data.
+Solar Data Tools is an open-source Python library designed for automated data quality and loss factor
+analysis of _unlabeled_ PV time-series data, i.e. without requiring a system model, meteorological 
+data, or performance indices. The primary objective of Solar Data Tools is to empower PV system operators or fleet 
+owners to understand their system's performance using only basic power output data.
+
+Solar Data Tools is user-friendly, requiring minimal setup, and is compatible with all types of solar systems. Using 
+advanced signal decomposition techniques, the library enables the performance and reliability analysis of large
+volumes of PV power time-series data across various formats and quality levels. It eliminates the need for site-specific
+meteorological inputs or pre-defined system models, simplifying the analysis process.  This library can be valuable 
+for a wide range of users that work with unlabeled solar power data, including 
+professionals in the private solar industry or utility companies, researchers and students in the solar energy field, 
+community solar owners, and rooftop PV system owners.
 
 # Statement of need
 
 With the growing number
-of real-world installations of photovoltaic (PV) systems worldwide, 
+of real-world installations of photovoltaic (PV) systems worldwide,
 it is crucial to have tools that can process and analyze data
 from systems of all sizes and configurations. The data
-typically consists of time-series measurements of real 
-power production, reported as average power over intervals ranging from 
-one minute to one hour, spanning several years and possibly 
+typically consists of time-series measurements of real
+power production, reported as average power over intervals ranging from
+one minute to one hour, spanning several years and possibly
 containing missing entries.
 
-Historically, PV data analysis tools have focused on data combined 
-with local meteorological measurements and system configuration 
+Historically, PV data analysis tools have focused on data combined
+with local meteorological measurements and system configuration
 information, such as those from large power plants. Data cleaning tasks
-have largely been manual, and analyses have relied on metrics like the 
-performance index [@townsned], which require accurate site models and 
-meteorological data. For smaller, distributed rooftop PV systems, 
-meteorological information is often lacking, making accurate system 
-modeling difficult. For such systems, insights must be derived from just 
-the PV power data in isolation (referred to as \emph{unlabeled} data), 
-for which forming a performance index is difficult or impossible. Given 
-that distributed rooftop PV systems accounted for over 40\% of the 
-installed capacity in 2020 [@SEIA2021], there is a clear need for 
-automated and model-free data processing and analysis tools that 
-enable remote monitoring of system health and optimization of operations 
+have largely been manual, and analyses have relied on metrics like the
+performance index [@townsned], which require accurate site models and
+meteorological data. For smaller, distributed rooftop PV systems,
+meteorological information is often lacking, making accurate system
+modeling difficult. For such systems, insights must be derived from just
+the PV power data in isolation (referred to as \emph{unlabeled} data),
+for which forming a performance index is difficult or impossible. Given
+that distributed rooftop PV systems accounted for over 40\% of the
+installed capacity in 2020 [@SEIA2021], there is a clear need for
+automated and model-free data processing and analysis tools that
+enable remote monitoring of system health and optimization of operations
 and maintenance activities of these systems.
 
 [//]: # (Cite dask IEEE short paper too? I don't mention cloud 
@@ -85,8 +126,8 @@ tools for both small and fleet-scale PV performance analyses without
 requiring the calculation of performance indices for each system.
 
 Two other libraries offer similar data analysis tools for solar applications:
-PVAnalytics [@pvanalytics] and RdTools [@rdTools-zenodo]. Unlike SDT, 
-these libraries are model-driven and require users to define their own analyses. 
+PVAnalytics [@pvanalytics] and RdTools [@rdTools-zenodo]. Unlike SDT,
+these libraries are model-driven and require users to define their own analyses.
 PVAnalytics focuses on preprocessing and quality assurance, while RdTools specializes in
 loss factor analysis. SDT, on the other hand, provides both data quality and
 loss factor analysis, operates _automatically_ with minimal setup, and is
@@ -109,8 +150,8 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-This work is supported by the U.S. Department of Energy’s Office of 
-Energy Efficiency and Renewable Energy (EERE) under the Solar Energy 
+This work is supported by the U.S. Department of Energy’s Office of
+Energy Efficiency and Renewable Energy (EERE) under the Solar Energy
 Technologies Office Award Number 38529.
 
 # References
