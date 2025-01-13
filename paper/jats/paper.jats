@@ -22,22 +22,163 @@
 of unlabeled PV data</article-title>
 </title-group>
 <contrib-group>
-<contrib contrib-type="author">
+<contrib contrib-type="author" corresp="yes">
 <contrib-id contrib-id-type="orcid">https://orcid.org/0000-0002-3302-838X</contrib-id>
 <name>
 <surname>Miskovich</surname>
 <given-names>Sara A.</given-names>
 </name>
 <xref ref-type="aff" rid="aff-1"/>
+<xref ref-type="corresp" rid="cor-1"><sup>*</sup></xref>
 </contrib>
 <contrib contrib-type="author" corresp="yes">
 <contrib-id contrib-id-type="orcid">https://orcid.org/0000-0002-4089-0744</contrib-id>
 <name>
 <surname>Meyers</surname>
-<given-names>Bennet</given-names>
+<given-names>Bennet E.</given-names>
 </name>
 <xref ref-type="aff" rid="aff-1"/>
-<xref ref-type="corresp" rid="cor-1"><sup>*</sup></xref>
+<xref ref-type="corresp" rid="cor-2"><sup>*</sup></xref>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Apostolaki-Iosifidou</surname>
+<given-names>Elpiniki</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Berschauer</surname>
+<given-names>Claire</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Ding</surname>
+<given-names>Chengcheng</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Dufour</surname>
+<given-names>Aramis</given-names>
+</name>
+<xref ref-type="aff" rid="aff-2"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Rodriguez</surname>
+<given-names>David Jose Florez</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Goncalves</surname>
+<given-names>Jonathan</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Londono-Hurtado</surname>
+<given-names>Alejandro</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Lian</surname>
+<given-names>Victor-Haoyang</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Lin</surname>
+<given-names>Tristan</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Luo</surname>
+<given-names>Junlin</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Ming</surname>
+<given-names>Xiao</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Ragsdale</surname>
+<given-names>Duncan</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Serbetcioglu</surname>
+<given-names>Derin</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Sheng</surname>
+<given-names>Shixian</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Louis</surname>
+<given-names>Jose St</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Takahashi</surname>
+<given-names>Tadatoshi</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Telang</surname>
+<given-names>Nimish</given-names>
+</name>
+<xref ref-type="aff" rid="aff-"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Victoriano</surname>
+<given-names>Mitchell</given-names>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Zhang</surname>
+<given-names>Haoxi</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Yadav</surname>
+<given-names>Nimish</given-names>
+</name>
+<xref ref-type="aff" rid="aff-3"/>
 </contrib>
 <aff id="aff-1">
 <institution-wrap>
@@ -45,9 +186,21 @@ of unlabeled PV data</article-title>
 94025, USA</institution>
 </institution-wrap>
 </aff>
+<aff id="aff-2">
+<institution-wrap>
+<institution>Stanford University, Stanford, CA, 94305, USA</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-2">
+<institution-wrap>
+<institution>Carnegie Mellon University, Pittsburgh, PA 15213,
+USA</institution>
+</institution-wrap>
+</aff>
 </contrib-group>
 <author-notes>
 <corresp id="cor-1">* E-mail: <email></email></corresp>
+<corresp id="cor-2">* E-mail: <email></email></corresp>
 </author-notes>
 <pub-date date-type="pub" publication-format="electronic" iso-8601-date="2024-08-19">
 <day>19</day>
@@ -81,82 +234,88 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <body>
 <sec id="summary">
   <title>Summary</title>
-  <p>Solar Data Tools is an open-source Python library for analyzing
-  photovoltaic (PV) power (and irradiance) time-series data. It enables
-  automated analysis of <italic>unlabeled</italic> PV data, i.e. with no
-  model, no meteorological data, and no performance index required, by
-  taking a statistical signal processing approach in the algorithms used
-  in the library’s main data processing pipeline.</p>
-  <p>Solar Data Tools provides methods for data I/O, cleaning,
-  filtering, plotting, and data quality and loss analysis. These methods
-  are largely automated and require little to no input from the user
-  regardless of system type. This library is for anyone dealing with
-  photovoltaic data, especially data with no meteorological information
-  (unlabeled). This includes photovoltaic professionals (in private
-  solar industry or utility companies for example), researchers and
-  students in the solar power domain, community solar owners, and anyone
-  with a rooftop system. The scientific goal of the library is to
-  empower PV system fleet owners or operators to analyze system
-  performance, even when they only have access to the most basic data
-  stream—power output of the system.</p>
+  <p>Effectively processing and leveraging the growing volume of
+  photovoltaic (PV) system performance data is essential for the
+  operation and maintenance of PV systems globally. However, many
+  distributed rooftop PV systems suffer from lower data quality, are
+  difficult to model, and lack access to reliable environmental
+  data.</p>
+  <p>Solar Data Tools is an open-source Python library designed for
+  automated data quality and loss factor analysis of
+  <italic>unlabeled</italic> PV time-series data, i.e. without requiring
+  a system model, meteorological data, or performance indices. The
+  primary objective of Solar Data Tools is to empower PV system
+  operators or fleet owners to understand their system’s performance
+  using only basic power output data.</p>
+  <p>Solar Data Tools is user-friendly, requiring minimal setup, and is
+  compatible with all types of solar systems. Using advanced signal
+  decomposition techniques, the library enables the performance and
+  reliability analysis of large volumes of PV power time-series data
+  across various formats and quality levels. It eliminates the need for
+  site-specific meteorological inputs or pre-defined system models,
+  simplifying the analysis process. This library can be valuable for a
+  wide range of users that work with unlabeled solar power data,
+  including professionals in the private solar industry or utility
+  companies, researchers and students in the solar energy field,
+  community solar owners, and rooftop PV system owners.</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of need</title>
   <p>With the growing number of real-world installations of photovoltaic
   (PV) systems worldwide, it is crucial to have tools that can process
-  and analyze the data from system of all sizes and configurations. The
-  data is typically in the form of time-series measurements of real
-  power production reported as average power over some interval of time
-  (between the scale of one minute to one hour) over a number of years,
-  possibly with missing entries.</p>
-  <p>Historically, PV data analysis tools have focused on data that are
-  combined with local meteorological measurements and system
-  configuration information (such as those from large power plants). The
-  data cleaning tasks have largely been manual, the analyses have relied
-  on metrics such as the performance index (townsend), which rely on
-  having access to accurate site models and meteorological data. In the
-  case of smaller, distributed rooftop PV systems, meteorological
-  information is typically lacking, and it’s often difficult to model
-  the system accurately. For such systems, we desire to get insights
-  from just the PV power data in isolation (what we call
-  <italic>unlabeled</italic> data), for which it is difficult or
-  impossible to form a performance index. Given that distributed rooftop
-  PV systems make up over 40% of the
-  installed capacity in 2020
+  and analyze data from systems of all sizes and configurations. The
+  data typically consists of time-series measurements of real power
+  production, reported as average power over intervals ranging from one
+  minute to one hour, spanning several years and possibly containing
+  missing entries.</p>
+  <p>Historically, PV data analysis tools have focused on data combined
+  with local meteorological measurements and system configuration
+  information, such as those from large power plants. Data cleaning
+  tasks have largely been manual, and analyses have relied on metrics
+  like the performance index
+  (<xref alt="townsned?" rid="ref-townsned" ref-type="bibr"><bold>townsned?</bold></xref>),
+  which require accurate site models and meteorological data. For
+  smaller, distributed rooftop PV systems, meteorological information is
+  often lacking, making accurate system modeling difficult. For such
+  systems, insights must be derived from just the PV power data in
+  isolation (referred to as <italic>unlabeled</italic> data), for which
+  forming a performance index is difficult or impossible. Given that
+  distributed rooftop PV systems accounted for over 40% of the installed
+  capacity in 2020
   (<xref alt="Davis et al., 2021" rid="ref-SEIA2021" ref-type="bibr">Davis
   et al., 2021</xref>), there is a clear need for automated and
-  model-free data processing and analysis tools that can enable the
-  remote monitoring of system health and optimization of operations and
+  model-free data processing and analysis tools that enable remote
+  monitoring of system health and optimization of operations and
   maintenance activities of these systems.</p>
   <p>Solar Data Tools (SDT)
   (<xref alt="B. Meyers et al., 2020" rid="ref-Meyers2020b" ref-type="bibr">B.
   Meyers et al., 2020</xref>;
   <xref alt="Bennet Meyers &amp; others, 2024" rid="ref-sdt-zenodo" ref-type="bibr">Bennet
-  Meyers &amp; others, 2024</xref>) is an open-source Python library for
-  automatic data processing and analysis of unlabeled PV data signals.
-  SDT automates the cleaning, filtering, and analyzing PV power data,
-  including loss factor estimation analysis, eliminating the need for
-  user configuration or ``babysitting” regardless of data quality or
-  system configuration, from large, utility-scale trackers to small,
-  multi-pitch rooftops. SDT provides practical tools for both small and
-  fleet-scale PV performance analyses, without the need to calculate
-  performance indices for each system.</p>
-  <p>There are two other libraries that are similar in that they offer
-  data analysis tools for solar applications:
+  Meyers &amp; others, 2024</xref>) is an open-source Python library
+  designed for the automatic processing and analysis of unlabeled PV
+  data signals. SDT automates the cleaning, filtering, and analysis of
+  PV power data, including loss factor estimation, eliminating the need
+  for user configuration or “babysitting” regardless of data quality or
+  system configuration. It is suitable for a wide range of systems, from
+  large utility-scale trackers to small, multi-pitch rooftops. SDT
+  provides practical tools for both small and fleet-scale PV performance
+  analyses without requiring the calculation of performance indices for
+  each system.</p>
+  <p>Two other libraries offer similar data analysis tools for solar
+  applications: PVAnalytics
   (<xref alt="Perry et al., 2022" rid="ref-pvanalytics" ref-type="bibr">Perry
-  et al., 2022</xref>) and
+  et al., 2022</xref>) and RdTools
   (<xref alt="rdTools-zenodo?" rid="ref-rdTools-zenodo" ref-type="bibr"><bold>rdTools-zenodo?</bold></xref>).
-  In contrast to SDT, they are both model driven, and require the user
-  to define their own analysis. PVAnalytics focuses on preprocessing and
-  QA, while RdTools focuses on loss factor analysis. SDT provides both
-  data quality and loss factor analysis, runs
-  <italic>automatically</italic> with little to no setup, and is
-  <bold>model-free</bold> and does not require any weather or other
-  information. SDT is most suited for when users want a pre-defined
-  pipeline to get information on complex systems that can’t be modeled
-  easily and that have no meteorological data–which is frequently the
-  case for small, distributed systems. (cite tutorial here for more
-  info?)</p>
+  Unlike SDT, these libraries are model-driven and require users to
+  define their own analyses. PVAnalytics focuses on preprocessing and
+  quality assurance, while RdTools specializes in loss factor analysis.
+  SDT, on the other hand, provides both data quality and loss factor
+  analysis, operates <italic>automatically</italic> with minimal setup,
+  and is <bold>model-free</bold>, requiring no weather or other external
+  information. SDT is particularly suited for users who need a
+  pre-defined pipeline to analyze complex systems that cannot be easily
+  modeled and lack meteorological data—a common scenario for small,
+  distributed systems. (cite tutorial here for more info?)</p>
 </sec>
 <sec id="figures">
   <title>Figures</title>

@@ -15,20 +15,20 @@ authors: # TODO: generate full list of authors
     orcid: 0000-0002-4089-0744
     corresponding: true
     affiliation: 1
-  - name: "Duncan Ragsdale"
-    affiliation: 1
-  - name: "Mitchell Victoriano"
-    affiliation: 1
-  - name: "Aramis Dufour"
-    affiliation: 2
-  - name: "Nimish Yadav"
-    affiliation: 3
   - name: "Elpiniki Apostolaki-Iosifidou"
     affiliation: 1
   - name: "Claire Berschauer"
     affiliation: 1
   - name: "Chengcheng Ding"
     affiliation: 3
+  - name: "Aramis Dufour"
+    affiliation: 2
+  - name: "David Jose Florez Rodriguez"
+    affiliation: 3
+  - name: "Jonathan Goncalves"
+    affiliation: 1
+  - name: "Alejandro Londono-Hurtado"
+    affiliation: 1
   - name: "Victor-Haoyang Lian"
     affiliation: 3
   - name: "Tristan Lin"
@@ -37,22 +37,23 @@ authors: # TODO: generate full list of authors
     affiliation: 3
   - name: "Xiao Ming"
     affiliation: 3
-  - name: "David Jose Florez Rodriguez"
-    affiliation: 3
+  - name: "Duncan Ragsdale"
+    affiliation: 1
   - name: "Derin Serbetcioglu"
     affiliation: 1
+  - name: "Shixian Sheng"
+    affiliation: 3
   - name: "Jose St Louis"
     affiliation: 3
   - name: "Tadatoshi Takahashi"
     affiliation: 1
+  - name: "Nimish Telang"
+  - name: "Mitchell Victoriano"
+    affiliation: 1
   - name: "Haoxi Zhang"
     affiliation: 3
-  - name: "Jonathan Goncalves"
-    affiliation: 1
-  - name: "Nimish Telang"
-  - name: "Alejandro Londono-Hurtado"
-    affiliation: 1
-  - name: "Shixian Sheng"
+  - name: "Nimish Yadav"
+    affiliation: 3
 
 affiliations:
   - name: SLAC National Accelerator Laboratory, Menlo Park, CA, 94025, USA
