@@ -243,12 +243,12 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <p>Solar Data Tools is an open-source Python library designed for
   automated data quality and loss factor analysis of
   <italic>unlabeled</italic> PV time-series data, i.e. without requiring
-  a system model, meteorological data, or performance indices. The
-  primary objective of Solar Data Tools is to empower PV system
-  operators or fleet owners to understand their system’s performance
-  using only basic power output data.</p>
+  a system model, meteorological data, or performance indices. Solar
+  Data Tools empowers PV system operators and fleet owners to better
+  understand their system’s performance using only basic power output
+  data.</p>
   <p>Solar Data Tools is user-friendly, requiring minimal setup, and is
-  compatible with all types of solar systems. Using advanced signal
+  compatible with all types of PV systems. Using advanced signal
   decomposition techniques, the library enables the performance and
   reliability analysis of large volumes of PV power time-series data
   across various formats and quality levels. It eliminates the need for
@@ -258,40 +258,57 @@ a Creative Commons Attribution 4.0 International License (CC BY
   including professionals in the private solar industry or utility
   companies, researchers and students in the solar energy field,
   community solar owners, and rooftop PV system owners.</p>
+  <p>Solar Data Tools is developed openly on GitHub
+  (<xref alt="B. Meyers &amp; others, 2024e" rid="ref-sdt-repo" ref-type="bibr">B.
+  Meyers &amp; others, 2024e</xref>) under the permissive BSD-2 license
+  and is available to install via the Python Package Index (PyPI)
+  (<xref alt="B. Meyers &amp; others, 2024c" rid="ref-pypi" ref-type="bibr">B.
+  Meyers &amp; others, 2024c</xref>) and the conda-forge repository
+  (<xref alt="B. Meyers &amp; others, 2024b" rid="ref-conda" ref-type="bibr">B.
+  Meyers &amp; others, 2024b</xref>). The library is actively maintained
+  and contributions from the community are welcome. The documentation is
+  hosted on Read the Docs
+  (<xref alt="B. Meyers &amp; others, 2024a" rid="ref-sdt-docs" ref-type="bibr">B.
+  Meyers &amp; others, 2024a</xref>). More detailed information about
+  Solar Data Tools, its algorithms and its features can be found in the
+  PVSC 2020
+  (<xref alt="B. E. Meyers et al., 2020" rid="ref-pvsc2020" ref-type="bibr">B.
+  E. Meyers et al., 2020</xref>) and PVSC 2024
+  (<xref alt="Miskovich &amp; Meyers, 2024" rid="ref-pvsc2024" ref-type="bibr">Miskovich
+  &amp; Meyers, 2024</xref>) papers.</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of need</title>
-  <p>With the growing number of real-world installations of photovoltaic
-  (PV) systems worldwide, it is crucial to have tools that can process
-  and analyze data from systems of all sizes and configurations. The
-  data typically consists of time-series measurements of real power
-  production, reported as average power over intervals ranging from one
-  minute to one hour, spanning several years and possibly containing
-  missing entries.</p>
+  <p>With the growing number of photovoltaic (PV) systems worldwide, it
+  is crucial to have tools that can process and analyze data from
+  systems of all sizes and configurations. The data typically consists
+  of time-series measurements of real power production, reported as
+  average power over intervals ranging from one minute to one hour,
+  spanning several years and possibly containing missing entries.</p>
   <p>Historically, PV data analysis tools have focused on data combined
   with local meteorological measurements and system configuration
   information, such as those from large power plants. Data cleaning
   tasks have largely been manual, and analyses have relied on metrics
   like the performance index
-  (<xref alt="townsned?" rid="ref-townsned" ref-type="bibr"><bold>townsned?</bold></xref>),
-  which require accurate site models and meteorological data. For
-  smaller, distributed rooftop PV systems, meteorological information is
-  often lacking, making accurate system modeling difficult. For such
-  systems, insights must be derived from just the PV power data in
-  isolation (referred to as <italic>unlabeled</italic> data), for which
-  forming a performance index is difficult or impossible. Given that
-  distributed rooftop PV systems accounted for over 40% of the installed
-  capacity in 2020
+  (<xref alt="Townsend et al., 1994" rid="ref-Townsend1994" ref-type="bibr">Townsend
+  et al., 1994</xref>), which require accurate site models and
+  meteorological data. For smaller, distributed rooftop PV systems,
+  meteorological information is often lacking, making accurate system
+  modeling difficult. For such systems, insights must be derived from
+  just the PV power data in isolation (referred to as
+  <italic>unlabeled</italic> data), for which forming a performance
+  index is difficult or impossible. Given that distributed rooftop PV
+  systems accounted for over 40% of the installed capacity in 2020
   (<xref alt="Davis et al., 2021" rid="ref-SEIA2021" ref-type="bibr">Davis
   et al., 2021</xref>), there is a clear need for automated and
   model-free data processing and analysis tools that enable remote
   monitoring of system health and optimization of operations and
   maintenance activities of these systems.</p>
   <p>Solar Data Tools (SDT)
-  (<xref alt="B. Meyers et al., 2020" rid="ref-Meyers2020b" ref-type="bibr">B.
-  Meyers et al., 2020</xref>;
-  <xref alt="Bennet Meyers &amp; others, 2024" rid="ref-sdt-zenodo" ref-type="bibr">Bennet
-  Meyers &amp; others, 2024</xref>) is an open-source Python library
+  (<xref alt="B. E. Meyers et al., 2020" rid="ref-pvsc2020" ref-type="bibr">B.
+  E. Meyers et al., 2020</xref>;
+  <xref alt="B. Meyers &amp; others, 2024d" rid="ref-sdt-zenodo" ref-type="bibr">B.
+  Meyers &amp; others, 2024d</xref>) is an open-source Python library
   designed for the automatic processing and analysis of unlabeled PV
   data signals. SDT automates the cleaning, filtering, and analysis of
   PV power data, including loss factor estimation, eliminating the need
@@ -305,29 +322,20 @@ a Creative Commons Attribution 4.0 International License (CC BY
   applications: PVAnalytics
   (<xref alt="Perry et al., 2022" rid="ref-pvanalytics" ref-type="bibr">Perry
   et al., 2022</xref>) and RdTools
-  (<xref alt="rdTools-zenodo?" rid="ref-rdTools-zenodo" ref-type="bibr"><bold>rdTools-zenodo?</bold></xref>).
-  Unlike SDT, these libraries are model-driven and require users to
-  define their own analyses. PVAnalytics focuses on preprocessing and
-  quality assurance, while RdTools specializes in loss factor analysis.
-  SDT, on the other hand, provides both data quality and loss factor
-  analysis, operates <italic>automatically</italic> with minimal setup,
-  and is <bold>model-free</bold>, requiring no weather or other external
-  information. SDT is particularly suited for users who need a
-  pre-defined pipeline to analyze complex systems that cannot be easily
-  modeled and lack meteorological data—a common scenario for small,
-  distributed systems. (cite tutorial here for more info?)</p>
-</sec>
-<sec id="figures">
-  <title>Figures</title>
-  <p>Add example plots (heatmaps, loss analysis, what else?)</p>
-  <p>Figures can be included like this:
-  <named-content content-type="image">Caption for example
-  figure.<styled-content id="figU003Aexample"></styled-content></named-content>
-  and referenced from text using
-  <xref alt="[fig:example]" rid="figU003Aexample">[fig:example]</xref>.</p>
-  <p>Figure sizes can be customized by adding an optional second
-  parameter: <named-content content-type="image">Caption for example
-  figure.</named-content></p>
+  (<xref alt="Deceglie &amp; others, 2024" rid="ref-rdtools-zenodo" ref-type="bibr">Deceglie
+  &amp; others, 2024</xref>). Unlike SDT, these libraries are
+  model-driven and require users to define their own analyses.
+  PVAnalytics focuses on preprocessing and quality assurance, while
+  RdTools specializes in loss factor analysis. SDT, on the other hand,
+  provides both data quality and loss factor analysis, operates
+  <italic>automatically</italic> with minimal setup, and is
+  <bold>model-free</bold>, requiring no weather or other external
+  information. To our knowledge, no other open-source software provides
+  flexible model-free automated analysis for unlabeled PV data. SDT is
+  particularly suited for users who need a pre-defined pipeline to
+  analyze complex systems that cannot be easily modeled and lack
+  meteorological data—a common scenario for small, distributed
+  systems.</p>
 </sec>
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
@@ -339,6 +347,37 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <back>
 <ref-list>
   <title></title>
+  <ref id="ref-pvsc2024">
+    <element-citation publication-type="paper-conference">
+      <person-group person-group-type="author">
+        <name><surname>Miskovich</surname><given-names>Sara A.</given-names></name>
+        <name><surname>Meyers</surname><given-names>Bennet</given-names></name>
+      </person-group>
+      <article-title>Automated analysis of unlabeled PV data with solar data tools software: Overview and feature updates</article-title>
+      <source>2024 IEEE 52nd photovoltaic specialist conference (PVSC)</source>
+      <year iso-8601-date="2024">2024</year>
+      <volume></volume>
+      <pub-id pub-id-type="doi">10.1109/PVSC57443.2024.10749597</pub-id>
+      <fpage>1728</fpage>
+      <lpage>1730</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-pvsc2020">
+    <element-citation publication-type="paper-conference">
+      <person-group person-group-type="author">
+        <name><surname>Meyers</surname><given-names>Bennet E.</given-names></name>
+        <name><surname>Apostolaki-Iosifidou</surname><given-names>Elpiniki</given-names></name>
+        <name><surname>Schelhas</surname><given-names>Laura T.</given-names></name>
+      </person-group>
+      <article-title>Solar data tools: Automatic solar data processing pipeline</article-title>
+      <source>2020 47th IEEE photovoltaic specialists conference (PVSC)</source>
+      <year iso-8601-date="2020">2020</year>
+      <volume></volume>
+      <pub-id pub-id-type="doi">10.1109/PVSC45281.2020.9300847</pub-id>
+      <fpage>0655</fpage>
+      <lpage>0656</lpage>
+    </element-citation>
+  </ref>
   <ref id="ref-pvanalytics">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
@@ -351,6 +390,28 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <article-title>PVAnalytics: A python package for automated processing of solar time series data</article-title>
       <year iso-8601-date="2022-09">2022</year><month>09</month>
       <uri>https://www.osti.gov/biblio/1887283</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-sdt-docs">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Meyers</surname><given-names>Bennet</given-names></name>
+        <name><surname>others</surname></name>
+      </person-group>
+      <article-title>Solar data tools documentation</article-title>
+      <year iso-8601-date="2024">2024</year>
+      <uri>https://solar-data-tools.readthedocs.io/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-rdtools-zenodo">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Deceglie</surname><given-names>Michael</given-names></name>
+        <name><surname>others</surname></name>
+      </person-group>
+      <article-title>NREL/rdtools: Version 3.0.0-alpha.6</article-title>
+      <year iso-8601-date="2024">2024</year>
+      <uri>https://doi.org/10.5281/zenodo.13356337</uri>
     </element-citation>
   </ref>
   <ref id="ref-sdt-zenodo">
@@ -366,19 +427,37 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <pub-id pub-id-type="doi">10.5281/zenodo.10888385</pub-id>
     </element-citation>
   </ref>
-  <ref id="ref-Meyers2020b">
+  <ref id="ref-sdt-repo">
     <element-citation>
       <person-group person-group-type="author">
-        <name><surname>Meyers</surname><given-names>B.</given-names></name>
-        <name><surname>Apostolaki-Iosifidou</surname><given-names>E.</given-names></name>
-        <name><surname>Schelhas</surname><given-names>L.</given-names></name>
+        <name><surname>Meyers</surname><given-names>Bennet</given-names></name>
+        <name><surname>others</surname></name>
       </person-group>
-      <article-title>Solar data tools: Automatic solar data processing pipeline</article-title>
-      <year iso-8601-date="2020">2020</year>
-      <volume></volume>
-      <pub-id pub-id-type="doi">10.1109/PVSC45281.2020.9300847</pub-id>
-      <fpage>0655</fpage>
-      <lpage>0656</lpage>
+      <article-title>Solar data tools</article-title>
+      <year iso-8601-date="2024-03">2024</year><month>03</month>
+      <uri>https://github.com/slacgismo/solar-data-tools</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-pypi">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Meyers</surname><given-names>Bennet</given-names></name>
+        <name><surname>others</surname></name>
+      </person-group>
+      <article-title>Solar data tools on PyPi</article-title>
+      <year iso-8601-date="2024">2024</year>
+      <uri>https://pypi.org/project/solar-data-tools/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-conda">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Meyers</surname><given-names>Bennet</given-names></name>
+        <name><surname>others</surname></name>
+      </person-group>
+      <article-title>Solar data tools on anaconda</article-title>
+      <year iso-8601-date="2024">2024</year>
+      <uri>https://anaconda.org/conda-forge/solar-data-tools</uri>
     </element-citation>
   </ref>
   <ref id="ref-SEIA2021">
@@ -397,8 +476,25 @@ a Creative Commons Attribution 4.0 International License (CC BY
         <name><surname>Baca</surname><given-names>Justin</given-names></name>
       </person-group>
       <source>U.S. Solar market insight executive summary, 2020 year in review</source>
-      <publisher-name>Wood Mackenzie; SEIA</publisher-name>
+      <publisher-name>Wood Mackenzie; Solar Energy Industries Association</publisher-name>
       <year iso-8601-date="2021">2021</year>
+    </element-citation>
+  </ref>
+  <ref id="ref-Townsend1994">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Townsend</surname><given-names>T.</given-names></name>
+        <name><surname>Whitaker</surname><given-names>C.</given-names></name>
+        <name><surname>Farmer</surname><given-names>B.</given-names></name>
+        <name><surname>Wenger</surname><given-names>H.</given-names></name>
+      </person-group>
+      <article-title>New performance index for PV system analysis</article-title>
+      <source>Conference Record of the IEEE Photovoltaic Specialists Conference</source>
+      <year iso-8601-date="1994">1994</year>
+      <volume>1</volume>
+      <pub-id pub-id-type="doi">10.1109/wcpec.1994.520138</pub-id>
+      <fpage>1036</fpage>
+      <lpage>1039</lpage>
     </element-citation>
   </ref>
 </ref-list>

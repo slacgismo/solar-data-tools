@@ -1,3 +1,26 @@
+@INPROCEEDINGS{pvsc2024,
+  author={Miskovich, Sara A. and Meyers, Bennet},
+  booktitle={2024 IEEE 52nd Photovoltaic Specialist Conference (PVSC)},
+  title={Automated Analysis of Unlabeled PV Data with Solar Data Tools Software: Overview and Feature Updates},
+  year={2024},
+  volume={},
+  number={},
+  pages={1728-1730},
+  keywords={Photovoltaic systems;Industries;Data integrity;System performance;Time series analysis;Software;Data models;Software reliability;Performance analysis;Python;PV systems;convex optimization;machine learning;photovoltaic;signal decomposition;open source software;artificial intelligence;cloud compute;data analytics},
+  doi={10.1109/PVSC57443.2024.10749597}}
+
+@INPROCEEDINGS{pvsc2020,
+  author={Meyers, Bennet E. and Apostolaki-Iosifidou, Elpiniki and Schelhas, Laura T.},
+  booktitle={2020 47th IEEE Photovoltaic Specialists Conference (PVSC)},
+  title={Solar Data Tools: Automatic Solar Data Processing Pipeline},
+  year={2020},
+  volume={},
+  number={},
+  pages={0655-0656},
+  keywords={Software;Data integrity;Tools;Software algorithms;Signal processing algorithms;Pipelines;Machine learning algorithms;photovoltaic systems;system performance;maintenance engineering;data handling;data processing;data analysis;machine learning;statistical learning},
+  doi={10.1109/PVSC45281.2020.9300847}}
+
+
 @article{pvanalytics,
 title = {PVAnalytics: A Python Package for Automated Processing of Solar Time Series Data},
 author = {Perry, Kirsten and Vining, William and Anderson, Kevin and Muller, Matthew and Hansen, Cliff},
@@ -7,13 +30,11 @@ year = {2022},
 month = {9}
 }
 
-@misc{signal-decomp-software,
+@misc{sdt-docs,
 	author       = {Meyers, Bennet and others},
-	title        = {Signal decomposition modeling language},
-	month        = Sept,
-	year         = 2023,
-	version      = {v0.0.2},
-	url          = {https://github.com/cvxgrp/signal-decomposition}
+	title        = {Solar Data Tools Documentation},
+	url          = {https://solar-data-tools.readthedocs.io/},
+	year = {2024}
 }
 
 @misc{rdtools-zenodo,
@@ -53,79 +74,18 @@ month = {9}
   year = {2024}
 }
 
-
 @misc{conda,
   author = {Meyers, Bennet and others},
   title = {Solar Data Tools on Anaconda},
-  url = {https://anaconda.org/slacgismo/solar-data-tools},
+  url = {https://anaconda.org/conda-forge/solar-data-tools},
   year = {2024}
-}
-
-
-@article{diamond2016cvxpy,
-  author  = {Steven Diamond and Stephen Boyd},
-  title   = {{CVXPY}: {A} {P}ython-embedded modeling language for convex optimization},
-  journal = {Journal of Machine Learning Research},
-  year    = {2016},
-  volume  = {17},
-  number  = {83},
-  pages   = {1--5},
-}
-
-@misc{mosek,
-   author = "MOSEK ApS",
-   title = "MOSEK Fusion API for Python 10.1.28",
-   year = 2024,
-   url = "https://docs.mosek.com/latest/pythonfusion/index.html"
- }
-
-@article{Meyers2023,
-	year    = {2023},
-	volume  = {17},
-	journal = {Foundations and Trends in Signal Processing},
-	title   = {Signal Decomposition Using Masked Proximal Operators},
-	doi     = {10.1561/2000000122},
-	issn    = {1932-8346},
-	number  = {1},
-	pages   = {1-78},
-	author  = {B. Meyers and S. Boyd}
-}
-
-@article{volpatti2022,
-	title={Signal Decomposition via Quadratic-Separable Optimization},
-	author={Volpatti, Luke and Meyers, Bennet E and Boyd, Stephen P},
-	year={2022},
-	url={https://web.stanford.edu/~boyd/papers/sig_decomp_quad_sep.html}
-}
-
-@misc{Meyers2020b,
-	author={B. {Meyers} and E. {Apostolaki-Iosifidou} and L. {Schelhas}},
-	booktitle={2020 47th IEEE Photovoltaic Specialists Conference (PVSC)},
-	title={Solar Data Tools: Automatic Solar Data Processing Pipeline},
-	year={2020},
-	volume={},
-	number={},
-	pages={0655-0656},
-	doi={10.1109/PVSC45281.2020.9300847}
-}
-
-@misc{clarabel-software,
-	author       = {Paul Goulart  and Yuwen Chen},
-	title        = {Clarabel documentation},
-	month        = Jan,
-	year         = 2024,
-	version      = {v0.6.0},
-	url          = {https://oxfordcontrol.github.io/ClarabelDocs/stable/}
 }
 
 @book{SEIA2021,
 author = {Davis, Michelle and Smith, Colin and White, Bryan and Goldstein,
 Rachel and Sun, Xiaojing and Cox, Molly and Curtin, Gregson and Manghani, Ravi
 and Rumery, Shawn and Silver, Colin and Baca, Justin},
-file = {:Users/bennetmeyers/Documents/Articles/Davis et al. - 2021 - U.S. solar
-market insight executive summary, 2020 year in review.pdf:pdf},
-mendeley-groups = {PV/Industry Reports},
-publisher = {Wood Mackenzie and SEIA},
+publisher = {Wood Mackenzie and Solar Energy Industries Association},
 title = {{U.S. {S}olar market insight executive summary, 2020 year in review}},
 year = {2021}
 }
@@ -139,14 +99,4 @@ year = {2021}
    title = {New performance index for {PV} system analysis},
    volume = {1},
    year = {1994},
-}
-
-@book{herlihy2012art,
-  title={The Art of Multiprocessor Programming, Revised Reprint},
-  author={Herlihy, M. and Shavit, N.},
-  isbn={9780123977953},
-  url={https://books.google.com/books?id=vfvPrSz7R7QC},
-  year={2012},
-  publisher={Elsevier Science},
- note={p. 14: ``Some computational problems are `embarrassingly parallel': they can easily be divided into components that can be executed concurrently''},
 }
