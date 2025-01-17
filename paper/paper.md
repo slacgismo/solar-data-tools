@@ -75,23 +75,24 @@ the operation and maintenance of PV systems globally. However, many distributed 
 data quality, are difficult to model, and lack access to reliable environmental data.
 
 Solar Data Tools is an open-source Python library designed for automated data quality and loss factor
-analysis of _unlabeled_ PV time-series data, i.e. without requiring a system model, meteorological 
-data, or performance indices. Solar Data Tools empowers PV system operators and fleet 
+analysis of _unlabeled_ PV time-series data, i.e. without requiring a system model, meteorological
+data, or performance indices. Solar Data Tools empowers PV system operators and fleet
 owners to better understand their system's performance using only basic power output data.
 
-Solar Data Tools is user-friendly, requiring minimal setup, and is compatible with all types of PV systems. Using 
-advanced signal decomposition techniques, the library enables the performance and reliability analysis of large
+Solar Data Tools is user-friendly, requiring minimal setup, and is compatible with all types of PV systems, from small
+roof-top generators to large utilty power plants. Using
+advanced signal decomposition techniques [@Meyers2023], the library enables the performance and reliability analysis of large
 volumes of PV power time-series data across various formats and quality levels. It eliminates the need for site-specific
-meteorological inputs or pre-defined system models, simplifying the analysis process.  This library can be valuable 
-for a wide range of users that work with unlabeled solar power data, including 
-professionals in the private solar industry or utility companies, researchers and students in the solar energy field, 
+meteorological inputs or pre-defined system models, simplifying the analysis process.  This library can be valuable
+for a wide range of users that work with unlabeled solar power data, including
+professionals in the private solar industry or utility companies, researchers and students in the solar energy field,
 community solar owners, and rooftop PV system owners.
 
-Solar Data Tools is developed openly on GitHub [@sdt-repo] under the permissive BSD-2 license and is available to 
-install via the Python Package Index (PyPI) [@pypi] and the conda-forge repository [@conda]. The library is actively 
+Solar Data Tools is developed openly on GitHub [@sdt-repo] under the permissive BSD-2 license and is available to
+install via the Python Package Index (PyPI) [@pypi] and the conda-forge repository [@conda]. The library is actively
 maintained and contributions
-from the community are welcome. The documentation is hosted on Read the Docs [@sdt-docs]. More detailed information 
-about Solar Data Tools, its algorithms and 
+from the community are welcome. The documentation is hosted on Read the Docs [@sdt-docs]. More detailed information
+about Solar Data Tools, its algorithms and
 its features can be found in the PVSC 2020 [@pvsc2020] and PVSC 2024 [@pvsc2024] papers.
 
 # Statement of need
@@ -126,10 +127,16 @@ library designed for the automatic processing and analysis of unlabeled PV
 data signals. SDT automates the cleaning, filtering, and analysis of PV power
 data, including loss factor estimation, eliminating the need for user
 configuration or "babysitting" regardless of data quality or system
-configuration. It is suitable for a wide range of systems, from large
+configuration. It is suitable for a wide range of applications and system types, from large
 utility-scale trackers to small, multi-pitch rooftops. SDT provides practical
 tools for both small and fleet-scale PV performance analyses without
-requiring the calculation of performance indices for each system.
+requiring the calculation of performance indices for each system. It may be used to fully automate a
+quality and loss factor estimation pipeline, or it may be used to onboard, visualize, and explore new
+data or prepare data for a custom analysis.
+
+The software has been used by researchers at Stanford University [@Ogut2024], Case Western Reserve University [@Pierce2024],
+and LBNL [@Li2023; @Li2024] to prepare data in the development data-driven performance models for the solar PV domain.
+In addition, the software has been used in loss factor estimation intercomparison studies by NREL [@osti_1990039] and the IEA [@Lindig2021].
 
 Two other libraries offer similar data analysis tools for solar applications:
 PVAnalytics [@pvanalytics] and RdTools [@rdtools-zenodo]. Unlike SDT,
@@ -137,16 +144,18 @@ these libraries are model-driven and require users to define their own analyses.
 PVAnalytics focuses on preprocessing and quality assurance, while RdTools specializes in
 loss factor analysis. SDT, on the other hand, provides both data quality and
 loss factor analysis, operates _automatically_ with minimal setup, and is
-**model-free**, requiring no weather or other external information. To our knowledge, no other open-source software 
-provides flexible model-free automated analysis for unlabeled PV data. 
+**model-free**, requiring no weather or other external information. To our knowledge, no other open-source software
+provides flexible model-free automated analysis for unlabeled PV data.
 SDT is particularly suited for users who need a pre-defined pipeline to analyze
 complex systems that cannot be easily modeled and lack meteorological data—a
 common scenario for small, distributed systems.
+
+
 
 # Acknowledgements
 
 This work is supported by the U.S. Department of Energy’s Office of
 Energy Efficiency and Renewable Energy (EERE) under the Solar Energy
-Technologies Office Award Number 38529.
+Technologies Office Award Numbers 34368 and 38529.
 
 # References
