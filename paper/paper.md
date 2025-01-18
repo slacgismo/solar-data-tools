@@ -80,7 +80,7 @@ data, or performance indices. Solar Data Tools empowers PV system operators and 
 owners to better understand their system's performance using only basic power output data.
 
 Solar Data Tools is user-friendly, requiring minimal setup, and is compatible with all types of PV systems, from small
-roof-top generators to large utilty power plants. Using
+rooftop generators to large utility power plants. Using
 advanced signal decomposition techniques [@Meyers2023], the library enables the performance and reliability analysis of large
 volumes of PV power time-series data across various formats and quality levels. It eliminates the need for site-specific
 meteorological inputs or pre-defined system models, simplifying the analysis process.  This library can be valuable
