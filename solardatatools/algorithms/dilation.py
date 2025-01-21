@@ -10,22 +10,28 @@ from solardatatools.plotting import plot_2d
 
 DEFAULT = {
     "nvals_dil": 101,
+    "matrix": "raw",
 }
 
 
 class Dilation:
     def __init__(self, data_handler, **config):
-        self.dh = data_handler
-        self.nvals_ori = data_handler.raw_data_matrix.shape[0]
-        self.ndays = data_handler.raw_data_matrix.shape[1]
-        self.idx_ori = None
-        self.idx_dil = None
-        self.signal_ori = data_handler.raw_data_matrix.ravel(order="F")
-        self.signal_dil = None
         if len(config) == 0:
             self.config = DEFAULT
         else:
             self.config = config
+        if self.config["matrix"] == "raw":
+            mat = data_handler.raw_data_matrix
+        elif self.config["matrix"] == "filled":
+            mat = data_handler.filled_data_matrix
+        else:
+            raise ValueError("Invalid value for matrix. Choose from: ['raw', 'filled']")
+        self.dh = data_handler
+        self.nvals_ori, self.ndays = mat.shape
+        self.idx_ori = None
+        self.idx_dil = None
+        self.signal_ori = mat.ravel(order="F")
+        self.signal_dil = None
         self.nvals_dil = self.config["nvals_dil"]
         self.run()
 
