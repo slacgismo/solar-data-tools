@@ -278,17 +278,18 @@ def compute_integral_interpolation(ttnew, xxnew, new_indices):
     """
     # replace NaNs with zeros
     xxnew_filled = np.nan_to_num(xxnew, nan=0)
-    # compute the piecewise than cumulative integral of the signal
     piecewise_integrals = np.diff(ttnew) * xxnew_filled[:-1]
     cumulative_integrals = np.zeros(ttnew.shape[0])
     # Add the initial zero as a baseline for the cumulative sum
     cumulative_integrals[1:] = np.cumsum(piecewise_integrals)
+    # the new value at each new time point is the difference between the cumulative integrals
+    # at this point and the following one
+    y = np.diff(cumulative_integrals[new_indices])
     # set NaNs back to Na
     was_nan = np.isnan(xxnew)
     # the last point is not used in the interpolation, it shouldn't propagate NaNs
     was_nan[-1] = False
-    cumulative_integrals[was_nan] = np.nan
-    # the new value at each new time point is the difference between the cumulative integrals
-    # at this point and the following one
-    y = np.diff(cumulative_integrals[new_indices])
+    subarrays = np.split(was_nan, new_indices)
+    nan_flags = np.array([np.any(subarray) for subarray in subarrays])[1:-1]
+    y[nan_flags] = np.nan
     return y
