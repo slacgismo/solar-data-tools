@@ -8,18 +8,13 @@ to undilate it back.
 import numpy as np
 from solardatatools.plotting import plot_2d
 
-DEFAULT = {
-    "nvals_dil": 101,
-    "matrix": "raw",
-}
-
-
 class Dilation:
-    def __init__(self, data_handler, **config):
-        if len(config) == 0:
-            self.config = DEFAULT
-        else:
-            self.config = config
+    def __init__(self, data_handler, nvals_dil=101, matrix="raw"):
+        config = {
+            "nvals_dil": nvals_dil,
+            "matrix": matrix
+        }
+        self.config = config
         if self.config["matrix"] == "raw":
             mat = data_handler.raw_data_matrix
         elif self.config["matrix"] == "filled":
