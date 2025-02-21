@@ -14,7 +14,7 @@ DEFAULT = {
 }
 
 class Dilation:
-    def __init__(self, data_handler, nvals_dil=DEFAULT["nvals_dil"], matrix=DEFAULT["raw"]):
+    def __init__(self, data_handler, nvals_dil=DEFAULT["nvals_dil"], matrix=DEFAULT["matrix"]):
         config = {
             "nvals_dil": nvals_dil,
             "matrix": matrix
