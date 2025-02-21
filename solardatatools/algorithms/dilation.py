@@ -8,8 +8,13 @@ to undilate it back.
 import numpy as np
 from solardatatools.plotting import plot_2d
 
+DEFAULT = {
+    "nvals_dil": 101,
+    "matrix": "raw",
+}
+
 class Dilation:
-    def __init__(self, data_handler, nvals_dil=101, matrix="raw"):
+    def __init__(self, data_handler, nvals_dil=DEFAULT["nvals_dil"], matrix=DEFAULT["raw"]):
         config = {
             "nvals_dil": nvals_dil,
             "matrix": matrix
