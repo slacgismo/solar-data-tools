@@ -16,7 +16,7 @@ clarabel
 qss
 tqdm
 spcqe
-# Packages below this line are for the SDT Dask tool feature
+# Packages below this line are for the SDT Dask tool feature (optional)
 dask
 distributed
 dask-cloudprovider[all]

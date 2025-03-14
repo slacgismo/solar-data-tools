@@ -17,6 +17,7 @@
 *.png
 notebooks/*.pkl
 notebooks/data/*
+docs/source/getting_started/notebooks/inputs
 
 ### Database ###
 *.accdb
@@ -170,6 +171,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+solardatatools/_version.py
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

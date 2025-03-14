@@ -14,7 +14,7 @@ maintainers = [
   { name = "Sara Miskovich", email = "smiskov@slac.stanford.edu" },
 ]
 keywords = ["solar", "pv", "photovoltaic"]
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 
 dependencies = [
     "scipy",
@@ -53,6 +53,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 [tool.setuptools_scm]
+version_file = "solardatatools/_version.py"
 
 [tool.setuptools.packages.find]
 include = ["solardatatools*", "pvsystemprofiler*", "statistical_clear_sky*", "sdt_dask*"]
@@ -60,8 +61,10 @@ include = ["solardatatools*", "pvsystemprofiler*", "statistical_clear_sky*", "sd
 [project.optional-dependencies]
 docs = [
     "sphinx",
-    "sphinx-changelog>=1.2.0",
+    "pydata-sphinx-theme",
     "sphinx_design",
+    "nbsphinx",
+    "myst-parser"
 ]
 mosek = [
     "mosek"
