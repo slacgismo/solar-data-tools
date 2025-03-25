@@ -84,8 +84,6 @@ class CapacityChange:
         self.train_error = train_r
 
     def solve_sd(self, metric, filter, w1, transition_locs=None, solver=None):
-        mcp = np.copy(metric)
-        mcp[~filter] = np.nan
         s1, s2, s3 = l1_l1d1_l2d2p365(
             metric,
             use_ixs=filter,

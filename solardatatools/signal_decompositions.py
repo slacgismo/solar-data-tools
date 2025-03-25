@@ -203,24 +203,20 @@ def l1_l1d1_l2d2p365(
     """
     Used in solardatatools/algorithms/capacity_change.py
 
-    This is a nonconvex problem when invoking QSS, and convex when invoking MOSEK.
+    We solve a convex signal decomposition problem, making use of the l1-sparsity heuristic for estimating a
+    piecewise constant component. We use a single pass of iterative reweighting on this term to "polish" the sparse
+    solution (see: https://web.stanford.edu/~boyd/papers/rwl1.html).
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
         the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
         None is default (uses the entire signal).
-    :param w0: Weight on the residual component
-    :param w1: The regularization parameter to control the total variation in
-        the final output signal
-    :param w2: The regularization parameter to control the smoothness of the
-        seasonal signal
-    :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
-    :param sum_card: Boolean for using the nonconvex formulation using the cardinality penalty,
-        Supported only using OSD with the QSS solver.
+    :param w2: Weight on the piecewise constant component
+    :param w3: Weight on the smooth, periodic component
+    :param w4: Weight on the slope of the trend term (discourages large trends)
+    :param solver: Solver to use for the decomposition. Standard cvxpy solvers are supported
     :param verbose: Sets verbosity
-    :return: A tuple with three 1d numpy arrays containing the three signal component estimates
+    :return: A tuple with three 1d numpy arrays containing the three non-noise signal component estimates
     """
     if solver is not None:
         if solver.upper() not in ["MOSEK", "CLARABEL", "OSQP"]:
@@ -228,7 +224,7 @@ def l1_l1d1_l2d2p365(
     masked_sig = np.copy(signal)
     masked_sig[use_ixs] = np.nan
     problem, tv_weights_param = make_l1_l1d1_l2d2p365_problem(signal, w2, w3, w4)
-    problem.solve(solver="CLARABEL")
+    problem.solve(solver=solver, verbose=verbose)
     var_dict = {v.name(): v for v in problem.variables()}
     eps = 0.1
     tv_weights = 1 / (eps + np.abs(np.diff(var_dict["x2"].value, n=1)))
