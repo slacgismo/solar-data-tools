@@ -98,7 +98,7 @@ class CapacityChange:
     def optimize_weight(self, metric, filter, weights, solver=None):
         ixs = np.arange(len(metric))
         ixs = ixs[filter]
-        train_ixs, test_ixs = train_test_split(ixs, train_size=0.85)
+        train_ixs, test_ixs = train_test_split(ixs, train_size=0.7)
         train = np.zeros(len(metric), dtype=bool)
         test = np.zeros(len(metric), dtype=bool)
         train[train_ixs] = True
