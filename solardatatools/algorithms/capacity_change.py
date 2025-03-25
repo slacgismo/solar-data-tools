@@ -134,6 +134,7 @@ class CapacityChange:
             # The basic assumption here is that if the test error jumps up sharply when the weight is increased to the
             # point that the piecewise constant term turns off. We make this assumption because we believe a change
             # has been detected.
+            min_error_ix = np.argmin(test_r)
             try:
                 # Try to find the 'large jump' by identifying positive outliers via the interquartile range outlier test
                 test_err_diffs = np.diff(test_r)
@@ -141,7 +142,12 @@ class CapacityChange:
                 lower_quartile = np.percentile(test_err_diffs, 25)
                 iqr = (upper_quartile - lower_quartile) * 1.5
                 holdout_increase_threshold = upper_quartile + iqr
-                best_ix = np.where(test_err_diffs > holdout_increase_threshold)[0][0]
+                best_ix = np.where(
+                    np.logical_and(
+                        test_err_diffs > holdout_increase_threshold,
+                        np.arange(len(test_err_diffs)) >= min_error_ix,
+                    )
+                )[0][0]
             except IndexError:
                 # no differences were above the threshold. try another approach.
                 # find lowest holdout value
