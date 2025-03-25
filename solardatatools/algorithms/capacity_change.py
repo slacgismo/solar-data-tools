@@ -63,9 +63,7 @@ class CapacityChange:
             weights = None
             changes_detected = None
         # change detector, seasonal term, linear term
-        s1, s2, s3 = self.solve_sd(
-            metric, filter, tuned_weight, transition_locs=None, solver=solver
-        )
+        s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
         # Get capacity assignments (label each day)
         # rounding buckets aligned to first value of component, bin widths of 0.05
         rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
