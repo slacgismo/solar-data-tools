@@ -27,16 +27,16 @@ class CapacityChange:
         self.s2 = None
         self.s3 = None
         self.labels = None
-        self.best_w1 = None
+        self.best_weight = None
         self.best_ix = None
-        self.w1_vals = None
+        self.weight_vals = None
         self.holdout_error = None
         self.test_error = None
 
     def run(
         self,
         data,
-        w1=None,
+        weight=None,
         filter=None,
         quantile=1.00,
         solver=None,
@@ -49,18 +49,18 @@ class CapacityChange:
             filter = ~np.isnan(metric)
         else:
             filter = np.logical_and(filter, ~np.isnan(metric))
-        if w1 is None:
-            w1s = np.logspace(-1, 3, 13)
+        if weight is None:
+            weights = np.logspace(-1, 3, 13)
             test_r, train_r, best_ix = self.optimize_weight(
-                metric, filter, w1s, solver=solver
+                metric, filter, weights, solver=solver
             )
-            tuned_weight = w1s[best_ix]
+            tuned_weight = weights[best_ix]
         else:
-            tuned_weight = w1
+            tuned_weight = weight
             best_ix = None
             test_r = None
             train_r = None
-            w1s = None
+            weights = None
             changes_detected = None
         # change detector, seasonal term, linear term
         s1, s2, s3 = self.solve_sd(
@@ -77,24 +77,27 @@ class CapacityChange:
         self.s2 = s2  # seasonal
         self.s3 = s3  # linear
         self.labels = capacity_assignments
-        self.best_w1 = tuned_weight
+        self.best_weight = tuned_weight
         self.best_ix = best_ix
-        self.w1_vals = w1s
+        self.weight_vals = weights
         self.holdout_error = test_r
         self.train_error = train_r
 
-    def solve_sd(self, metric, filter, w1, transition_locs=None, solver=None):
+    def solve_sd(
+        self, metric, filter, weight, w3=1, w4=1e1, solver=None, verbose=False
+    ):
         s1, s2, s3 = l1_l1d1_l2d2p365(
             metric,
             use_ixs=filter,
-            w1=w1,
-            transition_locs=transition_locs,
+            w2=weight,
+            w3=w3,
+            w4=w4,
             solver=solver,
-            sum_card=False,
+            verbose=verbose,
         )
         return s1, s2, s3
 
-    def optimize_weight(self, metric, filter, w1s, solver=None):
+    def optimize_weight(self, metric, filter, weights, solver=None):
         ixs = np.arange(len(metric))
         ixs = ixs[filter]
         train_ixs, test_ixs = train_test_split(ixs, train_size=0.85)
@@ -103,11 +106,13 @@ class CapacityChange:
         train[train_ixs] = True
         test[test_ixs] = True
         # initialize results objects
-        train_r = np.zeros_like(w1s)
-        test_r = np.zeros_like(w1s)
-        # iterate over possible values of w1 parameter
-        for i, v in enumerate(w1s):
-            s1, s2, s3 = self.solve_sd(metric=metric, filter=train, w1=v, solver=solver)
+        train_r = np.zeros_like(weights)
+        test_r = np.zeros_like(weights)
+        # iterate over possible values of weight parameter
+        for i, v in enumerate(weights):
+            s1, s2, s3 = self.solve_sd(
+                metric=metric, filter=train, weight=v, solver=solver
+            )
             y = metric
             # collect results
             train_r[i] = np.average(np.abs((y - s1 - s2 - s3)[train]))
@@ -125,7 +130,7 @@ class CapacityChange:
 
         if not changes_detected:
             # use largest weight
-            best_ix = np.arange(len(w1s))[-1]
+            best_ix = np.arange(len(weights))[-1]
         else:
             # Select best weight as the largest weight that doesn't increase the test error by more than the threshold
             # The basic assumption here is that if the test error jumps up sharply when the weight is increased to the
@@ -147,7 +152,7 @@ class CapacityChange:
                 # bound is 2% of the test error range, or 2% of the min value, whichever is larger
                 bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
                 cond = test_r <= min_test_err + bound
-                ixs = np.arange(len(w1s))
+                ixs = np.arange(len(weights))
                 best_ix = np.max(ixs[cond])
         return test_r, train_r, best_ix
 
