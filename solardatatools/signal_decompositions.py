@@ -223,8 +223,8 @@ def l1_l1d1_l2d2p365(
         if solver.upper() not in ["MOSEK", "CLARABEL", "OSQP"]:
             solver = "CLARABEL"
     masked_sig = np.copy(signal)
-    masked_sig[use_ixs] = np.nan
-    problem, tv_weights_param = make_l1_l1d1_l2d2p365_problem(signal, w2, w3, w4)
+    masked_sig[~use_ixs] = np.nan
+    problem, tv_weights_param = make_l1_l1d1_l2d2p365_problem(masked_sig, w2, w3, w4)
     problem.solve(solver=solver, verbose=verbose)
     var_dict = {v.name(): v for v in problem.variables()}
     eps = 0.1
