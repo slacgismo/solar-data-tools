@@ -50,7 +50,7 @@ class CapacityChange:
         else:
             filter = np.logical_and(filter, ~np.isnan(metric))
         if w1 is None:
-            w1s = np.logspace(-1, 3, 17)
+            w1s = np.logspace(-1, 3, 13)
             test_r, train_r, best_ix = self.optimize_weight(
                 metric, filter, w1s, solver=solver
             )
@@ -66,21 +66,6 @@ class CapacityChange:
         s1, s2, s3 = self.solve_sd(
             metric, filter, tuned_weight, transition_locs=None, solver=solver
         )
-
-        # Identify transition points, and resolve second convex signal decomposition problem
-        # find indices of transition points
-        seg_diff = segment_diffs(s1)
-        no_transitions = len(seg_diff[0]) == 0
-        if not no_transitions:
-            new_diff = make_pooled_dsig(np.diff(s1), seg_diff)
-            transition_locs = np.where(np.abs(new_diff) >= 0.05)[0]
-            s1, s2, s3 = self.solve_sd(
-                metric,
-                filter,
-                tuned_weight,
-                transition_locs=transition_locs,
-                solver=solver,
-            )
         # Get capacity assignments (label each day)
         # rounding buckets aligned to first value of component, bin widths of 0.05
         rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
@@ -99,6 +84,8 @@ class CapacityChange:
         self.train_error = train_r
 
     def solve_sd(self, metric, filter, w1, transition_locs=None, solver=None):
+        mcp = np.copy(metric)
+        mcp[~filter] = np.nan
         s1, s2, s3 = l1_l1d1_l2d2p365(
             metric,
             use_ixs=filter,

@@ -30,6 +30,7 @@ SDT algorithms. The defined signal decompositions are:
 """
 import sys
 import numpy as np
+import cvxpy as cvx
 
 from solardatatools._osd_signal_decompositions import (
     _osd_l2_l1d1_l2d2p365,
@@ -193,11 +194,10 @@ def tl1_l2d2p365(
 def l1_l1d1_l2d2p365(
     signal,
     use_ixs=None,
-    w1=1e0,
-    transition_locs=None,
-    return_all=False,
+    w2=2e1,
+    w3=1,
+    w4=1e1,
     solver="CLARABEL",
-    sum_card=False,  # OSD only
     verbose=False,
 ):
     """
@@ -222,28 +222,59 @@ def l1_l1d1_l2d2p365(
     :param verbose: Sets verbosity
     :return: A tuple with three 1d numpy arrays containing the three signal component estimates
     """
-    if solver == "MOSEK":
-        # MOSEK weights set in CVXPY function
-        res = _cvx_l1_l1d1_l2d2p365(
-            signal=signal,
-            use_ixs=use_ixs,
-            return_all=return_all,
-            solver=solver,
-            verbose=verbose,
-        )
-    else:
-        res = _osd_l1_l1d1_l2d2p365(
-            signal=signal,
-            use_ixs=use_ixs,
-            w1=w1,
-            transition_locs=transition_locs,
-            return_all=return_all,
-            solver=solver,
-            sum_card=False,
-            verbose=verbose,
-        )
+    if solver is not None:
+        if solver.upper() not in ["MOSEK", "CLARABEL", "OSQP"]:
+            solver = "CLARABEL"
+    masked_sig = np.copy(signal)
+    masked_sig[use_ixs] = np.nan
+    problem, tv_weights_param = make_l1_l1d1_l2d2p365_problem(signal, w2, w3, w4)
+    problem.solve(solver="CLARABEL")
+    var_dict = {v.name(): v for v in problem.variables()}
+    eps = 0.1
+    tv_weights = 1 / (eps + np.abs(np.diff(var_dict["x2"].value, n=1)))
+    tv_weights_param.value = tv_weights
+    problem.solve(solver=solver, verbose=verbose)
+    var_dict = {v.name(): v for v in problem.variables()}
+    return var_dict["x2"].value, var_dict["x3"].value, var_dict["x4"].value
 
-    return res
+
+def make_l1_l1d1_l2d2p365_problem(metric, w2, w3, w4, tv_weights=None):
+    use_set = ~np.isnan(metric)
+    # noise term
+    x1 = cvx.Variable(len(metric), name="x1")
+    # piecewise constatn term
+    x2 = cvx.Variable(len(metric), name="x2")
+    # Smooth, yearly periodic term
+    x3 = cvx.Variable(len(metric), name="x3")
+    # trend term
+    x4 = cvx.Variable(len(metric), name="x4")
+    phi1 = cvx.sum(cvx.abs(x1))
+    if tv_weights is None:
+        tv_weights = np.ones(len(metric) - 1)
+    tv_weights_param = cvx.Parameter(
+        shape=len(tv_weights), value=tv_weights, nonneg=True
+    )
+    phi2 = w2 * cvx.sum(cvx.abs(cvx.multiply(tv_weights_param, cvx.diff(x2, k=1))))
+    B = make_basis_matrix(num_harmonics=[6], length=len(metric), periods=[365.2425])
+    W = make_regularization_matrix(
+        num_harmonics=[6], weight=w3, periods=[365.2425]
+    ).todense()
+    # remove bias term
+    B = B[:, 1:]
+    W = W[1:, 1:]
+    z3 = cvx.Variable(B.shape[1], name="z3")
+    phi3 = cvx.sum_squares(W @ z3)
+    beta = cvx.Variable(name="beta")
+    phi4 = w4 * len(metric) * beta**2
+    cost = phi1 + phi2 + phi3 + phi4
+    constraints = [
+        metric[use_set] == (x1 + x2 + x3 + x4)[use_set],
+        x3 == B @ z3,
+        cvx.diff(x4) == beta,
+        x4[0] == 0,
+    ]
+    problem = cvx.Problem(cvx.Minimize(cost), constraints)
+    return problem, tv_weights_param
 
 
 def l2_l1d2_constrained(
