@@ -31,6 +31,7 @@ SDT algorithms. The defined signal decompositions are:
 import sys
 import numpy as np
 import cvxpy as cvx
+from spcqe import make_basis_matrix, make_regularization_matrix
 
 from solardatatools._osd_signal_decompositions import (
     _osd_l2_l1d1_l2d2p365,
