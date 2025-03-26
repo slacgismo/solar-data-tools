@@ -517,14 +517,10 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test with default args
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
-            signal,
-            w1=5e0,
-            sum_card=True,
-            solver="CLARABEL",
-            return_all=True,
+            signal, w2=5e0, solver="CLARABEL", return_all=True
         )
 
-        actual_obj_val = actual_problem.objective_value
+        actual_obj_val = actual_problem.objective.value
 
         mae_s_hat = mae(actual_s_hat, expected_s_hat)
         mae_s_seas = mae(actual_s_seas, expected_s_seas)

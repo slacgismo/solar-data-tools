@@ -200,6 +200,7 @@ def l1_l1d1_l2d2p365(
     w4=1e1,
     solver="CLARABEL",
     verbose=False,
+    return_all=False,
 ):
     """
     Used in solardatatools/algorithms/capacity_change.py
@@ -223,7 +224,8 @@ def l1_l1d1_l2d2p365(
         if solver.upper() not in ["MOSEK", "CLARABEL", "OSQP"]:
             solver = "CLARABEL"
     masked_sig = np.copy(signal)
-    masked_sig[~use_ixs] = np.nan
+    if use_ixs is not None:
+        masked_sig[~use_ixs] = np.nan
     problem, tv_weights_param = make_l1_l1d1_l2d2p365_problem(masked_sig, w2, w3, w4)
     problem.solve(solver=solver, verbose=verbose)
     var_dict = {v.name(): v for v in problem.variables()}
@@ -232,7 +234,10 @@ def l1_l1d1_l2d2p365(
     tv_weights_param.value = tv_weights
     problem.solve(solver=solver, verbose=verbose)
     var_dict = {v.name(): v for v in problem.variables()}
-    return var_dict["x2"].value, var_dict["x3"].value, var_dict["x4"].value
+    if not return_all:
+        return var_dict["x2"].value, var_dict["x3"].value, var_dict["x4"].value
+    else:
+        return var_dict["x2"].value, var_dict["x3"].value, var_dict["x4"].value, problem
 
 
 def make_l1_l1d1_l2d2p365_problem(metric, w2, w3, w4, tv_weights=None):
