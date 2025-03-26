@@ -139,6 +139,14 @@ class CapacityChange:
             beta = np.mean(np.diff(s3))
             trend_cost = 1e1 * len(metric) * beta**2
             trend_costs[i] = trend_cost
+        # Procedure to select weight:
+        # When capacity changes are present, you get lower holdout error by allowing jumps, so the largest errors are
+        # with the highest weights. We max/min scale the data, and then select the largest weight that reduces the holdout
+        # error by at least half. In short we don't minimize the holdout error, but select the largest weight that gives
+        # "significant improvement" over the model with no jumps. Reducing the weight further tends to introduce unwanted
+        # changes in the piecwise constant term, and it only makes marginal improvements in the holdout error (i.e the slope
+        # error versus weight curve is flatter at lower weights and steeper at higher weights before "turning off" the
+        # component).
         max_r = np.max(test_r)
         min_r = np.min(test_r)
         scaled_r = (test_r - min_r) / (max_r - min_r)
