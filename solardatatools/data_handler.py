@@ -1311,13 +1311,21 @@ time zone errors     {report['time zone correction'] != 0}
                     sharex=True,
                     gridspec_kw={"height_ratios": [4, 1]},
                 )
+                ax[0].plot(
+                    xs[self.daily_flags.no_errors],
+                    metric[self.daily_flags.no_errors],
+                    alpha=0.3,
+                    label="measured signal",
+                    marker=".",
+                    ls="none",
+                    color="gray",
+                )
                 ax[0].plot(xs, s1, label="capacity change detector")
                 ax[0].plot(xs, s1 + s2 + s3, label="signal model")
-                ax[0].plot(xs, metric, alpha=0.3, label="measured signal")
                 ax[0].legend()
                 ax[0].set_title("Detection of system capacity changes")
                 ax[1].set_xlabel("date")
-                ax[0].set_ylabel("normalized daily max power")
+                ax[0].set_ylabel("log daily max power")
                 ax[1].plot(xs, labels, ls="none", marker=".")
                 ax[1].set_ylabel("Capacity clusters")
             else:
@@ -1327,7 +1335,7 @@ time zone errors     {report['time zone correction'] != 0}
                 ax.plot(xs, metric, alpha=0.3, label="measured signal")
                 ax.legend()
                 ax.set_title("Detection of system capacity changes")
-                ax.set_ylabel("normalized daily maximum power")
+                ax.set_ylabel("daily maximum power")
                 ax.set_xlabel("date")
             return fig
 
