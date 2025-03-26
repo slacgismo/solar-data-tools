@@ -1325,7 +1325,7 @@ time zone errors     {report['time zone correction'] != 0}
                 ax[0].legend()
                 ax[0].set_title("Detection of system capacity changes")
                 ax[1].set_xlabel("date")
-                ax[0].set_ylabel("log daily max power")
+                ax[0].set_ylabel("daily max power")
                 ax[1].plot(xs, labels, ls="none", marker=".")
                 ax[1].set_ylabel("Capacity clusters")
             else:
