@@ -268,6 +268,7 @@ def make_l1_l1d1_l2d2p365_problem(metric, w2, w3, w4, tv_weights=None):
         metric[use_set] == (x1 + x2 + x3 + x4)[use_set],
         x3 == B @ z3,
         cvx.diff(x4) == beta,
+        phi4 <= 0.08,
         x4[0] == 0,
     ]
     problem = cvx.Problem(cvx.Minimize(cost), constraints)
