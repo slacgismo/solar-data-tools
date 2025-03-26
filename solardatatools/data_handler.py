@@ -2431,6 +2431,23 @@ time zone errors     {report['time zone correction'] != 0}
                 boolean_selection=self.data_frame["clear-day"],
             )
             self.polar_transform = pt
+
+        user_updated = np.any(
+            [
+                self.polar_transform.tz_offset != tz_offset,
+                self.polar_transform.lat != lat,
+                self.polar_transform.lon != lon,
+            ]
+        )
+        if user_updated:
+            pt = PolarTransform(
+                self.data_frame[self.use_column],
+                lat,
+                lon,
+                tz_offset=tz_offset,
+                boolean_selection=self.data_frame["clear-day"],
+            )
+            self.polar_transform = pt
         has_changed = np.logical_or(
             elevation_round != self.polar_transform._er,
             azimuth_round != self.polar_transform._ar,
