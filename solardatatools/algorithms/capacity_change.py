@@ -32,38 +32,57 @@ class CapacityChange:
         self.weight_vals = None
         self.holdout_error = None
         self.test_error = None
+        self.trend_costs = None
 
     def run(
         self,
         data,
+        metric=None,
         weight=None,
         filter=None,
         quantile=1.00,
         solver=None,
     ):
-        metric = np.nanquantile(data, q=quantile, axis=0)
-        metric_temp = np.ones_like(metric) * np.nan
-        # metric /= np.max(metric)
-        metric[~np.isnan(metric_temp)] = np.log(metric_temp[~np.isnan(metric_temp)])
+        if metric is None:
+            metric = np.nanquantile(data, q=quantile, axis=0)
+            metric_temp = np.ones_like(metric) * np.nan
+            # metric /= np.max(metric)
+            metric[~np.isnan(metric_temp)] = np.log(metric_temp[~np.isnan(metric_temp)])
         if filter is None:
             filter = ~np.isnan(metric)
         else:
             filter = np.logical_and(filter, ~np.isnan(metric))
         if weight is None:
-            weights = np.logspace(-1, 3, 13)
-            test_r, train_r, best_ix = self.optimize_weight(
-                metric, filter, weights, solver=solver
+            # initial check if changes are present
+            s1, s2, s3 = self.solve_sd(
+                metric=metric, filter=filter, weight=50, solver=solver
             )
-            tuned_weight = weights[best_ix]
+            rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
+            set_labels = list(set(rounded_s1))
+            if len(set_labels) == 1:
+                tuned_weight = 50
+                best_ix = None
+                test_r = None
+                train_r = None
+                weights = None
+                trend_costs = None
+            else:
+                # changes are present, optimize the weight with holdout
+                weights = np.logspace(1, 3, 9)
+                test_r, train_r, best_ix, trend_costs = self.optimize_weight(
+                    metric, filter, weights, solver=solver
+                )
+                tuned_weight = weights[best_ix]
+                s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
         else:
             tuned_weight = weight
             best_ix = None
             test_r = None
             train_r = None
             weights = None
-            changes_detected = None
-        # change detector, seasonal term, linear term
-        s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
+            trend_costs = None
+            s1, s2, s3 = self.solve_sd(metric, filter, weight, solver=solver)
+
         # Get capacity assignments (label each day)
         # rounding buckets aligned to first value of component, bin widths of 0.05
         rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
@@ -80,6 +99,7 @@ class CapacityChange:
         self.weight_vals = weights
         self.holdout_error = test_r
         self.train_error = train_r
+        self.trend_costs = trend_costs
 
     def solve_sd(
         self, metric, filter, weight, w3=1, w4=1e1, solver=None, verbose=False
@@ -106,6 +126,7 @@ class CapacityChange:
         # initialize results objects
         train_r = np.zeros_like(weights)
         test_r = np.zeros_like(weights)
+        trend_costs = np.zeros_like(weights)
         # iterate over possible values of weight parameter
         for i, v in enumerate(weights):
             s1, s2, s3 = self.solve_sd(
@@ -115,50 +136,14 @@ class CapacityChange:
             # collect results
             train_r[i] = np.average(np.abs((y - s1 - s2 - s3)[train]))
             test_r[i] = np.average(np.abs((y - s1 - s2 - s3)[test]))
-        # Precheck: Determine if changes are present. We observe the two conditions indicate a change:
-        # 1) there is a significant difference between the best and worst holdout error (otherwise that part of the
-        # model is unimportant).
-        # 2) Forcing the component to turn off (high weight) results in worse holdout error than including the component
-        # with no regularization (low weight).
-        holdout_metric = (np.max(test_r) - np.min(test_r)) / np.average(test_r)
-        if holdout_metric > 0.2 and test_r[-1] > test_r[0]:
-            changes_detected = True
-        else:
-            changes_detected = False
-
-        if not changes_detected:
-            # use largest weight
-            best_ix = np.arange(len(weights))[-1]
-        else:
-            # Select best weight as the largest weight that doesn't increase the test error by more than the threshold
-            # The basic assumption here is that if the test error jumps up sharply when the weight is increased to the
-            # point that the piecewise constant term turns off. We make this assumption because we believe a change
-            # has been detected.
-            min_error_ix = np.argmin(test_r)
-            try:
-                # Try to find the 'large jump' by identifying positive outliers via the interquartile range outlier test
-                test_err_diffs = np.diff(test_r)
-                upper_quartile = np.percentile(test_err_diffs, 75)
-                lower_quartile = np.percentile(test_err_diffs, 25)
-                iqr = (upper_quartile - lower_quartile) * 1.5
-                holdout_increase_threshold = upper_quartile + iqr
-                best_ix = np.where(
-                    np.logical_and(
-                        test_err_diffs > holdout_increase_threshold,
-                        np.arange(len(test_err_diffs)) >= min_error_ix,
-                    )
-                )[0][0]
-            except IndexError:
-                # no differences were above the threshold. try another approach.
-                # find lowest holdout value
-                min_test_err = np.min(test_r)
-                max_test_err = np.max(test_r)
-                # bound is 2% of the test error range, or 2% of the min value, whichever is larger
-                bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
-                cond = test_r <= min_test_err + bound
-                ixs = np.arange(len(weights))
-                best_ix = np.max(ixs[cond])
-        return test_r, train_r, best_ix
+            beta = np.mean(np.diff(s3))
+            trend_cost = 1e1 * len(metric) * beta**2
+            trend_costs[i] = trend_cost
+        max_r = np.max(test_r)
+        min_r = np.min(test_r)
+        scaled_r = (test_r - min_r) / (max_r - min_r)
+        best_ix = np.where(scaled_r <= 0.5)[0][-1]
+        return test_r, train_r, best_ix, trend_costs
 
 
 def custom_round(x, base=0.05):
