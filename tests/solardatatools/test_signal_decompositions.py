@@ -482,10 +482,10 @@ class TestSignalDecompositions(unittest.TestCase):
         self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
 
     ###################
-    # l1_l1d1_l2d2p365
+    # l1_pwc_smoothper_trend
     ###################
 
-    def test_l1_l1d1_l2d2p365_default(self):
+    def test_l1_pwc_smoothper_trend_default(self):
         """Test with default args"""
 
         # Load input and output data
@@ -516,15 +516,11 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output[f"expected_obj_val_365"]
 
         # Run test with default args
-        actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_l1d1_l2d2p365(
-            signal,
-            w1=5e0,
-            sum_card=True,
-            solver="CLARABEL",
-            return_all=True,
+        actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_pwc_smoothper_trend(
+            signal, w2=5e0, solver="CLARABEL", return_all=True
         )
 
-        actual_obj_val = actual_problem.objective_value
+        actual_obj_val = actual_problem.objective.value
 
         mae_s_hat = mae(actual_s_hat, expected_s_hat)
         mae_s_seas = mae(actual_s_seas, expected_s_seas)
