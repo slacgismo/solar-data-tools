@@ -243,7 +243,7 @@ def _cvx_l1_pwc_smoothper_trend(
             var_dict["x2"].value,
             var_dict["x3"].value,
             var_dict["x4"].value,
-            problem.value,
+            problem,
         )
 
 
