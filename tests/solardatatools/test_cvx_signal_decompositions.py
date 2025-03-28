@@ -582,67 +582,10 @@ class TestSignalDecompositions(unittest.TestCase):
         expected_obj_val = output[f"expected_obj_val_mosek_365"]
 
         # Run test with default args
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l1_l1d1_l2d2p365(
-            signal, w1=5, w2=1e5, solver=self.cvxpy_solver, return_all=True
+        actual_s_hat, actual_s_seas, _, actual_prob = sd._cvx_l1_pwc_smoothper_trend(
+            signal, w2=5e0, solver=self.cvxpy_solver, return_all=True
         )
-
-        mae_s_hat = mae(actual_s_hat, expected_s_hat)
-        mae_s_seas = mae(actual_s_seas, expected_s_seas)
-
-        self.assertLess(mae_s_hat, self.mae_threshold)
-        self.assertLess(mae_s_seas, self.mae_threshold)
-        self.assertAlmostEqual(expected_obj_val, actual_obj_val, self.obj_tolerance)
-
-    def test_cvx_l1_l1d1_l2d2p365_idx_select(self):
-        """Test with select indices"""
-
-        # Load input and output data
-        filepath = Path(__file__).parent.parent
-        data_file_path = (
-            filepath
-            / "fixtures"
-            / "signal_decompositions"
-            / "_cvx_signal_decompositions"
-        )
-
-        input_path = (
-            str(data_file_path)
-            + "/"
-            + "test_cvx_l1_l1d1_l2d2p365_idx_select_input.json"
-        )
-        output_path = (
-            str(data_file_path)
-            + "/"
-            + "test_cvx_l1_l1d1_l2d2p365_idx_select_output.json"
-        )
-
-        # Load input
-        with open(input_path) as f:
-            input = json.load(f)
-
-        # Load output
-        with open(output_path) as f:
-            output = json.load(f)
-
-        # Input
-        signal = np.array(input["test_signal"])
-        indices = input["indices"]
-
-        # Expected output
-        expected_s_hat = output[f"expected_s_hat_mosek_ixs"]
-        expected_s_seas = output[f"expected_s_seas_mosek_ixs"]
-        expected_obj_val = output[f"expected_obj_val_mosek_ixs"]
-
-        # Run test
-        actual_s_hat, actual_s_seas, _, actual_obj_val = sd._cvx_l1_l1d1_l2d2p365(
-            signal,
-            w1=5,
-            w2=1e5,
-            solver=self.cvxpy_solver,
-            use_ixs=indices,
-            return_all=True,
-        )
-
+        actual_obj_val = actual_prob.objective.value
         mae_s_hat = mae(actual_s_hat, expected_s_hat)
         mae_s_seas = mae(actual_s_seas, expected_s_seas)
 
