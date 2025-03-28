@@ -583,7 +583,7 @@ class TestSignalDecompositions(unittest.TestCase):
 
         # Run test with default args
         actual_s_hat, actual_s_seas, _, actual_prob = sd._cvx_l1_pwc_smoothper_trend(
-            signal, w2=5e0, solver=self.cvxpy_solver, return_all=True
+            signal, w2=5e0, w3=1e-1, solver=self.cvxpy_solver, return_all=True
         )
         actual_obj_val = actual_prob.objective.value
         mae_s_hat = mae(actual_s_hat, expected_s_hat)
