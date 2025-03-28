@@ -15,8 +15,7 @@ power production data sets. The algorithm works as follows:
 """
 
 import numpy as np
-from solardatatools.signal_decompositions import l1_l1d1_l2d2p365
-from solardatatools.utilities import segment_diffs, make_pooled_dsig
+from solardatatools.signal_decompositions import l1_pwc_smoothper_trend
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
@@ -118,12 +117,10 @@ class CapacityChange:
     def solve_sd(
         self, metric, filter, weight, w3=1, w4=1e1, solver=None, verbose=False
     ):
-        # weight_length_scale = (len(metric) / 2000) ** 2
-        weight_length_scale = 1
-        s1, s2, s3 = l1_l1d1_l2d2p365(
+        s1, s2, s3 = l1_pwc_smoothper_trend(
             metric,
             use_ixs=filter,
-            w2=weight * weight_length_scale,
+            w2=weight,
             w3=w3,
             w4=w4,
             solver=solver,
@@ -183,8 +180,14 @@ class CapacityChange:
             best_ix = np.where(candidate_ixs)[0][0]
         return test_r, train_r, best_ix, jmp_counts, min_jumps
 
-    def plot_weight_optimization(self):
-        _fig, _ax = plt.subplots(nrows=3, sharex=True, figsize=(10, 5))
+    def plot_weight_optimization(self, figsize=(10, 5)):
+        """
+        A function for plotting plotting the three weight selection criteria
+
+        :param figsize: a 2-tuple of the figure size to plot
+        :return: matplotlib figure
+        """
+        _fig, _ax = plt.subplots(nrows=3, sharex=True, figsize=figsize)
         _ax[0].plot(
             self.weight_vals,
             self.holdout_error / np.max(self.holdout_error),

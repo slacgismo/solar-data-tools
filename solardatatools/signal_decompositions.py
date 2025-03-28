@@ -28,20 +28,15 @@ SDT algorithms. The defined signal decompositions are:
    - constrained to have first val at 0 and last val at 1
 
 """
-import sys
-import numpy as np
-import cvxpy as cvx
-from spcqe import make_basis_matrix, make_regularization_matrix
 
 from solardatatools._osd_signal_decompositions import (
     _osd_l2_l1d1_l2d2p365,
-    _osd_l1_l1d1_l2d2p365,
     _osd_tl1_l2d2p365,
     _osd_l2_l1d2_constrained,
 )
 from solardatatools._cvx_signal_decompositions import (
     _cvx_l2_l1d1_l2d2p365,
-    _cvx_l1_l1d1_l2d2p365,
+    _cvx_l1_pwc_smoothper_trend,
     _cvx_tl1_l2d2p365,
     _cvx_l2_l1d2_constrained,
 )
@@ -79,8 +74,7 @@ def l2_l1d1_l2d2p365(
         seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param sum_card: Boolean for using the nonconvex formulation using the cardinality penalty,
         Supported only using OSD with the QSS solver.
     :param transition_locs: List of indices where transitions are located. Only used in CVXPY problems.
@@ -148,7 +142,7 @@ def tl1_l2d2p365(
     solardatatools/sunrise_sunset.py
 
 
-    This is a convex problem and the default solver across SDT is OSQP.
+    This is a convex problem and the default solver across SDT is CLARABEL.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
         the signal of interest
@@ -162,8 +156,7 @@ def tl1_l2d2p365(
         seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param verbose: Sets verbosity
     :return: A tuple with three 1d numpy arrays containing the three signal component estimates
     """
@@ -192,7 +185,7 @@ def tl1_l2d2p365(
     return res
 
 
-def l1_l1d1_l2d2p365(
+def l1_pwc_smoothper_trend(
     signal,
     use_ixs=None,
     w2=2e1,
@@ -216,69 +209,21 @@ def l1_l1d1_l2d2p365(
     :param w2: Weight on the piecewise constant component
     :param w3: Weight on the smooth, periodic component
     :param w4: Weight on the slope of the trend term (discourages large trends)
-    :param solver: Solver to use for the decomposition. Standard cvxpy solvers are supported
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param verbose: Sets verbosity
     :return: A tuple with three 1d numpy arrays containing the three non-noise signal component estimates
     """
-    if solver is not None:
-        if solver.upper() not in ["MOSEK", "CLARABEL", "OSQP"]:
-            solver = "CLARABEL"
-    masked_sig = np.copy(signal)
-    if use_ixs is not None:
-        masked_sig[~use_ixs] = np.nan
-    problem, tv_weights_param = make_l1_l1d1_l2d2p365_problem(masked_sig, w2, w3, w4)
-    problem.solve(solver=solver, verbose=verbose)
-    var_dict = {v.name(): v for v in problem.variables()}
-    eps = 0.1
-    tv_weights = 1 / (eps + np.abs(np.diff(var_dict["x2"].value, n=1)))
-    tv_weights_param.value = tv_weights
-    problem.solve(solver=solver, verbose=verbose)
-    var_dict = {v.name(): v for v in problem.variables()}
-    if not return_all:
-        return var_dict["x2"].value, var_dict["x3"].value, var_dict["x4"].value
-    else:
-        return var_dict["x2"].value, var_dict["x3"].value, var_dict["x4"].value, problem
-
-
-def make_l1_l1d1_l2d2p365_problem(metric, w2, w3, w4, tv_weights=None):
-    use_set = ~np.isnan(metric)
-    # noise term
-    x1 = cvx.Variable(len(metric), name="x1")
-    # piecewise constatn term
-    x2 = cvx.Variable(len(metric), name="x2")
-    # Smooth, yearly periodic term
-    x3 = cvx.Variable(len(metric), name="x3")
-    # trend term
-    x4 = cvx.Variable(len(metric), name="x4")
-    phi1 = cvx.mean(cvx.abs(x1))
-    if tv_weights is None:
-        tv_weights = np.ones(len(metric) - 1)
-    tv_weights_param = cvx.Parameter(
-        shape=len(tv_weights), value=tv_weights, nonneg=True
+    res = _cvx_l1_pwc_smoothper_trend(
+        signal=signal,
+        use_ixs=use_ixs,
+        w2=w2,
+        w3=w3,
+        w4=w4,
+        solver=solver,
+        verbose=verbose,
+        return_all=return_all,
     )
-    phi2 = w2 * cvx.mean(cvx.abs(cvx.multiply(tv_weights_param, cvx.diff(x2, k=1))))
-    B = make_basis_matrix(num_harmonics=[6], length=len(metric), periods=[365.2425])
-    W = make_regularization_matrix(
-        num_harmonics=[6], weight=w3, periods=[365.2425]
-    ).todense()
-    # remove bias term
-    B = B[:, 1:]
-    W = W[1:, 1:]
-    z3 = cvx.Variable(B.shape[1], name="z3")
-    phi3 = cvx.sum_squares(W @ z3)
-    beta = cvx.Variable(name="beta")
-    phi4 = w4 * len(metric) * beta**2
-    cost = phi1 + phi2 + phi3 + phi4
-    constraints = [
-        metric[use_set] == (x1 + x2 + x3 + x4)[use_set],
-        x3 == B @ z3,
-        cvx.diff(x4) == beta,
-        beta * 365 <= 0.05,
-        beta * 365 >= -0.2,
-        x4[0] == 0,
-    ]
-    problem = cvx.Problem(cvx.Minimize(cost), constraints)
-    return problem, tv_weights_param
+    return res
 
 
 def l2_l1d2_constrained(
@@ -287,15 +232,14 @@ def l2_l1d2_constrained(
     """
     Used in solardatatools/algorithms/clipping.py
 
-    This is a convex problem and the default solver across SDT is OSQP.
+    This is a convex problem and the default solver across SDT is CLARABEL.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
         the signal of interest
     :param w0: Weight on the residual component
     :param w1: The regularization parameter on l1d2 component
     :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param verbose: Sets verbosity
     :return: A tuple with returning the signal, the l1d2 component estimate, and the weight
     """
