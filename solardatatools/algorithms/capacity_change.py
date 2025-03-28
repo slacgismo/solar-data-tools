@@ -18,6 +18,7 @@ import numpy as np
 from solardatatools.signal_decompositions import l1_l1d1_l2d2p365
 from solardatatools.utilities import segment_diffs, make_pooled_dsig
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 
 class CapacityChange:
@@ -32,7 +33,8 @@ class CapacityChange:
         self.weight_vals = None
         self.holdout_error = None
         self.test_error = None
-        self.trend_costs = None
+        self.jmp_counts = None
+        self.min_jumps = None
 
     def run(
         self,
@@ -46,41 +48,52 @@ class CapacityChange:
         if metric is None:
             metric = np.nanquantile(data, q=quantile, axis=0)
             metric_temp = np.ones_like(metric) * np.nan
-            # metric /= np.max(metric)
-            metric[~np.isnan(metric_temp)] = np.log(metric_temp[~np.isnan(metric_temp)])
+            slct = np.logical_and(~np.isnan(metric), metric > 0)
+            metric_temp[slct] = np.log(metric[slct])
+            metric = metric_temp
         if filter is None:
             filter = ~np.isnan(metric)
         else:
             filter = np.logical_and(filter, ~np.isnan(metric))
         if weight is None:
             # initial check if changes are present
-            s1, s2, s3 = self.solve_sd(
-                metric=metric, filter=filter, weight=50, solver=solver
+            # initial_weight = 50
+            # initial_weight = .1
+            # s1, s2, s3 = self.solve_sd(
+            #     metric=metric, filter=filter, weight=initial_weight, solver=solver
+            # )
+            # rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
+            # set_labels = list(set(rounded_s1))
+            # if len(set_labels) == 1:
+            #     tuned_weight = initial_weight
+            #     best_ix = None
+            #     test_r = None
+            #     train_r = None
+            #     weights = None
+            #     jmp_counts = None
+            # else:
+            # changes are present, optimize the weight with holdout
+            # weights = np.logspace(1, 3, 9)
+            weights = np.logspace(-0.5, 2.5, 13)
+            test_r, train_r, best_ix, jmp_counts, min_jumps = self.optimize_weight(
+                metric, filter, weights, solver=solver
             )
-            rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
-            set_labels = list(set(rounded_s1))
-            if len(set_labels) == 1:
-                tuned_weight = 50
-                best_ix = None
-                test_r = None
-                train_r = None
-                weights = None
-                trend_costs = None
-            else:
-                # changes are present, optimize the weight with holdout
-                weights = np.logspace(1, 3, 9)
-                test_r, train_r, best_ix, trend_costs = self.optimize_weight(
-                    metric, filter, weights, solver=solver
-                )
-                tuned_weight = weights[best_ix]
-                s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
+            tuned_weight = weights[best_ix]
+            s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
+            num_jumps = np.sum(~np.isclose(np.diff(s1), 0))
+            num_years = np.max([1, len(metric) / 365])
+            # if num_jumps > num_years * 4:
+            #     tuned_weight = weights[-1]
+            #     best_ix = len(weights) - 1
+            #     s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
         else:
             tuned_weight = weight
             best_ix = None
             test_r = None
             train_r = None
             weights = None
-            trend_costs = None
+            jmp_counts = None
+            min_jumps = None
             s1, s2, s3 = self.solve_sd(metric, filter, weight, solver=solver)
 
         # Get capacity assignments (label each day)
@@ -99,15 +112,18 @@ class CapacityChange:
         self.weight_vals = weights
         self.holdout_error = test_r
         self.train_error = train_r
-        self.trend_costs = trend_costs
+        self.jmp_counts = jmp_counts
+        self.min_jumps = min_jumps
 
     def solve_sd(
         self, metric, filter, weight, w3=1, w4=1e1, solver=None, verbose=False
     ):
+        # weight_length_scale = (len(metric) / 2000) ** 2
+        weight_length_scale = 1
         s1, s2, s3 = l1_l1d1_l2d2p365(
             metric,
             use_ixs=filter,
-            w2=weight,
+            w2=weight * weight_length_scale,
             w3=w3,
             w4=w4,
             solver=solver,
@@ -121,12 +137,15 @@ class CapacityChange:
         train_ixs, test_ixs = train_test_split(ixs, train_size=0.7)
         train = np.zeros(len(metric), dtype=bool)
         test = np.zeros(len(metric), dtype=bool)
-        train[train_ixs] = True
-        test[test_ixs] = True
+        # train[train_ixs] = True
+        # test[test_ixs] = True
+        train[filter] = True
+        test[filter] = True
         # initialize results objects
         train_r = np.zeros_like(weights)
         test_r = np.zeros_like(weights)
-        trend_costs = np.zeros_like(weights)
+        jmp_counts = np.zeros_like(weights)
+        min_jumps = np.zeros_like(weights)
         # iterate over possible values of weight parameter
         for i, v in enumerate(weights):
             s1, s2, s3 = self.solve_sd(
@@ -136,22 +155,63 @@ class CapacityChange:
             # collect results
             train_r[i] = np.average(np.abs((y - s1 - s2 - s3)[train]))
             test_r[i] = np.average(np.abs((y - s1 - s2 - s3)[test]))
-            beta = np.mean(np.diff(s3))
-            trend_cost = 1e1 * len(metric) * beta**2
-            trend_costs[i] = trend_cost
+            # beta = np.mean(np.diff(s3))
+            # jmpc = np.max(np.convolve(~np.isclose(np.diff(s1), 0), np.ones(365), mode='same'))
+            nonzero = ~np.isclose(np.diff(s1), 0, atol=1e-3)
+            jmpc = np.sum(nonzero)
+            jmp_counts[i] = jmpc
+            try:
+                min_jumps[i] = np.min(np.abs(np.diff(s1)[nonzero]))
+            except ValueError:
+                min_jumps[i] = 0
         # Procedure to select weight:
-        # When capacity changes are present, you get lower holdout error by allowing jumps, so the largest errors are
-        # with the highest weights. We max/min scale the data, and then select the largest weight that reduces the holdout
-        # error by at least half. In short we don't minimize the holdout error, but select the largest weight that gives
-        # "significant improvement" over the model with no jumps. Reducing the weight further tends to introduce unwanted
-        # changes in the piecwise constant term, and it only makes marginal improvements in the holdout error (i.e the slope
-        # error versus weight curve is flatter at lower weights and steeper at higher weights before "turning off" the
-        # component).
-        max_r = np.max(test_r)
-        min_r = np.min(test_r)
-        scaled_r = (test_r - min_r) / (max_r - min_r)
-        best_ix = np.where(scaled_r <= 0.5)[0][-1]
-        return test_r, train_r, best_ix, trend_costs
+        # We are looking for weights that result in fits that: (1) improve the fit accuracy over not including the pwc term,
+        # (2) result in no more than 5 total jumps, and (3) don't produce small changes in the pwc term. We check these
+        # conditions below. If no fits qualify, the data does not have capacity changes. If multiple fits quality, we take
+        # the smallest qualifying weight. Of the three, the third condition is the most important. Fits with small jumps indicate
+        # "overfitting" to the data, i.e. the weight is too small.
+        model_fit_improvement = train_r / np.max(train_r)
+        cond1 = (
+            model_fit_improvement <= 0.98
+        )  # 2% minimum improvement over fit with no piecewise constant term
+        cond2 = jmp_counts < 5  # no more than 5 jumps in the data set
+        cond3 = min_jumps >= 0.075  # the smallest allowable nonzero jump is 0.075
+        candidate_ixs = np.all([cond1, cond2, cond3], axis=0)
+        if np.sum(candidate_ixs) == 0:
+            best_ix = len(weights) - 1
+        else:
+            best_ix = np.where(candidate_ixs)[0][0]
+        return test_r, train_r, best_ix, jmp_counts, min_jumps
+
+    def plot_weight_optimization(self):
+        _fig, _ax = plt.subplots(nrows=3, sharex=True, figsize=(10, 5))
+        _ax[0].plot(
+            self.weight_vals,
+            self.holdout_error / np.max(self.holdout_error),
+            marker=".",
+        )
+        _ax[0].axhline(0.98, color="red", ls="--")
+        _ax[0].set_xscale("log")
+        _ax[0].set_ylabel("fit improvement")
+        _ax[1].plot(
+            self.weight_vals,
+            self.jmp_counts,
+            marker=".",
+        )
+        _ax[1].axhline(5, color="red", ls="--")
+        _ax[1].set_yscale("log")
+        _ax[1].set_ylabel("jump count")
+        _ax[2].plot(
+            self.weight_vals,
+            self.min_jumps,
+            marker=".",
+        )
+        _ax[2].axhline(0.075, color="red", ls="--")
+        _ax[2].set_ylabel("min nonzero jump")
+        _ax[-1].set_xlabel("weight")
+        for _i in range(3):
+            _ax[_i].axvline(self.best_weight, color="orange", ls=":")
+        return _fig
 
 
 def custom_round(x, base=0.05):
