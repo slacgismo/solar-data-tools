@@ -250,13 +250,13 @@ def make_l1_l1d1_l2d2p365_problem(metric, w2, w3, w4, tv_weights=None):
     x3 = cvx.Variable(len(metric), name="x3")
     # trend term
     x4 = cvx.Variable(len(metric), name="x4")
-    phi1 = cvx.sum(cvx.abs(x1))
+    phi1 = cvx.mean(cvx.abs(x1))
     if tv_weights is None:
         tv_weights = np.ones(len(metric) - 1)
     tv_weights_param = cvx.Parameter(
         shape=len(tv_weights), value=tv_weights, nonneg=True
     )
-    phi2 = w2 * cvx.sum(cvx.abs(cvx.multiply(tv_weights_param, cvx.diff(x2, k=1))))
+    phi2 = w2 * cvx.mean(cvx.abs(cvx.multiply(tv_weights_param, cvx.diff(x2, k=1))))
     B = make_basis_matrix(num_harmonics=[6], length=len(metric), periods=[365.2425])
     W = make_regularization_matrix(
         num_harmonics=[6], weight=w3, periods=[365.2425]
@@ -273,7 +273,8 @@ def make_l1_l1d1_l2d2p365_problem(metric, w2, w3, w4, tv_weights=None):
         metric[use_set] == (x1 + x2 + x3 + x4)[use_set],
         x3 == B @ z3,
         cvx.diff(x4) == beta,
-        phi4 <= 0.08,
+        beta * 365 <= 0.05,
+        beta * 365 >= -0.2,
         x4[0] == 0,
     ]
     problem = cvx.Problem(cvx.Minimize(cost), constraints)
