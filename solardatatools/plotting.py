@@ -74,3 +74,62 @@ def plot_2d(
         return fig
     else:
         return
+
+def plot_bundt_cake(
+    data,
+    figsize=(12, 8),
+    units="kW",
+    inner_radius=1.0,
+    slice_thickness=100,
+    elev=45,
+    azim=30,
+    zoom=1.0,
+    ax=None,
+    cmap="coolwarm",
+):
+    """
+    A function for plotting solar power data in a 3D “Bundt cake” style.
+
+    :param data: A 2D NumPy array of shape (365, N), where 365 is the number of days
+    :param figsize: Size of the figure (width, height)
+    :param units: Label for the z-axis
+    :param inner_radius: Inner radius for the first slice
+    :param slice_thickness: Total radial extent of all slices combined
+    :param elev: Elevation angle for the 3D view
+    :param azim: Azimuth angle for the 3D view
+    :param zoom: Controls the box aspect ratio in x and y directions
+    :param ax: Optional Matplotlib Axes object (3D projection). If None, a new figure is created
+    :param cmap: Colormap used for the surface
+    :return: Matplotlib Figure object
+    """
+    if data is None or data.shape[0] != 365:
+        return
+
+    with sns.axes_style("white"):
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111, projection="3d")
+        else:
+            fig = ax.get_figure()
+
+        num_days, slices_per_day = data.shape
+        theta_days = np.linspace(0, 2 * np.pi, num_days, endpoint=False)
+        theta_slices = np.linspace(0, 2 * np.pi, slices_per_day, endpoint=False)
+        theta_grid, slice_grid = np.meshgrid(theta_days, theta_slices, indexing="xy")
+
+        x = (inner_radius + slice_grid * (slice_thickness / slices_per_day)) * np.cos(theta_grid)
+        y = (inner_radius + slice_grid * (slice_thickness / slices_per_day)) * np.sin(theta_grid)
+        z = data.T
+
+        ax.plot_surface(x, y, z, cmap=cmap, edgecolor="none")
+        ax.grid(False)
+        ax.set_facecolor("white")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zlabel(units)
+        ax.view_init(elev=elev, azim=azim)
+        ax.set_box_aspect([zoom, zoom, 1])
+        plt.tight_layout()
+        return fig
+
+
