@@ -14,9 +14,11 @@ class LocalFiles(DataPlug):
     the source. The main requirement is to keep the ``Dataplug.get_data`` method,
     and make sure the args and returns as defined here.
     """
-    def __init__(self, path_to_files, ext=".csv"):
+
+    def __init__(self, path_to_files, ext=".csv", make_time_series=False):
         self.path = path_to_files
         self.ext = ext
+        self.make_time_series = make_time_series
 
     def _read_file(self, filename):
         """
@@ -49,6 +51,7 @@ class LocalFiles(DataPlug):
             a power column
         """
         self._read_file(key[0])
-        self._clean_data()
+        if self.make_time_series:
+            self._clean_data()
 
         return self.df
