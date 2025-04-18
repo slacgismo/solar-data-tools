@@ -28,7 +28,7 @@ class LocalFiles(DataPlug):
         """
         file = self.path + filename + self.ext
         if self.ext == ".csv":
-            self.df = pd.read_csv(file)
+            self.df = pd.read_csv(file, index_col=0, parse_dates=[0])
         else:
             raise "File type not supported."
 
