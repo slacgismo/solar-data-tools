@@ -19,6 +19,10 @@ each component has a README.md with more information. See the dataplugs README [
 
 ## Installation
 
+>[!NOTE]
+> The SDT Dask tool only supports Python versions 3.10 to 3.12. If you'd like to use our provided Docker image to run on the cloud,
+> your local environment needs to have Python 3.12 installed.
+
 To install the development version of this tool, in a fresh Python environment, run from the root of the project:
 
 ```bash
