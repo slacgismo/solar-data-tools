@@ -2324,7 +2324,7 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             print(
                 "Please run the time shift analysis first by setting 'fix_shifts=True' when "
-                "running the pipeline, e.g. 'DataHandler.run_pipeline(fix_shifts=True)'."
+                "running the pipeline, e.g., 'DataHandler.run_pipeline(fix_shifts=True)'."
             )
 
     def plot_circ_dist(self, flag="good", num_bins=12 * 4, figsize=(8, 8)):
