@@ -114,5 +114,9 @@ html_theme_options = {
     "github_url": "https://github.com/slacgismo/solar-data-tools",
     "show_toc_level": 1,
     "footer_start": ["copyright", "sphinx-version"],
-    "navigation_with_keys" : False
+    "navigation_with_keys" : False,
+    "switcher": {
+        "json_url": "https://raw.githubusercontent.com/slacgismo/solar-data-tools/main/docs/source/_static/solardatatools.json",
+        "version_match": release
+    }
 }
