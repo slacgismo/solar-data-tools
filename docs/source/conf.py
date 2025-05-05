@@ -109,14 +109,10 @@ html_theme_options = {
     },
     "external_links": [],
     "navbar_align": "left",
-    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "show_version_warning_banner": True,
     "github_url": "https://github.com/slacgismo/solar-data-tools",
     "show_toc_level": 1,
     "footer_start": ["copyright", "sphinx-version"],
-    "navigation_with_keys" : False,
-    "switcher": {
-        "json_url": "https://raw.githubusercontent.com/slacgismo/solar-data-tools/main/docs/source/_static/solardatatools.json",
-        "version_match": release
-    }
+    "navigation_with_keys" : False
 }
