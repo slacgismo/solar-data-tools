@@ -1,4 +1,3 @@
-prune statistical-clear-sky/fixtures
 prune notebooks
 prune docs
 prune tests
