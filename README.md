@@ -17,6 +17,22 @@
 
 <table  align="center" >
 <tr>
+  <td>Python Versions</td>
+  <td>
+    <a href="https://www.python.org/downloads/release/python-3100/">
+        <img src="https://img.shields.io/badge/python-3.10-blue.svg" alt="latest release" />
+    </a>
+    <a href="https://www.python.org/downloads/release/python-3110/">
+        <img src="https://img.shields.io/badge/python-3.11-blue.svg" />
+    </a>
+    <a href="https://www.python.org/downloads/release/python-3120/">
+        <img src="https://img.shields.io/badge/python-3.12-blue.svg" />
+    </a>
+    <a href="https://www.python.org/downloads/release/python-3130/">
+        <img src="https://img.shields.io/badge/python-3.13-blue.svg" />
+    </a>
+</tr>
+<tr>
   <td>Latest Release</td>
   <td>
     <a href="https://pypi.org/project/solar-data-tools/">
