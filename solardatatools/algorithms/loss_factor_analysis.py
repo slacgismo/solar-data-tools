@@ -587,7 +587,7 @@ def enumerate_paths_full(origin, destination, path=None):
         np.asarray(destination, dtype=int) - np.asarray(origin, dtype=int) >= 0
     )
     if not correct_ordering:
-        raise Exception("destination must be larger than origin in all dimensions")
+        raise ValueError("destination must be larger than origin in all dimensions")
     if path is None:
         path = []
     paths = []

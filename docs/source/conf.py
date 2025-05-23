@@ -109,7 +109,7 @@ html_theme_options = {
     },
     "external_links": [],
     "navbar_align": "left",
-    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "show_version_warning_banner": True,
     "github_url": "https://github.com/slacgismo/solar-data-tools",
     "show_toc_level": 1,

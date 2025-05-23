@@ -1,4 +1,2 @@
-prune statistical-clear-sky/fixtures
+include docs/source/_static/SDT_v1_secondary_blue_text.png
 prune notebooks
-prune docs
-prune tests
