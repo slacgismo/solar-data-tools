@@ -76,7 +76,7 @@ class LocalClient(ClientPlug):
         """
         self._get_sys_var()
         if self.workers * self.threads > self.cpu_count:
-            raise Exception(
+            raise ValueError(
                 f"workers and threads exceed local resources, {self.cpu_count} cores present"
             )
         if self.workers * self.memory > self.sys_memory:

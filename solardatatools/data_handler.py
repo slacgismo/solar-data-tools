@@ -123,7 +123,7 @@ class DataHandler:
                 else:
                     e = "Data frame must have a DatetimeIndex or"
                     e += "the user must set the datetime_col kwarg."
-                    raise Exception(e)
+                    raise ValueError(e)
             self.tz_info = get_index_timezone(self.data_frame_raw)
             self.data_frame_raw = remove_index_timezone(self.data_frame_raw)
             if no_future_dates:
