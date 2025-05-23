@@ -6,5 +6,5 @@ from warnings import warn
 warn(
     "The Statistical Clear Sky package is deprecated. Starting in Solar Data Tools 2.0, it will be removed.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )

@@ -21,7 +21,7 @@ def create_partition(partition):
     script_name = partition.script_name
     estimation = partition.estimation
     scripts_location = partition.scripts_location
-    local_script = scripts_location + 'modules/local_partition_script.py'
+    local_script = scripts_location + "modules/local_partition_script.py"
     conda_env = partition.conda_environment
     instance = partition.public_ip_address
     ssh_username = partition.aws_username
@@ -44,49 +44,72 @@ def create_partition(partition):
     commands = [grep_conda]
     output = remote_execute(ssh_username, instance, ssh_key_file, commands)
     conda_location = output[grep_conda][0]
-    conda_location = conda_location.decode('utf-8')
+    conda_location = conda_location.decode("utf-8")
     i = conda_location.find("('")
     j = conda_location.find("bin", i + 2)
-    conda_location = conda_location[i + 2: j]
-    python_command = conda_location + 'envs/' + conda_env + '/bin/python'
+    conda_location = conda_location[i + 2 : j]
+    python_command = conda_location + "envs/" + conda_env + "/bin/python"
 
     # delete existing remote partitions
-    commands = ['rm estimation* -rf']
+    commands = ["rm estimation* -rf"]
     output = remote_execute(ssh_username, instance, ssh_key_file, commands)
 
     # check for previously created remote folders
-    commands = ['ls' + ' ' + local_working_folder]
+    commands = ["ls" + " " + local_working_folder]
     output = remote_execute(ssh_username, instance, ssh_key_file, commands)
 
     # create remote partition if does not exist
-    if str(output[commands[0]][1]).find('No such file or directory') != -1:
+    if str(output[commands[0]][1]).find("No such file or directory") != -1:
         # prepare commands to create partition
-        commands = ['rm estimation* -rf',
-                    'mkdir' + ' ' + local_working_folder,
-                    python_command + ' ' + local_script + ' '
-                    + str(start_index) + ' '
-                    + str(end_index) + ' '
-                    + script_name + ' '
-                    + estimation + ' '
-                    + global_input_file + ' '
-                    + local_working_folder + ' '
-                    + local_input_file + ' '
-                    + local_output_file + ' '
-                    + power_column_id + ' '
-                    + str(convert_to_ts) + ' '
-                    + s3_location + ' '
-                    + n_files + ' '
-                    + str(file_label) + ' '
-                    + str(fix_time_shifts) + ' '
-                    + str(time_zone_correction) + ' '
-                    + str(check_json) + ' '
-                    + str(gmt_offset) + ' '
-                    + data_type + ' '
-                    + supplementary_file + ' '
-                    + python_command
-                    ]
+        commands = [
+            "rm estimation* -rf",
+            "mkdir" + " " + local_working_folder,
+            python_command
+            + " "
+            + local_script
+            + " "
+            + str(start_index)
+            + " "
+            + str(end_index)
+            + " "
+            + script_name
+            + " "
+            + estimation
+            + " "
+            + global_input_file
+            + " "
+            + local_working_folder
+            + " "
+            + local_input_file
+            + " "
+            + local_output_file
+            + " "
+            + power_column_id
+            + " "
+            + str(convert_to_ts)
+            + " "
+            + s3_location
+            + " "
+            + n_files
+            + " "
+            + str(file_label)
+            + " "
+            + str(fix_time_shifts)
+            + " "
+            + str(time_zone_correction)
+            + " "
+            + str(check_json)
+            + " "
+            + str(gmt_offset)
+            + " "
+            + data_type
+            + " "
+            + supplementary_file
+            + " "
+            + python_command,
+        ]
     else:
         # if remote partition exist from previous run, resume run
-        commands = [local_working_folder + 'run_local_partition.sh']
+        commands = [local_working_folder + "run_local_partition.sh"]
     # execute remote partition script
     remote_execute(ssh_username, instance, ssh_key_file, commands)

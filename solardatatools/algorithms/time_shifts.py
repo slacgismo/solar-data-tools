@@ -1,4 +1,4 @@
-""" Time Shift Algorithm Module
+"""Time Shift Algorithm Module
 
 This module contains the algorithm for detecting time shifts in an unlabeled PV
 power production data sets. These occur because of the local clock on the data
@@ -17,7 +17,6 @@ The algorithm works as follows:
 
 import numpy as np
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 from solardatatools.signal_decompositions import l2_l1d1_l2d2p365
 from solardatatools.utilities import segment_diffs, make_pooled_dsig
@@ -281,7 +280,6 @@ class TimeShift:
         sum_card=False,
         transition_locs=None,
     ):
-
         s1, s2 = l2_l1d1_l2d2p365(
             metric,
             use_ixs=use_ixs,

@@ -1,4 +1,4 @@
-""" Shade Module
+"""Shade Module
 
 This module is for analyzing shade losses in unlabeled power data
 

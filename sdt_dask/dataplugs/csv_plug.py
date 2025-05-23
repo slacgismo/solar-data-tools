@@ -14,6 +14,7 @@ class LocalFiles(DataPlug):
     the source. The main requirement is to keep the ``Dataplug.get_data`` method,
     and make sure the args and returns as defined here.
     """
+
     def __init__(self, path_to_files, ext=".csv"):
         self.path = path_to_files
         self.ext = ext

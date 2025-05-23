@@ -5,6 +5,7 @@ and pre-process the data. The provided class will then estimate  longitude, lati
  'estimate_longitude', 'estimate_latitude' and 'estimate_orientation' methods, respectively. Alternatively, all four
  parameters can be estimated at once using the 'estimate_all' method.
 """
+
 # Standard Imports
 import numpy as np
 
@@ -13,7 +14,6 @@ from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 
 # Module Imports
 from pvsystemprofiler.utilities.equation_of_time import eot_da_rosa, eot_duffie
-from solardatatools.algorithms import SunriseSunset
 from pvsystemprofiler.algorithms.latitude.hours_daylight import calculate_hours_daylight
 from pvsystemprofiler.utilities.hour_angle_equation import calculate_omega
 from pvsystemprofiler.utilities.declination_equation import delta_cooper
@@ -27,9 +27,6 @@ from pvsystemprofiler.algorithms.angle_of_incidence.dynamic_value_functions impo
 )
 from pvsystemprofiler.algorithms.angle_of_incidence.dynamic_value_functions import (
     select_init_values,
-)
-from pvsystemprofiler.algorithms.tilt_azimuth.daytime_threshold_quantile import (
-    filter_data,
 )
 from pvsystemprofiler.utilities.tools import random_initial_values
 from pvsystemprofiler.algorithms.longitude.estimation import estimate_longitude

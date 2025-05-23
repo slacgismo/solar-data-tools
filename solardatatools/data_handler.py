@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Data Handler Module
+"""Data Handler Module
 
 This module contains a class for managing a data processing pipeline
 
@@ -14,7 +14,8 @@ import cvxpy as cvx
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import traceback, sys
+import traceback
+import sys
 from tqdm import tqdm
 from solardatatools.time_axis_manipulation import (
     make_time_series,
@@ -809,17 +810,17 @@ class DataHandler:
 -----------------
 DATA SET REPORT
 -----------------
-length               {report['length']:.2f} years
-capacity estimate    {report['capacity']:.2f} kW
-data sampling        {report['sampling']} minutes
-quality score        {report['quality score']:.2f}
-clearness score      {report['clearness score']:.2f}
-inverter clipping    {report['inverter clipping']}
-clipped fraction     {report['clipped fraction']:.2f}
-capacity changes     {report['capacity change']}
-data quality warning {report['data quality warning']}
-time shift errors    {report['time shift correction']}
-time zone errors     {report['time zone correction'] != 0}
+length               {report["length"]:.2f} years
+capacity estimate    {report["capacity"]:.2f} kW
+data sampling        {report["sampling"]} minutes
+quality score        {report["quality score"]:.2f}
+clearness score      {report["clearness score"]:.2f}
+inverter clipping    {report["inverter clipping"]}
+clipped fraction     {report["clipped fraction"]:.2f}
+capacity changes     {report["capacity change"]}
+data quality warning {report["data quality warning"]}
+time shift errors    {report["time shift correction"]}
+time zone errors     {report["time zone correction"] != 0}
             """
             print(pout)
         if return_values:

@@ -20,5 +20,3 @@ runner.get_result()
 ```
 
 Examples usage of other combinations of provided dataplugs and clients can be found in the [examples](../examples/) directory.
-
- 

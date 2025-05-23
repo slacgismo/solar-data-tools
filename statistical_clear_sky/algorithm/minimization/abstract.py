@@ -4,23 +4,30 @@ This module defines common functionality of minimization problem solution
 Since there is common code for minimization of both L matrix and R matrix,
 the common code is placed in the abstract base class.
 """
+
 from abc import abstractmethod
 import cvxpy as cvx
-import numpy as np
 
-class AbstractMinimization():
+
+class AbstractMinimization:
     """
     Abstract class for minimization that uses the same equation but
     the subclasses fix either L (left) matrix value or R (right) matrix
     value.
     """
 
-    def __init__(self, power_signals_d, rank_k, weights, tau,
-                 non_neg_constraints=True, solver_type='ECOS'):
+    def __init__(
+        self,
+        power_signals_d,
+        rank_k,
+        weights,
+        tau,
+        non_neg_constraints=True,
+        solver_type="ECOS",
+    ):
         self._power_signals_d = power_signals_d
         self._rank_k = rank_k
-        self._weights = cvx.Parameter(shape=len(weights), value=weights,
-                                      nonneg=True)
+        self._weights = cvx.Parameter(shape=len(weights), value=weights, nonneg=True)
         self._tau = tau
         self._non_neg_constraints = non_neg_constraints
         self._solver_type = solver_type
@@ -53,12 +60,17 @@ class AbstractMinimization():
         self._weights.value = weights
 
     def _construct_problem(self, l_cs_value, r_cs_value, beta_value, component_r0):
-        self._define_variables_and_parameters(l_cs_value, r_cs_value, beta_value, component_r0)
-        objective = cvx.Minimize(self._term_f1(self.left_matrix, self.right_matrix)
-                                 + self._term_f2(self.left_matrix, self.right_matrix)
-                                 + self._term_f3(self.left_matrix, self.right_matrix))
-        constraints = self._constraints(self.left_matrix, self.right_matrix, self.beta,
-                                        self.r0)
+        self._define_variables_and_parameters(
+            l_cs_value, r_cs_value, beta_value, component_r0
+        )
+        objective = cvx.Minimize(
+            self._term_f1(self.left_matrix, self.right_matrix)
+            + self._term_f2(self.left_matrix, self.right_matrix)
+            + self._term_f3(self.left_matrix, self.right_matrix)
+        )
+        constraints = self._constraints(
+            self.left_matrix, self.right_matrix, self.beta, self.r0
+        )
         problem = cvx.Problem(objective, constraints)
         self._problem = problem
 
@@ -77,11 +89,13 @@ class AbstractMinimization():
         """
 
         weights_w1 = cvx.diag(self._weights)
-        return cvx.sum((0.5 * cvx.abs(self._power_signals_d
-                        - l_cs_param @ r_cs_param)
-                      + (self._tau - 0.5) * (self._power_signals_d
-                        - l_cs_param @ r_cs_param))
-                     @ weights_w1)
+        return cvx.sum(
+            (
+                0.5 * cvx.abs(self._power_signals_d - l_cs_param @ r_cs_param)
+                + (self._tau - 0.5) * (self._power_signals_d - l_cs_param @ r_cs_param)
+            )
+            @ weights_w1
+        )
 
     @abstractmethod
     def _term_f2(self, l_cs_param, r_cs_param):

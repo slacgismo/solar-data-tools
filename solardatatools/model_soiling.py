@@ -28,7 +28,6 @@ def simulate_PV_time_series(
     smooth_rates=False,
     random_seed=False,
 ):
-
     if random_seed:  # Have seed for repeatability
         if not type(np.random.seed) == int:
             np.random.seed(int(random_seed))

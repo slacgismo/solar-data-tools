@@ -1,4 +1,4 @@
-""" Tilt and Azimuth Study Module
+"""Tilt and Azimuth Study Module
 This module contains a class for conducting a study to estimating Tilt and Azimuth from an input signal. This code
 accepts an input signal data in the form of a `solar-data-tools` `DataHandler` object, which is used to standardize
 and pre-process the data. The provided class will then estimate the Tilt and Azimuth of the site that produced the data,
@@ -8,7 +8,8 @@ Duffie, John A., and William A. Beckman. Solar engineering of thermal processes.
 The following configurations can be run:
  - Day range: 'full_year' or customized day range
  - Declination equation: 'cooper', 'spencer'.
- """
+"""
+
 import numpy as np
 import pandas as pd
 from pvsystemprofiler.utilities.hour_angle_equation import calculate_omega
@@ -88,9 +89,9 @@ class TiltAzimuthStudy:
                 "full_year": None,
             }
 
-        elif day_range is "full_year":
+        elif day_range == "full_year":
             self.day_range_dict = {"full_year": None}
-        elif day_range is "manual":
+        elif day_range == "manual":
             self.day_range_dict = {"manual": day_range}
 
         self.data_matrix = self.data_handler.filled_data_matrix

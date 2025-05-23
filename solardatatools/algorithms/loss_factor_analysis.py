@@ -1,4 +1,4 @@
-""" Combined Soiling and Degradation Estimation Module
+"""Combined Soiling and Degradation Estimation Module
 
 This module is for estimation of degradation and soiling losses from unlabeled
 daily energy production data. Model is of the form
@@ -21,7 +21,6 @@ from scipy.signal import sawtooth, find_peaks
 from gfosd import Problem
 import gfosd.components as comp
 from gfosd.components.base_graph_class import GraphComponent
-from spcqe.functions import make_basis_matrix, make_regularization_matrix
 from tqdm import tqdm
 
 

@@ -11,18 +11,16 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import subprocess
-import pydata_sphinx_theme
 import os
 import sys
 from datetime import date
-import solardatatools
 
 sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 
 project = "Solar Data Tools"
-copyright = '%s, Bennet Meyers' % date.today().year
+copyright = "%s, Bennet Meyers" % date.today().year
 author = "Bennet Meyers"
 # Get version from git tags
 # (so this will always show latest tagged version and not local/dev version)
@@ -48,7 +46,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
-    "nbsphinx" # for notebooks integration
+    "nbsphinx",  # for notebooks integration
 ]
 
 autosummary_generate = True
@@ -56,19 +54,12 @@ autosummary_generate = True
 source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = [
-    "_templates"
-]
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [
-    "_build",
-    "_templates",
-    "Thumbs.db",
-    ".DS_Store"
-]
+exclude_patterns = ["_build", "_templates", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -82,11 +73,11 @@ html_theme = "pydata_sphinx_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_title = f"{project} v{release}"
-html_static_path = ['_static']
+html_static_path = ["_static"]
 html_css_files = ["solardatatools.css"]
 html_copy_source = False
 html_favicon = "_static/SDT_v1_icon_only_dark_background_small.ico"
-#html_logo = "_static/SDT_v1_icon_only_dark_background_small.png"
+# html_logo = "_static/SDT_v1_icon_only_dark_background_small.png"
 html_short_title = f"{project} v{release}"
 
 master_doc = "index"
@@ -114,5 +105,5 @@ html_theme_options = {
     "github_url": "https://github.com/slacgismo/solar-data-tools",
     "show_toc_level": 1,
     "footer_start": ["copyright", "sphinx-version"],
-    "navigation_with_keys" : False
+    "navigation_with_keys": False,
 }

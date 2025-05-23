@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-""" Data IO Module
+"""Data IO Module
 
 This module contains functions for obtaining data from various sources.
 
 """
+
 import math
 from warnings import warn
 from solardatatools.time_axis_manipulation import (
@@ -13,14 +14,14 @@ from solardatatools.time_axis_manipulation import (
 from solardatatools.utilities import progress
 
 from time import time, perf_counter
-from io import StringIO, BytesIO
+from io import StringIO
 import base64
 import os
 import json
 import requests
 import numpy as np
 import pandas as pd
-from typing import Callable, TypedDict, Any, Tuple, Dict
+from typing import Callable, TypedDict, Any, Dict
 from functools import wraps
 from datetime import datetime
 import zlib
@@ -187,9 +188,7 @@ def load_cassandra_data(
         from measurement_raw
         where site = '{}'
             and meas_name = '{}'
-    """.format(
-        siteid, column
-    )
+    """.format(siteid, column)
     ts_constraint = np.logical_or(tmin is not None, tmax is not None)
     if tmin is not None:
         cql += "and ts > '{}'\n".format(tmin)

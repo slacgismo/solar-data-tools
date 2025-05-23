@@ -1,4 +1,4 @@
-""" Polar Transform Module
+"""Polar Transform Module
 
 This module contains a class for tranforming a power signal into azimuth-
 elevation space, which requires system latitude and longitude to calculate.

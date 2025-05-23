@@ -1,4 +1,4 @@
-""" PVPRO Post Processing Module
+"""PVPRO Post Processing Module
 
 This module contains a class that takes in the output dataframe of PVPRO and
 contains methods to process the dataset, perform signal decompositions to model

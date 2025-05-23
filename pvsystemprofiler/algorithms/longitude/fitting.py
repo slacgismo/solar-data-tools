@@ -2,13 +2,13 @@ import numpy as np
 import cvxpy as cvx
 
 
-def fit_longitude(eot, solarnoon, days, gmt_offset, loss='l2'):
+def fit_longitude(eot, solarnoon, days, gmt_offset, loss="l2"):
     lon = cvx.Variable()
-    if loss == 'l2':
+    if loss == "l2":
         cost_func = cvx.norm
-    elif loss == 'l1':
+    elif loss == "l1":
         cost_func = cvx.norm1
-    elif loss == 'huber':
+    elif loss == "huber":
         cost_func = lambda x: cvx.sum(cvx.huber(x))
 
     sn_m = 720 - eot + 4 * (15 * gmt_offset - lon)

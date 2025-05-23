@@ -10,6 +10,7 @@ the 'bounds' tuple containing the bounds for the variables. Bounds for latitude 
  and William A. Beckman. Solar engineering of thermal processes. New York: Wiley, 1991.). However a value of tilt >90
  would mean that that the surface has a downward-facing component, which is not the case of the current application.
 """
+
 from pvsystemprofiler.utilities.angle_of_incidence_function import func_costheta
 import numpy as np
 

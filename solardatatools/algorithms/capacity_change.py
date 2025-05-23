@@ -1,4 +1,4 @@
-""" Capacity Change Algorithm Module
+"""Capacity Change Algorithm Module
 
 This module the algorithm for detecting capacity changes in an unlabeled PV
 power production data sets. The algorithm works as follows:
