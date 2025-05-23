@@ -6,9 +6,6 @@ import time
 import glob
 from pathlib import Path
 
-# TODO: remove pth.append after package is deployed
-filepath = Path(__file__).resolve().parents[2]
-sys.path.append(str(filepath))
 from pvsystemprofiler.scripts.modules.config_partitions import get_config
 from pvsystemprofiler.scripts.modules.create_partition import create_partition
 from pvsystemprofiler.scripts.modules.script_functions import enumerate_files
@@ -16,6 +13,10 @@ from pvsystemprofiler.scripts.modules.script_functions import copy_to_s3
 from pvsystemprofiler.scripts.modules.script_functions import remote_execute
 from pvsystemprofiler.scripts.modules.script_functions import get_address
 from pvsystemprofiler.scripts.modules.script_functions import get_commandline_inputs
+
+# TODO: remove pth.append after package is deployed
+filepath = Path(__file__).resolve().parents[2]
+sys.path.append(str(filepath))
 
 
 def build_input_file(
@@ -277,7 +278,7 @@ if __name__ == "__main__":
     # aws licence file
     try:
         ssh_key_file = glob.glob("/Users/*/.aws/*.pem")[0]
-    except:
+    except:  # noqa: E722
         ssh_key_file = glob.glob("/home/*/.aws/*.pem")[0]
 
     # create main class

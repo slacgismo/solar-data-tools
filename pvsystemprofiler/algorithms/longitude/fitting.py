@@ -9,7 +9,7 @@ def fit_longitude(eot, solarnoon, days, gmt_offset, loss="l2"):
     elif loss == "l1":
         cost_func = cvx.norm1
     elif loss == "huber":
-        cost_func = lambda x: cvx.sum(cvx.huber(x))
+        cost_func = lambda x: cvx.sum(cvx.huber(x))  # noqa: E731
 
     sn_m = 720 - eot + 4 * (15 * gmt_offset - lon)
     sn_h = sn_m / 60

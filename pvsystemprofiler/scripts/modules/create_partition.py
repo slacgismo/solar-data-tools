@@ -1,10 +1,11 @@
 import sys
 from pathlib import Path
 
+from pvsystemprofiler.scripts.modules.script_functions import remote_execute
+
 # TODO: remove pth.append after package is deployed
 filepath = Path(__file__).resolve().parents[1]
 sys.path.append(str(filepath))
-from pvsystemprofiler.scripts.modules.script_functions import remote_execute
 
 
 def create_partition(partition):

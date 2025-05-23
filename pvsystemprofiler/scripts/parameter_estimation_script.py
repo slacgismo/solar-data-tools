@@ -11,9 +11,6 @@ import pandas as pd
 import numpy as np
 from time import time
 
-# TODO: remove pth.append after package is deployed
-filepath = Path(__file__).resolve().parents[2]
-sys.path.append(str(filepath))
 from solardatatools.utilities import progress
 from pvsystemprofiler.scripts.modules.script_functions import run_failsafe_pipeline
 from pvsystemprofiler.scripts.modules.script_functions import resume_run
@@ -32,6 +29,10 @@ from pvsystemprofiler.scripts.modules.script_functions import (
 )
 from pvsystemprofiler.scripts.modules.script_functions import run_failsafe_ta_estimation
 from solardatatools import DataHandler
+
+# TODO: remove pth.append after package is deployed
+filepath = Path(__file__).resolve().parents[2]
+sys.path.append(str(filepath))
 
 
 def evaluate_systems(site_id, inputs_dict, df, site_metadata, json_file_dict=None):

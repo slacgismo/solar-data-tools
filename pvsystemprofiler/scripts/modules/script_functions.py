@@ -248,7 +248,7 @@ def log_file_versions(
                 i = line.find(":")
                 location = line[i + 1 :]
                 output_string += "utility version:" + " " + location + "\n"
-    except:
+    except:  # noqa: E722
         pip_list = ""
         output_string += "utility version:" + " " + "n/a" + "\n"
     try:
@@ -277,7 +277,7 @@ def log_file_versions(
                 i = line.find(" ")
                 date = line[i:]
                 output_string += "date:" + " " + date + "\n"
-    except:
+    except:  # noqa: E722
         output_string += "commit id:" + " " + "n/a" + "\n"
         output_string += "author:" + " " + "n/a" + "\n"
         output_string += "date:" + " " + "n/a" + "\n"
@@ -418,7 +418,7 @@ def run_failsafe_pipeline(dh, sys_tag, fts, tzc):
                 verbose=False,
                 max_val=max_val * 3,
             )
-    except:
+    except:  # noqa: E722
         return dh, False
     return dh, True
 
@@ -519,7 +519,7 @@ def run_failsafe_lon_estimation(dh_in, real_longitude, gmt_offset):
         )
         lon_study.run(verbose=False)
         p_df = lon_study.results.sort_index().copy()
-    except:
+    except:  # noqa: E722
         runs_lon_estimation = False
         p_df = pd.DataFrame(
             columns=[
@@ -544,7 +544,7 @@ def run_failsafe_lat_estimation(dh_in, real_latitude):
         lat_study = LatitudeStudy(data_handler=dh_in, lat_true_value=real_latitude)
         lat_study.run()
         p_df = lat_study.results.sort_index().copy()
-    except:
+    except:  # noqa: E722
         runs_lat_estimation = False
         p_df = pd.DataFrame(
             columns=[
@@ -591,7 +591,7 @@ def run_failsafe_ta_estimation(
         )
         ta_study.run()
         p_df = ta_study.results.sort_index().copy()
-    except:
+    except:  # noqa: E722
         runs_ta_estimation = False
         cols = [
             "day range",

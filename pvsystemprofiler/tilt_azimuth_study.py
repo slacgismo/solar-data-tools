@@ -256,7 +256,7 @@ class TiltAzimuthStudy:
                                         self.azimuth_input,
                                     ]
                                 )
-                                estimates = np.full(np.sum(input_array == None), np.nan)
+                                estimates = np.full(np.sum(input_array is None), np.nan)
                             # create dictionary with dict_keys and estimates
                             estimates_dict = dict(zip(dict_keys, estimates))
                             # dynamic results dataFrame based on provided inputs

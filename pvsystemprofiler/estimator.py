@@ -270,7 +270,7 @@ class ConfigurationEstimator:
 
         for i, estimate in enumerate(dict_keys):
             if estimate == "latitude_estimate":
-                lat_estimate = estimates[i]
+                lat_estimate = estimates[i]  # noqa: F841
             if estimate == "tilt_estimate":
                 tilt_estimate = estimates[i]
             if estimate == "azimuth_estimate":
