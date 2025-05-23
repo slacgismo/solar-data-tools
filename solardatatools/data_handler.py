@@ -186,7 +186,6 @@ class DataHandler:
         # Useful daily signals defined by the data set
         self.daily_signals = DailySignals()
         # Algorithm objects
-        self.scsf = None
         self.capacity_analysis = None
         self.time_shift_analysis = None
         self.daytime_analysis = None
@@ -953,87 +952,6 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             print("Please run pipeline first.")
 
-    def fit_statistical_clear_sky_model(
-        self,
-        data_matrix=None,
-        rank=6,
-        mu_l=None,
-        mu_r=None,
-        tau=None,
-        exit_criterion_epsilon=1e-3,
-        solver_type="MOSEK",
-        max_iteration=10,
-        calculate_degradation=True,
-        max_degradation=None,
-        min_degradation=None,
-        non_neg_constraints=False,
-        verbose=True,
-        bootstraps=None,
-    ):
-        """
-        Fit Statistical Clear Sky model.
-
-        .. deprecated:: 1.5.0
-            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
-
-        :param data_matrix:
-        :param rank:
-        :param mu_l:
-        :param mu_r:
-        :param tau:
-        :param exit_criterion_epsilon:
-        :param solver_type:
-        :param max_iteration:
-        :param calculate_degradation:
-        :param max_degradation:
-        :param min_degradation:
-        :param non_neg_constraints:
-        :param verbose:
-        :param bootstraps:
-        :return:
-
-        """
-        try:
-            from statistical_clear_sky import SCSF
-        except ImportError:
-            print("Please install statistical-clear-sky package")
-            return
-        scsf = SCSF(
-            data_handler_obj=self,
-            data_matrix=data_matrix,
-            rank_k=rank,
-            solver_type=solver_type,
-        )
-        scsf.execute(
-            mu_l=mu_l,
-            mu_r=mu_r,
-            tau=tau,
-            exit_criterion_epsilon=exit_criterion_epsilon,
-            max_iteration=max_iteration,
-            is_degradation_calculated=calculate_degradation,
-            max_degradation=max_degradation,
-            min_degradation=min_degradation,
-            non_neg_constraints=non_neg_constraints,
-            verbose=verbose,
-            bootstraps=bootstraps,
-        )
-        self.scsf = scsf
-
-    def calculate_scsf_performance_index(self):
-        """
-        .. deprecated:: 1.5.0
-            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
-
-        """
-        if self.scsf is None:
-            print("No SCSF model detected. Fitting now...")
-            self.fit_statistical_clear_sky_model()
-        clear = self.scsf.estimated_power_matrix
-        clear_energy = np.sum(clear, axis=0)
-        measured_energy = np.sum(self.filled_data_matrix, axis=0)
-        pi = np.divide(measured_energy, clear_energy)
-        return pi
-
     def augment_data_frame(self, boolean_index, column_name):
         """
         Add a column to the data frame (tabular) representation of the data,
@@ -1451,23 +1369,6 @@ time zone errors     {report['time zone correction'] != 0}
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
-    def find_clear_times(
-        self, power_hyperparam=0.1, smoothness_hyperparam=0.05, min_length=3
-    ):
-        if self.scsf is None:
-            print("No SCSF model detected. Fitting now...")
-            self.fit_statistical_clear_sky_model()
-        clear = self.scsf.estimated_power_matrix
-        clear_times = find_clear_times(
-            self.filled_data_matrix,
-            clear,
-            self.capacity_estimate,
-            th_relative_power=power_hyperparam,
-            th_relative_smoothness=smoothness_hyperparam,
-            min_length=min_length,
-        )
-        self.boolean_masks.clear_times = clear_times
-
     def setup_location_and_orientation_estimation(
         self,
         gmt_offset,
@@ -1790,7 +1691,6 @@ time zone errors     {report['time zone correction'] != 0}
         label=None,
         boolean_mask=None,
         mask_label=None,
-        show_clear_model=True,
         show_legend=False,
         marker=None,
     ):
@@ -1832,9 +1732,6 @@ time zone errors     {report['time zone correction'] != 0}
 
         :param mask_label: Label for the boolean mask. Default is None.
         :type mask_label: str or None, optional
-
-        :param show_clear_model: Whether to show the clear sky model in the plot. Default is True.
-        :type show_clear_model: bool, optional
 
         :param show_legend: Whether to show the legend in the plot. Default is False.
         :type show_legend: bool, optional
@@ -1897,11 +1794,6 @@ time zone errors     {report['time zone correction'] != 0}
                 marker=".",
                 color="red",
                 label=mask_label,
-            )
-        if show_clear_model and self.scsf is not None:
-            plot_model = self.scsf.estimated_power_matrix[:, slct].ravel(order="F")
-            plt.plot(
-                xs, plot_model, color="orange", linewidth=1, label="clear sky model"
             )
         if show_legend:
             plt.legend()
