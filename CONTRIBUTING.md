@@ -54,7 +54,17 @@ Python virtual environments. We recommend using `conda`.
     $ git checkout -b name-of-your-bugfix-or-feature
     ```
 
-6. When you're done making changes, check that your changes conform to any code formatting requirements and pass any tests.
+6. When you're done making changes, check that your changes conform to any code formatting requirements and pass any tests. One of the automated checks for each PR is linting with ruff and pre-commit hooks and will fail otherwise. You can install pre-commit with `pip install pre-commit` and then run `pre-commit install` in the root of the repository. When you commit your changes, the pre-commit hooks will run automatically.
+
+   If you have made changes to the documentation, you can build the docs locally by running:
+
+    ```console
+    $ cd docs
+    $ make html
+    ```
+
+   This will create a local copy of the documentation in `_build/html/index.html`.
+
 
 7. Commit and push your changes to your fork, and open a pull request.
 
