@@ -1,6 +1,6 @@
 """Omega, the hour angle is estimated as defined on p. 13 in:
-       Duffie, John A., and William A. Beckman. Solar engineering of thermal
-       processes. New York: Wiley, 1991."""
+Duffie, John A., and William A. Beckman. Solar engineering of thermal
+processes. New York: Wiley, 1991."""
 
 import numpy as np
 from pvsystemprofiler.utilities.time_convert import clock_to_solar

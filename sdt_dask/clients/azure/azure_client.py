@@ -1,10 +1,11 @@
 """
 Class for the Azure client plug to be used with the SDT Dask Tool (Runner)
 """
-import os
+
 from dask.distributed import Client
 from dask_cloudprovider.azure import AzureVMCluster
 from sdt_dask.clients.clientplug import ClientPlug
+
 
 class AzureClient(ClientPlug):
     """Azure Client Class for configuring dask client on Azure VM Cluster.
@@ -30,13 +31,16 @@ class AzureClient(ClientPlug):
         https://cloudprovider.dask.org/en/latest/azure.html
     :type kwargs: dict
     """
-    def __init__(self, workers: int = 5, threads: int = 2, memory: float = 15.63, **kwargs):
-            self.workers = workers
-            self.threads = threads
-            self.memory = memory
-            self.kwargs = kwargs
-            self.client = None
-            self.cluster = None
+
+    def __init__(
+        self, workers: int = 5, threads: int = 2, memory: float = 15.63, **kwargs
+    ):
+        self.workers = workers
+        self.threads = threads
+        self.memory = memory
+        self.kwargs = kwargs
+        self.client = None
+        self.cluster = None
 
     def init_client(self) -> Client:
         """Initializes the Dask Client and the AzureCluster with the defined
@@ -46,14 +50,19 @@ class AzureClient(ClientPlug):
             configuration
         :rtype: `dask.distributed.Client` object
         """
-        print(f"Initializing Azure Cluster with {self.workers} workers, "
-              f"{self.threads} threads and {self.memory}MiB per worker...")
+        print(
+            f"Initializing Azure Cluster with {self.workers} workers, "
+            f"{self.threads} threads and {self.memory}MiB per worker..."
+        )
 
-        self.cluster = AzureVMCluster(n_workers=self.workers,
-                                      worker_options={
-                                          "nthreads": self.threads,
-                                          "memory_limit": f"{self.memory:.2f}GiB"
-                                      }, **self.kwargs)
+        self.cluster = AzureVMCluster(
+            n_workers=self.workers,
+            worker_options={
+                "nthreads": self.threads,
+                "memory_limit": f"{self.memory:.2f}GiB",
+            },
+            **self.kwargs,
+        )
 
         print("Initialized Azure VM Cluster")
         print("Initializing Dask Client ...")

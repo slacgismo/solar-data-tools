@@ -11,4 +11,3 @@ project_details/index_project_details
 project_details/citation
 getting_started/code_of_conduct.md
 ```
-

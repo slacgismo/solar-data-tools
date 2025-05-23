@@ -3,9 +3,9 @@ This README provides guidance on creating your own DataPlugs or use our existing
 
 ## Creating Your Own DataPlug
 
-To create your own DataPlug, you must a Python module (`your_dataplug.py`) containing your DataPlug class. You also 
+To create your own DataPlug, you must a Python module (`your_dataplug.py`) containing your DataPlug class. You also
 must install all necessary Python packages that aren't part of the SDT requirements (if you are using Docker
-to run on the cloud, make sure to create your own image of the SDT environment and install your dataplug 
+to run on the cloud, make sure to create your own image of the SDT environment and install your dataplug
 requirements on it as well. For more info see [the Docker README](../docker/README.md).
 
 ### Implement Your DataPlug
@@ -36,25 +36,25 @@ class YourDataPlug(DataPlug):
 
 ## Existing DataPlug Examples
 
-Below are detailed descriptions of the DataPlugs available for use with the SDT Dask tool. Each DataPlug serves a unique purpose, designed to retrieve and process data from different sources. A corresponding requirements.txt file for each DataPlug is located in the directory solar-data-tools/sdt_dask/dataplugs/Requirements/. 
+Below are detailed descriptions of the DataPlugs available for use with the SDT Dask tool. Each DataPlug serves a unique purpose, designed to retrieve and process data from different sources. A corresponding requirements.txt file for each DataPlug is located in the directory solar-data-tools/sdt_dask/dataplugs/Requirements/.
 
 ### 1. LocalFiles DataPlug (dataplugs/csv_plug.py)
 
 - **Description**: Retrieving and cleaning solar data from local CSV files
-- **Initialization**:   
-`path_to_files`: The directory path where the CSV files are stored.  
-- **`get_data` Tuple input**: Expects a single string value representing the filename (without extension) of the dataset to be processed. Example to call `get_data` method:  
-```python 
+- **Initialization**:
+`path_to_files`: The directory path where the CSV files are stored.
+- **`get_data` Tuple input**: Expects a single string value representing the filename (without extension) of the dataset to be processed. Example to call `get_data` method:
+```python
 data_plug.get_data(("filename",))
 ```
 
 ### 2. PVDAQPlug (dataplugs/pvdaq_plug.py)
 
 - **Description**: Retrieving and cleaning solar data from the PVDAQ database
-- **Initialization**:   
+- **Initialization**:
 `api_key`: Your API key for accessing the PVDAQ data.
 - **`get_data` Tuple input**: Expects a tuple containing the site ID (integer) and the year (integer) for which data is to be retrieved. Example to call get_data method:
-```python 
+```python
 data_plug.get_data((site_id, year))
 ```
 
@@ -64,17 +64,17 @@ data_plug.get_data((site_id, year))
 - **Description**: Retrieving and cleaning solar data from the PVDB (Redshift) database
 - **Initialization**: No input but assumes the API key is set as an environment variable REDSHIFT_API_KEY.
 - **`get_data` Tuple input**: Expects a tuple containing the site ID (string) and the sensor type (integer), identifying the specific dataset to be retrieved. Example to call get_data method:
-```python 
+```python
 data_plug.get_data(("site_id", sensor_type))
 ```
 
 ### 4. S3Bucket DataPlug
 
 - **Description**: Retrieving and cleaning solar data from S3 Bucket. And provides a function to get the full key list inside the given bucket name.
-- **Initialization**:  
-`api_key`: Your API key for accessing the PVDAQ data.  
+- **Initialization**:
+`api_key`: Your API key for accessing the PVDAQ data.
 And also assumes the AWS configuration has been set up in local environment
 - **`get_data` Tuple input**: Expects a single string value in the tuple, specifying the key of the file in the bucket. Example to call get_data method:
-```python 
+```python
 data_plug.get_data(("s3-file-key",))
 ```

@@ -3,7 +3,6 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from solardatatools import DataHandler
-import matplotlib.pyplot as plt
 
 
 class TestDataHandler(unittest.TestCase):

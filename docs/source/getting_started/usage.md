@@ -1,7 +1,7 @@
 # General Usage
 
-Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
-Tools uses CLARABEL as the solver for all signal decomposition problems. If you would like 
+Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data
+Tools uses CLARABEL as the solver for all signal decomposition problems. If you would like
 to specify a solver (such as MOSEK), just pass the keyword argument `solver` to `DataHandler.pipeline` with the solver of choice.
 
 ```python

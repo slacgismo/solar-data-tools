@@ -28,9 +28,8 @@ def simulate_PV_time_series(
     smooth_rates=False,
     random_seed=False,
 ):
-
     if random_seed:  # Have seed for repeatability
-        if not type(np.random.seed) == int:
+        if isinstance(np.random.seed, int):
             np.random.seed(int(random_seed))
 
     # Initialize time series and data frame
@@ -104,7 +103,7 @@ def simulate_PV_time_series_seasonal_soiling(
     """As the name implies, this function models soiling rates that vary from day to day according
     to a Gaussian distribution"""
     if random_seed:  # Have seed for repeatability
-        if not type(np.random.seed) == int:
+        if not isinstance(np.random.seed, int):
             np.random.seed(int(random_seed))
 
     # Initialize time series and data frame

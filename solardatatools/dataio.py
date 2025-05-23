@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-""" Data IO Module
+"""Data IO Module
 
 This module contains functions for obtaining data from various sources.
 
 """
+
 import math
 from warnings import warn
 from solardatatools.time_axis_manipulation import (
@@ -13,14 +14,14 @@ from solardatatools.time_axis_manipulation import (
 from solardatatools.utilities import progress
 
 from time import time, perf_counter
-from io import StringIO, BytesIO
+from io import StringIO
 import base64
 import os
 import json
 import requests
 import numpy as np
 import pandas as pd
-from typing import Callable, TypedDict, Any, Tuple, Dict
+from typing import Callable, TypedDict, Any, Dict
 from functools import wraps
 from datetime import datetime
 import zlib
@@ -187,9 +188,7 @@ def load_cassandra_data(
         from measurement_raw
         where site = '{}'
             and meas_name = '{}'
-    """.format(
-        siteid, column
-    )
+    """.format(siteid, column)
     ts_constraint = np.logical_or(tmin is not None, tmax is not None)
     if tmin is not None:
         cql += "and ts > '{}'\n".format(tmin)
@@ -369,7 +368,7 @@ def load_redshift_data(
         if response.status_code != 200:
             error = response.json()
             error_msg = error["error"]
-            raise Exception(
+            raise IOError(
                 f"Query failed with status code {response.status_code}: {error_msg}"
             )
         if verbose:
@@ -405,7 +404,7 @@ def load_redshift_data(
             error = response.json()
             print(error)
             error_msg = error["error"]
-            raise Exception(
+            raise IOError(
                 f"Query failed with status code {response.status_code}: {error_msg}"
             )
 
@@ -419,7 +418,7 @@ def load_redshift_data(
             new_df = decompress_data_to_dataframe(response.content)
 
             if new_df.empty:
-                raise Exception("Empty dataframe returned from query")
+                raise IOError("Empty dataframe returned from query")
             if verbose:
                 print(f"Page: {page}, Rows: {len(new_df)}")
             df_list[index] = new_df
@@ -447,7 +446,7 @@ def load_redshift_data(
         data = batch_df.json()
     except Exception as e:
         print(e)
-        raise Exception("Failed to get query info")
+        raise IOError("Failed to get query info")
     max_limit = int(data["max_limit"])
     total_count = int(data["total_count"])
     batches = int(data["batches"])
@@ -501,5 +500,5 @@ def load_redshift_data(
     df = pd.concat(list_of_dfs, ignore_index=True)
     # If any batch returns an empty DataFrame, stop querying
     if df.empty:
-        raise Exception("Empty dataframe returned from query")
+        raise IOError("Empty dataframe returned from query")
     return df

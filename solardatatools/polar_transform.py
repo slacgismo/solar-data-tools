@@ -1,4 +1,4 @@
-""" Polar Transform Module
+"""Polar Transform Module
 
 This module contains a class for tranforming a power signal into azimuth-
 elevation space, which requires system latitude and longitude to calculate.
@@ -39,7 +39,7 @@ class PolarTransform:
             else:
                 e = "boolean index for data selection must"
                 e += " match length of data series"
-                raise Exception(e)
+                raise ValueError(e)
         self.transformed_data = None
         self._er = None
         self._ar = None

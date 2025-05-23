@@ -4,12 +4,14 @@ from solardatatools.dataio import load_redshift_data
 from solardatatools.time_axis_manipulation import make_time_series
 from sdt_dask.dataplugs.dataplug import DataPlug
 
+
 class PVDBPlug(DataPlug):
     """
     Dataplug class for retrieving data from the PVDB (Redshift) database.
     """
+
     def __init__(self, power_col="meas_val_f"):
-        self.api_key = os.environ.get('REDSHIFT_API_KEY')
+        self.api_key = os.environ.get("REDSHIFT_API_KEY")
         self.power_col = power_col
 
     def _pull_data(self, siteid, sensor):
@@ -19,12 +21,8 @@ class PVDBPlug(DataPlug):
         :param siteid: Site ID for the data to be retrieved
         :param sensor: Sensor Index for the data to be retrieved (staring from 0)
         """
-        query = {
-            'siteid': siteid,
-            'api_key': self.api_key,
-            'sensor': sensor
-        }
-        
+        query = {"siteid": siteid, "api_key": self.api_key, "sensor": sensor}
+
         self.df = load_redshift_data(**query)
 
     def _clean_data(self):
@@ -41,8 +39,8 @@ class PVDBPlug(DataPlug):
         their custom dataplugs.
 
         :param keys: Tuple containing the required inputs: a unique set of
-            historical power generation measurements, which should be a 
-            siteid and a sensor id 
+            historical power generation measurements, which should be a
+            siteid and a sensor id
         :return: Returns a pandas DataFrame with a timestamp column and
             a power column
         """
@@ -50,6 +48,3 @@ class PVDBPlug(DataPlug):
         self._clean_data()
 
         return self.df
-    
-
-    

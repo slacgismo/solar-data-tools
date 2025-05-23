@@ -4,14 +4,14 @@ If you use Solar Data Tools in your research, please cite:
 
 ## Recommended citations
 
-  Bennet E. Meyers, Elpiniki Apostolaki-Iosifidou and Laura Schelhas, "Solar Data Tools: Automatic Solar 
+  Bennet E. Meyers, Elpiniki Apostolaki-Iosifidou and Laura Schelhas, "Solar Data Tools: Automatic Solar
   Data Processing Pipeline," 2020 47th IEEE Photovoltaic Specialists Conference (PVSC), Calgary, AB, Canada, 2020,
   pp. 0655-0656, doi: [10.1109/PVSC45281.2020.9300847](https://doi.org/10.1109/PVSC45281.2020.9300847).
 
-  Bennet E. Meyers, Sara A. Miskovich, Duncan Ragsdale, Mitchell Victoriano, Aramis Dufour, 
-  Nimish Telang, Nimish Yadav, Elpiniki Apostolaki-Iosifidou, Claire Berschauer, Chengcheng Ding, 
-  Jonathan Goncalves, Victor-Haoyang Lian, Tristan Lin, Alejandro Londono-Hurtado, Junlin Luo, Xiao Ming, 
-  David Jose Florez Rodriguez, Derin Serbetcioglu, Shixian Sheng, Jose St Louis, Tadatoshi Takahashi, and Haoxi Zhang. (2024). 
+  Bennet E. Meyers, Sara A. Miskovich, Duncan Ragsdale, Mitchell Victoriano, Aramis Dufour,
+  Nimish Telang, Nimish Yadav, Elpiniki Apostolaki-Iosifidou, Claire Berschauer, Chengcheng Ding,
+  Jonathan Goncalves, Victor-Haoyang Lian, Tristan Lin, Alejandro Londono-Hurtado, Junlin Luo, Xiao Ming,
+  David Jose Florez Rodriguez, Derin Serbetcioglu, Shixian Sheng, Jose St Louis, Tadatoshi Takahashi, and Haoxi Zhang. (2024).
   slacgismo/solar-data-tools. Zenodo. doi: [10.5281/zenodo.5056959](https://zenodo.org/doi/10.5281/zenodo.5056959)
 
 ## Citing technical details (_e.g._, SDT algorithms)

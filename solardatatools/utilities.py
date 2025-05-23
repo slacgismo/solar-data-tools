@@ -1,4 +1,4 @@
-""" Utilities Module
+"""Utilities Module
 
 This module contains utility functions used by other modules.
 
@@ -6,7 +6,6 @@ This module contains utility functions used by other modules.
 
 import sys
 import numpy as np
-import cvxpy as cvx
 from scipy.interpolate import interp1d
 
 

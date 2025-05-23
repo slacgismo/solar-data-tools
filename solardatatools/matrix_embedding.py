@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Matrix Embedding Module
+"""Matrix Embedding Module
 
 This module contains functions for embedding PV power time series data into
 a matrix

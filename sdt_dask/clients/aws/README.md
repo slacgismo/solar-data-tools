@@ -8,7 +8,7 @@ You need the appropriate permissions to be able to create and manage ECS cluster
 
 # AWS Credentials
 Here we have 2 options
-1. Using AWS CLI commands     
+1. Using AWS CLI commands
    We are taking *long-term credentials* as an example, for other types of credentials, please refer to this [link](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html)
    1. Open a terminal and run `aws configure`
    2. Fill in the requested information:
@@ -18,10 +18,10 @@ Here we have 2 options
       4. Default output format (e.g. `json`)
 
 2. Manual setup
-   1. Go to the home directory, create directory `.aws` with a file `credentials` in it. It looks like this:  
+   1. Go to the home directory, create directory `.aws` with a file `credentials` in it. It looks like this:
       1. Windows:  `%USERPROFILE%\.aws\credentials`
       2. Linux and MacOS: `~/.aws/credentials`
-   2. Write the credentials into file `credentials`, it looks like:  
+   2. Write the credentials into file `credentials`, it looks like:
         ```
         [default]
         aws_access_key_id=<_KEY_>
@@ -30,7 +30,7 @@ Here we have 2 options
 
 # Docker Image
 
-We recommend using Docker images to run SDT on AWS clusters. For more information on the Docker 
+We recommend using Docker images to run SDT on AWS clusters. For more information on the Docker
 image we provide, see [the Docker README](./docker/README.md).
 
 # AWS Fargate Demo
@@ -42,12 +42,12 @@ credentials are set correctly as well as any other environment variable that you
    3. Want detailed error messages? Click on each worker/scheduler and then the **logs** tab for specific information
 
 # Debugging Tips
-1. **Error during deserialization of the task graph**   
+1. **Error during deserialization of the task graph**
      - **Solution**:
      Please make sure the client environment aligns with the scheduler environment!  (e.g. python versions, python packages & versions)
-2. **Windows Powershell compatibility issues with AWS** 
+2. **Windows Powershell compatibility issues with AWS**
    - Details: docker push command shows `retrying in ... second ... EOF`
    - **Solution**: Use Git Bash on windows can save you a lot of time.
-3. **Workers failed to run**  
+3. **Workers failed to run**
    - Details: the worker logs a report: `Worker is at 85% memory usage`
    - **Solution**: This indicates the cluster might not be powerful enough to handle the workload. Please double-check the worker node specification. Scaling up the cluster, either horizontally or vertically, should resolve the issue.

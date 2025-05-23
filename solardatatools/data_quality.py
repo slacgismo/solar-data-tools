@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Data Quality Checking Module
+"""Data Quality Checking Module
 
 This module contains functions for identifying corrupt or bad quality data.
 

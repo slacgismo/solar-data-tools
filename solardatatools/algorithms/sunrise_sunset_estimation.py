@@ -1,4 +1,4 @@
-""" Sunrise Sunset Estimation Algorithm Module
+"""Sunrise Sunset Estimation Algorithm Module
 
 This module contains an algorithm for robust estimation of sunrise and sunset
 times from measured power data. This algorithm utilizes the following prior
@@ -65,7 +65,10 @@ class SunriseSunset:
         bool_msk = detect_sun(data, threshold)
         measured = rise_set_rough(bool_msk)
         smoothed = rise_set_smoothed(
-            measured, sunrise_tau=self.sunrise_tau, sunset_tau=self.sunset_tau, solver=solver
+            measured,
+            sunrise_tau=self.sunrise_tau,
+            sunset_tau=self.sunset_tau,
+            solver=solver,
         )
         self.sunrise_estimates = smoothed["sunrises"]
         self.sunset_estimates = smoothed["sunsets"]
@@ -262,7 +265,10 @@ class SunriseSunset:
                 ho_error.append(np.average(run_ho_errors))
                 if self.true_times is not None:
                     full_fit = rise_set_smoothed(
-                        measured, sunrise_tau=self.sunrise_tau, sunset_tau=self.sunset_tau, solver=solver
+                        measured,
+                        sunrise_tau=self.sunrise_tau,
+                        sunset_tau=self.sunset_tau,
+                        solver=solver,
                     )
                     sr_full = full_fit["sunrises"]
                     ss_full = full_fit["sunsets"]
@@ -279,7 +285,12 @@ class SunriseSunset:
         selected_th = np.min(ths[slct_vals])
         bool_msk = detect_sun(data, selected_th)
         measured = rise_set_rough(bool_msk)
-        smoothed = rise_set_smoothed(measured, sunrise_tau=self.sunrise_tau, sunset_tau=self.sunset_tau, solver=solver)
+        smoothed = rise_set_smoothed(
+            measured,
+            sunrise_tau=self.sunrise_tau,
+            sunset_tau=self.sunset_tau,
+            solver=solver,
+        )
         self.sunrise_estimates = smoothed["sunrises"]
         self.sunset_estimates = smoothed["sunsets"]
         self.sunrise_measurements = measured["sunrises"]

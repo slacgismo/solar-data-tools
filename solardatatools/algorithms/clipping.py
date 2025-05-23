@@ -1,4 +1,4 @@
-""" Clipping Module
+"""Clipping Module
 
 This module is for analyzing clipping in power data
 
