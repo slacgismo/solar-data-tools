@@ -369,7 +369,7 @@ def load_redshift_data(
         if response.status_code != 200:
             error = response.json()
             error_msg = error["error"]
-            raise Exception(
+            raise IOError(
                 f"Query failed with status code {response.status_code}: {error_msg}"
             )
         if verbose:
@@ -405,7 +405,7 @@ def load_redshift_data(
             error = response.json()
             print(error)
             error_msg = error["error"]
-            raise Exception(
+            raise IOError(
                 f"Query failed with status code {response.status_code}: {error_msg}"
             )
 
@@ -419,7 +419,7 @@ def load_redshift_data(
             new_df = decompress_data_to_dataframe(response.content)
 
             if new_df.empty:
-                raise Exception("Empty dataframe returned from query")
+                raise IOError("Empty dataframe returned from query")
             if verbose:
                 print(f"Page: {page}, Rows: {len(new_df)}")
             df_list[index] = new_df
@@ -447,7 +447,7 @@ def load_redshift_data(
         data = batch_df.json()
     except Exception as e:
         print(e)
-        raise Exception("Failed to get query info")
+        raise IOError("Failed to get query info")
     max_limit = int(data["max_limit"])
     total_count = int(data["total_count"])
     batches = int(data["batches"])
@@ -501,5 +501,5 @@ def load_redshift_data(
     df = pd.concat(list_of_dfs, ignore_index=True)
     # If any batch returns an empty DataFrame, stop querying
     if df.empty:
-        raise Exception("Empty dataframe returned from query")
+        raise IOError("Empty dataframe returned from query")
     return df

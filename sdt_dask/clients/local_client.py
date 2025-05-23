@@ -71,7 +71,7 @@ class LocalClient(ClientPlug):
         """
         self._get_sys_var()
         if self.workers * self.threads > self.cpu_count:
-            raise Exception(f"workers and threads exceed local resources, {self.cpu_count} cores present")
+            raise ValueError(f"workers and threads exceed local resources, {self.cpu_count} cores present")
         if self.workers * self.memory > self.sys_memory:
             self.dask_config.set({'distributed.worker.memory.spill': True})
             print(f"Memory per worker exceeds system memory ({self.memory} GB), activating memory spill\n")
