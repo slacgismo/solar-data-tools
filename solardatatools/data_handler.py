@@ -1695,7 +1695,6 @@ time zone errors     {report["time zone correction"] != 0}
         label=None,
         boolean_mask=None,
         mask_label=None,
-        show_clear_model=True,
         show_legend=False,
         marker=None,
     ):
