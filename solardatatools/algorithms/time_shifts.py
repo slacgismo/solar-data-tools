@@ -15,6 +15,8 @@ The algorithm works as follows:
 
 """
 
+# ruff: noqa: E731
+
 import numpy as np
 from sklearn.model_selection import train_test_split
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
@@ -132,7 +134,7 @@ class TimeShift:
                 sum_card=sum_card,
                 transition_locs=transition_locs,
             )
-            jumps_per_year = len(transition_locs) / (len(metric) / 365)
+            # jumps_per_year = len(transition_locs) / (len(metric) / 365)
             # cond1 = jumps_per_year >= 5
             # cond2 = w1 is None
             # cond3 = self.__recursion_depth < 2

@@ -5,6 +5,8 @@ This module contains a class for managing a data processing pipeline
 
 """
 
+# ruff: noqa: E731, E722
+
 from time import time
 from datetime import timedelta
 from datetime import datetime
@@ -17,6 +19,7 @@ import matplotlib.cm as cm
 import traceback
 import sys
 from tqdm import tqdm
+from pandas.plotting import register_matplotlib_converters
 from solardatatools.time_axis_manipulation import (
     make_time_series,
     standardize_time_axis,
@@ -41,10 +44,11 @@ from solardatatools.algorithms import (
     ClippingDetection,
     LossFactorAnalysis,
 )
-from pandas.plotting import register_matplotlib_converters
+
+from solardatatools.polar_transform import PolarTransform
+
 
 register_matplotlib_converters()
-from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:
@@ -1273,7 +1277,7 @@ time zone errors     {report["time zone correction"] != 0}
         self.daily_scores.clipping_2 = self.clipping_analysis.clip_stat_2
         self.daily_flags.inverter_clipped = self.clipping_analysis.clipped_days
 
-    def find_clipped_times(self):
+    def find_clipped_times(self, solver_convex="CLARABEL"):
         if self.clipping_analysis is None:
             self.clipping_check(solver=solver_convex)
         self.clipping_analysis.find_clipped_times()

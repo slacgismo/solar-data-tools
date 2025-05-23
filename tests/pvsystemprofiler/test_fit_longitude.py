@@ -3,9 +3,10 @@ import os
 from pathlib import Path
 import numpy as np
 
+from pvsystemprofiler.algorithms.longitude.fitting import fit_longitude
+
 path = Path.cwd().parent.parent
 os.chdir(path)
-from pvsystemprofiler.algorithms.longitude.fitting import fit_longitude
 
 
 class TestFitLongitude(unittest.TestCase):
@@ -35,7 +36,7 @@ class TestFitLongitude(unittest.TestCase):
         expected_output = -77.22534574490635
 
         actual_output = fit_longitude(
-            eot_duffie, solarnoon, days, gmt_offset, loss="l2"
+            eot_duffie, solarnoon, days, gmt_offset, loss=loss
         )
         np.testing.assert_almost_equal(actual_output, expected_output, decimal=1)
 

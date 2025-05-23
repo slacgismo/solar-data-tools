@@ -3,9 +3,10 @@ import os
 from pathlib import Path
 import numpy as np
 
+from pvsystemprofiler.utilities.equation_of_time import eot_da_rosa, eot_duffie
+
 path = Path.cwd().parent.parent
 os.chdir(path)
-from pvsystemprofiler.utilities.equation_of_time import eot_da_rosa, eot_duffie
 
 
 class TestEquationOfTime(unittest.TestCase):

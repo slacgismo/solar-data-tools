@@ -3,9 +3,10 @@ import os
 from pathlib import Path
 import numpy as np
 
+from pvsystemprofiler.algorithms.latitude.estimation import estimate_latitude
+
 path = Path.cwd().parent.parent
 os.chdir(path)
-from pvsystemprofiler.algorithms.latitude.estimation import estimate_latitude
 
 
 class TestEstimateLatitude(unittest.TestCase):

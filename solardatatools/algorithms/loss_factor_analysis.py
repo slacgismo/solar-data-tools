@@ -378,7 +378,7 @@ class LossFactorAnalysis:
         """
         if self.MC_results is not None:
             if figsize is not None:
-                fig = plt.figure(figsize=figsize)
+                _ = plt.figure(figsize=figsize)
             degs = self.MC_results["samples"]["deg"]
             n, bins, patches = plt.hist(degs)
             plt.axvline(np.average(degs), color="yellow", label="mean")
@@ -408,7 +408,7 @@ class LossFactorAnalysis:
         """
         if self.MC_results is not None:
             if figsize is not None:
-                fig = plt.figure(figsize=figsize)
+                _ = plt.figure(figsize=figsize)
             degs = self.MC_results["samples"]["deg"]
             taus = self.MC_results["samples"]["tau"]
             weights = self.MC_results["samples"]["weight"]
@@ -432,7 +432,7 @@ class LossFactorAnalysis:
         """
         if self.MC_results is not None:
             if figsize is not None:
-                fig = plt.figure(figsize=figsize)
+                _ = plt.figure(figsize=figsize)
             degs = self.MC_results["samples"]["deg"]
             taus = self.MC_results["samples"]["tau"]
             weights = self.MC_results["samples"]["weight"]
@@ -530,7 +530,7 @@ class LossFactorAnalysis:
                     comp.Basis(custom_basis),
                 ]
             )
-        elif deg_select.value == "none":
+        elif deg_type == "none":
             c4 = SetEqual(val=np.zeros(length))
         # capacity change term: leverage previous analysis from SDT pipeline
         if use_capacity_change_labels and self.capacity_change_labels is not None:

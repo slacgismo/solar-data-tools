@@ -3,9 +3,10 @@ import os
 from pathlib import Path
 import numpy as np
 
+from pvsystemprofiler.algorithms.longitude.calculation import calculate_longitude
+
 path = Path.cwd().parent.parent
 os.chdir(path)
-from pvsystemprofiler.algorithms.longitude.calculation import calculate_longitude
 
 
 class TestCalculateLongitude(unittest.TestCase):
@@ -29,8 +30,6 @@ class TestCalculateLongitude(unittest.TestCase):
             days = days.astype(dtype=bool)
         # gmt_offset
         gmt_offset = -5
-        # loss
-        loss = "l2"
 
         # Expected Longitude Output is generated in tests/fixtures/longitude/longitude_fitting_and_calculation_test_data_creator.ipynb
         expected_output = -77.10636729272031

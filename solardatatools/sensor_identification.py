@@ -96,7 +96,7 @@ class SensorIdentification:
                         y_pred = fit.predict(data[test_ix])
                         # Calculate the residuals
                         residuals.append(y[test_ix] - y_pred)
-                    except:
+                    except:  # noqa: E722
                         residuals.append(np.inf)
                 # Collect the residuals from all the splits
                 residuals = np.concatenate(residuals)

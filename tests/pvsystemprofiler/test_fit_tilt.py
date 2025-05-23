@@ -3,12 +3,13 @@ import os
 from pathlib import Path
 import numpy as np
 
-path = Path.cwd().parent.parent
-os.chdir(path)
 from pvsystemprofiler.algorithms.angle_of_incidence.lambda_functions import (
     select_function,
 )
 from pvsystemprofiler.algorithms.angle_of_incidence.curve_fitting import run_curve_fit
+
+path = Path.cwd().parent.parent
+os.chdir(path)
 
 
 class TestFitTilt(unittest.TestCase):
@@ -41,10 +42,6 @@ class TestFitTilt(unittest.TestCase):
         with open(boolean_filter_file_path) as file:
             boolean_filter = np.genfromtxt(file, delimiter=",")
             boolean_filter = boolean_filter.astype(dtype=bool)
-        # keys
-        keys = ["tilt", "azimuth"]
-        # init_values
-        init_values = [30, 30]
 
         # Expected Tilt and azimuth output is generated in tests/fixtures/tilt_azimuth/tilt_azimuth_Estimation_data_creator.ipynb
         expected_output = 31.73673021

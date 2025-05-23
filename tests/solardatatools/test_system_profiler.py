@@ -23,8 +23,6 @@ class TestSystemProfiler(unittest.TestCase):
         estimate_latitude = dh.estimate_latitude()
         estimate_longitude = dh.estimate_longitude()
 
-        estimate_orientation = dh.estimate_orientation()
-
         # Based on site documentation
         actual_latitude = 39.4856
         actual_longitude = -76.6636

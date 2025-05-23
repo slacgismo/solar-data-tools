@@ -3,12 +3,13 @@ import os
 from pathlib import Path
 import numpy as np
 
-path = Path.cwd().parent.parent
-os.chdir(path)
 from pvsystemprofiler.algorithms.angle_of_incidence.lambda_functions import (
     select_function,
 )
 from pvsystemprofiler.algorithms.angle_of_incidence.curve_fitting import run_curve_fit
+
+path = Path.cwd().parent.parent
+os.chdir(path)
 
 
 class TestFitAzimuth(unittest.TestCase):
@@ -51,12 +52,12 @@ class TestFitAzimuth(unittest.TestCase):
         func_customized, bounds = select_function(39.4856, None, None)
         actual_output = run_curve_fit(
             func=func_customized,
-            keys=["tilt", "azimuth"],
+            keys=keys,
             delta=delta_f,
             omega=omega_f,
             costheta=costheta_fit,
             boolean_filter=boolean_filter,
-            init_values=[30, 30],
+            init_values=init_values,
             fit_bounds=bounds,
         )[1]
         np.testing.assert_almost_equal(actual_output, expected_output, decimal=4)

@@ -34,7 +34,7 @@ def plot_signal(signal):
     signal = list(signal)
     sns.set_theme()
     sns.set(font_scale=0.8)
-    fig = plt.figure(figsize=(8, 3))
+    _ = plt.figure(figsize=(8, 3))
 
     plt.plot(signal, label="Noisy signal")
 

@@ -79,8 +79,9 @@ class CapacityChange:
             )
             tuned_weight = weights[best_ix]
             s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
-            num_jumps = np.sum(~np.isclose(np.diff(s1), 0))
-            num_years = np.max([1, len(metric) / 365])
+
+            # num_jumps = np.sum(~np.isclose(np.diff(s1), 0))
+            # num_years = np.max([1, len(metric) / 365])
             # if num_jumps > num_years * 4:
             #     tuned_weight = weights[-1]
             #     best_ix = len(weights) - 1
