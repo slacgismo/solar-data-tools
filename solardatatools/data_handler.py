@@ -68,7 +68,12 @@ class DataHandler:
         This class can work with both data frames and raw data matrices, allowing for
         time series conversion, aggregation, and various other preprocessing steps.
 
-        It is initialized by passing a Pandas dataframe to the `data_frame` parameter.
+        It is initialized by passing a Pandas dataframe to the `data_frame` parameter. Note that
+        the DataFrame must have a DatetimeIndex or the user must set the `datetime_col` kwarg.
+        The timestamps are recommended to be in the local timezone of the data. If there is a small shift
+        in the timestamps, the pipeline will attempt to correct it. If the shift is large (8-10 hours), the pipeline
+        will likely fail to adjust the shift.
+
 
         :param data_frame: A pandas DataFrame containing the raw data. If provided,
                            the class will process the data frame based on the other
@@ -96,8 +101,8 @@ class DataHandler:
         :param how: A function used to aggregate the resampled data. The function should
                     take a pandas object and return a single value (e.g., mean, sum).
         :type how: callable, default=lambda x: x.mean()
-        :param gmt_offset: An integer representing the GMT offset, used for timezone
-                           conversions if necessary.
+        :param gmt_offset: An integer representing the GMT offset, used when estimating the
+                        longitude and latitude. It is NOT used for timezone correction.
         :type gmt_offset: int, optional
         """
 

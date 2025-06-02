@@ -16,7 +16,11 @@ to improve on these docs, please consider [submitting an Issue or a PR](index_de
 ## Getting started with the `DataHandler` class
 Most users will only need to interact with the `DataHandler` class. To instantiate, a Data Handler
 object takes a DataFrame containing the power data timeseries (with a timestamps and power columns)
-as an input.
+as an input. Note that the DataFrame must have a DatetimeIndex, or the user must set the `datetime_col` kwarg.
+
+The timestamps are recommended to be in the local timezone of the data. If there is a small shift in the timestamps,
+the pipeline will attempt to correct it. If the shift is large (8-10 hours), the pipeline will likely fail to
+adjust the shift.
 
 Let's say we have a CSV file with power data that we want to analyze. We can load it into a DataFrame:
 
