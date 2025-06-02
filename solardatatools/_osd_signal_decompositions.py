@@ -24,7 +24,7 @@ the OSD modeling language. The defined signal decompositions are:
     - constrained to have first val at 0 and last val at 1
 
 """
-import sys
+
 import numpy as np
 
 from gfosd import Problem
@@ -40,7 +40,6 @@ from gfosd.components import (
     FirstValEqual,
     LastValEqual,
     NoCurvature,
-    NoSlope,
     Fourier,
     Basis,
 )

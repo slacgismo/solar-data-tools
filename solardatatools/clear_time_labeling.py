@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-""" Clear Time Labeling Module
+"""Clear Time Labeling Module
 
 This module contains a function to find time periods in a data matrix
 that correspond to clear sky output.
 
 """
+
 import numpy as np
 from solardatatools.utilities import find_runs
 

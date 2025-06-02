@@ -24,7 +24,6 @@ This module contains standardized signal decomposition models for use in the SDT
 
 """
 
-import sys
 import numpy as np
 
 import cvxpy as cvx

@@ -1,8 +1,10 @@
-""" Shade Module
+"""Shade Module
 
 This module is for analyzing shade losses in unlabeled power data
 
 """
+
+# ruff: noqa: E731
 
 import numpy as np
 import pandas as pd
@@ -13,6 +15,7 @@ import seaborn as sns
 from pathlib import Path
 
 from solardatatools.polar_transform import PolarTransform
+
 
 my_round = lambda x, c: c * np.round(x / c, 0)
 

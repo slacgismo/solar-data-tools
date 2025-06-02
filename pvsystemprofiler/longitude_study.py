@@ -17,16 +17,19 @@ The following configurations can be run:
  - Method for day selection: all days, sunny/clear days, cloudy days
 
 """
+
 import numpy as np
 import pandas as pd
 from solardatatools.solar_noon import energy_com, avg_sunrise_sunset
 from pvsystemprofiler.utilities.equation_of_time import eot_da_rosa, eot_duffie
 from pvsystemprofiler.utilities.progress import progress
 from pvsystemprofiler.algorithms.longitude.estimation import estimate_longitude
-from pvsystemprofiler.algorithms.optimized_sunrise_sunset import get_optimized_sunrise_sunset
+from pvsystemprofiler.algorithms.optimized_sunrise_sunset import (
+    get_optimized_sunrise_sunset,
+)
 
 
-class LongitudeStudy():
+class LongitudeStudy:
     def __init__(self, data_handler, gmt_offset=-8, true_value=None):
         """
         Default value for GMT offset is -8 which corresponds to Pacific
@@ -37,7 +40,7 @@ class LongitudeStudy():
         """
         self.data_handler = data_handler
         if not data_handler._ran_pipeline:
-            print('Running DataHandler preprocessing pipeline with defaults')
+            print("Running DataHandler preprocessing pipeline with defaults")
             self.data_handler.run_pipeline()
         self.data_matrix = self.data_handler.filled_data_matrix
         self.raw_data_matrix = self.data_handler.raw_data_matrix
@@ -64,12 +67,20 @@ class LongitudeStudy():
         self.measurements_sunrise_filled = None
         self.measurements_sunset_filled = None
 
-    def run(self, data_matrix=('raw', 'filled'),
-            estimator=('calculated', 'fit_l1', 'fit_l2', 'fit_huber'),
-            eot_calculation=('duffie', 'da_rosa'),
-            solar_noon_method=('rise_set_average', 'energy_com', 'optimized_estimates', 'optimized_measurements'),
-            day_selection_method=('all', 'clear', 'cloudy'),
-            verbose=True):
+    def run(
+        self,
+        data_matrix=("raw", "filled"),
+        estimator=("calculated", "fit_l1", "fit_l2", "fit_huber"),
+        eot_calculation=("duffie", "da_rosa"),
+        solar_noon_method=(
+            "rise_set_average",
+            "energy_com",
+            "optimized_estimates",
+            "optimized_measurements",
+        ),
+        day_selection_method=("all", "clear", "cloudy"),
+        verbose=True,
+    ):
         """
         Run a study with the given configuration of options. Defaults to
         running all available options. Any kwarg can be constrained by
@@ -97,67 +108,86 @@ class LongitudeStudy():
         :param verbose: show progress bar if True.
         :return: None.
         """
-        results = pd.DataFrame(columns=[
-            'longitude', 'estimator', 'eot_calculation', 'solar_noon_method',
-            'day_selection_method', 'data_matrix'
-        ])
+        results = pd.DataFrame(
+            columns=[
+                "longitude",
+                "estimator",
+                "eot_calculation",
+                "solar_noon_method",
+                "day_selection_method",
+                "data_matrix",
+            ]
+        )
         estimator = np.atleast_1d(estimator)
         eot_calculation = np.atleast_1d(eot_calculation)
         solar_noon_method = np.atleast_1d(solar_noon_method)
         day_selection_method = np.atleast_1d(day_selection_method)
         data_matrix = np.atleast_1d(data_matrix)
 
-        if 'raw' in data_matrix:
+        if "raw" in data_matrix:
             rdm = self.raw_data_matrix
         else:
             rdm = None
-        if 'filled' in data_matrix:
+        if "filled" in data_matrix:
             fdm = self.data_matrix
         else:
             fdm = None
         opt_dict = get_optimized_sunrise_sunset(fdm, rdm)
-        self.estimates_sunrise_raw, self.estimates_sunset_raw, self.measurements_sunrise_raw, \
-        self.measurements_sunset_raw, self.opt_threshold_raw, \
-        self.estimates_sunrise_filled, self.estimates_sunset_filled, self.measurements_sunrise_filled, \
-        self.measurements_sunset_filled, self.opt_threshold_filled = opt_dict.values()
+        (
+            self.estimates_sunrise_raw,
+            self.estimates_sunset_raw,
+            self.measurements_sunrise_raw,
+            self.measurements_sunset_raw,
+            self.opt_threshold_raw,
+            self.estimates_sunrise_filled,
+            self.estimates_sunset_filled,
+            self.measurements_sunrise_filled,
+            self.measurements_sunset_filled,
+            self.opt_threshold_filled,
+        ) = opt_dict.values()
 
-        total = (len(estimator) * len(eot_calculation) * len(solar_noon_method)
-                 * len(day_selection_method) * len(data_matrix))
+        total = (
+            len(estimator)
+            * len(eot_calculation)
+            * len(solar_noon_method)
+            * len(day_selection_method)
+            * len(data_matrix)
+        )
         counter = 0
         for dm in data_matrix:
-            if dm == 'raw':
+            if dm == "raw":
                 data_in = self.raw_data_matrix
-            elif dm == 'filled':
+            elif dm == "filled":
                 data_in = self.data_matrix
             for sn in solar_noon_method:
-                if sn == 'rise_set_average':
+                if sn == "rise_set_average":
                     self.solarnoon = avg_sunrise_sunset(data_in)
-                elif sn == 'energy_com':
+                elif sn == "energy_com":
                     self.solarnoon = energy_com(data_in)
-                elif sn == 'optimized_estimates':
-                    if dm == 'filled':
+                elif sn == "optimized_estimates":
+                    if dm == "filled":
                         sunset = np.copy(self.estimates_sunset_filled)
                         sunrise = np.copy(self.estimates_sunrise_filled)
-                    if dm == 'raw':
+                    if dm == "raw":
                         sunset = np.copy(self.estimates_sunset_raw)
                         sunrise = np.copy(self.estimates_sunrise_raw)
                     self.solarnoon = np.nanmean([sunrise, sunset], axis=0)
-                elif sn == 'optimized_measurements':
-                    if dm == 'filled':
+                elif sn == "optimized_measurements":
+                    if dm == "filled":
                         sunset = np.copy(self.measurements_sunset_filled)
                         sunrise = np.copy(self.measurements_sunrise_filled)
-                    if dm == 'raw':
+                    if dm == "raw":
                         sunset = np.copy(self.measurements_sunset_raw)
                         sunrise = np.copy(self.measurements_sunrise_raw)
                     sunrise[np.isnan(sunrise)] = 0
                     sunset[np.isnan(sunset)] = 0
                     self.solarnoon = np.nanmean([sunrise, sunset], axis=0)
                 for ds in day_selection_method:
-                    if ds == 'all':
+                    if ds == "all":
                         self.days = self.data_handler.daily_flags.no_errors
-                    elif ds == 'clear':
+                    elif ds == "clear":
                         self.days = self.data_handler.daily_flags.clear
-                    elif ds == 'cloudy':
+                    elif ds == "cloudy":
                         self.days = self.data_handler.daily_flags.cloudy
                     for est in estimator:
                         for eot in eot_calculation:
@@ -165,27 +195,31 @@ class LongitudeStudy():
                                 progress(counter, total)
 
                             try:
-                                if eot in ('duffie', 'd', 'duf') or eot is None:
+                                if eot in ("duffie", "d", "duf") or eot is None:
                                     eot_ref = self.eot_duffie
-                                elif eot in ('da_rosa', 'dr', 'rosa'):
+                                elif eot in ("da_rosa", "dr", "rosa"):
                                     eot_ref = self.eot_da_rosa
-                                lon = estimate_longitude(est, eot_ref, self.solarnoon, self.days, self.gmt_offset)
+                                lon = estimate_longitude(
+                                    est,
+                                    eot_ref,
+                                    self.solarnoon,
+                                    self.days,
+                                    self.gmt_offset,
+                                )
 
                             except ValueError:
                                 lon = np.nan
 
-                            results.loc[counter] = [
-                                lon, est, eot, sn, ds, dm
-                            ]
+                            results.loc[counter] = [lon, est, eot, sn, ds, dm]
                             counter += 1
         if verbose:
             progress(counter, total)
         if self.true_value is not None:
-            results['residual'] = self.true_value - results['longitude']
-            results['measured_longitude'] = self.true_value
+            results["residual"] = self.true_value - results["longitude"]
+            results["measured_longitude"] = self.true_value
         self.results = results
         if self.true_value is not None:
-            best_loc = results['residual'].apply(lambda x: np.abs(x)).argmin()
+            best_loc = results["residual"].apply(lambda x: np.abs(x)).argmin()
             self.best_result = results.loc[best_loc]
-            self.results = results.loc[np.argsort(np.abs(results['residual']).values)]
+            self.results = results.loc[np.argsort(np.abs(results["residual"]).values)]
         return

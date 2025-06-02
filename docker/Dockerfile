@@ -4,6 +4,7 @@ WORKDIR /root
 RUN mkdir sdt
 WORKDIR /root/sdt
 
-COPY docker/requirements.txt /root/sdt/.
+RUN pip install solar-data-tools[dask]
 
-RUN pip install -r requirements.txt
+# For the s3 dataplug
+RUN pip install boto3==1.34.131

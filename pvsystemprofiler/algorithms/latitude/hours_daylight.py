@@ -11,4 +11,4 @@ def calculate_hours_daylight_raw(data_in, data_sampling, threshold=0.001):
 def calculate_hours_daylight(data_in, threshold=0.001):
     bool_msk = detect_sun(data_in, threshold=threshold)
     measurements = rise_set_rough(bool_msk)
-    return measurements['sunsets'] - measurements['sunrises']
+    return measurements["sunsets"] - measurements["sunrises"]

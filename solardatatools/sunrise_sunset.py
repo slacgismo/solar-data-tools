@@ -1,4 +1,4 @@
-""" Sunrise and Sunset Estimation Module
+"""Sunrise and Sunset Estimation Module
 
 This module contains functions for estimating sunrise and sunset times from an
 unlabel PV power dataset.

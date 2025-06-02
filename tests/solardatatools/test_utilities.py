@@ -1,7 +1,7 @@
 import unittest
-from pathlib import Path
 import numpy as np
-#from solardatatools.signal_decompositions import l1_l2d2p365
+
+# from solardatatools.signal_decompositions import l1_l2d2p365
 from solardatatools.utilities import basic_outlier_filter
 
 

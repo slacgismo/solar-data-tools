@@ -2,7 +2,9 @@
 This module defines the class for Singular Value Decomposition related
  operations.
 """
+
 import numpy as np
+
 
 class SingularValueDecomposition:
     """
@@ -23,22 +25,26 @@ class SingularValueDecomposition:
             Rank of the resulting low rank matrices.
         """
 
-        (left_singular_vectors_u, singular_values_sigma,
-         right_singular_vectors_v) = np.linalg.svd(power_signals_d)
-        left_singular_vectors_u, right_singular_vectors_v = \
-            self._adjust_singular_vectors(left_singular_vectors_u,
-                                           right_singular_vectors_v)
+        (left_singular_vectors_u, singular_values_sigma, right_singular_vectors_v) = (
+            np.linalg.svd(power_signals_d)
+        )
+        left_singular_vectors_u, right_singular_vectors_v = (
+            self._adjust_singular_vectors(
+                left_singular_vectors_u, right_singular_vectors_v
+            )
+        )
         self._left_singular_vectors_u = left_singular_vectors_u
         self._singular_values_sigma = singular_values_sigma
         self._right_singular_vectors_v = right_singular_vectors_v
 
         self._matrix_l0 = self._left_singular_vectors_u[:, :rank_k]
         self._matrix_r0 = np.diag(self._singular_values_sigma[:rank_k]).dot(
-            right_singular_vectors_v[:rank_k, :])
+            right_singular_vectors_v[:rank_k, :]
+        )
 
-    def _adjust_singular_vectors(self, left_singular_vectors_u,
-                                  right_singular_vectors_v):
-
+    def _adjust_singular_vectors(
+        self, left_singular_vectors_u, right_singular_vectors_v
+    ):
         if np.sum(left_singular_vectors_u[:, 0]) < 0:
             left_singular_vectors_u[:, 0] *= -1
             right_singular_vectors_v[0] *= -1

@@ -1,4 +1,5 @@
 """Class for dataplugs to be used with the SDT Dask tool."""
+
 import pandas as pd
 from solardatatools.dataio import get_pvdaq_data
 from sdt_dask.dataplugs.dataplug import DataPlug
@@ -9,6 +10,7 @@ class PVDAQPlug(DataPlug):
     Dataplug class for retrieving data from the PVDAQ DB.
     Note that the DEMO_KEY has a rate limit of 30/h, 50/d per IP address.
     """
+
     def __init__(self, api_key="DEMO_KEY", power_col="ac_power"):
         self.api_key = api_key
         self.power_col = power_col
@@ -22,7 +24,7 @@ class PVDAQPlug(DataPlug):
 
     def _clean_data(self):
         # pick out one power col
-        self.df = self.df[['ac_power']]
+        self.df = self.df[["ac_power"]]
 
     def get_data(self, keys: tuple[int, int]) -> pd.DataFrame:
         """This is the main function that the Dask tool will interact with.
@@ -41,5 +43,3 @@ class PVDAQPlug(DataPlug):
         self._clean_data()
 
         return self.df
-
-

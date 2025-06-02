@@ -10,6 +10,7 @@ the 'bounds' tuple containing the bounds for the variables. Bounds for latitude 
  and William A. Beckman. Solar engineering of thermal processes. New York: Wiley, 1991.). However a value of tilt >90
  would mean that that the surface has a downward-facing component, which is not the case of the current application.
 """
+
 from pvsystemprofiler.utilities.angle_of_incidence_function import func_costheta
 import numpy as np
 
@@ -23,30 +24,30 @@ def select_function(latitude=None, tilt=None, azimuth=None):
     """
 
     if latitude is None and tilt is None and azimuth is None:
-        func = lambda x, phi, beta, gamma: func_costheta(x, phi, beta, gamma)
+        func = lambda x, phi, beta, gamma: func_costheta(x, phi, beta, gamma)  # noqa: E731
     elif latitude is not None and tilt is None and azimuth is None:
-        func = lambda x, beta, gamma: func_costheta(
+        func = lambda x, beta, gamma: func_costheta(  # noqa: E731
             x, np.deg2rad(latitude), beta, gamma
         )
 
     elif latitude is None and tilt is not None and azimuth is None:
-        func = lambda x, phi, gamma: func_costheta(x, phi, np.deg2rad(tilt), gamma)
+        func = lambda x, phi, gamma: func_costheta(x, phi, np.deg2rad(tilt), gamma)  # noqa: E731
 
     elif latitude is None and tilt is None and azimuth is not None:
-        func = lambda x, phi, beta: func_costheta(x, phi, beta, np.deg2rad(azimuth))
+        func = lambda x, phi, beta: func_costheta(x, phi, beta, np.deg2rad(azimuth))  # noqa: E731
 
     elif latitude is None and tilt is not None and azimuth is not None:
-        func = lambda x, phi: func_costheta(
+        func = lambda x, phi: func_costheta(  # noqa: E731
             x, phi, np.deg2rad(tilt), np.deg2rad(azimuth)
         )
 
     elif latitude is not None and tilt is None and azimuth is not None:
-        func = lambda x, beta: func_costheta(
+        func = lambda x, beta: func_costheta(  # noqa: E731
             x, np.deg2rad(latitude), beta, np.deg2rad(azimuth)
         )
 
     elif latitude is not None and tilt is not None and azimuth is None:
-        func = lambda x, gamma: func_costheta(
+        func = lambda x, gamma: func_costheta(  # noqa: E731
             x, np.deg2rad(latitude), np.deg2rad(tilt), gamma
         )
 

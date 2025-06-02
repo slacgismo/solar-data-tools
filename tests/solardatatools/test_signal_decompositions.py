@@ -1,4 +1,4 @@
-""" This module contains tests for the following signal decompositions:
+"""This module contains tests for the following signal decompositions:
 
 1) 'l2_l1d1_l2d2p365', components:
     - l2: gaussian noise, sum-of-squares small or l2-norm squared
@@ -46,7 +46,6 @@ import unittest
 from pathlib import Path
 import json
 import numpy as np
-import pandas as pd
 from sklearn.metrics import mean_absolute_error as mae
 
 from solardatatools import signal_decompositions as sd
@@ -511,9 +510,9 @@ class TestSignalDecompositions(unittest.TestCase):
         signal = np.array(input["test_signal"])
 
         # Expected output
-        expected_s_hat = output[f"expected_s_hat_365"]
-        expected_s_seas = output[f"expected_s_seas_365"]
-        expected_obj_val = output[f"expected_obj_val_365"]
+        expected_s_hat = output["expected_s_hat_365"]
+        expected_s_seas = output["expected_s_seas_365"]
+        expected_obj_val = output["expected_obj_val_365"]
 
         # Run test with default args
         actual_s_hat, actual_s_seas, _, actual_problem = sd.l1_pwc_smoothper_trend(
@@ -555,8 +554,8 @@ class TestSignalDecompositions(unittest.TestCase):
         signal = np.array(input["test_signal"])
 
         # Expected output
-        expected_y_hat = output[f"expected_y_hat"]
-        expected_obj_val = output[f"expected_obj_val"]
+        expected_y_hat = output["expected_y_hat"]
+        expected_obj_val = output["expected_obj_val"]
 
         # Run test with default args
         actual_y_hat, actual_problem = sd.l2_l1d2_constrained(

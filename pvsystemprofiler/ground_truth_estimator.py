@@ -94,7 +94,7 @@ def ground_truth_estimate(filename):
             # gather all tilts and azimuths of same home
             tilt.append(t)
             azimuth.append(a)
-        except:
+        except:  # noqa: E722
             pass
     # calculate mean and standard deviation tilt and azimuth per home
     ave_tilt = np.mean(tilt)
