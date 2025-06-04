@@ -91,6 +91,7 @@ def plot_bundt_cake(
     elev=45,
     azim=30,
     zoom=1.0,
+    zscale=0.5,
     ax=None,
     cmap="coolwarm",
 ):
@@ -139,6 +140,6 @@ def plot_bundt_cake(
         ax.set_yticks([])
         ax.set_zlabel(units)
         ax.view_init(elev=elev, azim=azim)
-        ax.set_box_aspect([zoom, zoom, 1])
+        ax.set_box_aspect([zoom, zoom, zscale])
         plt.tight_layout()
         return fig

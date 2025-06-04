@@ -2426,33 +2426,59 @@ time zone errors     {report['time zone correction'] != 0}
                    elev=45,
                    azim=30,
                    zoom=1.0,
-                   cmap="coolwarm"):
-        """
-        Plot first 365 days of solar data in Bundt cake style after time dilation.
+                   zscale=0.5,
+                   cmap="coolwarm",
+                   aggregate=False,
+                   skip=0):
 
-        Parameters:
-            figsize, units, inner_radius, slice_thickness, elev, azim, zoom, cmap:
-                Customization parameters passed directly to Bundt plotting function.
-
-        Returns:
-            Matplotlib figure object.
-        """
-
-        # Perform sunrise/sunset estimation if not already done
+        # Ensure sunrise/sunset analysis has been run
         if not hasattr(self, 'daytime_analysis') or \
                 self.daytime_analysis.sunrise_estimates is None:
             print("Estimating sunrise and sunset times...")
             self.run_pipeline(sunrise_sunset=True)
 
-        # Perform time dilation using built-in dilation class
+        # Apply time dilation
         dilation = Dilation(self, matrix='raw', nvals_dil=101)
-
-        # Extract dilated data and select first 365 days
         dilated_matrix = dilation.signal_dil[1:].reshape(
             dilation.nvals_dil, dilation.ndays, order='F')
-        data_for_bundt = dilated_matrix[:, :365].T  # shape (365, nvals_dil)
+        # shape: (101, ndays)
 
-        # Plot using user's provided Bundt cake function
+        if aggregate:
+            # Drop Feb 29 entries
+            leap_day_mask = np.logical_and(
+                self.day_index.month == 2,
+                self.day_index.day == 29
+            )
+            valid_days_mask = ~leap_day_mask
+            valid_day_index = self.day_index[valid_days_mask]
+            valid_matrix = dilated_matrix[:,
+                                          valid_days_mask]  # shape: (101, N')
+
+            # Create 365-day vector for day-of-year (1–365, excluding Feb 29)
+            doy = valid_day_index.dayofyear.to_numpy()
+            doy[doy > 59] -= 1  # adjust for removed Feb 29
+
+            # Aggregate using nanmedian for robustness to missing data
+            data_for_bundt = np.zeros((365, dilation.nvals_dil))
+            data_for_bundt[:] = np.nan  # initialize with NaNs
+
+            for day in range(1, 366):
+                same_day_mask = doy == day
+                if np.any(same_day_mask):
+                    # shape: (101, n_years_for_day)
+                    day_data = valid_matrix[:, same_day_mask]
+                    data_for_bundt[day - 1] = np.nanmedian(day_data, axis=1)
+        else:
+            start_day = skip
+            end_day = skip + 365
+            data = dilated_matrix[:, start_day:end_day]
+            if data.shape[1] < 365:
+                # Pad with zeros if not enough days
+                pad = 365 - data.shape[1]
+                data = np.pad(data, ((0, 0), (0, pad)), constant_values=0)
+            data_for_bundt = data.T  # shape: (365, 101)
+
+        # Plot with provided bundt cake function
         from solardatatools.plotting import plot_bundt_cake
         fig = plot_bundt_cake(
             data_for_bundt,
@@ -2463,9 +2489,9 @@ time zone errors     {report['time zone correction'] != 0}
             elev=elev,
             azim=azim,
             zoom=zoom,
+            zscale=zscale,
             cmap=cmap
         )
-
         return fig
 
     def plot_polar_transform(
