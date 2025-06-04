@@ -1312,10 +1312,10 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             self.capacity_changes = False
         if plot:
-            metric = self.capacity_analysis.metric
-            s1 = self.capacity_analysis.s1
-            s2 = self.capacity_analysis.s2
-            s3 = self.capacity_analysis.s3
+            metric = np.exp(self.capacity_analysis.metric)
+            s1 = np.exp(self.capacity_analysis.s1)
+            s2 = np.exp(self.capacity_analysis.s2)
+            s3 = np.exp(self.capacity_analysis.s3)
             labels = self.capacity_analysis.labels
             try:
                 xs = self.day_index.to_pydatetime()
@@ -1328,23 +1328,36 @@ time zone errors     {report['time zone correction'] != 0}
                     sharex=True,
                     gridspec_kw={"height_ratios": [4, 1]},
                 )
+                ax[0].plot(
+                    xs[self.daily_flags.no_errors],
+                    metric[self.daily_flags.no_errors],
+                    alpha=0.3,
+                    label="measured signal",
+                    marker=".",
+                    ls="none",
+                    color="gray",
+                )
                 ax[0].plot(xs, s1, label="capacity change detector")
-                ax[0].plot(xs, s1 + s2 + s3, label="signal model")
-                ax[0].plot(xs, metric, alpha=0.3, label="measured signal")
+                ax[0].plot(xs, s1 * s2 * s3, label="signal model")
                 ax[0].legend()
                 ax[0].set_title("Detection of system capacity changes")
                 ax[1].set_xlabel("date")
-                ax[0].set_ylabel("normalized daily max power")
+                ax[0].set_ylabel("daily max power")
                 ax[1].plot(xs, labels, ls="none", marker=".")
                 ax[1].set_ylabel("Capacity clusters")
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label="capacity change detector")
-                ax.plot(xs, s1 + s2 + s3, label="signal model")
-                ax.plot(xs, metric, alpha=0.3, label="measured signal")
+                ax.plot(xs, s1 * s2 * s3, label="signal model")
+                ax.plot(
+                    xs[self.daily_flags.no_errors],
+                    metric[self.daily_flags.no_errors],
+                    alpha=0.3,
+                    label="measured signal",
+                )
                 ax.legend()
                 ax.set_title("Detection of system capacity changes")
-                ax.set_ylabel("normalized daily maximum power")
+                ax.set_ylabel("daily maximum power")
                 ax.set_xlabel("date")
             return fig
 
@@ -2487,6 +2500,23 @@ time zone errors     {report['time zone correction'] != 0}
         """
         if self.polar_transform is None:
             self.augment_data_frame(self.daily_flags.clear, "clear-day")
+            pt = PolarTransform(
+                self.data_frame[self.use_column],
+                lat,
+                lon,
+                tz_offset=tz_offset,
+                boolean_selection=self.data_frame["clear-day"],
+            )
+            self.polar_transform = pt
+
+        user_updated = np.any(
+            [
+                self.polar_transform.tz_offset != tz_offset,
+                self.polar_transform.lat != lat,
+                self.polar_transform.lon != lon,
+            ]
+        )
+        if user_updated:
             pt = PolarTransform(
                 self.data_frame[self.use_column],
                 lat,
