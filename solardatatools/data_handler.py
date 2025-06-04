@@ -5,6 +5,8 @@ This module contains a class for managing a data processing pipeline
 
 """
 
+from solardatatools.algorithms.dilation import Dilation
+from solardatatools.polar_transform import PolarTransform
 from time import time
 from datetime import timedelta
 from datetime import datetime
@@ -14,7 +16,8 @@ import cvxpy as cvx
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import traceback, sys
+import traceback
+import sys
 from tqdm import tqdm
 from solardatatools.time_axis_manipulation import (
     make_time_series,
@@ -43,7 +46,6 @@ from solardatatools.algorithms import (
 from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
-from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:
@@ -139,7 +141,8 @@ class DataHandler:
         if self.raw_data_matrix is not None:
             self.num_days = self.raw_data_matrix.shape[1]
             if self.raw_data_matrix.shape[0] <= 1400:
-                self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
+                self.data_sampling = int(
+                    24 * 60 / self.raw_data_matrix.shape[0])
             else:
                 self.data_sampling = 24 * 60 / self.raw_data_matrix.shape[0]
         else:
@@ -426,7 +429,8 @@ class DataHandler:
             progress.update()
         ss = SunriseSunset()
         try:
-            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
+            ss.run_optimizer(self.raw_data_matrix,
+                             plot=False, solver=solver_convex)
             self.boolean_masks.daytime = ss.sunup_mask_estimated
         except:
             msg = "Sunrise/sunset detection failed."
@@ -442,7 +446,8 @@ class DataHandler:
         if verbose:
             progress.update()
         try:
-            self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
+            self.make_filled_data_matrix(
+                zero_night=zero_night, interp_day=interp_day)
         except:
             msg = "Matrix filling failed."
             self._error_msg += "\n" + msg
@@ -479,7 +484,8 @@ class DataHandler:
             self._error_msg += "\n" + msg
             if verbose:
                 print(msg)
-                print(f"ratio of filled to raw nonzero measurements was {ratio:.2f}")
+                print(
+                    f"ratio of filled to raw nonzero measurements was {ratio:.2f}")
             self.daily_scores = None
             self.daily_flags = None
             self.data_quality_score = None
@@ -581,7 +587,7 @@ class DataHandler:
                     periodic_detector=periodic_detector,
                     solver=solver,
                 )
-                rms = lambda x: np.sqrt(np.mean(np.square(x)))
+                def rms(x): return np.sqrt(np.mean(np.square(x)))
                 if rms(self.time_shift_analysis.s2) > 0.25:
                     if verbose:
                         print("Invoking periodic timeshift detector.")
@@ -618,7 +624,8 @@ class DataHandler:
                 # Related to this bug fix:
                 # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da
                 old_index = self.data_frame.index.copy()
-                self.data_frame.index = self.data_frame.index.shift(tz_offset, freq="H")
+                self.data_frame.index = self.data_frame.index.shift(
+                    tz_offset, freq="H")
                 self.data_frame = self.data_frame.reindex(
                     index=old_index, method="nearest", limit=1
                 ).fillna(0)
@@ -627,7 +634,8 @@ class DataHandler:
                 self.filled_data_matrix = np.nan_to_num(
                     np.roll(self.filled_data_matrix, roll_by, axis=0), 0
                 )
-                self.raw_data_matrix = np.roll(self.raw_data_matrix, roll_by, axis=0)
+                self.raw_data_matrix = np.roll(
+                    self.raw_data_matrix, roll_by, axis=0)
                 self.boolean_masks.daytime = np.roll(
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
@@ -777,7 +785,8 @@ class DataHandler:
                         self.num_days / 365
                     )
                 else:
-                    l1 = "Length:                {} days\n".format(self.num_days)
+                    l1 = "Length:                {} days\n".format(
+                        self.num_days)
                 if self.power_units == "W":
                     l1_a = "Capacity estimate:     {:.2f} kW\n".format(
                         self.capacity_estimate / 1000
@@ -792,7 +801,8 @@ class DataHandler:
                     )
                     l1_a += self.power_units + "\n"
                 if self.raw_data_matrix.shape[0] <= 1440:
-                    l2 = "Data sampling:         {} minute\n".format(self.data_sampling)
+                    l2 = "Data sampling:         {} minute\n".format(
+                        self.data_sampling)
                 else:
                     l2 = "Data sampling:         {} second\n".format(
                         int(self.data_sampling * 60)
@@ -840,7 +850,8 @@ time zone errors     {report['time zone correction'] != 0}
             df_localized = df.tz_localize(
                 "US/Pacific", ambiguous="NaT", nonexistent="NaT"
             )
-            df_localized = df_localized[df_localized.index == df_localized.index]
+            df_localized = df_localized[df_localized.index ==
+                                        df_localized.index]
             df_localized = df_localized.tz_convert("Etc/GMT+8")
             df_localized = df_localized.tz_localize(None)
             self.data_frame_raw = df_localized
@@ -1078,12 +1089,14 @@ time zone errors     {report['time zone correction'] != 0}
             freq = "{}min".format(self.data_sampling)
             periods = self.filled_data_matrix.size
             tindex = pd.date_range(start=start, freq=freq, periods=periods)
-            series = pd.Series(data=boolean_index.ravel(order="F"), index=tindex)
+            series = pd.Series(
+                data=boolean_index.ravel(order="F"), index=tindex)
             series.name = column_name
             if column_name in self.data_frame.columns:
                 del self.data_frame[column_name]
             self.data_frame = self.data_frame.join(series)
-            self.data_frame[column_name] = self.data_frame[column_name].fillna(False)
+            self.data_frame[column_name] = self.data_frame[column_name].fillna(
+                False)
         elif cond2:
             slct_dates = self.day_index[boolean_index].date
             bix = np.isin(self.data_frame.index.date, slct_dates)
@@ -1109,7 +1122,8 @@ time zone errors     {report['time zone correction'] != 0}
         df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
-        self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
+        self.raw_data_matrix, day_index = make_2d(
+            df, key=use_col, return_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
         if self.raw_data_matrix.shape[0] <= 1400:
@@ -1150,7 +1164,7 @@ time zone errors     {report['time zone correction'] != 0}
                 start=self.day_index[0].date(), end=end, freq="{}s".format(freq)
             )[:-1]
         num_meas = self.filled_data_matrix.shape[0]
-        new_view = self.data_frame[column].loc[new_index[0] : new_index[-1]]
+        new_view = self.data_frame[column].loc[new_index[0]: new_index[-1]]
         new_view = new_view.values.reshape(num_meas, -1, order="F")
         if self.time_shifts:
             ts = self.time_shift_analysis
@@ -1194,7 +1208,8 @@ time zone errors     {report['time zone correction'] != 0}
         # outside the decision boundaries
         day_counts = [
             np.logical_or(
-                self.daily_scores.linearity[db.labels_ == lb] > linearity_threshold,
+                self.daily_scores.linearity[db.labels_ ==
+                                            lb] > linearity_threshold,
                 np.logical_or(
                     self.daily_scores.density[db.labels_ == lb]
                     < density_lower_threshold,
@@ -1249,11 +1264,13 @@ time zone errors     {report['time zone correction'] != 0}
     def score_data_set(self):
         num_days = self.raw_data_matrix.shape[1]
         try:
-            self.data_quality_score = np.sum(self.daily_flags.no_errors) / num_days
+            self.data_quality_score = np.sum(
+                self.daily_flags.no_errors) / num_days
         except TypeError:
             self.data_quality_score = None
         try:
-            self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
+            self.data_clearness_score = np.sum(
+                self.daily_flags.clear) / num_days
         except TypeError:
             self.data_clearness_score = None
         return
@@ -1434,7 +1451,8 @@ time zone errors     {report['time zone correction'] != 0}
         # the clearness test. Occasionally, we find an early morning or late
         # afternoon inverter outage on a clear day is still detected as clear.
         # Added July 2020 --BM
-        clear_days = np.logical_and(clear_days, self.daily_scores.density > 0.9)
+        clear_days = np.logical_and(
+            clear_days, self.daily_scores.density > 0.9)
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
@@ -1886,7 +1904,8 @@ time zone errors     {report['time zone correction'] != 0}
                 label=mask_label,
             )
         if show_clear_model and self.scsf is not None:
-            plot_model = self.scsf.estimated_power_matrix[:, slct].ravel(order="F")
+            plot_model = self.scsf.estimated_power_matrix[:, slct].ravel(
+                order="F")
             plt.plot(
                 xs, plot_model, color="orange", linewidth=1, label="clear sky model"
             )
@@ -2040,8 +2059,10 @@ time zone errors     {report['time zone correction'] != 0}
             ls=":",
             label="decision boundary",
         )
-        plt.axvline(self.__density_upper_threshold, linewidth=1, color="red", ls=":")
-        plt.axvline(self.__density_lower_threshold, linewidth=1, color="red", ls=":")
+        plt.axvline(self.__density_upper_threshold,
+                    linewidth=1, color="red", ls=":")
+        plt.axvline(self.__density_lower_threshold,
+                    linewidth=1, color="red", ls=":")
         plt.legend()
         return fig
 
@@ -2344,7 +2365,8 @@ time zone errors     {report['time zone correction'] != 0}
             slct = self.daily_flags.cloudy
             title += "cloudy days"
         circ_data = (
-            (self.start_doy + np.arange(self.num_days)[slct]) % 365 * 2 * np.pi / 365
+            (self.start_doy + np.arange(self.num_days)
+             [slct]) % 365 * 2 * np.pi / 365
         )
         circ_hist = np.histogram(circ_data, bins=num_bins)
         fig = plt.figure(figsize=figsize)
@@ -2381,6 +2403,56 @@ time zone errors     {report['time zone correction'] != 0}
         )
         ax.set_title(title)
         # print(np.sum(circ_hist[0] <= 1))
+        return fig
+
+    def plot_bundt(self,
+                   figsize=(12, 8),
+                   units="kW",
+                   inner_radius=1.0,
+                   slice_thickness=100,
+                   elev=45,
+                   azim=30,
+                   zoom=1.0,
+                   cmap="coolwarm"):
+        """
+        Plot first 365 days of solar data in Bundt cake style after time dilation.
+
+        Parameters:
+            figsize, units, inner_radius, slice_thickness, elev, azim, zoom, cmap:
+                Customization parameters passed directly to Bundt plotting function.
+
+        Returns:
+            Matplotlib figure object.
+        """
+
+        # Perform sunrise/sunset estimation if not already done
+        if not hasattr(self, 'daytime_analysis') or \
+                self.daytime_analysis.sunrise_estimates is None:
+            print("Estimating sunrise and sunset times...")
+            self.run_pipeline(sunrise_sunset=True)
+
+        # Perform time dilation using built-in dilation class
+        dilation = Dilation(self, matrix='raw', nvals_dil=101)
+
+        # Extract dilated data and select first 365 days
+        dilated_matrix = dilation.signal_dil[1:].reshape(
+            dilation.nvals_dil, dilation.ndays, order='F')
+        data_for_bundt = dilated_matrix[:, :365].T  # shape (365, nvals_dil)
+
+        # Plot using user's provided Bundt cake function
+        from solardatatools.plotting import plot_bundt_cake
+        fig = plot_bundt_cake(
+            data_for_bundt,
+            figsize=figsize,
+            units=units,
+            inner_radius=inner_radius,
+            slice_thickness=slice_thickness,
+            elev=elev,
+            azim=azim,
+            zoom=zoom,
+            cmap=cmap
+        )
+
         return fig
 
     def plot_polar_transform(
