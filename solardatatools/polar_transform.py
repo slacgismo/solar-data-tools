@@ -39,7 +39,7 @@ class PolarTransform:
             else:
                 e = "boolean index for data selection must"
                 e += " match length of data series"
-                raise Exception(e)
+                raise ValueError(e)
         self.transformed_data = None
         self._er = None
         self._ar = None
