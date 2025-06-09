@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Plotting Module
-
-
-
-"""
+"""Plotting Module"""
 
 import numpy as np
 import matplotlib.pyplot as plt

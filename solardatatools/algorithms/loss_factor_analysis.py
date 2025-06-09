@@ -1,4 +1,4 @@
-""" Combined Soiling and Degradation Estimation Module
+"""Combined Soiling and Degradation Estimation Module
 
 This module is for estimation of degradation and soiling losses from unlabeled
 daily energy production data. Model is of the form
@@ -21,7 +21,6 @@ from scipy.signal import sawtooth, find_peaks
 from gfosd import Problem
 import gfosd.components as comp
 from gfosd.components.base_graph_class import GraphComponent
-from spcqe.functions import make_basis_matrix, make_regularization_matrix
 from tqdm import tqdm
 
 
@@ -379,7 +378,7 @@ class LossFactorAnalysis:
         """
         if self.MC_results is not None:
             if figsize is not None:
-                fig = plt.figure(figsize=figsize)
+                _ = plt.figure(figsize=figsize)
             degs = self.MC_results["samples"]["deg"]
             n, bins, patches = plt.hist(degs)
             plt.axvline(np.average(degs), color="yellow", label="mean")
@@ -409,7 +408,7 @@ class LossFactorAnalysis:
         """
         if self.MC_results is not None:
             if figsize is not None:
-                fig = plt.figure(figsize=figsize)
+                _ = plt.figure(figsize=figsize)
             degs = self.MC_results["samples"]["deg"]
             taus = self.MC_results["samples"]["tau"]
             weights = self.MC_results["samples"]["weight"]
@@ -433,7 +432,7 @@ class LossFactorAnalysis:
         """
         if self.MC_results is not None:
             if figsize is not None:
-                fig = plt.figure(figsize=figsize)
+                _ = plt.figure(figsize=figsize)
             degs = self.MC_results["samples"]["deg"]
             taus = self.MC_results["samples"]["tau"]
             weights = self.MC_results["samples"]["weight"]
@@ -531,7 +530,7 @@ class LossFactorAnalysis:
                     comp.Basis(custom_basis),
                 ]
             )
-        elif deg_select.value == "none":
+        elif deg_type == "none":
             c4 = SetEqual(val=np.zeros(length))
         # capacity change term: leverage previous analysis from SDT pipeline
         if use_capacity_change_labels and self.capacity_change_labels is not None:

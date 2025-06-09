@@ -6,7 +6,6 @@ This module contains functions for detecting clear days in historical PV solar d
 """
 
 import numpy as np
-import cvxpy as cvx
 from solardatatools.signal_decompositions import tl1_l2d2p365
 from solardatatools.utilities import basic_outlier_filter
 

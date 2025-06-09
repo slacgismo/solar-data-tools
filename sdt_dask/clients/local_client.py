@@ -1,7 +1,10 @@
 """
 Class for the local client plug to be used with the SDT Dask Tool (Runner)
 """
-import os, platform, psutil, dask.config
+
+import os
+import psutil
+import dask.config
 from dask.distributed import Client, LocalCluster
 from sdt_dask.clients.clientplug import ClientPlug
 
@@ -27,7 +30,10 @@ class LocalClient(ClientPlug):
         https://distributed.dask.org/en/stable/api.html#distributed.LocalCluster
     :type kwargs: dict
     """
-    def __init__(self, workers: int = 2, threads: int = 2, memory: float = 6.0, **kwargs):
+
+    def __init__(
+        self, workers: int = 2, threads: int = 2, memory: float = 6.0, **kwargs
+    ):
         self.workers = workers
         self.threads = threads
         self.memory = memory
@@ -48,7 +54,7 @@ class LocalClient(ClientPlug):
         self.cpu_count = os.cpu_count()
         # memory is stored in GB
         # type: float
-        self.sys_memory = (psutil.virtual_memory().total / (1024.**3))
+        self.sys_memory = psutil.virtual_memory().total / (1024.0**3)
 
     def _config_init(self):
         """Checks for dask settings saved in dask's config YAML file, if there
@@ -56,13 +62,12 @@ class LocalClient(ClientPlug):
         for the dask worker which include memory spill, target and worker pause,
         terminate variables
         """
-        tmp_dir = dask.config.get('temporary_directory')
+        tmp_dir = dask.config.get("temporary_directory")
         if not tmp_dir:
-            self.dask_config.set({'distributed.worker.memory.spill': True})
-            self.dask_config.set({'distributed.worker.memory.pause': True})
-            self.dask_config.set({'distributed.worker.memory.target': 0.95})
-            self.dask_config.set({'distributed.worker.memory.terminate': False})
-
+            self.dask_config.set({"distributed.worker.memory.spill": True})
+            self.dask_config.set({"distributed.worker.memory.pause": True})
+            self.dask_config.set({"distributed.worker.memory.target": 0.95})
+            self.dask_config.set({"distributed.worker.memory.terminate": False})
 
     def _check(self):
         """Checks if the workers, threads and memory are within the resource
@@ -71,10 +76,14 @@ class LocalClient(ClientPlug):
         """
         self._get_sys_var()
         if self.workers * self.threads > self.cpu_count:
-            raise ValueError(f"workers and threads exceed local resources, {self.cpu_count} cores present")
+            raise ValueError(
+                f"workers and threads exceed local resources, {self.cpu_count} cores present"
+            )
         if self.workers * self.memory > self.sys_memory:
-            self.dask_config.set({'distributed.worker.memory.spill': True})
-            print(f"Memory per worker exceeds system memory ({self.memory} GB), activating memory spill\n")
+            self.dask_config.set({"distributed.worker.memory.spill": True})
+            print(
+                f"Memory per worker exceeds system memory ({self.memory} GB), activating memory spill\n"
+            )
 
     def init_client(self) -> Client:
         """Initializes the Dask Client and the LocalCluster with the defined
@@ -87,10 +96,12 @@ class LocalClient(ClientPlug):
         self._config_init()
         self._check()
 
-        self.cluster = LocalCluster(n_workers=self.workers,
-                                    threads_per_worker=self.threads,
-                                    memory_limit=f"{self.memory:.2f}GiB",
-                                    **self.kwargs)
+        self.cluster = LocalCluster(
+            n_workers=self.workers,
+            threads_per_worker=self.threads,
+            memory_limit=f"{self.memory:.2f}GiB",
+            **self.kwargs,
+        )
         self.client = Client(self.cluster)
 
         print(f"\nDask Dashboard Link: {self.client.dashboard_link}\n")

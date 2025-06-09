@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Data Handler Module
+"""Data Handler Module
 
 This module contains a class for managing a data processing pipeline
 
@@ -14,7 +14,8 @@ import cvxpy as cvx
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import traceback, sys
+import traceback
+import sys
 from tqdm import tqdm
 from solardatatools.time_axis_manipulation import (
     make_time_series,
@@ -33,6 +34,7 @@ from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
+from solardatatools.polar_transform import PolarTransform
 from solardatatools.algorithms import (
     CapacityChange,
     TimeShift,
@@ -43,7 +45,6 @@ from solardatatools.algorithms import (
 from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
-from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:
@@ -433,7 +434,7 @@ class DataHandler:
         try:
             ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
             self.boolean_masks.daytime = ss.sunup_mask_estimated
-        except:
+        except Exception:
             msg = "Sunrise/sunset detection failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -448,7 +449,7 @@ class DataHandler:
             progress.update()
         try:
             self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
-        except:
+        except Exception:
             msg = "Matrix filling failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -502,7 +503,7 @@ class DataHandler:
         try:
             # density scoring
             self.get_daily_scores(threshold=0.2, solver=solver_convex)
-        except:
+        except Exception:
             msg = "Daily quality scoring failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -515,7 +516,7 @@ class DataHandler:
                 density_upper_threshold=density_upper_threshold,
                 linearity_threshold=linearity_threshold,
             )
-        except:
+        except Exception:
             msg = "Daily quality flagging failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -529,7 +530,7 @@ class DataHandler:
                 energy_threshold=clear_day_energy_param,
                 solver=solver_convex,
             )
-        except:
+        except Exception:
             msg = "Clear day detection failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -548,7 +549,7 @@ class DataHandler:
         t_clean[3] = time()
         try:
             self.score_data_set()
-        except:
+        except Exception:
             msg = "Data set summary scoring failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -586,7 +587,7 @@ class DataHandler:
                     periodic_detector=periodic_detector,
                     solver=solver,
                 )
-                rms = lambda x: np.sqrt(np.mean(np.square(x)))
+                rms = lambda x: np.sqrt(np.mean(np.square(x)))  # noqa: E731
                 if rms(self.time_shift_analysis.s2) > 0.25:
                     if verbose:
                         print("Invoking periodic timeshift detector.")
@@ -814,17 +815,17 @@ class DataHandler:
 -----------------
 DATA SET REPORT
 -----------------
-length               {report['length']:.2f} years
-capacity estimate    {report['capacity']:.2f} kW
-data sampling        {report['sampling']} minutes
-quality score        {report['quality score']:.2f}
-clearness score      {report['clearness score']:.2f}
-inverter clipping    {report['inverter clipping']}
-clipped fraction     {report['clipped fraction']:.2f}
-capacity changes     {report['capacity change']}
-data quality warning {report['data quality warning']}
-time shift errors    {report['time shift correction']}
-time zone errors     {report['time zone correction'] != 0}
+length               {report["length"]:.2f} years
+capacity estimate    {report["capacity"]:.2f} kW
+data sampling        {report["sampling"]} minutes
+quality score        {report["quality score"]:.2f}
+clearness score      {report["clearness score"]:.2f}
+inverter clipping    {report["inverter clipping"]}
+clipped fraction     {report["clipped fraction"]:.2f}
+capacity changes     {report["capacity change"]}
+data quality warning {report["data quality warning"]}
+time shift errors    {report["time shift correction"]}
+time zone errors     {report["time zone correction"] != 0}
             """
             print(pout)
         if return_values:
@@ -1277,7 +1278,7 @@ time zone errors     {report['time zone correction'] != 0}
         self.daily_scores.clipping_2 = self.clipping_analysis.clip_stat_2
         self.daily_flags.inverter_clipped = self.clipping_analysis.clipped_days
 
-    def find_clipped_times(self):
+    def find_clipped_times(self, solver_convex="CLARABEL"):
         if self.clipping_analysis is None:
             self.clipping_check(solver=solver_convex)
         self.clipping_analysis.find_clipped_times()

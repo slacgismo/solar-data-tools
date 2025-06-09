@@ -1,4 +1,5 @@
 import numpy as np
+
 """ Longitude Direct Calculation Module
 This module contains the function for the direct calculation of system
 longitude based on estimated local solar noon and timezone offset from UTC.
