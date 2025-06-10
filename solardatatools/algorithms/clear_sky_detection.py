@@ -7,57 +7,63 @@ on the input data (cake) and estimated 98th percentile (Q98).
 """
 
 import numpy as np
-from dilation import Dilation  # Import the Dilation class
+from solardatatools.algorithms.dilation import Dilation  # Import the Dilation class
 
 DEFAULT_CLEAR_SKY = {
     "lam": 2,
 }
 
+
 class ClearSkyDetection:
-    def __init__(self, data_handler, **config):
+    def __init__(self, data_handler, cake=None, **config):
         self.dh = data_handler
-        self.dilation = Dilation(data_handler, **config)  # Create an instance of Dilation
-        self.cake = self.dilation.signal_dil  # Get the 'cake' from the Dilation instance
-        self.Q98 = data_handler.Q98  # Assuming 'Q98' is still stored in data_handler
-        self.D = self.cake.shape[0]  # Number of days
-        self.T = self.cake.shape[1]  # Number of nodes in width
-        if len(config) == 0:
-            self.config = DEFAULT_CLEAR_SKY
-        else:
-            self.config = config
-        self.lam = self.config["lam"]
+        self.lam = config.pop("lam", DEFAULT_CLEAR_SKY["lam"])
+
+        if cake is None:
+            raise Exception("Bundt cake is not provided.")
+        self.cake = cake
+
+        self.Q98 = data_handler.Q98
+        self.D = self.cake.shape[0]
+        self.T = self.cake.shape[1]
         self.clearsky_cake = np.zeros_like(self.cake)
         self.run()
 
-    def hinge_loss(self, y, q_tilde, type=0):
-        return 1 if (y > q_tilde * 0.7 if type == 0 else y < q_tilde * 0.7) else 0
-    
-    def compute_hinge_losses(self, Y, Q98):
-        nodelosses = np.zeros((2, self.T))
-        for j in range(self.T):
-            nodelosses[0, j] = self.hinge_loss(Y[j], Q98[j], type=0)
-            nodelosses[1, j] = self.hinge_loss(Y[j], Q98[j], type=1)
-        return nodelosses
+    def hinge0(self, val, q98):
+        return 0.0 if val <= q98 * 0.7 else 1.0
 
-    def find_optimal_path(self, nodelosses):
-        cum_loss = nodelosses.copy()
+    def hinge1(self, val, q98):
+        return 0.0 if val >= q98 * 0.7 else 1.0
+
+    def compute_hinge_losses(self, values, q98_row):
+        losses = np.zeros((2, self.T))
+        for j in range(self.T):
+            val = values[j]
+            q98 = q98_row[j]
+            losses[0, j] = self.hinge0(val, q98)
+            losses[1, j] = self.hinge1(val, q98)
+        return losses
+
+    def find_optimal_path(self, L):
+        cum_loss = L.copy()
         for t in range(1, self.T):
-            cum_loss[0, t] += min(cum_loss[1, t-1] + self.lam, cum_loss[0, t-1])
-            cum_loss[1, t] += min(cum_loss[0, t-1] + self.lam, cum_loss[1, t-1])
-        path = np.zeros(self.T, dtype=int)
-        path[-1] = np.argmin(cum_loss[:, -1])
-        for t in range(self.T-2, -1, -1):
-            prev_row = path[t+1]
-            if cum_loss[prev_row, t] <= cum_loss[1-prev_row, t] + self.lam:
-                path[t] = prev_row
-            else:
-                path[t] = 1 - prev_row
-        return path
+            for i in range(2):
+                cum_loss[i, t] += min(cum_loss[1 - i, t - 1] +
+                                      self.lam, cum_loss[i, t - 1])
+        Z = np.zeros(self.T, dtype=int)
+        Z[-1] = np.argmin(cum_loss[:, -1])
+        for t in range(self.T - 2, -1, -1):
+            prev = Z[t + 1]
+            Z[t] = prev if cum_loss[prev, t] <= cum_loss[1 -
+                                                         prev, t] + self.lam else 1 - prev
+        return Z
 
     def run(self):
         for i in range(self.D):
-            nodelosses = self.compute_hinge_losses(self.cake[i], self.Q98[i])
-            self.clearsky_cake[i] = self.find_optimal_path(nodelosses)
+            values = self.cake[i]
+            q98_row = self.Q98[i]
+            losses = self.compute_hinge_losses(values, q98_row)
+            self.clearsky_cake[i] = self.find_optimal_path(losses)
         return self.clearsky_cake
 
     def get_clearsky_cake(self):
