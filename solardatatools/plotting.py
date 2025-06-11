@@ -98,6 +98,7 @@ def plot_bundt_cake(
     """
     A function for plotting solar power data in a 3D “Bundt cake” style.
     Author: Mehmet Giray Ogut
+    Date: June 11, 2025
 
     :param data: A 2D NumPy array of shape (365, N), where 365 is the number of days
     :param figsize: Size of the figure (width, height)
