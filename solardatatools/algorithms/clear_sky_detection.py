@@ -7,26 +7,16 @@ on the input data (cake) and estimated 98th percentile (Q98).
 """
 
 import numpy as np
-from solardatatools.algorithms.dilation import Dilation  # Import the Dilation class
-
-DEFAULT_CLEAR_SKY = {
-    "lam": 2,
-}
 
 
 class ClearSkyDetection:
-    def __init__(self, data_handler, cake=None, **config):
+    def __init__(self, data_handler, sig=None, Q98=None, stickiness=2, **config):
         self.dh = data_handler
-        self.lam = config.pop("lam", DEFAULT_CLEAR_SKY["lam"])
-
-        if cake is None:
-            raise Exception("Bundt cake is not provided.")
-        self.cake = cake
-
-        self.Q98 = data_handler.Q98
-        self.D = self.cake.shape[0]
-        self.T = self.cake.shape[1]
-        self.clearsky_cake = np.zeros_like(self.cake)
+        self.stickiness = stickiness
+        self.sig = sig
+        self.T = self.sig.shape[0]
+        self.Q98 = Q98
+        self.clearsky_sig = np.zeros_like(self.sig, dtype=int)
         self.run()
 
     def hinge0(self, val, q98):
@@ -49,22 +39,19 @@ class ClearSkyDetection:
         for t in range(1, self.T):
             for i in range(2):
                 cum_loss[i, t] += min(cum_loss[1 - i, t - 1] +
-                                      self.lam, cum_loss[i, t - 1])
+                                      self.stickiness, cum_loss[i, t - 1])
         Z = np.zeros(self.T, dtype=int)
         Z[-1] = np.argmin(cum_loss[:, -1])
         for t in range(self.T - 2, -1, -1):
             prev = Z[t + 1]
             Z[t] = prev if cum_loss[prev, t] <= cum_loss[1 -
-                                                         prev, t] + self.lam else 1 - prev
+                                                         prev, t] + self.stickiness else 1 - prev
         return Z
 
     def run(self):
-        for i in range(self.D):
-            values = self.cake[i]
-            q98_row = self.Q98[i]
-            losses = self.compute_hinge_losses(values, q98_row)
-            self.clearsky_cake[i] = self.find_optimal_path(losses)
-        return self.clearsky_cake
+        losses = self.compute_hinge_losses(self.sig, self.Q98)
+        self.clearsky_sig = self.find_optimal_path(losses)
+        return self.clearsky_sig
 
-    def get_clearsky_cake(self):
-        return self.clearsky_cake
+    def get_clearsky_sig(self):
+        return self.clearsky_sig

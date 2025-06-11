@@ -4,6 +4,7 @@
 This module contains a class for managing a data processing pipeline
 
 """
+from solardatatools.algorithms.dilation import undilate_signal
 from solardatatools.algorithms.clear_sky_detection import ClearSkyDetection
 from spcqe.quantiles import SmoothPeriodicQuantiles
 from solardatatools.algorithms.dilation import Dilation
@@ -153,6 +154,11 @@ class DataHandler:
         self._initialize_attributes()
 
     def _initialize_attributes(self):
+        self.nvals_dil = None
+        self.dilation_object = None
+        self.sig_dilated = None
+        self.highest_quantile = None
+        self.quantiles = None
         self.filled_data_matrix = None
         self.use_column = None
         self.capacity_estimate = None
@@ -2419,58 +2425,74 @@ time zone errors     {report['time zone correction'] != 0}
         # print(np.sum(circ_hist[0] <= 1))
         return fig
 
-    def detect_clear_sky(self,
-                         lam=2,
-                         quantile=0.98,
-                         verbose=False,
-                         nvals_dil=101):
-
-        # Ensure sunrise/sunset analysis has been run
-        if self.daytime_analysis is None or self.daytime_analysis.sunrise_estimates is None:
-            print("Estimating sunrise and sunset times...")
-            self.run_pipeline()  # sunrise_sunset=True
-
+    def apply_time_dilation(self, nvals_dil=101, verbose=True):
         # Apply time dilation
-        dilation = Dilation(self, matrix='raw', nvals_dil=nvals_dil)
-        dilated_matrix = dilation.signal_dil[1:].reshape(
-            nvals_dil, dilation.ndays, order='F')  # shape: (M, D)
-        dilated_matrix = dilated_matrix.T  # shape: (D, M)
-        D, M = dilated_matrix.shape
-
-        # Estimate Q98 if not already available
-        if not hasattr(self, 'Q98') or self.Q98 is None:
-            if verbose:
-                print("Estimating 98th percentile (Q98)...")
-
-            lmbda = 0.1  # regularization weight
-
-            spq = SmoothPeriodicQuantiles(
-                num_harmonics=[10, 3],
-                periods=[M, 365.24225*M],
-                standing_wave=[True, False],
-                trend=False,
-                quantiles=quantile,
-                weight=lmbda,
-                problem='full',
-                solver='CLARABEL',
-                verbose=verbose,
-            )
-
-            y = dilated_matrix.flatten(order='C')
-            spq.fit(y)
-            self.Q98 = spq.fit_quantiles.reshape(
-                D, M, order='C')  # shape: (D, M)
-            if verbose:
-                print(f"Q98 estimated in {spq.fit_time:.2f} seconds.")
-
-        # Run clear sky detection
-        csd = ClearSkyDetection(self, lam=lam, cake=dilated_matrix)
-        self.clearsky_cake = csd.get_clearsky_cake()
-
+        self.nvals_dil = nvals_dil
+        dil = Dilation(self, nvals_dil=nvals_dil)
+        self.dilation_object = dil
+        sig_dilated = dil.signal_dil
+        self.sig_dilated = sig_dilated
         if verbose:
-            print("Clear sky detection completed.")
+            print(f"Time dilation applied with {nvals_dil} values per day.")
 
-        return self.clearsky_cake, self.Q98, dilated_matrix
+    def estimate_quantiles(self,
+                           just_Q98=False,
+                           quantiles=[0.02, 0.1, 0.2, 0.3, 0.4,
+                                      0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
+                           regularization=0.1,
+                           solver='CLARABEL',
+                           verbose=True):
+        if just_Q98:
+            if verbose:
+                print("Estimating only the 98th quantile...")
+            quantiles = [0.98]
+        if self.nvals_dil is None:
+            if verbose:
+                print("Applying time dilation first...")
+            self.apply_time_dilation(verbose=verbose)
+        spq = SmoothPeriodicQuantiles(
+            num_harmonics=[10, 3],
+            periods=[self.nvals_dil, 365.24225*self.nvals_dil],
+            standing_wave=[True, False],
+            trend=False,
+            quantiles=quantiles,
+            weight=regularization,
+            problem='sequential',
+            solver=solver,
+            verbose=verbose,
+        )
+        spq.fit(self.sig_dilated)
+        if verbose:
+            print("Quantiles estimated successfully.")
+        self.quantiles = spq.fit_quantiles
+        if just_Q98:
+            if verbose:
+                print("98th percentile assigned.")
+            self.highest_quantile = self.quantiles.squeeze()
+
+    def detect_clear_sky(self,
+                         stickiness=2,
+                         regularization=0.1,
+                         verbose=True):
+        if self.highest_quantile is None:
+            if verbose:
+                print("Estimating quantiles first...")
+            self.estimate_quantiles(just_Q98=True,
+                                    regularization=regularization,
+                                    verbose=verbose)
+        Q98_dilated = self.highest_quantile
+        Q98_undilated = undilate_signal(
+            self.dilation_object.idx_ori, self.dilation_object.idx_dil, Q98_dilated)
+        sig_dilated = self.sig_dilated
+        sig_undilated = undilate_signal(
+            self.dilation_object.idx_ori, self.dilation_object.idx_dil, sig_dilated)
+        # Run clear sky detection
+        csd = ClearSkyDetection(self, sig=sig_undilated,
+                                Q98=Q98_undilated, stickiness=stickiness)
+        self.clearsky_sig = csd.get_clearsky_sig()
+        if verbose:
+            print("Clear sky detection succesfully completed.")
+        return self.clearsky_sig, Q98_undilated, sig_undilated
 
     def plot_bundt(self,
                    figsize=(12, 8),
