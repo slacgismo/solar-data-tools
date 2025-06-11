@@ -1,6 +1,7 @@
 """
 Clear Sky Detection Module
 Author: Mehmet Giray Ogut
+Date: June 11, 2025
 This module contains functions to detect clear sky periods 
 by applying a dynamic programming approach 
 on the input data (cake) and estimated 98th percentile (Q98).
