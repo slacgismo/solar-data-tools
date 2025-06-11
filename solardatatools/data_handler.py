@@ -206,6 +206,8 @@ class DataHandler:
         self.sig_dilated = None
         # Quantile attribute (dictionary)
         self.quantiles = {}
+        # Clear sky detection attributes
+        self.clearsky_masks = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -2461,7 +2463,6 @@ time zone errors     {report['time zone correction'] != 0}
         spq.fit(self.sig_dilated)
         if verbose:
             print("Quantiles estimated successfully.")
-        self.quantiles = {}
         for i, q in enumerate(quantile_levels):
             self.quantiles[q] = spq.fit_quantiles[:, i].squeeze()
 
@@ -2486,9 +2487,10 @@ time zone errors     {report['time zone correction'] != 0}
         csd = ClearSkyDetection(
             self, threshold=threshold, stickiness=stickiness, Q98=q98_undilated, sig=sig_undilated)
         self.clearsky_sig = csd.get_clearsky_sig()
-        if verbose:
-            print("Clear sky detection successfully completed.")
-        return self.clearsky_sig, q98_undilated, sig_undilated
+        daytime = self.boolean_masks.daytime.ravel(order='F')
+        self.clearsky_sig[~daytime] = 0
+        self.clearsky_masks = self.clearsky_sig.reshape(
+            self.boolean_masks.daytime.shape, order='F')
 
     def plot_bundt(self,
                    figsize=(12, 8),
