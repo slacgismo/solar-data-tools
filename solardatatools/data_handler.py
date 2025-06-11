@@ -154,11 +154,6 @@ class DataHandler:
         self._initialize_attributes()
 
     def _initialize_attributes(self):
-        self.nvals_dil = None
-        self.dilation_object = None
-        self.sig_dilated = None
-        self.highest_quantile = None
-        self.quantiles = None
         self.filled_data_matrix = None
         self.use_column = None
         self.capacity_estimate = None
@@ -205,6 +200,12 @@ class DataHandler:
         self.parameter_estimation = None
         self.polar_transform = None
         self.loss_analysis = None
+        # Time dilation attributes
+        self.nvals_dil = None
+        self.dilation_object = None
+        self.sig_dilated = None
+        # Quantile attribute (dictionary)
+        self.quantiles = {}
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -2436,26 +2437,22 @@ time zone errors     {report['time zone correction'] != 0}
             print(f"Time dilation applied with {nvals_dil} values per day.")
 
     def estimate_quantiles(self,
-                           just_Q98=False,
-                           quantiles=[0.02, 0.1, 0.2, 0.3, 0.4,
-                                      0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
+                           quantile_levels=[0.02, 0.1, 0.2, 0.3, 0.4,
+                                            0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
+                           num_harmonics=[10, 3],
                            regularization=0.1,
                            solver='CLARABEL',
                            verbose=True):
-        if just_Q98:
-            if verbose:
-                print("Estimating only the 98th quantile...")
-            quantiles = [0.98]
         if self.nvals_dil is None:
             if verbose:
                 print("Applying time dilation first...")
             self.apply_time_dilation(verbose=verbose)
         spq = SmoothPeriodicQuantiles(
-            num_harmonics=[10, 3],
+            num_harmonics=num_harmonics,
             periods=[self.nvals_dil, 365.24225*self.nvals_dil],
             standing_wave=[True, False],
             trend=False,
-            quantiles=quantiles,
+            quantiles=quantile_levels,
             weight=regularization,
             problem='sequential',
             solver=solver,
@@ -2464,35 +2461,34 @@ time zone errors     {report['time zone correction'] != 0}
         spq.fit(self.sig_dilated)
         if verbose:
             print("Quantiles estimated successfully.")
-        self.quantiles = spq.fit_quantiles
-        if just_Q98:
-            if verbose:
-                print("98th percentile assigned.")
-            self.highest_quantile = self.quantiles.squeeze()
+        self.quantiles = {}
+        for i, q in enumerate(quantile_levels):
+            self.quantiles[q] = spq.fit_quantiles[:, i].squeeze()
 
     def detect_clear_sky(self,
+                         threshold=0.7,
                          stickiness=2,
                          regularization=0.1,
                          verbose=True):
-        if self.highest_quantile is None:
+        if 0.98 not in self.quantiles:
             if verbose:
-                print("Estimating quantiles first...")
-            self.estimate_quantiles(just_Q98=True,
+                print("Estimating 98th percentile first...")
+            self.estimate_quantiles(quantile_levels=[0.98],
                                     regularization=regularization,
                                     verbose=verbose)
-        Q98_dilated = self.highest_quantile
-        Q98_undilated = undilate_signal(
-            self.dilation_object.idx_ori, self.dilation_object.idx_dil, Q98_dilated)
+        q98_dilated = self.quantiles[0.98]
+        q98_undilated = undilate_signal(
+            self.dilation_object.idx_ori, self.dilation_object.idx_dil, q98_dilated)
         sig_dilated = self.sig_dilated
         sig_undilated = undilate_signal(
             self.dilation_object.idx_ori, self.dilation_object.idx_dil, sig_dilated)
         # Run clear sky detection
-        csd = ClearSkyDetection(self, sig=sig_undilated,
-                                Q98=Q98_undilated, stickiness=stickiness)
+        csd = ClearSkyDetection(
+            self, threshold=threshold, stickiness=stickiness, Q98=q98_undilated, sig=sig_undilated)
         self.clearsky_sig = csd.get_clearsky_sig()
         if verbose:
-            print("Clear sky detection succesfully completed.")
-        return self.clearsky_sig, Q98_undilated, sig_undilated
+            print("Clear sky detection successfully completed.")
+        return self.clearsky_sig, q98_undilated, sig_undilated
 
     def plot_bundt(self,
                    figsize=(12, 8),

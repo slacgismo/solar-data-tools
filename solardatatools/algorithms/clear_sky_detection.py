@@ -10,20 +10,21 @@ import numpy as np
 
 
 class ClearSkyDetection:
-    def __init__(self, data_handler, sig=None, Q98=None, stickiness=2, **config):
+    def __init__(self, data_handler, threshold=0.7, stickiness=2, Q98=None, sig=None,  **config):
         self.dh = data_handler
         self.stickiness = stickiness
         self.sig = sig
         self.T = self.sig.shape[0]
         self.Q98 = Q98
+        self.threshold = threshold
         self.clearsky_sig = np.zeros_like(self.sig, dtype=int)
         self.run()
 
     def hinge0(self, val, q98):
-        return 0.0 if val <= q98 * 0.7 else 1.0
+        return 0.0 if val <= q98 * self.threshold else 1.0
 
     def hinge1(self, val, q98):
-        return 0.0 if val >= q98 * 0.7 else 1.0
+        return 0.0 if val >= q98 * self.threshold else 1.0
 
     def compute_hinge_losses(self, values, q98_row):
         losses = np.zeros((2, self.T))
