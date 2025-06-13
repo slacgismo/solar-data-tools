@@ -24,6 +24,13 @@
     </a>
   </tr>
   <tr>
+  <td>pyOpenSci Peer-Reviewed</td>
+    <td>
+    <a href="https://github.com/pyOpenSci/software-review/issues/210"><img src="https://pyopensci.org/badges/peer-reviewed.svg"
+      alt="Project has been peer-reviewed by pyOpenSci." />
+    </a>
+  </tr>
+  <tr>
   <td>Python Versions</td>
   <td>
     <a href="https://www.python.org/downloads/release/python-3100/">
