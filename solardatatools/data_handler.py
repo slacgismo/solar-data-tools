@@ -4,11 +4,7 @@
 This module contains a class for managing a data processing pipeline
 
 """
-from solardatatools.algorithms.dilation import undilate_signal
-from solardatatools.algorithms.clear_sky_detection import ClearSkyDetection
-from spcqe.quantiles import SmoothPeriodicQuantiles
-from solardatatools.algorithms.dilation import Dilation
-from solardatatools.polar_transform import PolarTransform
+
 from time import time
 from datetime import timedelta
 from datetime import datetime
@@ -38,12 +34,17 @@ from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
+from solardatatools.algorithms.dilation import undilate_signal
+from solardatatools.polar_transform import PolarTransform
 from solardatatools.algorithms import (
     CapacityChange,
     TimeShift,
     SunriseSunset,
     ClippingDetection,
     LossFactorAnalysis,
+    PVQuantiles,
+    Dilation,
+    ClearSkyDetection
 )
 from pandas.plotting import register_matplotlib_converters
 
@@ -200,8 +201,7 @@ class DataHandler:
         self.parameter_estimation = None
         self.polar_transform = None
         self.loss_analysis = None
-        # Time dilation attributes
-        self.nvals_dil = None
+        self.quantile_object = None
         self.dilation_object = None
         self.sig_dilated = None
         # Quantile attribute (dictionary)
@@ -2426,64 +2426,57 @@ time zone errors     {report['time zone correction'] != 0}
         # print(np.sum(circ_hist[0] <= 1))
         return fig
 
-    def apply_time_dilation(self, nvals_dil=101, verbose=True):
+    def apply_time_dilation(self, nvals_dil=101):
         # Apply time dilation
-        self.nvals_dil = nvals_dil
         dil = Dilation(self, nvals_dil=nvals_dil)
         self.dilation_object = dil
         sig_dilated = dil.signal_dil
         self.sig_dilated = sig_dilated
-        if verbose:
-            print(f"Time dilation applied with {nvals_dil} values per day.")
 
     def estimate_quantiles(self,
+                           nvals_dil=101,
                            quantile_levels=[0.02, 0.1, 0.2, 0.3, 0.4,
                                             0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
                            num_harmonics=[10, 3],
                            regularization=0.1,
                            solver='CLARABEL',
-                           verbose=True):
-        if self.nvals_dil is None:
-            if verbose:
-                print("Applying time dilation first...")
-            self.apply_time_dilation(verbose=verbose)
-        spq = SmoothPeriodicQuantiles(
+                           verbose=False):
+        pvq = PVQuantiles(
+            self,
+            nvals_dil=nvals_dil,
             num_harmonics=num_harmonics,
-            periods=[self.nvals_dil, 365.24225*self.nvals_dil],
-            standing_wave=[True, False],
-            trend=False,
-            quantiles=quantile_levels,
-            weight=regularization,
-            problem='sequential',
+            regularization=regularization,
             solver=solver,
-            verbose=verbose,
+            verbose=verbose
         )
-        spq.fit(self.sig_dilated)
-        if verbose:
-            print("Quantiles estimated successfully.")
-        for i, q in enumerate(quantile_levels):
-            self.quantiles[q] = spq.fit_quantiles[:, i].squeeze()
+        pvq.estimate_quantiles(quantile_levels=quantile_levels)
+        self.quantile_object = pvq
 
     def detect_clear_sky(self,
+                         quantile_level=0.98
                          threshold=0.7,
                          stickiness=2,
                          regularization=0.1,
-                         verbose=True):
-        if 0.98 not in self.quantiles:
+                         loss_correction=True
+                         verbose=False):
+        ql = quantile_level
+        if ql not in self.quantile_object.quantile_levels:
             if verbose:
                 print("Estimating 98th percentile first...")
-            self.estimate_quantiles(quantile_levels=[0.98],
+            self.estimate_quantiles(quantile_levels=[ql],
                                     regularization=regularization,
                                     verbose=verbose)
-        q98_dilated = self.quantiles[0.98]
-        q98_undilated = undilate_signal(
-            self.dilation_object.idx_ori, self.dilation_object.idx_dil, q98_dilated)
-        sig_dilated = self.sig_dilated
-        sig_undilated = undilate_signal(
-            self.dilation_object.idx_ori, self.dilation_object.idx_dil, sig_dilated)
+        q_undilated = self.quantile_object.quantiles_original[ql]
+        sig_undilated = self.quantile_object.sig_original
+        if loss_correction:
+            if self.loss_analysis is None:
+                self.run_loss_factor_analysis()
+            sg = sig_undilated.reshape(self.raw_data_matrix.shape, order='F')
+            sg = sg / self.loss_analysis.energy_model[2] / dh.loss_analysis.energy_model[1]
+            sig_undilated = sg.ravel(order='F')
         # Run clear sky detection
         csd = ClearSkyDetection(
-            self, threshold=threshold, stickiness=stickiness, Q98=q98_undilated, sig=sig_undilated)
+            sig_undilated, q_undilated, threshold=threshold, stickiness=stickiness)
         self.clearsky_sig = csd.get_clearsky_sig()
         daytime = self.boolean_masks.daytime.ravel(order='F')
         self.clearsky_sig[~daytime] = 0
