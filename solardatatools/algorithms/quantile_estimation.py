@@ -3,11 +3,13 @@
 This module is for estimating time-varying quantiles of PV power data. 
 This module also include the ability to use the fit quantiles to transform the data
 
-Author: Bennet Meyers
+Authors: Bennet Meyers, Giray Ogut, and Aramis Dufour
 Date: 6/19/25
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 from spcqe.quantiles import SmoothPeriodicQuantiles
 from solardatatools.algorithms import Dilation
 from solardatatools.algorithms.dilation import undilate_quantiles
@@ -42,6 +44,7 @@ class PVQuantiles:
         :type verbose: boolean
         """
         dil = Dilation(data_handler, nvals_dil=nvals_dil)
+        self.num_days = data_handler.num_days
         self.dilation_object = dil
         self.sig_dilated = dil.signal_dil
         self.sig_original = dil.signal_ori
@@ -91,17 +94,19 @@ class PVQuantiles:
     
     def plot_all_quantiles(self, dilated=True):
         q = self.quantile_levels
+        ndays = self.num_days
         if dilated:
-            fq = np.empty((len(self.sig_dilated), float))
-            for i, q in enumerate(self.quantile_levels):
-                fq[:, i] = self.quantiles_dilated[q]
+            fq = np.empty((len(self.sig_dilated), len(q)), float)
+            for i, qq in enumerate(self.quantile_levels):
+                fq[:, i] = self.quantiles_dilated[qq]
             sig = self.sig_dilated
         else:
-            fq = np.empty((len(self.sig_original), float))
-            for i, q in enumerate(self.quantile_levels):
-                fq[:, i] = self.quantiles_original[q]
+            fq = np.empty((len(self.sig_original), len(q)), float)
+            for i, qq in enumerate(self.quantile_levels):
+                fq[:, i] = self.quantiles_original[qq]
             sig = self.sig_original
         nq = fq.shape[1]
+        nvals_dil = self.nvals_dil
         nrows = (nq + 2) // 2
         fig, ax = plt.subplots(nrows, 2, figsize=(12, 3*nrows))
         if nrows > 1:
