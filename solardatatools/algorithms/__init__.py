@@ -8,3 +8,4 @@ from solardatatools.algorithms.soiling import soiling_seperation_old
 from solardatatools.algorithms.soiling import soiling_seperation
 from solardatatools.algorithms.dilation import Dilation
 from solardatatools.algorithms.loss_factor_analysis import LossFactorAnalysis
+from solardatatools.algorithms.quantile_estimation import PVQuantiles

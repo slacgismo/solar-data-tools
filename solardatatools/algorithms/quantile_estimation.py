@@ -7,8 +7,11 @@ Author: Bennet Meyers
 Date: 6/19/25
 """
 
+import matplotlib.pyplot as plt
+from spcqe.quantiles import SmoothPeriodicQuantiles
 from solardatatools.algorithms import Dilation
 from solardatatools.algorithms.dilation import undilate_quantiles
+from solardatatools.plotting import plot_bundt_cake
 
 class PVQuantiles:
     def __init__(
@@ -19,38 +22,38 @@ class PVQuantiles:
         regularization=0.1, 
         solver='CLARABEL', 
         verbose=False
-    )
-    """
-    A class for estimating time-varying quantiles of PV power data
+    ):
+        """
+        A class for estimating time-varying quantiles of PV power data
 
-    :param data_handler: a DataHandler object with the initial pipeline run
-    :type data_handler: solardatatools.DataHandler
-    :param nvals_dil: the number of data points to use for daily dilation
-    :type nvals_dil: int
-    :param quantile_levels: the quantile levels to estimate, default is to estimate decades
-    :type quantile_levels: list
-    :param num_harmonics: the number of Fourier harmonics to use for the daily (first) and yearly (second) periods
-    :type num_harmonics: list
-    :param regularization: stiffness weight for quantile fits (larger is more stiff)
-    :type regularization: float
-    :param solver: the cvxpy solver to invoke, default is CLARABEL
-    :type solver: string
-    :param verbose: print solver status
-    :type verbose: boolean
-    """
-    dil = Dilation(data_handler, nvals_dil=nvals_dil)
-    self.dilation_object = dil
-    self.sig_dilated = dil.signal_dil
-    self.sig_original = dil.signal_ori
-    self.nvals_dil = nvals_dil
-    self.quantile_levels = None
-    self.num_harmonics = num_harmonics
-    self.regularization = regularization
-    self.solver = solver
-    self.verbose = verbose
-    self.quantiles_original = {}
-    self.quantiles_dilated = {}
-    self.spq_object = None
+        :param data_handler: a DataHandler object with the initial pipeline run
+        :type data_handler: solardatatools.DataHandler
+        :param nvals_dil: the number of data points to use for daily dilation
+        :type nvals_dil: int
+        :param quantile_levels: the quantile levels to estimate, default is to estimate decades
+        :type quantile_levels: list
+        :param num_harmonics: the number of Fourier harmonics to use for the daily (first) and yearly (second) periods
+        :type num_harmonics: list
+        :param regularization: stiffness weight for quantile fits (larger is more stiff)
+        :type regularization: float
+        :param solver: the cvxpy solver to invoke, default is CLARABEL
+        :type solver: string
+        :param verbose: print solver status
+        :type verbose: boolean
+        """
+        dil = Dilation(data_handler, nvals_dil=nvals_dil)
+        self.dilation_object = dil
+        self.sig_dilated = dil.signal_dil
+        self.sig_original = dil.signal_ori
+        self.nvals_dil = nvals_dil
+        self.quantile_levels = None
+        self.num_harmonics = num_harmonics
+        self.regularization = regularization
+        self.solver = solver
+        self.verbose = verbose
+        self.quantiles_original = {}
+        self.quantiles_dilated = {}
+        self.spq_object = None
 
     def estimate_quantiles(
         self,
@@ -68,7 +71,7 @@ class PVQuantiles:
             verbose=self.verbose,
         )
         spq.fit(self.sig_dilated)
-        if verbose:
+        if self.verbose:
             print("Quantiles estimated successfully.")
         quantiles_ori = undilate_quantiles(
              self.dilation_object.idx_ori,
@@ -86,15 +89,15 @@ class PVQuantiles:
             self.quantile_levels = list(set(self.quantile_levels + quantile_levels))
             self.quantile_levels.sort()
     
-    def plot_quantiles(self, dilated=True):
+    def plot_all_quantiles(self, dilated=True):
         q = self.quantile_levels
         if dilated:
-            fq = np.empty((len(self.sig_dilated)), float))
+            fq = np.empty((len(self.sig_dilated), float))
             for i, q in enumerate(self.quantile_levels):
                 fq[:, i] = self.quantiles_dilated[q]
             sig = self.sig_dilated
         else:
-            fq = np.empty((len(self.sig_original)), float))
+            fq = np.empty((len(self.sig_original), float))
             for i, q in enumerate(self.quantile_levels):
                 fq[:, i] = self.quantiles_original[q]
             sig = self.sig_original
@@ -114,4 +117,10 @@ class PVQuantiles:
             sns.heatmap(sig[1:].reshape((nvals_dil, ndays), order='F'), ax=ax[-1], cmap='plasma')
             ax[-1].set_title('Dilated signal')
         plt.tight_layout()
+        return plt.gcf()
+
+    def plot_quantile_bundt(self, quantile):
+        mat = self.quantiles_dilated[quantile]
+        mat = mat[1:].reshape(-1, self.nvals_dil)[:365]
+        plot_bundt_cake(mat)
         return plt.gcf()
