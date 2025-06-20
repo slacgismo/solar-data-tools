@@ -201,11 +201,10 @@ class DataHandler:
         self.parameter_estimation = None
         self.polar_transform = None
         self.loss_analysis = None
+        self.clearsky_object = None
         self.quantile_object = None
         self.dilation_object = None
         self.sig_dilated = None
-        # Quantile attribute (dictionary)
-        self.quantiles = {}
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -2437,7 +2436,7 @@ time zone errors     {report['time zone correction'] != 0}
                            nvals_dil=101,
                            quantile_levels=[0.02, 0.1, 0.2, 0.3, 0.4,
                                             0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
-                           num_harmonics=[10, 3],
+                           num_harmonics=[16, 3],
                            regularization=0.1,
                            solver='CLARABEL',
                            verbose=False):
@@ -2453,35 +2452,52 @@ time zone errors     {report['time zone correction'] != 0}
         self.quantile_object = pvq
 
     def detect_clear_sky(self,
-                         quantile_level=0.98
-                         threshold=0.7,
-                         stickiness=2,
-                         regularization=0.1,
-                         loss_correction=True
-                         verbose=False):
+                         quantile_level=0.90,
+                         threshold_low=0.9,
+                         threshold_high=1.15,
+                         stickiness_high=2, 
+                         stickiness_low=4,
+                         loss_correction=True,
+                         verbose=False,
+                         **pqv_kwargs):
         ql = quantile_level
-        if ql not in self.quantile_object.quantile_levels:
-            if verbose:
-                print("Estimating 98th percentile first...")
-            self.estimate_quantiles(quantile_levels=[ql],
-                                    regularization=regularization,
-                                    verbose=verbose)
+        if self.quantile_object is None:
+                if verbose:
+                    print(f"Estimating q{ql} level first...")
+                self.estimate_quantiles(quantile_levels=[ql],
+                                        verbose=verbose,
+                                        **pqv_kwargs)
+        elif ql not in self.quantile_object.quantile_levels:
+                if verbose:
+                    print(f"Estimating q{ql} level first...")
+                self.estimate_quantiles(quantile_levels=[ql],
+                                        regularization=regularization,
+                                        solver=solver,
+                                        verbose=verbose)
         q_undilated = self.quantile_object.quantiles_original[ql]
         sig_undilated = self.quantile_object.sig_original
         if loss_correction:
             if self.loss_analysis is None:
                 self.run_loss_factor_analysis()
             sg = sig_undilated.reshape(self.raw_data_matrix.shape, order='F')
-            sg = sg / self.loss_analysis.energy_model[2] / dh.loss_analysis.energy_model[1]
+            sg = sg / self.loss_analysis.energy_model[2] / self.loss_analysis.energy_model[1]
             sig_undilated = sg.ravel(order='F')
         # Run clear sky detection
         csd = ClearSkyDetection(
-            sig_undilated, q_undilated, threshold=threshold, stickiness=stickiness)
+            sig_undilated, q_undilated, threshold_low=threshold_low, 
+            threshold_high=threshold_high, stickiness_high=stickiness_high, 
+            stickiness_low=stickiness_low)
         self.clearsky_sig = csd.get_clearsky_sig()
         daytime = self.boolean_masks.daytime.ravel(order='F')
         self.clearsky_sig[~daytime] = 0
         self.boolean_masks.clear_times = self.clearsky_sig.reshape(
             self.boolean_masks.daytime.shape, order='F')
+        self.boolean_masks.clear_times = np.asarray(
+            self.boolean_masks.clear_times,
+            dtype=bool
+        )
+        self.clearsky_object = csd
+        return
 
     def plot_bundt(self,
                    figsize=(12, 8),
