@@ -11,8 +11,8 @@ import numpy as np
 
 
 class ClearSkyDetection:
-    def __init__(self, sig, quantile_estimate, threshold_low=0.7, 
-                 threshold_high=1.15, stickiness_high=2, stickiness_low=4):
+    def __init__(self, sig, quantile_estimate, threshold_low=0.75, 
+                 threshold_high=1.2, stickiness_high=.1, stickiness_low=4):
         self.stickiness_low = stickiness_low
         self.stickiness_high = stickiness_high
         self.sig = sig

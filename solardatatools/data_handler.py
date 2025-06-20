@@ -2453,9 +2453,9 @@ time zone errors     {report['time zone correction'] != 0}
 
     def detect_clear_sky(self,
                          quantile_level=0.90,
-                         threshold_low=0.9,
-                         threshold_high=1.15,
-                         stickiness_high=2, 
+                         threshold_low=0.75,
+                         threshold_high=1.2,
+                         stickiness_high=.1, 
                          stickiness_low=4,
                          loss_correction=True,
                          verbose=False,
