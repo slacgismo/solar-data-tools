@@ -32,7 +32,6 @@ from solardatatools.data_quality import (
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
-from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.algorithms.dilation import undilate_signal
 from solardatatools.polar_transform import PolarTransform
@@ -973,82 +972,55 @@ time zone errors     {report['time zone correction'] != 0}
 
     def fit_statistical_clear_sky_model(
         self,
-        data_matrix=None,
-        rank=6,
-        mu_l=None,
-        mu_r=None,
-        tau=None,
-        exit_criterion_epsilon=1e-3,
-        solver_type="MOSEK",
-        max_iteration=10,
-        calculate_degradation=True,
-        max_degradation=None,
-        min_degradation=None,
-        non_neg_constraints=False,
-        verbose=True,
-        bootstraps=None,
+        quantile_level=0.9,
+        nvals_dil=101,
+        num_harmonics=[16, 3], 
+        regularization=0.1, 
+        solver='CLARABEL', 
+        verbose=False
     ):
         """
-        Fit Statistical Clear Sky model.
+        Fit statistical model of PV system clear sky response, using smooth, periodic quantile estimation. Uses new 
+        self.estimate_quantiles method, estimating a single default quantile level of 0.9.
 
-        .. deprecated:: 1.5.0
-            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
-
-        :param data_matrix:
-        :param rank:
-        :param mu_l:
-        :param mu_r:
-        :param tau:
-        :param exit_criterion_epsilon:
-        :param solver_type:
-        :param max_iteration:
-        :param calculate_degradation:
-        :param max_degradation:
-        :param min_degradation:
-        :param non_neg_constraints:
-        :param verbose:
-        :param bootstraps:
+        :param quantile_level: the quantile level to fit as the clear sky system response
+        :type quantile_level: float
+        :param nvals_dil: the number of data points to use for daily dilation
+        :type nvals_dil: int
+        :param num_harmonics: the number of Fourier harmonics to use for the daily (first) and yearly (second) periods
+        :type num_harmonics: list
+        :param regularization: stiffness weight for quantile fits (larger is more stiff)
+        :type regularization: float
+        :param solver: the cvxpy solver to invoke, default is CLARABEL
+        :type solver: string
+        :param verbose: print solver status
+        :type verbose: boolean
         :return:
 
         """
-        try:
-            from statistical_clear_sky import SCSF
-        except ImportError:
-            print("Please install statistical-clear-sky package")
-            return
-        scsf = SCSF(
-            data_handler_obj=self,
-            data_matrix=data_matrix,
-            rank_k=rank,
-            solver_type=solver_type,
+        ql = np.atleast_1d(quantile_level)
+        self.estimate_quantiles(
+            nvals_dil=nvals_dil,
+            quantile_levels=ql,
+            num_harmonics=num_harmonics,
+            regularization=regularization,
+            solver=solver,
+            verbose=verbose
         )
-        scsf.execute(
-            mu_l=mu_l,
-            mu_r=mu_r,
-            tau=tau,
-            exit_criterion_epsilon=exit_criterion_epsilon,
-            max_iteration=max_iteration,
-            is_degradation_calculated=calculate_degradation,
-            max_degradation=max_degradation,
-            min_degradation=min_degradation,
-            non_neg_constraints=non_neg_constraints,
-            verbose=verbose,
-            bootstraps=bootstraps,
-        )
-        self.scsf = scsf
+        # the statistical clear sky fit (scsf) is the estimated quantile level
+        self.scsf = self.quantile_object.quantiles_original[quantile_level]
+        return
 
     def calculate_scsf_performance_index(self):
         """
-        .. deprecated:: 1.5.0
-            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
 
         """
         if self.scsf is None:
             print("No SCSF model detected. Fitting now...")
             self.fit_statistical_clear_sky_model()
-        clear = self.scsf.estimated_power_matrix
-        clear_energy = np.sum(clear, axis=0)
-        measured_energy = np.sum(self.filled_data_matrix, axis=0)
+        clear = self.scsf.reshape(self.raw_data_matrix.shape, order='F')
+        clear_energy = np.nansum(clear, axis=0)
+        measured_energy = np.nansum(self.raw_data_matrix, axis=0)
         pi = np.divide(measured_energy, clear_energy)
         return pi
 
@@ -1475,23 +1447,6 @@ time zone errors     {report['time zone correction'] != 0}
             clear_days, self.daily_scores.density > 0.9)
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
-
-    def find_clear_times(
-        self, power_hyperparam=0.1, smoothness_hyperparam=0.05, min_length=3
-    ):
-        if self.scsf is None:
-            print("No SCSF model detected. Fitting now...")
-            self.fit_statistical_clear_sky_model()
-        clear = self.scsf.estimated_power_matrix
-        clear_times = find_clear_times(
-            self.filled_data_matrix,
-            clear,
-            self.capacity_estimate,
-            th_relative_power=power_hyperparam,
-            th_relative_smoothness=smoothness_hyperparam,
-            min_length=min_length,
-        )
-        self.boolean_masks.clear_times = clear_times
 
     def setup_location_and_orientation_estimation(
         self,
@@ -1924,8 +1879,8 @@ time zone errors     {report['time zone correction'] != 0}
                 label=mask_label,
             )
         if show_clear_model and self.scsf is not None:
-            plot_model = self.scsf.estimated_power_matrix[:, slct].ravel(
-                order="F")
+            plot_model = self.scsf.reshape(self.raw_data_matrix.shape, order='F')
+            plot_model = plot_model[:, slct].ravel(order="F")
             plt.plot(
                 xs, plot_model, color="orange", linewidth=1, label="clear sky model"
             )
