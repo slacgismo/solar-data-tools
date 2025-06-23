@@ -1,5 +1,5 @@
 <!-- If this PR closes a GitHub issue, make sure the title starts with the issue number, and reference it here -->
-Closes [#151](https://github.com/slacgismo/solar-data-tools/issues/151)
+<!-- for example: Closes [#151](https://github.com/slacgismo/solar-data-tools/issues/151) <!--
 
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...

@@ -1,4 +1,4 @@
-""" Capacity Change Algorithm Module
+"""Capacity Change Algorithm Module
 
 This module the algorithm for detecting capacity changes in an unlabeled PV
 power production data sets. The algorithm works as follows:
@@ -15,9 +15,9 @@ power production data sets. The algorithm works as follows:
 """
 
 import numpy as np
-from solardatatools.signal_decompositions import l1_l1d1_l2d2p365
-from solardatatools.utilities import segment_diffs, make_pooled_dsig
+from solardatatools.signal_decompositions import l1_pwc_smoothper_trend
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 
 class CapacityChange:
@@ -27,60 +27,75 @@ class CapacityChange:
         self.s2 = None
         self.s3 = None
         self.labels = None
-        self.best_w1 = None
+        self.best_weight = None
         self.best_ix = None
-        self.w1_vals = None
+        self.weight_vals = None
         self.holdout_error = None
         self.test_error = None
+        self.jmp_counts = None
+        self.min_jumps = None
 
     def run(
         self,
         data,
-        w1=None,
+        metric=None,
+        weight=None,
         filter=None,
         quantile=1.00,
         solver=None,
     ):
-        metric = np.nanquantile(data, q=quantile, axis=0)
-        metric_temp = np.ones_like(metric) * np.nan
-        # metric /= np.max(metric)
-        metric[~np.isnan(metric_temp)] = np.log(metric_temp[~np.isnan(metric_temp)])
+        if metric is None:
+            metric = np.nanquantile(data, q=quantile, axis=0)
+            metric_temp = np.ones_like(metric) * np.nan
+            slct = np.logical_and(~np.isnan(metric), metric > 0)
+            metric_temp[slct] = np.log(metric[slct])
+            metric = metric_temp
         if filter is None:
             filter = ~np.isnan(metric)
         else:
             filter = np.logical_and(filter, ~np.isnan(metric))
-        if w1 is None:
-            w1s = np.logspace(-1, 3, 17)
-            test_r, train_r, best_ix = self.optimize_weight(
-                metric, filter, w1s, solver=solver
+        if weight is None:
+            # initial check if changes are present
+            # initial_weight = 50
+            # initial_weight = .1
+            # s1, s2, s3 = self.solve_sd(
+            #     metric=metric, filter=filter, weight=initial_weight, solver=solver
+            # )
+            # rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
+            # set_labels = list(set(rounded_s1))
+            # if len(set_labels) == 1:
+            #     tuned_weight = initial_weight
+            #     best_ix = None
+            #     test_r = None
+            #     train_r = None
+            #     weights = None
+            #     jmp_counts = None
+            # else:
+            # changes are present, optimize the weight with holdout
+            # weights = np.logspace(1, 3, 9)
+            weights = np.logspace(-0.5, 2.5, 13)
+            test_r, train_r, best_ix, jmp_counts, min_jumps = self.optimize_weight(
+                metric, filter, weights, solver=solver
             )
-            tuned_weight = w1s[best_ix]
+            tuned_weight = weights[best_ix]
+            s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
+
+            # num_jumps = np.sum(~np.isclose(np.diff(s1), 0))
+            # num_years = np.max([1, len(metric) / 365])
+            # if num_jumps > num_years * 4:
+            #     tuned_weight = weights[-1]
+            #     best_ix = len(weights) - 1
+            #     s1, s2, s3 = self.solve_sd(metric, filter, tuned_weight, solver=solver)
         else:
-            tuned_weight = w1
+            tuned_weight = weight
             best_ix = None
             test_r = None
             train_r = None
-            w1s = None
-            changes_detected = None
-        # change detector, seasonal term, linear term
-        s1, s2, s3 = self.solve_sd(
-            metric, filter, tuned_weight, transition_locs=None, solver=solver
-        )
+            weights = None
+            jmp_counts = None
+            min_jumps = None
+            s1, s2, s3 = self.solve_sd(metric, filter, weight, solver=solver)
 
-        # Identify transition points, and resolve second convex signal decomposition problem
-        # find indices of transition points
-        seg_diff = segment_diffs(s1)
-        no_transitions = len(seg_diff[0]) == 0
-        if not no_transitions:
-            new_diff = make_pooled_dsig(np.diff(s1), seg_diff)
-            transition_locs = np.where(np.abs(new_diff) >= 0.05)[0]
-            s1, s2, s3 = self.solve_sd(
-                metric,
-                filter,
-                tuned_weight,
-                transition_locs=transition_locs,
-                solver=solver,
-            )
         # Get capacity assignments (label each day)
         # rounding buckets aligned to first value of component, bin widths of 0.05
         rounded_s1 = custom_round(s1 - s1[0]) + s1[0]
@@ -92,79 +107,115 @@ class CapacityChange:
         self.s2 = s2  # seasonal
         self.s3 = s3  # linear
         self.labels = capacity_assignments
-        self.best_w1 = tuned_weight
+        self.best_weight = tuned_weight
         self.best_ix = best_ix
-        self.w1_vals = w1s
+        self.weight_vals = weights
         self.holdout_error = test_r
         self.train_error = train_r
+        self.jmp_counts = jmp_counts
+        self.min_jumps = min_jumps
 
-    def solve_sd(self, metric, filter, w1, transition_locs=None, solver=None):
-        s1, s2, s3 = l1_l1d1_l2d2p365(
+    def solve_sd(
+        self, metric, filter, weight, w3=1, w4=1e1, solver=None, verbose=False
+    ):
+        s1, s2, s3 = l1_pwc_smoothper_trend(
             metric,
             use_ixs=filter,
-            w1=w1,
-            transition_locs=transition_locs,
+            w2=weight,
+            w3=w3,
+            w4=w4,
             solver=solver,
-            sum_card=False,
+            verbose=verbose,
         )
         return s1, s2, s3
 
-    def optimize_weight(self, metric, filter, w1s, solver=None):
+    def optimize_weight(self, metric, filter, weights, solver=None):
         ixs = np.arange(len(metric))
         ixs = ixs[filter]
-        train_ixs, test_ixs = train_test_split(ixs, train_size=0.85)
+        train_ixs, test_ixs = train_test_split(ixs, train_size=0.7)
         train = np.zeros(len(metric), dtype=bool)
         test = np.zeros(len(metric), dtype=bool)
-        train[train_ixs] = True
-        test[test_ixs] = True
+        # train[train_ixs] = True
+        # test[test_ixs] = True
+        train[filter] = True
+        test[filter] = True
         # initialize results objects
-        train_r = np.zeros_like(w1s)
-        test_r = np.zeros_like(w1s)
-        # iterate over possible values of w1 parameter
-        for i, v in enumerate(w1s):
-            s1, s2, s3 = self.solve_sd(metric=metric, filter=train, w1=v, solver=solver)
+        train_r = np.zeros_like(weights)
+        test_r = np.zeros_like(weights)
+        jmp_counts = np.zeros_like(weights)
+        min_jumps = np.zeros_like(weights)
+        # iterate over possible values of weight parameter
+        for i, v in enumerate(weights):
+            s1, s2, s3 = self.solve_sd(
+                metric=metric, filter=train, weight=v, solver=solver
+            )
             y = metric
             # collect results
             train_r[i] = np.average(np.abs((y - s1 - s2 - s3)[train]))
             test_r[i] = np.average(np.abs((y - s1 - s2 - s3)[test]))
-        # Precheck: Determine if changes are present. We observe the two conditions indicate a change:
-        # 1) there is a significant difference between the best and worst holdout error (otherwise that part of the
-        # model is unimportant).
-        # 2) Forcing the component to turn off (high weight) results in worse holdout error than including the component
-        # with no regularization (low weight).
-        holdout_metric = (np.max(test_r) - np.min(test_r)) / np.average(test_r)
-        if holdout_metric > 0.2 and test_r[-1] > test_r[0]:
-            changes_detected = True
-        else:
-            changes_detected = False
-
-        if not changes_detected:
-            # use largest weight
-            best_ix = np.arange(len(w1s))[-1]
-        else:
-            # Select best weight as the largest weight that doesn't increase the test error by more than the threshold
-            # The basic assumption here is that if the test error jumps up sharply when the weight is increased to the
-            # point that the piecewise constant term turns off. We make this assumption because we believe a change
-            # has been detected.
+            # beta = np.mean(np.diff(s3))
+            # jmpc = np.max(np.convolve(~np.isclose(np.diff(s1), 0), np.ones(365), mode='same'))
+            nonzero = ~np.isclose(np.diff(s1), 0, atol=1e-3)
+            jmpc = np.sum(nonzero)
+            jmp_counts[i] = jmpc
             try:
-                # Try to find the 'large jump' by identifying positive outliers via the interquartile range outlier test
-                test_err_diffs = np.diff(test_r)
-                upper_quartile = np.percentile(test_err_diffs, 75)
-                lower_quartile = np.percentile(test_err_diffs, 25)
-                iqr = (upper_quartile - lower_quartile) * 1.5
-                holdout_increase_threshold = upper_quartile + iqr
-                best_ix = np.where(test_err_diffs > holdout_increase_threshold)[0][0]
-            except IndexError:
-                # no differences were above the threshold. try another approach.
-                # find lowest holdout value
-                min_test_err = np.min(test_r)
-                max_test_err = np.max(test_r)
-                # bound is 2% of the test error range, or 2% of the min value, whichever is larger
-                bound = max(0.02 * (max_test_err - min_test_err), 0.02 * min_test_err)
-                cond = test_r <= min_test_err + bound
-                ixs = np.arange(len(w1s))
-                best_ix = np.max(ixs[cond])
-        return test_r, train_r, best_ix
+                min_jumps[i] = np.min(np.abs(np.diff(s1)[nonzero]))
+            except ValueError:
+                min_jumps[i] = 0
+        # Procedure to select weight:
+        # We are looking for weights that result in fits that: (1) improve the fit accuracy over not including the pwc term,
+        # (2) result in no more than 5 total jumps, and (3) don't produce small changes in the pwc term. We check these
+        # conditions below. If no fits qualify, the data does not have capacity changes. If multiple fits quality, we take
+        # the smallest qualifying weight. Of the three, the third condition is the most important. Fits with small jumps indicate
+        # "overfitting" to the data, i.e. the weight is too small.
+        model_fit_improvement = train_r / np.max(train_r)
+        cond1 = (
+            model_fit_improvement <= 0.98
+        )  # 2% minimum improvement over fit with no piecewise constant term
+        cond2 = jmp_counts < 5  # no more than 5 jumps in the data set
+        cond3 = min_jumps >= 0.075  # the smallest allowable nonzero jump is 0.075
+        candidate_ixs = np.all([cond1, cond2, cond3], axis=0)
+        if np.sum(candidate_ixs) == 0:
+            best_ix = len(weights) - 1
+        else:
+            best_ix = np.where(candidate_ixs)[0][0]
+        return test_r, train_r, best_ix, jmp_counts, min_jumps
+
+    def plot_weight_optimization(self, figsize=(10, 5)):
+        """
+        A function for plotting plotting the three weight selection criteria
+
+        :param figsize: a 2-tuple of the figure size to plot
+        :return: matplotlib figure
+        """
+        _fig, _ax = plt.subplots(nrows=3, sharex=True, figsize=figsize)
+        _ax[0].plot(
+            self.weight_vals,
+            self.holdout_error / np.max(self.holdout_error),
+            marker=".",
+        )
+        _ax[0].axhline(0.98, color="red", ls="--")
+        _ax[0].set_xscale("log")
+        _ax[0].set_ylabel("fit improvement")
+        _ax[1].plot(
+            self.weight_vals,
+            self.jmp_counts,
+            marker=".",
+        )
+        _ax[1].axhline(5, color="red", ls="--")
+        _ax[1].set_yscale("log")
+        _ax[1].set_ylabel("jump count")
+        _ax[2].plot(
+            self.weight_vals,
+            self.min_jumps,
+            marker=".",
+        )
+        _ax[2].axhline(0.075, color="red", ls="--")
+        _ax[2].set_ylabel("min nonzero jump")
+        _ax[-1].set_xlabel("weight")
+        for _i in range(3):
+            _ax[_i].axvline(self.best_weight, color="orange", ls=":")
+        return _fig
 
 
 def custom_round(x, base=0.05):

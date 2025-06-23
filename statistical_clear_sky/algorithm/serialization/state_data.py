@@ -1,7 +1,9 @@
 """
 This module defines a class that holds the current state of algorithm object.
 """
+
 import numpy as np
+
 
 class StateData(object):
     """

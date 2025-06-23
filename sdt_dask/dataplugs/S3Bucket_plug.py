@@ -7,10 +7,11 @@ from sdt_dask.dataplugs.dataplug import DataPlug
 
 
 class S3Bucket(DataPlug):
-    """ 
+    """
     Dataplug class for retrieving data from an S3 bucket.
     aws configurations for the AWS CLI must be set up in local environment
     """
+
     def __init__(self, bucket_name):
         """
         Initialize the S3Bucket object with the bucket name.
@@ -25,7 +26,7 @@ class S3Bucket(DataPlug):
         """
         # Creating a new session for each call to ensure thread safety
         session = boto3.session.Session()
-        s3_client = session.client('s3')
+        s3_client = session.client("s3")
         return s3_client
 
     def _pull_data(self, key):
@@ -38,7 +39,7 @@ class S3Bucket(DataPlug):
         obj = s3_client.get_object(Bucket=self.bucket_name, Key=key)
 
         # Assume file is CSV
-        self.df = pd.read_csv(obj['Body'])
+        self.df = pd.read_csv(obj["Body"])
 
     def _clean_data(self):
         """
@@ -77,10 +78,10 @@ class S3Bucket(DataPlug):
 
         s3_client = self._create_s3_client()
         objects = s3_client.list_objects_v2(Bucket=self.bucket_name)
-        
-        if 'Contents' in objects:
-            for item in objects['Contents']:
-                filename = item['Key']
+
+        if "Contents" in objects:
+            for item in objects["Contents"]:
+                filename = item["Key"]
                 KEYS.append(filename)
-        
+
         return KEYS

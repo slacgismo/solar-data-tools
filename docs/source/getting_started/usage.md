@@ -1,8 +1,11 @@
 # General Usage
 
-Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
-Tools uses CLARABEL as the solver for all signal decomposition problems. If you would like 
+Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data
+Tools uses CLARABEL as the solver for all signal decomposition problems. If you would like
 to specify a solver (such as MOSEK), just pass the keyword argument `solver` to `DataHandler.pipeline` with the solver of choice.
+
+The data should be in the form of a pandas DataFrame with a datetime index and a column for the power signal
+(or the user must set the `datetime_col` kwarg.) The data is recommended to be in the local timezone of the PV system.
 
 ```python
 from solardatatools import DataHandler

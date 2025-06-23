@@ -100,7 +100,6 @@ class IterativeFitting(SerializationMixin, PlotMixin):
         verbose=True,
         bootstraps=None,
     ):
-
         mu_l, mu_r, tau = self._obtain_hyper_parameters(mu_l, mu_r, tau)
         l_cs_value, r_cs_value, beta_value = self._obtain_initial_values()
         weights = self._obtain_weights(verbose=verbose)
@@ -291,7 +290,7 @@ class IterativeFitting(SerializationMixin, PlotMixin):
             reduced_mat = self._power_signals_d[:, self._weights > 0]
             try:
                 real_meas = reduced_mat > 0.005 * self._capacity
-            except:
+            except Exception:
                 real_meas = reduced_mat > 0.005 * np.nanquantile(
                     self._power_signals_d, 0.95
                 )
@@ -783,7 +782,7 @@ class IterativeFitting(SerializationMixin, PlotMixin):
             # term_f4 = (mu_r * norm(
             #             r_cs_value[1:, :-365] - r_cs_value[1:, 365:], 'fro'))
             term_f4 = (
-                (mu_r * cvx.norm(r_cs_value[1:, :-365] - r_cs_value[1:, 365:], "fro"))
+                mu_r * cvx.norm(r_cs_value[1:, :-365] - r_cs_value[1:, 365:], "fro")
             ).value
         components = [term_f1, term_f2, term_f3, term_f4]
         objective = sum(components)
