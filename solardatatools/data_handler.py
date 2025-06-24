@@ -42,7 +42,7 @@ from solardatatools.algorithms import (
     LossFactorAnalysis,
     PVQuantiles,
     Dilation,
-    ClearSkyDetection
+    ClearSkyDetection,
 )
 from pandas.plotting import register_matplotlib_converters
 
@@ -147,8 +147,7 @@ class DataHandler:
         if self.raw_data_matrix is not None:
             self.num_days = self.raw_data_matrix.shape[1]
             if self.raw_data_matrix.shape[0] <= 1400:
-                self.data_sampling = int(
-                    24 * 60 / self.raw_data_matrix.shape[0])
+                self.data_sampling = int(24 * 60 / self.raw_data_matrix.shape[0])
             else:
                 self.data_sampling = 24 * 60 / self.raw_data_matrix.shape[0]
         else:
@@ -439,8 +438,7 @@ class DataHandler:
             progress.update()
         ss = SunriseSunset()
         try:
-            ss.run_optimizer(self.raw_data_matrix,
-                             plot=False, solver=solver_convex)
+            ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
             self.boolean_masks.daytime = ss.sunup_mask_estimated
         except Exception:
             msg = "Sunrise/sunset detection failed."
@@ -493,8 +491,7 @@ class DataHandler:
             self._error_msg += "\n" + msg
             if verbose:
                 print(msg)
-                print(
-                    f"ratio of filled to raw nonzero measurements was {ratio:.2f}")
+                print(f"ratio of filled to raw nonzero measurements was {ratio:.2f}")
             self.daily_scores = None
             self.daily_flags = None
             self.data_quality_score = None
@@ -633,8 +630,7 @@ class DataHandler:
                 # Related to this bug fix:
                 # https://github.com/slacgismo/solar-data-tools/commit/ae0037771c09ace08bff5a4904475da606e934da
                 old_index = self.data_frame.index.copy()
-                self.data_frame.index = self.data_frame.index.shift(
-                    tz_offset, freq="H")
+                self.data_frame.index = self.data_frame.index.shift(tz_offset, freq="H")
                 self.data_frame = self.data_frame.reindex(
                     index=old_index, method="nearest", limit=1
                 ).fillna(0)
@@ -643,8 +639,7 @@ class DataHandler:
                 self.filled_data_matrix = np.nan_to_num(
                     np.roll(self.filled_data_matrix, roll_by, axis=0), 0
                 )
-                self.raw_data_matrix = np.roll(
-                    self.raw_data_matrix, roll_by, axis=0)
+                self.raw_data_matrix = np.roll(self.raw_data_matrix, roll_by, axis=0)
                 self.boolean_masks.daytime = np.roll(
                     self.boolean_masks.daytime, roll_by, axis=0
                 )
@@ -794,8 +789,7 @@ class DataHandler:
                         self.num_days / 365
                     )
                 else:
-                    l1 = "Length:                {} days\n".format(
-                        self.num_days)
+                    l1 = "Length:                {} days\n".format(self.num_days)
                 if self.power_units == "W":
                     l1_a = "Capacity estimate:     {:.2f} kW\n".format(
                         self.capacity_estimate / 1000
@@ -810,8 +804,7 @@ class DataHandler:
                     )
                     l1_a += self.power_units + "\n"
                 if self.raw_data_matrix.shape[0] <= 1440:
-                    l2 = "Data sampling:         {} minute\n".format(
-                        self.data_sampling)
+                    l2 = "Data sampling:         {} minute\n".format(self.data_sampling)
                 else:
                     l2 = "Data sampling:         {} second\n".format(
                         int(self.data_sampling * 60)
@@ -859,8 +852,7 @@ time zone errors     {report["time zone correction"] != 0}
             df_localized = df.tz_localize(
                 "US/Pacific", ambiguous="NaT", nonexistent="NaT"
             )
-            df_localized = df_localized[df_localized.index ==
-                                        df_localized.index]
+            df_localized = df_localized[df_localized.index == df_localized.index]
             df_localized = df_localized.tz_convert("Etc/GMT+8")
             df_localized = df_localized.tz_localize(None)
             self.data_frame_raw = df_localized
@@ -977,13 +969,13 @@ time zone errors     {report["time zone correction"] != 0}
         self,
         quantile_level=0.9,
         nvals_dil=101,
-        num_harmonics=[16, 3], 
-        regularization=0.1, 
-        solver='CLARABEL', 
-        verbose=False
+        num_harmonics=[16, 3],
+        regularization=0.1,
+        solver="CLARABEL",
+        verbose=False,
     ):
         """
-        Fit statistical model of PV system clear sky response, using smooth, periodic quantile estimation. Uses new 
+        Fit statistical model of PV system clear sky response, using smooth, periodic quantile estimation. Uses new
         self.estimate_quantiles method, estimating a single default quantile level of 0.9.
 
         :param quantile_level: the quantile level to fit as the clear sky system response
@@ -1008,20 +1000,18 @@ time zone errors     {report["time zone correction"] != 0}
             num_harmonics=num_harmonics,
             regularization=regularization,
             solver=solver,
-            verbose=verbose
+            verbose=verbose,
         )
         # the statistical clear sky fit (scsf) is the estimated quantile level
         self.scsf = self.quantile_object.quantiles_original[quantile_level]
         return
 
     def calculate_scsf_performance_index(self):
-        """
-
-        """
+        """ """
         if self.scsf is None:
             print("No SCSF model detected. Fitting now...")
             self.fit_statistical_clear_sky_model()
-        clear = self.scsf.reshape(self.raw_data_matrix.shape, order='F')
+        clear = self.scsf.reshape(self.raw_data_matrix.shape, order="F")
         clear_energy = np.nansum(clear, axis=0)
         measured_energy = np.nansum(self.raw_data_matrix, axis=0)
         pi = np.divide(measured_energy, clear_energy)
@@ -1071,14 +1061,12 @@ time zone errors     {report["time zone correction"] != 0}
             freq = "{}min".format(self.data_sampling)
             periods = self.filled_data_matrix.size
             tindex = pd.date_range(start=start, freq=freq, periods=periods)
-            series = pd.Series(
-                data=boolean_index.ravel(order="F"), index=tindex)
+            series = pd.Series(data=boolean_index.ravel(order="F"), index=tindex)
             series.name = column_name
             if column_name in self.data_frame.columns:
                 del self.data_frame[column_name]
             self.data_frame = self.data_frame.join(series)
-            self.data_frame[column_name] = self.data_frame[column_name].fillna(
-                False)
+            self.data_frame[column_name] = self.data_frame[column_name].fillna(False)
         elif cond2:
             slct_dates = self.day_index[boolean_index].date
             bix = np.isin(self.data_frame.index.date, slct_dates)
@@ -1104,8 +1092,7 @@ time zone errors     {report["time zone correction"] != 0}
         df = self.data_frame
         if use_col is None:
             use_col = df.columns[0]
-        self.raw_data_matrix, day_index = make_2d(
-            df, key=use_col, return_day_axis=True)
+        self.raw_data_matrix, day_index = make_2d(df, key=use_col, return_day_axis=True)
         self.raw_data_matrix = self.raw_data_matrix[:, start_day_ix:end_day_ix]
         self.num_days = self.raw_data_matrix.shape[1]
         if self.raw_data_matrix.shape[0] <= 1400:
@@ -1146,7 +1133,7 @@ time zone errors     {report["time zone correction"] != 0}
                 start=self.day_index[0].date(), end=end, freq="{}s".format(freq)
             )[:-1]
         num_meas = self.filled_data_matrix.shape[0]
-        new_view = self.data_frame[column].loc[new_index[0]: new_index[-1]]
+        new_view = self.data_frame[column].loc[new_index[0] : new_index[-1]]
         new_view = new_view.values.reshape(num_meas, -1, order="F")
         if self.time_shifts:
             ts = self.time_shift_analysis
@@ -1190,8 +1177,7 @@ time zone errors     {report["time zone correction"] != 0}
         # outside the decision boundaries
         day_counts = [
             np.logical_or(
-                self.daily_scores.linearity[db.labels_ ==
-                                            lb] > linearity_threshold,
+                self.daily_scores.linearity[db.labels_ == lb] > linearity_threshold,
                 np.logical_or(
                     self.daily_scores.density[db.labels_ == lb]
                     < density_lower_threshold,
@@ -1246,13 +1232,11 @@ time zone errors     {report["time zone correction"] != 0}
     def score_data_set(self):
         num_days = self.raw_data_matrix.shape[1]
         try:
-            self.data_quality_score = np.sum(
-                self.daily_flags.no_errors) / num_days
+            self.data_quality_score = np.sum(self.daily_flags.no_errors) / num_days
         except TypeError:
             self.data_quality_score = None
         try:
-            self.data_clearness_score = np.sum(
-                self.daily_flags.clear) / num_days
+            self.data_clearness_score = np.sum(self.daily_flags.clear) / num_days
         except TypeError:
             self.data_clearness_score = None
         return
@@ -1446,8 +1430,7 @@ time zone errors     {report["time zone correction"] != 0}
         # the clearness test. Occasionally, we find an early morning or late
         # afternoon inverter outage on a clear day is still detected as clear.
         # Added July 2020 --BM
-        clear_days = np.logical_and(
-            clear_days, self.daily_scores.density > 0.9)
+        clear_days = np.logical_and(clear_days, self.daily_scores.density > 0.9)
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
 
@@ -1882,7 +1865,7 @@ time zone errors     {report["time zone correction"] != 0}
                 label=mask_label,
             )
         if show_clear_model and self.scsf is not None:
-            plot_model = self.scsf.reshape(self.raw_data_matrix.shape, order='F')
+            plot_model = self.scsf.reshape(self.raw_data_matrix.shape, order="F")
             plot_model = plot_model[:, slct].ravel(order="F")
             plt.plot(
                 xs, plot_model, color="orange", linewidth=1, label="clear sky model"
@@ -2037,10 +2020,8 @@ time zone errors     {report["time zone correction"] != 0}
             ls=":",
             label="decision boundary",
         )
-        plt.axvline(self.__density_upper_threshold,
-                    linewidth=1, color="red", ls=":")
-        plt.axvline(self.__density_lower_threshold,
-                    linewidth=1, color="red", ls=":")
+        plt.axvline(self.__density_upper_threshold, linewidth=1, color="red", ls=":")
+        plt.axvline(self.__density_lower_threshold, linewidth=1, color="red", ls=":")
         plt.legend()
         return fig
 
@@ -2346,8 +2327,7 @@ time zone errors     {report["time zone correction"] != 0}
             slct = self.daily_flags.cloudy
             title += "cloudy days"
         circ_data = (
-            (self.start_doy + np.arange(self.num_days)
-             [slct]) % 365 * 2 * np.pi / 365
+            (self.start_doy + np.arange(self.num_days)[slct]) % 365 * 2 * np.pi / 365
         )
         circ_hist = np.histogram(circ_data, bins=num_bins)
         fig = plt.figure(figsize=figsize)
@@ -2393,108 +2373,127 @@ time zone errors     {report["time zone correction"] != 0}
         sig_dilated = dil.signal_dil
         self.sig_dilated = sig_dilated
 
-    def estimate_quantiles(self,
-                           nvals_dil=101,
-                           quantile_levels=[0.02, 0.1, 0.2, 0.3, 0.4,
-                                            0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
-                           num_harmonics=[16, 3],
-                           regularization=0.1,
-                           solver='CLARABEL',
-                           verbose=False):
+    def estimate_quantiles(
+        self,
+        nvals_dil=101,
+        quantile_levels=[0.02, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
+        num_harmonics=[16, 3],
+        regularization=0.1,
+        solver="CLARABEL",
+        verbose=False,
+    ):
         pvq = PVQuantiles(
             self,
             nvals_dil=nvals_dil,
             num_harmonics=num_harmonics,
             regularization=regularization,
             solver=solver,
-            verbose=verbose
+            verbose=verbose,
         )
         pvq.estimate_quantiles(quantile_levels=quantile_levels)
         self.quantile_object = pvq
 
-    def detect_clear_sky(self,
-                         quantile_level=0.90,
-                         threshold_low=0.75,
-                         threshold_high=1.2,
-                         stickiness_high=.1, 
-                         stickiness_low=4,
-                         loss_correction=True,
-                         verbose=False,
-                         **pqv_kwargs):
+    def detect_clear_sky(
+        self,
+        quantile_level=0.90,
+        threshold_low=0.75,
+        threshold_high=1.2,
+        stickiness_high=0.1,
+        stickiness_low=4,
+        loss_correction=True,
+        verbose=False,
+        nvals_dil=101,
+        num_harmonics=[16, 3],
+        regularization=0.1,
+        solver="CLARABEL",
+        **pqv_kwargs,
+    ):
         ql = quantile_level
         if self.quantile_object is None:
-                if verbose:
-                    print(f"Estimating q{ql} level first...")
-                self.estimate_quantiles(quantile_levels=[ql],
-                                        verbose=verbose,
-                                        **pqv_kwargs)
+            if verbose:
+                print(f"Estimating q{ql} level first...")
+            self.estimate_quantiles(quantile_levels=[ql], verbose=verbose, **pqv_kwargs)
         elif ql not in self.quantile_object.quantile_levels:
-                if verbose:
-                    print(f"Estimating q{ql} level first...")
-                self.estimate_quantiles(quantile_levels=[ql],
-                                        regularization=regularization,
-                                        solver=solver,
-                                        verbose=verbose)
+            if verbose:
+                print(f"Estimating q{ql} level first...")
+            self.estimate_quantiles(
+                quantile_levels=[ql],
+                nvals_dil=nvals_dil,
+                num_harmonics=num_harmonics,
+                regularization=regularization,
+                solver=solver,
+                verbose=verbose,
+            )
         q_undilated = self.quantile_object.quantiles_original[ql]
         sig_undilated = self.quantile_object.sig_original
         if loss_correction:
             if self.loss_analysis is None:
                 self.run_loss_factor_analysis()
-            sg = sig_undilated.reshape(self.raw_data_matrix.shape, order='F')
-            sg = sg / self.loss_analysis.energy_model[2] / self.loss_analysis.energy_model[1]
-            sig_undilated = sg.ravel(order='F')
+            sg = sig_undilated.reshape(self.raw_data_matrix.shape, order="F")
+            sg = (
+                sg
+                / self.loss_analysis.energy_model[2]
+                / self.loss_analysis.energy_model[1]
+            )
+            sig_undilated = sg.ravel(order="F")
         # Run clear sky detection
         csd = ClearSkyDetection(
-            sig_undilated, q_undilated, threshold_low=threshold_low, 
-            threshold_high=threshold_high, stickiness_high=stickiness_high, 
-            stickiness_low=stickiness_low)
+            sig_undilated,
+            q_undilated,
+            threshold_low=threshold_low,
+            threshold_high=threshold_high,
+            stickiness_high=stickiness_high,
+            stickiness_low=stickiness_low,
+        )
         self.clearsky_sig = csd.get_clearsky_sig()
-        daytime = self.boolean_masks.daytime.ravel(order='F')
+        daytime = self.boolean_masks.daytime.ravel(order="F")
         self.clearsky_sig[~daytime] = 0
         self.boolean_masks.clear_times = self.clearsky_sig.reshape(
-            self.boolean_masks.daytime.shape, order='F')
+            self.boolean_masks.daytime.shape, order="F"
+        )
         self.boolean_masks.clear_times = np.asarray(
-            self.boolean_masks.clear_times,
-            dtype=bool
+            self.boolean_masks.clear_times, dtype=bool
         )
         self.clearsky_object = csd
         return
 
-    def plot_bundt(self,
-                   figsize=(12, 8),
-                   units="kW",
-                   inner_radius=1.0,
-                   slice_thickness=100,
-                   elev=45,
-                   azim=30,
-                   zoom=1.0,
-                   zscale=0.5,
-                   cmap="coolwarm",
-                   aggregate=False,
-                   skip=0):
-
+    def plot_bundt(
+        self,
+        figsize=(12, 8),
+        units="kW",
+        inner_radius=1.0,
+        slice_thickness=100,
+        elev=45,
+        azim=30,
+        zoom=1.0,
+        zscale=0.5,
+        cmap="coolwarm",
+        aggregate=False,
+        skip=0,
+    ):
         # Ensure sunrise/sunset analysis has been run
-        if not hasattr(self, 'daytime_analysis') or \
-                self.daytime_analysis.sunrise_estimates is None:
+        if (
+            not hasattr(self, "daytime_analysis")
+            or self.daytime_analysis.sunrise_estimates is None
+        ):
             print("Estimating sunrise and sunset times...")
             self.run_pipeline(sunrise_sunset=True)
 
         # Apply time dilation
-        dilation = Dilation(self, matrix='raw', nvals_dil=101)
+        dilation = Dilation(self, matrix="raw", nvals_dil=101)
         dilated_matrix = dilation.signal_dil[1:].reshape(
-            dilation.nvals_dil, dilation.ndays, order='F')
+            dilation.nvals_dil, dilation.ndays, order="F"
+        )
         # shape: (101, ndays)
 
         if aggregate:
             # Drop Feb 29 entries
             leap_day_mask = np.logical_and(
-                self.day_index.month == 2,
-                self.day_index.day == 29
+                self.day_index.month == 2, self.day_index.day == 29
             )
             valid_days_mask = ~leap_day_mask
             valid_day_index = self.day_index[valid_days_mask]
-            valid_matrix = dilated_matrix[:,
-                                          valid_days_mask]  # shape: (101, N')
+            valid_matrix = dilated_matrix[:, valid_days_mask]  # shape: (101, N')
 
             # Create 365-day vector for day-of-year (1–365, excluding Feb 29)
             doy = valid_day_index.dayofyear.to_numpy()
@@ -2522,6 +2521,7 @@ time zone errors     {report["time zone correction"] != 0}
 
         # Plot with provided bundt cake function
         from solardatatools.plotting import plot_bundt_cake
+
         fig = plot_bundt_cake(
             data_for_bundt,
             figsize=figsize,
@@ -2532,7 +2532,7 @@ time zone errors     {report["time zone correction"] != 0}
             azim=azim,
             zoom=zoom,
             zscale=zscale,
-            cmap=cmap
+            cmap=cmap,
         )
         return fig
 
