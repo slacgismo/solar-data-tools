@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Issue with current documentation:**
-Please leave a reference to the document or part of the code that you're referring to. 
+Please leave a reference to the document or part of the code that you're referring to.
 
 
 **Idea or request for content:**

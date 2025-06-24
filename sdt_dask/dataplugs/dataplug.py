@@ -1,5 +1,8 @@
 """Class for dataplugs to be used with the SDT Dask tool."""
+
 import pandas as pd
+
+
 class DataPlug:
     """
     Dataplug class for retrieving data from some source. It's recommended
@@ -9,6 +12,7 @@ class DataPlug:
     the source. The main requirement is to keep the ``DataPlug.get_data`` method,
     and make sure the args and returns as defined here.
     """
+
     def __init__(self):
         pass
 
