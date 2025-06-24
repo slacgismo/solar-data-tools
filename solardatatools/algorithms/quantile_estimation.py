@@ -1,6 +1,6 @@
-""" PV Power Quantile Estimation Module
+"""PV Power Quantile Estimation Module
 
-This module is for estimating time-varying quantiles of PV power data. 
+This module is for estimating time-varying quantiles of PV power data.
 This module also include the ability to use the fit quantiles to transform the data
 
 Authors: Bennet Meyers, Giray Ogut, and Aramis Dufour
@@ -15,15 +15,16 @@ from solardatatools.algorithms import Dilation
 from solardatatools.algorithms.dilation import undilate_quantiles
 from solardatatools.plotting import plot_bundt_cake
 
+
 class PVQuantiles:
     def __init__(
-        self, 
+        self,
         data_handler,
         nvals_dil=101,
-        num_harmonics=[10, 3], 
-        regularization=0.1, 
-        solver='CLARABEL', 
-        verbose=False
+        num_harmonics=[10, 3],
+        regularization=0.1,
+        solver="CLARABEL",
+        verbose=False,
     ):
         """
         A class for estimating time-varying quantiles of PV power data
@@ -64,12 +65,12 @@ class PVQuantiles:
     ):
         spq = SmoothPeriodicQuantiles(
             num_harmonics=self.num_harmonics,
-            periods=[self.nvals_dil, 365.24225*self.nvals_dil],
+            periods=[self.nvals_dil, 365.24225 * self.nvals_dil],
             standing_wave=[True, False],
             trend=False,
             quantiles=quantile_levels,
             weight=self.regularization,
-            problem='sequential',
+            problem="sequential",
             solver=self.solver,
             verbose=self.verbose,
         )
@@ -77,10 +78,10 @@ class PVQuantiles:
         if self.verbose:
             print("Quantiles estimated successfully.")
         quantiles_ori = undilate_quantiles(
-             self.dilation_object.idx_ori,
-             self.dilation_object.idx_dil,
-             spq.fit_quantiles,
-             nvals_dil=self.nvals_dil
+            self.dilation_object.idx_ori,
+            self.dilation_object.idx_dil,
+            spq.fit_quantiles,
+            nvals_dil=self.nvals_dil,
         )
         for i, q in enumerate(quantile_levels):
             self.quantiles_dilated[q] = spq.fit_quantiles[:, i].squeeze()
@@ -91,7 +92,7 @@ class PVQuantiles:
         else:
             self.quantile_levels = list(set(self.quantile_levels + quantile_levels))
             self.quantile_levels.sort()
-    
+
     def plot_all_quantiles(self, dilated=True):
         q = self.quantile_levels
         ndays = self.num_days
@@ -108,19 +109,33 @@ class PVQuantiles:
         nq = fq.shape[1]
         nvals_dil = self.nvals_dil
         nrows = (nq + 2) // 2
-        fig, ax = plt.subplots(nrows, 2, figsize=(12, 3*nrows))
+        fig, ax = plt.subplots(nrows, 2, figsize=(12, 3 * nrows))
         if nrows > 1:
             for i in range(len(q)):
-                sns.heatmap(fq[1:, i].reshape((nvals_dil, ndays), order='F'), ax=ax[i//2, i%2], cmap='plasma')
-                ax[i//2, i%2].set_title(f'Quantile {q[i]}')
-            sns.heatmap(sig[1:].reshape((nvals_dil, ndays), order='F'), ax=ax[-1, -1], cmap='plasma')
-            ax[-1, -1].set_title('Dilated signal')
+                sns.heatmap(
+                    fq[1:, i].reshape((nvals_dil, ndays), order="F"),
+                    ax=ax[i // 2, i % 2],
+                    cmap="plasma",
+                )
+                ax[i // 2, i % 2].set_title(f"Quantile {q[i]}")
+            sns.heatmap(
+                sig[1:].reshape((nvals_dil, ndays), order="F"),
+                ax=ax[-1, -1],
+                cmap="plasma",
+            )
+            ax[-1, -1].set_title("Dilated signal")
         else:
             for i in range(len(q)):
-                sns.heatmap(fq[1:, i].reshape((nvals_dil, ndays), order='F'), ax=ax[i], cmap='plasma')
-                ax[i].set_title(f'Quantile {q[i]}')
-            sns.heatmap(sig[1:].reshape((nvals_dil, ndays), order='F'), ax=ax[-1], cmap='plasma')
-            ax[-1].set_title('Dilated signal')
+                sns.heatmap(
+                    fq[1:, i].reshape((nvals_dil, ndays), order="F"),
+                    ax=ax[i],
+                    cmap="plasma",
+                )
+                ax[i].set_title(f"Quantile {q[i]}")
+            sns.heatmap(
+                sig[1:].reshape((nvals_dil, ndays), order="F"), ax=ax[-1], cmap="plasma"
+            )
+            ax[-1].set_title("Dilated signal")
         plt.tight_layout()
         return plt.gcf()
 

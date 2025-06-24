@@ -33,8 +33,7 @@ def plot_2d(
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
             else:
                 fig = ax.get_figure()
-            foo = ax.imshow(D, cmap="plasma",
-                            interpolation="none", aspect="auto")
+            foo = ax.imshow(D, cmap="plasma", interpolation="none", aspect="auto")
             ax.set_title("Measured power")
             plt.colorbar(foo, ax=ax, label=units)
             ax.set_xlabel("Day number")
@@ -47,16 +46,11 @@ def plot_2d(
                 days = np.arange(D.shape[1])
                 y1 = np.ones_like(days[use_day]) * D.shape[0] * 0.999
                 ax.scatter(days[use_day], y1, marker="|", color=color, s=2)
-                ax.scatter(days[use_day], 0.995 * y1,
-                           marker="|", color=color, s=2)
-                ax.scatter(days[use_day], 0.99 * y1,
-                           marker="|", color=color, s=2)
-                ax.scatter(days[use_day], 0.985 * y1,
-                           marker="|", color=color, s=2)
-                ax.scatter(days[use_day], 0.98 * y1,
-                           marker="|", color=color, s=2)
-                ax.scatter(days[use_day], 0.975 * y1,
-                           marker="|", color=color, s=2)
+                ax.scatter(days[use_day], 0.995 * y1, marker="|", color=color, s=2)
+                ax.scatter(days[use_day], 0.99 * y1, marker="|", color=color, s=2)
+                ax.scatter(days[use_day], 0.985 * y1, marker="|", color=color, s=2)
+                ax.scatter(days[use_day], 0.98 * y1, marker="|", color=color, s=2)
+                ax.scatter(days[use_day], 0.975 * y1, marker="|", color=color, s=2)
                 ax.set_xlim(*xlim)
                 ax.set_ylim(*ylim)
         if dates is not None:
@@ -120,15 +114,15 @@ def plot_bundt_cake(
 
         num_days, slices_per_day = data.shape
         theta_days = np.linspace(0, 2 * np.pi, num_days, endpoint=False)
-        theta_slices = np.linspace(
-            0, 2 * np.pi, slices_per_day, endpoint=False)
-        theta_grid, slice_grid = np.meshgrid(
-            theta_days, theta_slices, indexing="xy")
+        theta_slices = np.linspace(0, 2 * np.pi, slices_per_day, endpoint=False)
+        theta_grid, slice_grid = np.meshgrid(theta_days, theta_slices, indexing="xy")
 
-        x = (inner_radius + slice_grid *
-             (slice_thickness / slices_per_day)) * np.cos(theta_grid)
-        y = (inner_radius + slice_grid *
-             (slice_thickness / slices_per_day)) * np.sin(theta_grid)
+        x = (inner_radius + slice_grid * (slice_thickness / slices_per_day)) * np.cos(
+            theta_grid
+        )
+        y = (inner_radius + slice_grid * (slice_thickness / slices_per_day)) * np.sin(
+            theta_grid
+        )
         z = data.T
 
         ax.plot_surface(x, y, z, cmap=cmap, edgecolor="none")

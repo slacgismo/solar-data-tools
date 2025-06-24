@@ -23,5 +23,5 @@ __all__ = [
     "Dilation",
     "LossFactorAnalysis",
     "PVQuantiles",
-    "ClearSkyDetection"
+    "ClearSkyDetection",
 ]
