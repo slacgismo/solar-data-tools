@@ -596,11 +596,7 @@ class DataHandler:
                     periodic_detector=periodic_detector,
                     solver=solver,
                 )
-<<<<<<< HEAD
-                def rms(x): return np.sqrt(np.mean(np.square(x)))
-=======
                 rms = lambda x: np.sqrt(np.mean(np.square(x)))  # noqa: E731
->>>>>>> 1c5e3c765a810977b2b37c2258d06932fe001152
                 if rms(self.time_shift_analysis.s2) > 0.25:
                     if verbose:
                         print("Invoking periodic timeshift detector.")
