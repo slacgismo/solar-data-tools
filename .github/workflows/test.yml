@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -50,7 +50,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          uv pip install --system --break-system-packages -r requirements.txt
+          uv pip install --system --break-system-packages .
           uv pip install --system --break-system-packages pytest pytest-cov pytest-github-report pytest-github-actions-annotate-failures
 
       - name: Run Unit Tests

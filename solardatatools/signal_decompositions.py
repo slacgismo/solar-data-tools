@@ -28,18 +28,15 @@ SDT algorithms. The defined signal decompositions are:
    - constrained to have first val at 0 and last val at 1
 
 """
-import sys
-import numpy as np
 
 from solardatatools._osd_signal_decompositions import (
     _osd_l2_l1d1_l2d2p365,
-    _osd_l1_l1d1_l2d2p365,
     _osd_tl1_l2d2p365,
     _osd_l2_l1d2_constrained,
 )
 from solardatatools._cvx_signal_decompositions import (
     _cvx_l2_l1d1_l2d2p365,
-    _cvx_l1_l1d1_l2d2p365,
+    _cvx_l1_pwc_smoothper_trend,
     _cvx_tl1_l2d2p365,
     _cvx_l2_l1d2_constrained,
 )
@@ -77,8 +74,7 @@ def l2_l1d1_l2d2p365(
         seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param sum_card: Boolean for using the nonconvex formulation using the cardinality penalty,
         Supported only using OSD with the QSS solver.
     :param transition_locs: List of indices where transitions are located. Only used in CVXPY problems.
@@ -146,7 +142,7 @@ def tl1_l2d2p365(
     solardatatools/sunrise_sunset.py
 
 
-    This is a convex problem and the default solver across SDT is OSQP.
+    This is a convex problem and the default solver across SDT is CLARABEL.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
         the signal of interest
@@ -160,8 +156,7 @@ def tl1_l2d2p365(
         seasonal signal
     :param yearly_periodic: Adds periodicity constraint to signal decomposition
     :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param verbose: Sets verbosity
     :return: A tuple with three 1d numpy arrays containing the three signal component estimates
     """
@@ -190,59 +185,44 @@ def tl1_l2d2p365(
     return res
 
 
-def l1_l1d1_l2d2p365(
+def l1_pwc_smoothper_trend(
     signal,
     use_ixs=None,
-    w1=1e0,
-    transition_locs=None,
-    return_all=False,
+    w2=2e1,
+    w3=1,
+    w4=1e1,
     solver="CLARABEL",
-    sum_card=False,  # OSD only
     verbose=False,
+    return_all=False,
 ):
     """
     Used in solardatatools/algorithms/capacity_change.py
 
-    This is a nonconvex problem when invoking QSS, and convex when invoking MOSEK.
+    We solve a convex signal decomposition problem, making use of the l1-sparsity heuristic for estimating a
+    piecewise constant component. We use a single pass of iterative reweighting on this term to "polish" the sparse
+    solution (see: https://web.stanford.edu/~boyd/papers/rwl1.html).
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
         the signal of interest
     :param use_ixs: List of booleans indicating indices to use in signal.
         None is default (uses the entire signal).
-    :param w0: Weight on the residual component
-    :param w1: The regularization parameter to control the total variation in
-        the final output signal
-    :param w2: The regularization parameter to control the smoothness of the
-        seasonal signal
-    :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
-    :param sum_card: Boolean for using the nonconvex formulation using the cardinality penalty,
-        Supported only using OSD with the QSS solver.
+    :param w2: Weight on the piecewise constant component
+    :param w3: Weight on the smooth, periodic component
+    :param w4: Weight on the slope of the trend term (discourages large trends)
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param verbose: Sets verbosity
-    :return: A tuple with three 1d numpy arrays containing the three signal component estimates
+    :return: A tuple with three 1d numpy arrays containing the three non-noise signal component estimates
     """
-    if solver == "MOSEK":
-        # MOSEK weights set in CVXPY function
-        res = _cvx_l1_l1d1_l2d2p365(
-            signal=signal,
-            use_ixs=use_ixs,
-            return_all=return_all,
-            solver=solver,
-            verbose=verbose,
-        )
-    else:
-        res = _osd_l1_l1d1_l2d2p365(
-            signal=signal,
-            use_ixs=use_ixs,
-            w1=w1,
-            transition_locs=transition_locs,
-            return_all=return_all,
-            solver=solver,
-            sum_card=False,
-            verbose=verbose,
-        )
-
+    res = _cvx_l1_pwc_smoothper_trend(
+        signal=signal,
+        use_ixs=use_ixs,
+        w2=w2,
+        w3=w3,
+        w4=w4,
+        solver=solver,
+        verbose=verbose,
+        return_all=return_all,
+    )
     return res
 
 
@@ -252,15 +232,14 @@ def l2_l1d2_constrained(
     """
     Used in solardatatools/algorithms/clipping.py
 
-    This is a convex problem and the default solver across SDT is OSQP.
+    This is a convex problem and the default solver across SDT is CLARABEL.
 
     :param signal: A 1d numpy array (must support boolean indexing) containing
         the signal of interest
     :param w0: Weight on the residual component
     :param w1: The regularization parameter on l1d2 component
     :param return_all: Returns all components and the objective value. Used for tests.
-    :param solver: Solver to use for the decomposition. QSS and OSQP are supported with
-        OSD. MOSEK will trigger CVXPY use.
+    :param solver: Solver to use for the decomposition. Supported solvers are CLARABEL and MOSEK.
     :param verbose: Sets verbosity
     :return: A tuple with returning the signal, the l1d2 component estimate, and the weight
     """

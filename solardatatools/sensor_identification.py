@@ -1,4 +1,4 @@
-""" Sensor Identification Module
+"""Sensor Identification Module
 
 This module contains a class for choosing which irradiance sensor best
 describes a PV power or current data set. We assume a linear model between
@@ -17,7 +17,7 @@ these two data filtering schemes, the algorithm alerts the user.
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, HuberRegressor
-from sklearn.model_selection import KFold, TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit
 
 
 def rmse(residuals):
@@ -96,7 +96,7 @@ class SensorIdentification:
                         y_pred = fit.predict(data[test_ix])
                         # Calculate the residuals
                         residuals.append(y[test_ix] - y_pred)
-                    except:
+                    except:  # noqa: E722
                         residuals.append(np.inf)
                 # Collect the residuals from all the splits
                 residuals = np.concatenate(residuals)

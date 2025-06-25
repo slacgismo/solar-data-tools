@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Data Transforms Module
+"""Data Transforms Module
 
 This module contains functions for transforming PV power data, including time-axis standardization and
 2D-array generation
@@ -225,8 +225,8 @@ def standardize_time_axis(
             else:
                 print("{} transitions detected.".format(len(leading)))
             print("Suggest splitting data set between:")
-            for l, t in zip(leading, trailing):
-                print("    ", l, "and", t)
+            for s, t in zip(leading, trailing):
+                print("    ", s, "and", t)
             print("\n")
             del df["deltas"]
 

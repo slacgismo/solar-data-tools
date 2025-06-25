@@ -1,6 +1,6 @@
 """The function cos(theta) is  calculated using equation (1.6.2) in:
- Duffie, John A., and William A. Beckman. Solar engineering of thermal
- processes. New York: Wiley, 1991."""
+Duffie, John A., and William A. Beckman. Solar engineering of thermal
+processes. New York: Wiley, 1991."""
 
 import numpy as np
 from pvsystemprofiler.utilities.hour_angle_equation import calculate_omega
