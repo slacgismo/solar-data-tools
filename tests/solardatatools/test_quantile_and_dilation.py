@@ -24,6 +24,7 @@ class TestQuantileDilation(unittest.TestCase):
         self.filepath = (
             Path(__file__).parent.parent / "fixtures" / "quantile_estimation"
         )
+        np.random.seed(42)
 
     def test_quantile_and_dilation(self):
         # load input data
