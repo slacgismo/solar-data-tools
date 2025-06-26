@@ -2468,7 +2468,7 @@ time zone errors     {report["time zone correction"] != 0}
         zoom=1.0,
         zscale=0.5,
         cmap="coolwarm",
-        aggregate=False,
+        aggregate=True,
         skip=0,
     ):
         # Ensure sunrise/sunset analysis has been run
