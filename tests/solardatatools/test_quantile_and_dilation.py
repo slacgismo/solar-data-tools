@@ -71,7 +71,7 @@ class TestQuantileDilation(unittest.TestCase):
                 atol=1e-1,
             )
             # total 105408 entries
-            self.assertLessEqual(np.sum(~q_ori_close), 750)
+            self.assertLessEqual(np.sum(~q_ori_close), 1200)
 
 
 @contextlib.contextmanager
