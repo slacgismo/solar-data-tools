@@ -113,8 +113,8 @@ def plot_bundt_cake(
             fig = ax.get_figure()
 
         num_days, slices_per_day = data.shape
-        theta_days = np.linspace(0, 2 * np.pi, num_days, endpoint=False)
-        theta_slices = np.linspace(0, 2 * np.pi, slices_per_day, endpoint=False)
+        theta_days = np.linspace(0, 2 * np.pi, num_days, endpoint=True)
+        theta_slices = np.linspace(0, 2 * np.pi, slices_per_day, endpoint=True)
         theta_grid, slice_grid = np.meshgrid(theta_days, theta_slices, indexing="xy")
 
         x = (inner_radius + slice_grid * (slice_thickness / slices_per_day)) * np.cos(
