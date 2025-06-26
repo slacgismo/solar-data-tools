@@ -2406,13 +2406,19 @@ time zone errors     {report["time zone correction"] != 0}
         num_harmonics=[16, 3],
         regularization=0.1,
         solver="CLARABEL",
-        **pqv_kwargs,
     ):
         ql = quantile_level
         if self.quantile_object is None:
             if verbose:
                 print(f"Estimating q{ql} level first...")
-            self.estimate_quantiles(quantile_levels=[ql], verbose=verbose, **pqv_kwargs)
+            self.estimate_quantiles(
+                quantile_levels=[ql],
+                nvals_dil=nvals_dil,
+                num_harmonics=num_harmonics,
+                regularization=regularization,
+                solver=solver,
+                verbose=verbose,
+            )
         elif ql not in self.quantile_object.quantile_levels:
             if verbose:
                 print(f"Estimating q{ql} level first...")
@@ -2455,6 +2461,7 @@ time zone errors     {report["time zone correction"] != 0}
             self.boolean_masks.clear_times, dtype=bool
         )
         self.clearsky_object = csd
+        self.scsf = q_undilated
         return
 
     def plot_bundt(
