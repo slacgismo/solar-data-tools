@@ -1,6 +1,0 @@
-sphinx
-pydata-sphinx-theme
-sphinx-design
-nbsphinx
-myst-parser
-nbsphinx_link
