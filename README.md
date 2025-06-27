@@ -31,6 +31,13 @@
     </a>
   </tr>
   <tr>
+  <td>JOSS Paper</td>
+    <td>
+    <a style="border-width:0" href="https://doi.org/10.21105/joss.08478">
+      <img src="https://joss.theoj.org/papers/10.21105/joss.08478/status.svg" alt="DOI badge" >
+    </a>
+  </tr>
+  <tr>
   <td>Python Versions</td>
   <td>
     <a href="https://www.python.org/downloads/release/python-3100/">
