@@ -1,10 +1,12 @@
-""" PVPRO Post Processing Module
+"""PVPRO Post Processing Module
 
 This module contains a class that takes in the output dataframe of PVPRO and
 contains methods to process the dataset, perform signal decompositions to model
 degradation trends, analyze how well the models fit, and visualize the trends.
 
 """
+
+# ruff: noqa: E731
 
 import numpy as np
 
@@ -98,10 +100,9 @@ class PVPROPostProcessor:
             self.df_ds = self.df
 
         # processing steps
-        if bp == True:
+        if bp:
             self.boundary_points(verbose=verbose)
             self.boundary_to_nan()
-        df_scaled = self.scale_max_1()
         df_p = self.ln_df()
 
         # attributes
@@ -322,7 +323,6 @@ class PVPROPostProcessor:
             print("check model entry")
 
         # initializing data and characteristic values
-        data = self.df_p[label]
         y = self.df_p[label].values
         T = len(y)
         p = self.period
@@ -369,7 +369,7 @@ class PVPROPostProcessor:
         if model == "linear":
             constraints.append(cp.diff(x5, k=2) == 0)
         else:
-            if decreasing == True:
+            if decreasing:
                 constraints.append(cp.diff(x5, k=1) <= 0)
             else:
                 constraints.append(cp.diff(x5, k=1) >= 0)
@@ -709,7 +709,6 @@ class PVPROPostProcessor:
                 pass
 
         else:
-            data = self.df_ds[label]
             components = self.descaled_data[label + "_" + model]
 
             titles = [
@@ -780,7 +779,6 @@ class PVPROPostProcessor:
         """
 
         ti = time()
-        period = self.period
         lambda_2 = lambda2
         lambda_4_values = np.atleast_1d(lambda4)
         lambda_5_values = np.atleast_1d(lambda5)

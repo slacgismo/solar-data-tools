@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Solar Noon Module
+"""Solar Noon Module
 
 This module contains functions for estimating solar noon on each day in a
 PV power or irradiance data set. All functions assume that the data has been
@@ -12,7 +12,7 @@ tends to give a better estimate of solar noon than the sunrise/sunset approach.
 """
 
 import numpy as np
-from solardatatools.daytime import find_daytime, detect_sun
+from solardatatools.daytime import detect_sun
 from solardatatools.sunrise_sunset import rise_set_rough
 
 

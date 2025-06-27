@@ -6,6 +6,7 @@ It takes a data plug and a dask client as input and runs the pipeline on the dat
 See the README and tool_demo_SDTDask.ipynb for more information
 
 """
+
 import os
 import pandas as pd
 from dask import delayed
@@ -13,14 +14,15 @@ from time import strftime
 from dask.distributed import performance_report
 from solardatatools import DataHandler
 
+
 class Runner:
     """A class to run the SolarDataTools pipeline on a Dask cluster.
-        Will handle invalid data keys and failed datasets.
+    Will handle invalid data keys and failed datasets.
 
-        :param keys:
-            data_plug (:obj:`DataPlug`): The data plug object.
-            client (:obj:`Client`): The Dask client object.
-            output_path (str): The path to save the results.
+    :param keys:
+        data_plug (:obj:`DataPlug`): The data plug object.
+        client (:obj:`Client`): The Dask client object.
+        output_path (str): The path to save the results.
     """
 
     def __init__(self, client, output_path="../results/"):
@@ -49,11 +51,13 @@ class Runner:
             :rtype: tuple"""
 
             # Addition of function error status for key
-            errors = {"get_data error": ["No error"],
-                      "run_pipeline error": ["No error"],
-                      "run_pipeline_report error": ["No error"],
-                      "run_loss_analysis error": ["No error"],
-                      "run_loss_analysis_report error": ["No error"]}
+            errors = {
+                "get_data error": ["No error"],
+                "run_pipeline error": ["No error"],
+                "run_pipeline_report error": ["No error"],
+                "run_loss_analysis error": ["No error"],
+                "run_loss_analysis_report error": ["No error"],
+            }
 
             # Creates a key dictionary for the key combinations and the sensor
             # information
@@ -110,10 +114,12 @@ class Runner:
                 try:
                     datahandler.run_pipeline(**kwargs)
                     if datahandler.num_days <= 365:
-                        data_df[
-                            "run_loss_analysis error"] = "The length of data is less than or equal to 1 year, loss analysis will fail thus is not performed."
-                        data_df[
-                            "run_loss_analysis_report error"] = "Loss analysis is not performed"
+                        data_df["run_loss_analysis error"] = (
+                            "The length of data is less than or equal to 1 year, loss analysis will fail thus is not performed."
+                        )
+                        data_df["run_loss_analysis_report error"] = (
+                            "Loss analysis is not performed"
+                        )
 
                 except Exception as e:
                     data_df["run_pipeline error"] = str(e)
@@ -122,13 +128,11 @@ class Runner:
                     data_df["run_pipeline_report error"] = error
                     data_df["run_loss_analysis_report error"] = error
 
-
             # Gets the run_pipeline report and appends it to the dataframe as
             # columns and handles errors
             if data_df.iloc[0]["run_pipeline error"] == "No error":
                 try:
-                    report = datahandler.report(return_values=True,
-                                                verbose=False)
+                    report = datahandler.report(return_values=True, verbose=False)
                     data_df = data_df.assign(**report)
                 except Exception as e:
                     data_df["run_pipeline_report error"] = str(e)
@@ -171,7 +175,7 @@ class Runner:
             return data_df
 
         results = []
-        
+
         # For larger number of files it is recommended to use dask collections
         # instead of a for loop **
         # Reference:
@@ -179,27 +183,32 @@ class Runner:
         for key in KEYS:
             data_tuple_0 = delayed(get_data)(key)
             # data_tuple_0 = delayed(data_tuple_0)
-            data_tuple_1 = delayed(run_pipeline)(data_tuple_0, fix_shifts=True,
-                                                 verbose=False)
+            data_tuple_1 = delayed(run_pipeline)(
+                data_tuple_0, fix_shifts=True, verbose=False
+            )
             # data_tuple_1 = delayed(data_tuple_1)
-        
+
             result_df = delayed(run_loss_analysis)(data_tuple_1)
             results.append(result_df)
-        
+
         self.df_results = delayed(pd.concat)(results)
 
     def visualize(self, filename="sdt_graph.png", **kwargs):
         # visualize the pipeline, user should have graphviz installed
         self.df_results.visualize(filename, **kwargs)
 
-    def get_result(self, dask_report="dask-report.html", summary_report="summary_report.csv"):
+    def get_result(
+        self, dask_report="dask-report.html", summary_report="summary_report.csv"
+    ):
         # test if the filepath exist, if not create it
         time_stamp = strftime("%Y%m%d-%H%M%S")
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
-            
+
         # Compute tasks on cluster and save results
-        with performance_report(self.output_path + "/" + f"{time_stamp}-" + dask_report):
+        with performance_report(
+            self.output_path + "/" + f"{time_stamp}-" + dask_report
+        ):
             summary_table = self.client.compute(self.df_results)
             df = summary_table.result()
             df.to_csv(self.output_path + "/" + f"{time_stamp}-" + summary_report)

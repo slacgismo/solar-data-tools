@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Data Handler Module
+"""Data Handler Module
 
 This module contains a class for managing a data processing pipeline
 
@@ -14,7 +14,8 @@ import cvxpy as cvx
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import traceback, sys
+import traceback
+import sys
 from tqdm import tqdm
 from solardatatools.time_axis_manipulation import (
     make_time_series,
@@ -33,6 +34,7 @@ from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
 from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
+from solardatatools.polar_transform import PolarTransform
 from solardatatools.algorithms import (
     CapacityChange,
     TimeShift,
@@ -43,7 +45,6 @@ from solardatatools.algorithms import (
 from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
-from solardatatools.polar_transform import PolarTransform
 
 
 class DataHandler:
@@ -64,7 +65,12 @@ class DataHandler:
         This class can work with both data frames and raw data matrices, allowing for
         time series conversion, aggregation, and various other preprocessing steps.
 
-        It is initialized by passing a Pandas dataframe to the `data_frame` parameter.
+        It is initialized by passing a Pandas dataframe to the `data_frame` parameter. Note that
+        the DataFrame must have a DatetimeIndex or the user must set the `datetime_col` kwarg.
+        The timestamps are recommended to be in the local timezone of the data. If there is a small shift
+        in the timestamps, the pipeline will attempt to correct it. If the shift is large (8-10 hours), the pipeline
+        will likely fail to adjust the shift.
+
 
         :param data_frame: A pandas DataFrame containing the raw data. If provided,
                            the class will process the data frame based on the other
@@ -92,8 +98,8 @@ class DataHandler:
         :param how: A function used to aggregate the resampled data. The function should
                     take a pandas object and return a single value (e.g., mean, sum).
         :type how: callable, default=lambda x: x.mean()
-        :param gmt_offset: An integer representing the GMT offset, used for timezone
-                           conversions if necessary.
+        :param gmt_offset: An integer representing the GMT offset, used when estimating the
+                        longitude and latitude. It is NOT used for timezone correction.
         :type gmt_offset: int, optional
         """
 
@@ -119,7 +125,7 @@ class DataHandler:
                 else:
                     e = "Data frame must have a DatetimeIndex or"
                     e += "the user must set the datetime_col kwarg."
-                    raise Exception(e)
+                    raise ValueError(e)
             self.tz_info = get_index_timezone(self.data_frame_raw)
             self.data_frame_raw = remove_index_timezone(self.data_frame_raw)
             if no_future_dates:
@@ -428,7 +434,7 @@ class DataHandler:
         try:
             ss.run_optimizer(self.raw_data_matrix, plot=False, solver=solver_convex)
             self.boolean_masks.daytime = ss.sunup_mask_estimated
-        except:
+        except Exception:
             msg = "Sunrise/sunset detection failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -443,7 +449,7 @@ class DataHandler:
             progress.update()
         try:
             self.make_filled_data_matrix(zero_night=zero_night, interp_day=interp_day)
-        except:
+        except Exception:
             msg = "Matrix filling failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -497,7 +503,7 @@ class DataHandler:
         try:
             # density scoring
             self.get_daily_scores(threshold=0.2, solver=solver_convex)
-        except:
+        except Exception:
             msg = "Daily quality scoring failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -510,7 +516,7 @@ class DataHandler:
                 density_upper_threshold=density_upper_threshold,
                 linearity_threshold=linearity_threshold,
             )
-        except:
+        except Exception:
             msg = "Daily quality flagging failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -524,7 +530,7 @@ class DataHandler:
                 energy_threshold=clear_day_energy_param,
                 solver=solver_convex,
             )
-        except:
+        except Exception:
             msg = "Clear day detection failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -543,7 +549,7 @@ class DataHandler:
         t_clean[3] = time()
         try:
             self.score_data_set()
-        except:
+        except Exception:
             msg = "Data set summary scoring failed."
             self._error_msg += "\n" + msg
             if verbose:
@@ -581,7 +587,7 @@ class DataHandler:
                     periodic_detector=periodic_detector,
                     solver=solver,
                 )
-                rms = lambda x: np.sqrt(np.mean(np.square(x)))
+                rms = lambda x: np.sqrt(np.mean(np.square(x)))  # noqa: E731
                 if rms(self.time_shift_analysis.s2) > 0.25:
                     if verbose:
                         print("Invoking periodic timeshift detector.")
@@ -809,17 +815,17 @@ class DataHandler:
 -----------------
 DATA SET REPORT
 -----------------
-length               {report['length']:.2f} years
-capacity estimate    {report['capacity']:.2f} kW
-data sampling        {report['sampling']} minutes
-quality score        {report['quality score']:.2f}
-clearness score      {report['clearness score']:.2f}
-inverter clipping    {report['inverter clipping']}
-clipped fraction     {report['clipped fraction']:.2f}
-capacity changes     {report['capacity change']}
-data quality warning {report['data quality warning']}
-time shift errors    {report['time shift correction']}
-time zone errors     {report['time zone correction'] != 0}
+length               {report["length"]:.2f} years
+capacity estimate    {report["capacity"]:.2f} kW
+data sampling        {report["sampling"]} minutes
+quality score        {report["quality score"]:.2f}
+clearness score      {report["clearness score"]:.2f}
+inverter clipping    {report["inverter clipping"]}
+clipped fraction     {report["clipped fraction"]:.2f}
+capacity changes     {report["capacity change"]}
+data quality warning {report["data quality warning"]}
+time shift errors    {report["time shift correction"]}
+time zone errors     {report["time zone correction"] != 0}
             """
             print(pout)
         if return_values:
@@ -1272,7 +1278,7 @@ time zone errors     {report['time zone correction'] != 0}
         self.daily_scores.clipping_2 = self.clipping_analysis.clip_stat_2
         self.daily_flags.inverter_clipped = self.clipping_analysis.clipped_days
 
-    def find_clipped_times(self):
+    def find_clipped_times(self, solver_convex="CLARABEL"):
         if self.clipping_analysis is None:
             self.clipping_check(solver=solver_convex)
         self.clipping_analysis.find_clipped_times()
@@ -1295,10 +1301,10 @@ time zone errors     {report['time zone correction'] != 0}
         else:
             self.capacity_changes = False
         if plot:
-            metric = self.capacity_analysis.metric
-            s1 = self.capacity_analysis.s1
-            s2 = self.capacity_analysis.s2
-            s3 = self.capacity_analysis.s3
+            metric = np.exp(self.capacity_analysis.metric)
+            s1 = np.exp(self.capacity_analysis.s1)
+            s2 = np.exp(self.capacity_analysis.s2)
+            s3 = np.exp(self.capacity_analysis.s3)
             labels = self.capacity_analysis.labels
             try:
                 xs = self.day_index.to_pydatetime()
@@ -1311,23 +1317,36 @@ time zone errors     {report['time zone correction'] != 0}
                     sharex=True,
                     gridspec_kw={"height_ratios": [4, 1]},
                 )
+                ax[0].plot(
+                    xs[self.daily_flags.no_errors],
+                    metric[self.daily_flags.no_errors],
+                    alpha=0.3,
+                    label="measured signal",
+                    marker=".",
+                    ls="none",
+                    color="gray",
+                )
                 ax[0].plot(xs, s1, label="capacity change detector")
-                ax[0].plot(xs, s1 + s2 + s3, label="signal model")
-                ax[0].plot(xs, metric, alpha=0.3, label="measured signal")
+                ax[0].plot(xs, s1 * s2 * s3, label="signal model")
                 ax[0].legend()
                 ax[0].set_title("Detection of system capacity changes")
                 ax[1].set_xlabel("date")
-                ax[0].set_ylabel("normalized daily max power")
+                ax[0].set_ylabel("daily max power")
                 ax[1].plot(xs, labels, ls="none", marker=".")
                 ax[1].set_ylabel("Capacity clusters")
             else:
                 fig, ax = plt.subplots(nrows=1, figsize=figsize)
                 ax.plot(xs, s1, label="capacity change detector")
-                ax.plot(xs, s1 + s2 + s3, label="signal model")
-                ax.plot(xs, metric, alpha=0.3, label="measured signal")
+                ax.plot(xs, s1 * s2 * s3, label="signal model")
+                ax.plot(
+                    xs[self.daily_flags.no_errors],
+                    metric[self.daily_flags.no_errors],
+                    alpha=0.3,
+                    label="measured signal",
+                )
                 ax.legend()
                 ax.set_title("Detection of system capacity changes")
-                ax.set_ylabel("normalized daily maximum power")
+                ax.set_ylabel("daily maximum power")
                 ax.set_xlabel("date")
             return fig
 
@@ -2309,7 +2328,10 @@ time zone errors     {report['time zone correction'] != 0}
             fig = plt.gcf()
             return fig
         else:
-            print("Please run pipeline first.")
+            print(
+                "Please run the time shift analysis first by setting 'fix_shifts=True' when "
+                "running the pipeline, e.g., 'DataHandler.run_pipeline(fix_shifts=True)'."
+            )
 
     def plot_circ_dist(self, flag="good", num_bins=12 * 4, figsize=(8, 8)):
         """
@@ -2415,6 +2437,23 @@ time zone errors     {report['time zone correction'] != 0}
         """
         if self.polar_transform is None:
             self.augment_data_frame(self.daily_flags.clear, "clear-day")
+            pt = PolarTransform(
+                self.data_frame[self.use_column],
+                lat,
+                lon,
+                tz_offset=tz_offset,
+                boolean_selection=self.data_frame["clear-day"],
+            )
+            self.polar_transform = pt
+
+        user_updated = np.any(
+            [
+                self.polar_transform.tz_offset != tz_offset,
+                self.polar_transform.lat != lat,
+                self.polar_transform.lon != lon,
+            ]
+        )
+        if user_updated:
             pt = PolarTransform(
                 self.data_frame[self.use_column],
                 lat,

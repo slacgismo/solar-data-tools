@@ -1,7 +1,6 @@
 import unittest
 from pathlib import Path
 import numpy as np
-import cvxpy as cvx
 from solardatatools.clear_day_detection import ClearDayDetection
 
 

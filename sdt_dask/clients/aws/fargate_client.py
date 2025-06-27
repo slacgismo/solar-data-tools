@@ -1,10 +1,12 @@
 """
 Class for the fargate client plug to be used with the SDT Dask Tool (Runner)
 """
+
 import dask.config
 from sdt_dask.clients.clientplug import ClientPlug
 from dask_cloudprovider.aws import FargateCluster
 from dask.distributed import Client
+
 
 class FargateClient(ClientPlug):
     """Fargate Client Class for configuring dask client on ECS Cluster using
@@ -31,6 +33,7 @@ class FargateClient(ClientPlug):
         https://cloudprovider.dask.org/en/latest/aws.html
     :type kwargs: dict
     """
+
     def __init__(self, workers: int = 2, threads: int = 2, memory: int = 16, **kwargs):
         self.workers = workers
         self.threads = threads
@@ -48,13 +51,17 @@ class FargateClient(ClientPlug):
             configuration
         :rtype: `dask.distributed.Client` object
         """
-        print(f"Initializing Fargate Cluster with {self.workers} workers, "
-              f"{self.threads} threads and {self.memory}MiB per worker...")
+        print(
+            f"Initializing Fargate Cluster with {self.workers} workers, "
+            f"{self.threads} threads and {self.memory}MiB per worker..."
+        )
 
-        self.cluster = FargateCluster(n_workers=self.workers,
-                                      worker_nthreads=self.threads,
-                                      worker_mem=self.memory,
-                                      **self.kwargs)
+        self.cluster = FargateCluster(
+            n_workers=self.workers,
+            worker_nthreads=self.threads,
+            worker_mem=self.memory,
+            **self.kwargs,
+        )
 
         print("Initialized Fargate Cluster")
         print("Initializing Dask Client ...")
