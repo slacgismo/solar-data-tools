@@ -125,7 +125,7 @@ Note that the timeshift correction method must be run (by passing `fix_shifts=Tr
 before calling the `plot_time_shift_analysis_results` method.
 
 Examples of some of these plotting methods are shown below in the notebooks and examples section,
-such as the [demo](getting_started/notebooks/demo_default.ipynb) and the
+such as the [demo](getting_started/notebooks/demo_default.nblink) and the
 [tutorial](getting_started/notebooks/tutorial.ipynb).
 
 ## Running loss factor analysis
@@ -148,7 +148,7 @@ Once it terminates, you can visualize some of the results by calling the followi
 | DataHandler.loss_analysis.plot_waterfall   | Create waterfall plot to visualize the breakdown of energy loss factors |
 | DataHandler.loss_analysis.plot_decomposition   | Plot the estimated signal components found through decomposition    |
 
-Head over to our [demo](getting_started/notebooks/demo_default.ipynb) and
+Head over to our [demo](getting_started/notebooks/demo_default.nblink) and
 [tutorial](getting_started/notebooks/tutorial.ipynb) to see these functions in action on real data.
 
 ## Other features

@@ -33,4 +33,4 @@ Filtering/Summarizing      18.83s
     Capacity change detect 2.67s
 ```
 
-You can find more in-depth usage examples in the [demo](./notebooks/demo_default.ipynb) and [tutorial](./notebooks/tutorial.ipynb) notebooks.
+You can find more in-depth usage examples in the [demo](./notebooks/demo_default.nblink) and [tutorial](./notebooks/tutorial.ipynb) notebooks.
