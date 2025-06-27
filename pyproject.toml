@@ -61,7 +61,8 @@ docs = [
     "pydata-sphinx-theme",
     "sphinx_design",
     "nbsphinx",
-    "myst-parser"
+    "myst-parser",
+    "nbsphinx_link"
 ]
 mosek = [
     "mosek"

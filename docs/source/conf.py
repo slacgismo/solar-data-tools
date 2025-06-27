@@ -47,6 +47,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "nbsphinx",  # for notebooks integration
+    "nbsphinx_link",  # for linking to notebooks from docs source
 ]
 
 autosummary_generate = True
