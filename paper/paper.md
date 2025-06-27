@@ -61,7 +61,7 @@ affiliations:
   - name: Stanford University, Stanford, CA, 94305, USA
     index: 2
   - name: Carnegie Mellon University, Pittsburgh, PA 15213, USA
-    index: 2
+    index: 3
 date: 19 August 2024
 bibliography: paper.bib
 ---
