@@ -157,7 +157,7 @@ of unlabeled PV data</article-title>
 <surname>Telang</surname>
 <given-names>Nimish</given-names>
 </name>
-<xref ref-type="aff" rid="aff-"/>
+<xref ref-type="aff" rid="aff-4"/>
 </contrib>
 <contrib contrib-type="author">
 <name>
@@ -191,10 +191,15 @@ of unlabeled PV data</article-title>
 <institution>Stanford University, Stanford, CA, 94305, USA</institution>
 </institution-wrap>
 </aff>
-<aff id="aff-2">
+<aff id="aff-3">
 <institution-wrap>
 <institution>Carnegie Mellon University, Pittsburgh, PA 15213,
 USA</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-4">
+<institution-wrap>
+<institution>Independent Researcher, USA</institution>
 </institution-wrap>
 </aff>
 </contrib-group>
@@ -433,7 +438,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       </person-group>
       <article-title>NREL/rdtools: Version 3.0.0-alpha.6</article-title>
       <year iso-8601-date="2024">2024</year>
-      <uri>https://doi.org/10.5281/zenodo.13356337</uri>
+      <uri>10.5281/zenodo.13356337</uri>
     </element-citation>
   </ref>
   <ref id="ref-sdt-zenodo">
@@ -442,11 +447,11 @@ a Creative Commons Attribution 4.0 International License (CC BY
         <name><surname>Meyers</surname><given-names>Bennet</given-names></name>
         <name><surname>others</surname></name>
       </person-group>
-      <article-title>Slacgismo/solar-data-tools: v1.2.2</article-title>
+      <article-title>Slacgismo/solar-data-tools: v1.7.1</article-title>
       <publisher-name>Zenodo</publisher-name>
       <year iso-8601-date="2024-03">2024</year><month>03</month>
-      <uri>https://doi.org/10.5281/zenodo.10888385</uri>
-      <pub-id pub-id-type="doi">10.5281/zenodo.10888385</pub-id>
+      <uri>10.5281/zenodo.15243716</uri>
+      <pub-id pub-id-type="doi">10.5281/zenodo.15243716</pub-id>
     </element-citation>
   </ref>
   <ref id="ref-sdt-repo">
@@ -608,7 +613,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <volume>29</volume>
       <issue>6</issue>
       <uri>https://onlinelibrary.wiley.com/doi/abs/10.1002/pip.3397</uri>
-      <pub-id pub-id-type="doi">https://doi.org/10.1002/pip.3397</pub-id>
+      <pub-id pub-id-type="doi">10.1002/pip.3397</pub-id>
       <fpage>573</fpage>
       <lpage>602</lpage>
     </element-citation>
@@ -639,7 +644,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <volume>236</volume>
       <issn>0960-1481</issn>
       <uri>https://www.sciencedirect.com/science/article/pii/S0960148124015611</uri>
-      <pub-id pub-id-type="doi">https://doi.org/10.1016/j.renene.2024.121493</pub-id>
+      <pub-id pub-id-type="doi">10.1016/j.renene.2024.121493</pub-id>
       <fpage>121493</fpage>
       <lpage></lpage>
     </element-citation>
@@ -663,7 +668,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <volume>254</volume>
       <issn>0038-092X</issn>
       <uri>https://www.sciencedirect.com/science/article/pii/S0038092X23001573</uri>
-      <pub-id pub-id-type="doi">https://doi.org/10.1016/j.solener.2023.03.011</pub-id>
+      <pub-id pub-id-type="doi">10.1016/j.solener.2023.03.011</pub-id>
       <fpage>168</fpage>
       <lpage>181</lpage>
     </element-citation>

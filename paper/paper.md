@@ -48,6 +48,7 @@ authors: # TODO: generate full list of authors
   - name: "Tadatoshi Takahashi"
     affiliation: 1
   - name: "Nimish Telang"
+    affiliation: 4
   - name: "Mitchell Victoriano"
     affiliation: 1
   - name: "Haoxi Zhang"
@@ -62,6 +63,8 @@ affiliations:
     index: 2
   - name: Carnegie Mellon University, Pittsburgh, PA 15213, USA
     index: 3
+  - name: Independent Researcher, USA
+    index: 4
 date: 19 August 2024
 bibliography: paper.bib
 ---
