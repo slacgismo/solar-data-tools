@@ -31,7 +31,7 @@ from solardatatools.data_quality import (
 )
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import ClearDayDetection
-from solardatatools.plotting import plot_2d
+from solardatatools.plotting import plot_2d, plot_bundt_cake
 from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.polar_transform import PolarTransform
 from solardatatools.algorithms import (
@@ -2525,9 +2525,6 @@ time zone errors     {report["time zone correction"] != 0}
                 pad = 365 - data.shape[1]
                 data = np.pad(data, ((0, 0), (0, pad)), constant_values=0)
             data_for_bundt = data.T  # shape: (365, 101)
-
-        # Plot with provided bundt cake function
-        from solardatatools.plotting import plot_bundt_cake
 
         fig = plot_bundt_cake(
             data_for_bundt,
