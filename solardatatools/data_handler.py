@@ -32,7 +32,6 @@ from solardatatools.data_quality import (
 from solardatatools.data_filling import zero_nighttime, interp_missing
 from solardatatools.clear_day_detection import ClearDayDetection
 from solardatatools.plotting import plot_2d
-from solardatatools.clear_time_labeling import find_clear_times
 from solardatatools.solar_noon import avg_sunrise_sunset
 from solardatatools.polar_transform import PolarTransform
 from solardatatools.algorithms import (
@@ -41,6 +40,9 @@ from solardatatools.algorithms import (
     SunriseSunset,
     ClippingDetection,
     LossFactorAnalysis,
+    PVQuantiles,
+    Dilation,
+    ClearSkyDetection,
 )
 from pandas.plotting import register_matplotlib_converters
 
@@ -201,6 +203,10 @@ class DataHandler:
         self.parameter_estimation = None
         self.polar_transform = None
         self.loss_analysis = None
+        self.clearsky_object = None
+        self.quantile_object = None
+        self.dilation_object = None
+        self.sig_dilated = None
         # Private attributes
         self._ran_pipeline = False
         self._error_msg = ""
@@ -961,82 +967,53 @@ time zone errors     {report["time zone correction"] != 0}
 
     def fit_statistical_clear_sky_model(
         self,
-        data_matrix=None,
-        rank=6,
-        mu_l=None,
-        mu_r=None,
-        tau=None,
-        exit_criterion_epsilon=1e-3,
-        solver_type="MOSEK",
-        max_iteration=10,
-        calculate_degradation=True,
-        max_degradation=None,
-        min_degradation=None,
-        non_neg_constraints=False,
-        verbose=True,
-        bootstraps=None,
+        quantile_level=0.9,
+        nvals_dil=101,
+        num_harmonics=[16, 3],
+        regularization=0.1,
+        solver="CLARABEL",
+        verbose=False,
     ):
         """
-        Fit Statistical Clear Sky model.
+        Fit statistical model of PV system clear sky response, using smooth, periodic quantile estimation. Uses new
+        self.estimate_quantiles method, estimating a single default quantile level of 0.9.
 
-        .. deprecated:: 1.5.0
-            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
-
-        :param data_matrix:
-        :param rank:
-        :param mu_l:
-        :param mu_r:
-        :param tau:
-        :param exit_criterion_epsilon:
-        :param solver_type:
-        :param max_iteration:
-        :param calculate_degradation:
-        :param max_degradation:
-        :param min_degradation:
-        :param non_neg_constraints:
-        :param verbose:
-        :param bootstraps:
+        :param quantile_level: the quantile level to fit as the clear sky system response
+        :type quantile_level: float
+        :param nvals_dil: the number of data points to use for daily dilation
+        :type nvals_dil: int
+        :param num_harmonics: the number of Fourier harmonics to use for the daily (first) and yearly (second) periods
+        :type num_harmonics: list
+        :param regularization: stiffness weight for quantile fits (larger is more stiff)
+        :type regularization: float
+        :param solver: the cvxpy solver to invoke, default is CLARABEL
+        :type solver: string
+        :param verbose: print solver status
+        :type verbose: boolean
         :return:
 
         """
-        try:
-            from statistical_clear_sky import SCSF
-        except ImportError:
-            print("Please install statistical-clear-sky package")
-            return
-        scsf = SCSF(
-            data_handler_obj=self,
-            data_matrix=data_matrix,
-            rank_k=rank,
-            solver_type=solver_type,
-        )
-        scsf.execute(
-            mu_l=mu_l,
-            mu_r=mu_r,
-            tau=tau,
-            exit_criterion_epsilon=exit_criterion_epsilon,
-            max_iteration=max_iteration,
-            is_degradation_calculated=calculate_degradation,
-            max_degradation=max_degradation,
-            min_degradation=min_degradation,
-            non_neg_constraints=non_neg_constraints,
+        ql = np.atleast_1d(quantile_level)
+        self.estimate_quantiles(
+            nvals_dil=nvals_dil,
+            quantile_levels=ql,
+            num_harmonics=num_harmonics,
+            regularization=regularization,
+            solver=solver,
             verbose=verbose,
-            bootstraps=bootstraps,
         )
-        self.scsf = scsf
+        # the statistical clear sky fit (scsf) is the estimated quantile level
+        self.scsf = self.quantile_object.quantiles_original[quantile_level]
+        return
 
     def calculate_scsf_performance_index(self):
-        """
-        .. deprecated:: 1.5.0
-            Statistical Clear Sky is deprecated. Starting in Solar Data Tools 2.0, it will be removed.
-
-        """
+        """ """
         if self.scsf is None:
             print("No SCSF model detected. Fitting now...")
             self.fit_statistical_clear_sky_model()
-        clear = self.scsf.estimated_power_matrix
-        clear_energy = np.sum(clear, axis=0)
-        measured_energy = np.sum(self.filled_data_matrix, axis=0)
+        clear = self.scsf.reshape(self.raw_data_matrix.shape, order="F")
+        clear_energy = np.nansum(clear, axis=0)
+        measured_energy = np.nansum(self.raw_data_matrix, axis=0)
         pi = np.divide(measured_energy, clear_energy)
         return pi
 
@@ -1456,23 +1433,6 @@ time zone errors     {report["time zone correction"] != 0}
         clear_days = np.logical_and(clear_days, self.daily_scores.density > 0.9)
         self.daily_flags.flag_clear_cloudy(clear_days)
         return
-
-    def find_clear_times(
-        self, power_hyperparam=0.1, smoothness_hyperparam=0.05, min_length=3
-    ):
-        if self.scsf is None:
-            print("No SCSF model detected. Fitting now...")
-            self.fit_statistical_clear_sky_model()
-        clear = self.scsf.estimated_power_matrix
-        clear_times = find_clear_times(
-            self.filled_data_matrix,
-            clear,
-            self.capacity_estimate,
-            th_relative_power=power_hyperparam,
-            th_relative_smoothness=smoothness_hyperparam,
-            min_length=min_length,
-        )
-        self.boolean_masks.clear_times = clear_times
 
     def setup_location_and_orientation_estimation(
         self,
@@ -1905,7 +1865,8 @@ time zone errors     {report["time zone correction"] != 0}
                 label=mask_label,
             )
         if show_clear_model and self.scsf is not None:
-            plot_model = self.scsf.estimated_power_matrix[:, slct].ravel(order="F")
+            plot_model = self.scsf.reshape(self.raw_data_matrix.shape, order="F")
+            plot_model = plot_model[:, slct].ravel(order="F")
             plt.plot(
                 xs, plot_model, color="orange", linewidth=1, label="clear sky model"
             )
@@ -2403,6 +2364,183 @@ time zone errors     {report["time zone correction"] != 0}
         )
         ax.set_title(title)
         # print(np.sum(circ_hist[0] <= 1))
+        return fig
+
+    def apply_time_dilation(self, nvals_dil=101):
+        # Apply time dilation
+        dil = Dilation(self, nvals_dil=nvals_dil)
+        self.dilation_object = dil
+        sig_dilated = dil.signal_dil
+        self.sig_dilated = sig_dilated
+
+    def estimate_quantiles(
+        self,
+        nvals_dil=101,
+        quantile_levels=[0.02, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.90, 0.98],
+        num_harmonics=[16, 3],
+        regularization=0.1,
+        solver="CLARABEL",
+        verbose=False,
+    ):
+        pvq = PVQuantiles(
+            self,
+            nvals_dil=nvals_dil,
+            num_harmonics=num_harmonics,
+            regularization=regularization,
+            solver=solver,
+            verbose=verbose,
+        )
+        pvq.estimate_quantiles(quantile_levels=quantile_levels)
+        self.quantile_object = pvq
+
+    def detect_clear_sky(
+        self,
+        quantile_level=0.90,
+        threshold_low=0.75,
+        threshold_high=1.2,
+        stickiness_high=0.1,
+        stickiness_low=4,
+        loss_correction=True,
+        verbose=False,
+        nvals_dil=101,
+        num_harmonics=[16, 3],
+        regularization=0.1,
+        solver="CLARABEL",
+    ):
+        ql = quantile_level
+        if self.quantile_object is None:
+            if verbose:
+                print(f"Estimating q{ql} level first...")
+            self.estimate_quantiles(
+                quantile_levels=[ql],
+                nvals_dil=nvals_dil,
+                num_harmonics=num_harmonics,
+                regularization=regularization,
+                solver=solver,
+                verbose=verbose,
+            )
+        elif ql not in self.quantile_object.quantile_levels:
+            if verbose:
+                print(f"Estimating q{ql} level first...")
+            self.estimate_quantiles(
+                quantile_levels=[ql],
+                nvals_dil=nvals_dil,
+                num_harmonics=num_harmonics,
+                regularization=regularization,
+                solver=solver,
+                verbose=verbose,
+            )
+        q_undilated = self.quantile_object.quantiles_original[ql]
+        sig_undilated = self.quantile_object.sig_original
+        if loss_correction:
+            if self.loss_analysis is None:
+                self.run_loss_factor_analysis()
+            sg = sig_undilated.reshape(self.raw_data_matrix.shape, order="F")
+            sg = (
+                sg
+                / self.loss_analysis.energy_model[2]
+                / self.loss_analysis.energy_model[1]
+            )
+            sig_undilated = sg.ravel(order="F")
+        # Run clear sky detection
+        csd = ClearSkyDetection(
+            sig_undilated,
+            q_undilated,
+            threshold_low=threshold_low,
+            threshold_high=threshold_high,
+            stickiness_high=stickiness_high,
+            stickiness_low=stickiness_low,
+        )
+        self.clearsky_sig = csd.get_clearsky_sig()
+        daytime = self.boolean_masks.daytime.ravel(order="F")
+        self.clearsky_sig[~daytime] = 0
+        self.boolean_masks.clear_times = self.clearsky_sig.reshape(
+            self.boolean_masks.daytime.shape, order="F"
+        )
+        self.boolean_masks.clear_times = np.asarray(
+            self.boolean_masks.clear_times, dtype=bool
+        )
+        self.clearsky_object = csd
+        self.scsf = q_undilated
+        return
+
+    def plot_bundt(
+        self,
+        figsize=(12, 8),
+        units="kW",
+        inner_radius=1.0,
+        slice_thickness=100,
+        elev=45,
+        azim=30,
+        zoom=1.0,
+        zscale=0.5,
+        cmap="coolwarm",
+        aggregate=True,
+        skip=0,
+    ):
+        # Ensure sunrise/sunset analysis has been run
+        if (
+            not hasattr(self, "daytime_analysis")
+            or self.daytime_analysis.sunrise_estimates is None
+        ):
+            print("Estimating sunrise and sunset times...")
+            self.run_pipeline(sunrise_sunset=True)
+
+        # Apply time dilation
+        dilation = Dilation(self, matrix="raw", nvals_dil=101)
+        dilated_matrix = dilation.signal_dil[1:].reshape(
+            dilation.nvals_dil, dilation.ndays, order="F"
+        )
+        # shape: (101, ndays)
+
+        if aggregate:
+            # Drop Feb 29 entries
+            leap_day_mask = np.logical_and(
+                self.day_index.month == 2, self.day_index.day == 29
+            )
+            valid_days_mask = ~leap_day_mask
+            valid_day_index = self.day_index[valid_days_mask]
+            valid_matrix = dilated_matrix[:, valid_days_mask]  # shape: (101, N')
+
+            # Create 365-day vector for day-of-year (1–365, excluding Feb 29)
+            doy = valid_day_index.dayofyear.to_numpy()
+            doy[doy > 59] -= 1  # adjust for removed Feb 29
+
+            # Aggregate using nanmedian for robustness to missing data
+            data_for_bundt = np.zeros((365, dilation.nvals_dil))
+            data_for_bundt[:] = np.nan  # initialize with NaNs
+
+            for day in range(1, 366):
+                same_day_mask = doy == day
+                if np.any(same_day_mask):
+                    # shape: (101, n_years_for_day)
+                    day_data = valid_matrix[:, same_day_mask]
+                    data_for_bundt[day - 1] = np.nanmedian(day_data, axis=1)
+        else:
+            start_day = skip
+            end_day = skip + 365
+            data = dilated_matrix[:, start_day:end_day]
+            if data.shape[1] < 365:
+                # Pad with zeros if not enough days
+                pad = 365 - data.shape[1]
+                data = np.pad(data, ((0, 0), (0, pad)), constant_values=0)
+            data_for_bundt = data.T  # shape: (365, 101)
+
+        # Plot with provided bundt cake function
+        from solardatatools.plotting import plot_bundt_cake
+
+        fig = plot_bundt_cake(
+            data_for_bundt,
+            figsize=figsize,
+            units=units,
+            inner_radius=inner_radius,
+            slice_thickness=slice_thickness,
+            elev=elev,
+            azim=azim,
+            zoom=zoom,
+            zscale=zscale,
+            cmap=cmap,
+        )
         return fig
 
     def plot_polar_transform(
