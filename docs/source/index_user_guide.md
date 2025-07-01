@@ -109,6 +109,7 @@ the pipeline. Here is a full list of the plotting methods available after runnin
 | Method | Description|
 | --- | --- |
 |    DataHandler.plot_heatmap | Plot a heatmap of the data |
+|    DataHandler.plot_bundt | Make a "[Bundt plot](https://ieeexplore.ieee.org/abstract/document/10749393)" of the data |
 |    DataHandler.plot_circ_dist | Plot the circular distribution of the data |
 |    DataHandler.plot_daily_energy | Plot the daily energy |
 |    DataHandler.plot_daily_signals | Plot the daily signals |
@@ -150,6 +151,24 @@ Once it terminates, you can visualize some of the results by calling the followi
 
 Head over to our [demo](getting_started/notebooks/demo_default.nblink) and
 [tutorial](getting_started/notebooks/tutorial.ipynb) to see these functions in action on real data.
+
+## Running clear sky model estimation
+
+After the main pipeline is run, a clear sky model of the PV system power can be estimated by running:
+```python
+dh.fit_statistical_clear_sky_model()
+```
+This fits a *smooth, multiperiodic* model of the instantaneous 90th percentile of the power data, as explained in [this paper](https://ieeexplore.ieee.org/abstract/document/10749393). Under the hood, this invokes the [spcqe package](https://github.com/cvxgrp/spcqe). Check out this [demo](getting_started/notebooks/clearsky_estimation_demo.nblink) for more information.
+
+## Running clear sky data labeling
+
+The clear sky labeling subroutine leverages the results from the main pipeline, the loss factor estimation, and the clear sky model fitting, all described above. After the main pipeline is run, the user may run:
+```python
+dh.detect_clear_sky()
+```
+If either or both of the loss factor estimation and clear sky estimation modules have not been run, the Data Handler will run those modules automatically when `detect_clear_sky` is called. (The Data Handler will not re-run these modules if they've already been invoked and will just make use of the outputs.)
+
+Check out this [demo](getting_started/notebooks/clearsky_detection_demo.nblink) for more details.
 
 ## Other features
 
