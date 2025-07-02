@@ -27,7 +27,6 @@ Submodules
    reference/solardatatools.data_filling
    reference/solardatatools.data_handler
    reference/solardatatools.data_quality
-   reference/solardatatools.dataio
    reference/solardatatools.daytime
    reference/solardatatools.matrix_embedding
    reference/solardatatools.model_soiling
