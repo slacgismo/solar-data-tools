@@ -19,3 +19,21 @@ def divide_df(data_frame,datetime_col = None):
 
     result = {col: df[[col]].copy() for col in df.columns}
     return result
+
+
+def common_days(dh_dict):
+    """
+    This function takes a dictionary of DataHandlers and returns a dictionary of boolean NumPy arrays,
+    where each value indicates whether the corresponding day is a common good day.
+    """
+    common_good_days = None  
+    for dh in dh_dict.values():
+        good_days = set(np.array(dh.day_index)[np.array(dh.daily_flags.no_errors)])
+        if common_good_days is None:
+            common_good_days = good_days
+        else:
+            common_good_days &= good_days 
+    result = {}
+    for name, dh in dh_dict.items():
+        result[name] = np.isin(dh.day_index, list(common_good_days))
+    return result
