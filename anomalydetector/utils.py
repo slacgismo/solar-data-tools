@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 
 
+
 def divide_df(data_frame,datetime_col = None):
     """
     This function divide a dataframe with a single column timeIndex and multiple columns for the values
@@ -28,12 +29,16 @@ def common_days(dh_dict):
     """
     common_good_days = None  
     for dh in dh_dict.values():
-        good_days = set(np.array(dh.day_index)[np.array(dh.daily_flags.no_errors)])
+        good_days = set(dh.day_index[dh.daily_flags.no_errors])
         if common_good_days is None:
             common_good_days = good_days
         else:
             common_good_days &= good_days 
     result = {}
     for name, dh in dh_dict.items():
-        result[name] = np.isin(dh.day_index, list(common_good_days))
+        result[name] = np.isin(
+            dh.day_index.astype('datetime64[ns]'),
+            np.array(list(common_good_days)).astype('datetime64[ns]')
+        )
     return result
+
