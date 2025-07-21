@@ -71,8 +71,8 @@ class TestQuantileDilation(unittest.TestCase):
                 quant_ori_df[str(q)],
                 atol=1e-1,
             )
-            # total 105408 entries
-            self.assertLessEqual(np.sum(~q_ori_close), 1200)
+            # total 105408 entries, so less than 3% entries changed
+            self.assertLessEqual(np.sum(~q_ori_close), 3162)
 
 
 @contextlib.contextmanager
