@@ -49,11 +49,13 @@ class MultiDataHandler:
         self._initialize_attributes()
 
     def _initialize_attributes(self):
+        #Keep track of the clean data
         self.filled_mat = None
         self.good_days = None
         self.common_days = None
+        #Keep track of the dilated data 
         self.dil_mat = None
-
+        #Keep track of the failure scenario data
         self.random_mat = None
         self.failure_mat = None
         self.target = None
@@ -141,6 +143,72 @@ class MultiDataHandler:
         self.random_mat = mask
         self.failure_mat = self.dil_mat[target]*(1-mask)
         self.target = target
+
+    def ndil(self):
+        if self.dil_mat is None :
+            return None
+        else :
+            key = list(self.dil_mat.keys())[0]
+            return self.dil_mat[key].shape[0]
+        
+
+def train_test_split(multidata : MultiDataHandler,test_size = None, train_size = None, shuffle = True):
+
+    if test_size is None and train_size is None:
+        raise ValueError("Missing one argument of size")
+    elif test_size is None :
+        test_size = 1-train_size
+    elif train_size is None :
+        train_size = 1-test_size
+    elif train_size+test_size != 1 :
+        raise ValueError("Incompatible arguments given")
+    
+    X1 = MultiDataHandler()
+    X2 = MultiDataHandler()
+    X1.raw_handler = multidata.raw_handler
+    X2.raw_handler = multidata.raw_handler
+    X1.keys = multidata.keys
+    X2.keys = multidata.keys
+    if multidata.common_days is None or multidata.filled_mat is None:
+        multidata.align()
+    n = len(multidata.common_days)
+    split = int(train_size * n)
+    if shuffle :
+        indices = np.random.permutation(n)
+        train_indices = indices[:split]
+        test_indices = indices[split:]
+    else :
+        train_indices = list(range(split))       
+        test_indices = list(range(split, n)) 
+    X1.common_days = multidata.common_days[train_indices]
+    X2.common_days = multidata.common_days[test_indices]
+    X1.filled_mat = {}
+    X2.filled_mat = {}
+    X1.good_days = {}
+    X2.good_days = {}
+    for key in multidata.keys :
+        X1.good_days[key] = multidata.good_days[key][train_indices]
+        X2.good_days[key] = multidata.good_days[key][test_indices]
+        X1.filled_mat[key] = multidata.filled_mat[key][:,train_indices]
+        X2.filled_mat[key] = multidata.filled_mat[key][:,test_indices]
+    if multidata.dil_mat is not None :
+        X1.dil_mat = {}
+        X2.dil_mat = {}
+        for key in multidata.keys :
+            X1.dil_mat[key] = multidata.dil_mat[key][:,train_indices]
+            X2.dil_mat[key] = multidata.dil_mat[key][:,test_indices]
+    if multidata.random_mat is not None :
+        X1.random_mat = multidata.random_mat[:,train_indices]
+        X2.random_mat = multidata.random_mat[:,test_indices]
+        X1.failure_mat = multidata.failure_mat[:,train_indices]
+        X2.failure_mat = multidata.failure_mat[:,test_indices]
+        X1.target = multidata.target
+        X2.target = multidata.target
+    return X1,X2
+
+
+
+
 
         
         
