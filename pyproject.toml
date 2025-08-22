@@ -53,7 +53,7 @@ dynamic = ["version"]
 version_file = "solardatatools/_version.py"
 
 [tool.setuptools.packages.find]
-include = ["solardatatools*", "pvsystemprofiler*", "sdt_dask*"]
+include = ["solardatatools*", "pvsystemprofiler*", "sdt_dask*","anomalydetector*"]
 
 [project.optional-dependencies]
 docs = [
