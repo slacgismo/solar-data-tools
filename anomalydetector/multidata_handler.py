@@ -1,6 +1,5 @@
 
 from solardatatools import DataHandler
-from solardatatools.dataio import load_redshift_data
 from solardatatools.algorithms import Dilation
 
 from anomalydetector.utils import divide_df,common_days
@@ -8,7 +7,11 @@ from anomalydetector.utils import divide_df,common_days
 from scipy.stats import uniform
 from tqdm import tqdm
 import numpy as np
-import pandas as pd
+from datetime import datetime
+import bisect
+import matplotlib.pyplot as plt
+import warnings
+
 
 
 class MultiDataHandler:
@@ -25,7 +28,7 @@ class MultiDataHandler:
 
         :param data_frame: The list of Pandas Dataframe or unique Dataframe containing the values for 
                             all the different sites.
-        :type data_frame: pandas.DataFrame, optional 
+        :type data_frame: pandas.DataFrame/list, optional 
         :param datetime_col: The name of the column containing datetime information,
                              used to set the DataFrame's index to a DatetimeIndex.
                              Required if the DataFrame index is not already a DatetimeIndex.
@@ -59,8 +62,7 @@ class MultiDataHandler:
         self.random_mat = None
         self.failure_mat = None
         self.target = None
-
-        
+ 
     def align(self):
         """
         This method aims to align the different datasets to produce a final set of common 
@@ -81,7 +83,6 @@ class MultiDataHandler:
                 dict_mat[key] = self.raw_handler[key].filled_data_matrix[:,self.good_days[key]]
             self.filled_mat = dict_mat
 
-
     def dilate(self,ndil = None):
         """
         This method dilates the datasets and construct a dictionary of dilated matrices
@@ -100,7 +101,10 @@ class MultiDataHandler:
             self.dil_mat = dict_mat_dil
         if self.failure_mat is not None and self.target is not None and self.random_mat is not None :
             self.generate_failure(self.target)
-
+            warnings.warn(
+                "No failure scenario detected — calling multidata.generate_failure automatically with default parameters.",
+                category=UserWarning
+            )
 
     def generate_failure(self,
                          target,
@@ -151,6 +155,49 @@ class MultiDataHandler:
             key = list(self.dil_mat.keys())[0]
             return self.dil_mat[key].shape[0]
         
+    def display(self, idx, site=None, ax=None):
+        created_figure = False
+        if ax is None:
+            _, ax = plt.subplots(figsize=(10, 4))
+            created_figure = True
+
+        if isinstance(idx, datetime):
+            idx = bisect.bisect_left(self.common_days, idx)
+
+        if site is None or site == self.target:
+            ax2 = ax.twinx()
+            x = np.arange(self.ndil())
+
+            ax.plot(x, self.failure_mat[:, idx], label="Power with outage", color="black")
+            ax.plot(x, self.dil_mat[self.target][:, idx], label="Power no outage",
+                    color="black", linestyle="dotted", linewidth=1)
+            ax2.plot(x, self.random_mat[:, idx], label="Loss fraction",
+                    color="red", linestyle="dotted")
+
+            ax.set_ylabel("Power")
+            ax2.set_ylabel("Loss")
+            ax2.set_ylim(0, 1)
+
+            lines1, labels1 = ax.get_legend_handles_labels()
+            lines2, labels2 = ax2.get_legend_handles_labels()
+            ax.legend(lines1 + lines2, labels1 + labels2, loc="upper right")
+            ax.grid(True)
+        
+        else :
+            x = np.arange(self.ndil())
+            ax.plot(x, self.dil_mat[site][:, idx], label="Power no outage",
+                    color="black", linestyle="dotted", linewidth=1)
+            ax.set_ylabel("Power")
+            lines1, labels1 = ax.get_legend_handles_labels()
+            ax.legend(lines1, labels1, loc="upper right")
+            ax.grid(True)
+
+        ax.set_xlabel("Time step")
+        ax.set_title(f"Display for day {self.common_days[idx].date()} ({site if site else self.target})")
+
+        if created_figure:
+            plt.tight_layout()
+            plt.show()
 
 def train_test_split(multidata : MultiDataHandler,test_size = None, train_size = None, shuffle = True):
 

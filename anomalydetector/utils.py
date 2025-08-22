@@ -1,9 +1,11 @@
+from solardatatools import DataHandler
+
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
-
+from dask import delayed
 
 
 def divide_df(data_frame,datetime_col = None):
@@ -24,7 +26,6 @@ def divide_df(data_frame,datetime_col = None):
     result = {col: df[[col]].copy() for col in df.columns}
     return result
 
-
 def common_days(dh_dict):
     """
     This function takes a dictionary of DataHandlers and returns a dictionary of boolean NumPy arrays,
@@ -44,6 +45,10 @@ def common_days(dh_dict):
             np.array(list(common_good_days)).astype('datetime64[ns]')
         )
     return result
+
+@delayed
+def fit_dask(spq,x):
+    spq.fit(x)
 
 def full_signal(day_list,start_day,signal,ndil):
     """
