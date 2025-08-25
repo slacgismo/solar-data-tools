@@ -11,11 +11,9 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import subprocess
-import pydata_sphinx_theme
 import os
 import sys
 from datetime import date
-import solardatatools
 
 sys.path.insert(0, os.path.abspath("../.."))
 
@@ -49,6 +47,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "nbsphinx",  # for notebooks integration
+    "nbsphinx_link",  # for linking to notebooks from docs source
 ]
 
 autosummary_generate = True

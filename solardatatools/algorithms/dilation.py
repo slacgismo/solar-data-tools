@@ -1,4 +1,4 @@
-""" Dilation Module
+"""Dilation Module
 
 This module contains functions to dilate a signal from a regular time grid to a dilated time grid and
 to undilate it back.
@@ -13,12 +13,12 @@ DEFAULT = {
     "matrix": "raw",
 }
 
+
 class Dilation:
-    def __init__(self, data_handler, nvals_dil=DEFAULT["nvals_dil"], matrix=DEFAULT["matrix"]):
-        config = {
-            "nvals_dil": nvals_dil,
-            "matrix": matrix
-        }
+    def __init__(
+        self, data_handler, nvals_dil=DEFAULT["nvals_dil"], matrix=DEFAULT["matrix"]
+    ):
+        config = {"nvals_dil": nvals_dil, "matrix": matrix}
         self.config = config
         if self.config["matrix"] == "raw":
             mat = data_handler.raw_data_matrix

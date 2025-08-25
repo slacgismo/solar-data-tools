@@ -1,4 +1,4 @@
-""" Daytime Module
+"""Daytime Module
 
 This module contains a function for finding the daytime period of a power time
 series
@@ -47,7 +47,6 @@ def detect_sun(data, threshold):
 
 
 def scale_data(data, return_metrics=False):
-
     high_val = np.nanquantile(data, 0.99)
     low_val = max(np.nanmin(data), -0.005 * high_val)
     scaled_mat = (data - low_val) / high_val

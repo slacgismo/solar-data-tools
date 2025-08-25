@@ -50,7 +50,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          uv pip install --system --break-system-packages -r ".[dev]"
+          uv pip install --system --break-system-packages .
           uv pip install --system --break-system-packages pytest pytest-cov pytest-github-report pytest-github-actions-annotate-failures
 
       - name: Run Unit Tests

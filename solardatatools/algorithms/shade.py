@@ -1,8 +1,10 @@
-""" Shade Module
+"""Shade Module
 
 This module is for analyzing shade losses in unlabeled power data
 
 """
+
+# ruff: noqa: E731
 
 import numpy as np
 import pandas as pd
@@ -13,6 +15,7 @@ import seaborn as sns
 from pathlib import Path
 
 from solardatatools.polar_transform import PolarTransform
+
 
 my_round = lambda x, c: c * np.round(x / c, 0)
 
@@ -53,7 +56,7 @@ class ShadeAnalysis:
 
     @property
     def has_run(self):
-        state = np.alltrue(
+        state = np.all(
             [
                 self.data_normalized is not None,
                 self.data_transformed is not None,
@@ -63,13 +66,25 @@ class ShadeAnalysis:
         return state
 
     def run(
-        self, power=8, solver="MOSEK", verbose=False, mu=None, lambd=None, q_mat=None
+        self,
+        power=8,
+        solver="MOSEK",
+        w1=20,
+        w2=1e0,
+        w3=5e2,
+        w4=3e-1,
+        verbose=False,
+        mu=None,
+        lambd=None,
+        q_mat=None,
     ):
         if not self.has_run:
             dn, dt = self.transform_data(power)
             self.data_normalized = dn
             self.data_transformed = dt
-            self.osd_problem = self.make_osd_problem(mu=mu, lambd=lambd, q_mat=q_mat)
+            self.osd_problem = self.make_osd_problem(
+                w1=w1, w2=w2, w3=w3, w4=w4, mu=mu, lambd=lambd, q_mat=q_mat
+            )
             self.osd_problem.solve(solver=solver, verbose=verbose)
         variable_dict = {v.name(): v for v in self.osd_problem.variables()}
         self.clear_sky_component = variable_dict["clear-sky"].value / self.scale_factor
@@ -333,7 +348,9 @@ class ShadeAnalysis:
         agg_by_azimuth = agg_by_azimuth.reindex(new_index)
         return normalized, agg_by_azimuth
 
-    def make_osd_problem(self, mu=None, lambd=None, q_mat=None):
+    def make_osd_problem(
+        self, w1=20, w2=1e0, w3=5e2, w4=3e-1, mu=None, lambd=None, q_mat=None
+    ):
         if mu is None:
             mu = MU
         if lambd is None:
@@ -388,7 +405,7 @@ class ShadeAnalysis:
             x3 >= 0,
         ]
 
-        objective = cvx.Minimize(20 * phi1 + 1e0 * phi2 + 5e2 * phi3 + 3e-1 * phi4)
+        objective = cvx.Minimize(w1 * phi1 + w2 * phi2 + w3 * phi3 + w4 * phi4)
         problem = cvx.Problem(objective, constraints)
         return problem
 
