@@ -69,6 +69,11 @@ To debug if a release doesn't show up automatically:
     [here](https://app.readthedocs.org/dashboard/solar-data-tools/version/create/).
   - Check [ReadTheDocs build logs](https://readthedocs.org/projects/solar-data-tools/builds/).
   - For major changes, update `index.rst` and API docs.
+- Make sure all errors and warnings are resolved when building locally before pushing to the repo. Common issues:
+  - Missing dependencies in the `docs/requirements.txt` file.
+  - Syntax errors in `.rst` or `.md` files.
+  - Broken links (check URLs and internal references).
+  - Outdated API docs (regenerate with `sphinx-apidoc` if needed).
 
 
 ## 4. GitHub Workflows
