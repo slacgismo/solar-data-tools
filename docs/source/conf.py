@@ -79,7 +79,7 @@ html_css_files = ["solardatatools.css"]
 html_copy_source = False
 html_favicon = "_static/SDT_v1_icon_only_dark_background_small.ico"
 # html_logo = "_static/SDT_v1_icon_only_dark_background_small.png"
-html_short_title = f"{project} v{release}"
+html_short_title = f"{project}"
 
 master_doc = "index"
 
@@ -95,7 +95,7 @@ html_theme_options = {
         # first, then the text, so this example will be read as "P-G-G-P-Y
         # (short pause) Home A pretty good geometry package"
         "alt_text": f"{project}",
-        "text": f"{project} v{release}",
+        "text": f"{project}",
         "image_light": "_static/SDT_v1_icon_only_light_background_small.png",
         "image_dark": "_static/SDT_v1_icon_only_dark_background_small.png",
     },

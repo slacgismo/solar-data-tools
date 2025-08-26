@@ -10,6 +10,7 @@ getting_started/notebooks/bundt_cake_plot_demo
 getting_started/notebooks/clearsky_detection_demo
 getting_started/notebooks/clearsky_estimation_demo
 getting_started/contribute
+getting_started/maintenance
 project_details/index_project_details
 project_details/citation
 getting_started/code_of_conduct.md

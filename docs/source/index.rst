@@ -10,7 +10,7 @@
 
 Welcome to the Solar Data Tools Docs!
 =====================================
-|PyPI release| |Conda-forge release|
+**Latest release**: |PyPI release| |Conda-forge release|
 
 .. |PyPI release| image:: https://img.shields.io/pypi/v/solar-data-tools.svg
    :target: https://pypi.org/project/solar-data-tools/
