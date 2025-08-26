@@ -1,7 +1,7 @@
 import sys
 
 
-def progress(count, total, status='', bar_length=60):
+def progress(count, total, status="", bar_length=60):
     """
     Python command line progress bar in less than 10 lines of code. · GitHub
     https://gist.github.com/vladignatyev/06860ec2040cb497f0f3
@@ -14,7 +14,7 @@ def progress(count, total, status='', bar_length=60):
     filled_len = int(round(bar_len * count / float(total)))
 
     percents = round(100.0 * count / float(total), 1)
-    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+    bar = "=" * filled_len + "-" * (bar_len - filled_len)
 
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.write("[%s] %s%s ...%s\r" % (bar, percents, "%", status))
     sys.stdout.flush()

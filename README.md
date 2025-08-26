@@ -13,9 +13,46 @@
     <br />
     <br />
 </p>
-</p>    
+</p>
 
 <table  align="center" >
+<tr>
+  <td>Repo Status</td>
+    <td>
+    <a href="https://www.repostatus.org/#active"><img src="https://www.repostatus.org/badges/latest/active.svg"
+      alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed." />
+    </a>
+  </tr>
+  <tr>
+  <td>pyOpenSci Peer-Reviewed</td>
+    <td>
+    <a href="https://github.com/pyOpenSci/software-review/issues/210"><img src="https://pyopensci.org/badges/peer-reviewed.svg"
+      alt="Project has been peer-reviewed by pyOpenSci." />
+    </a>
+  </tr>
+  <tr>
+  <td>JOSS Paper</td>
+    <td>
+    <a style="border-width:0" href="https://doi.org/10.21105/joss.08478">
+      <img src="https://joss.theoj.org/papers/10.21105/joss.08478/status.svg" alt="DOI badge" >
+    </a>
+  </tr>
+  <tr>
+  <td>Python Versions</td>
+  <td>
+    <a href="https://www.python.org/downloads/release/python-3100/">
+        <img src="https://img.shields.io/badge/python-3.10-blue.svg" alt="latest release" />
+    </a>
+    <a href="https://www.python.org/downloads/release/python-3110/">
+        <img src="https://img.shields.io/badge/python-3.11-blue.svg" />
+    </a>
+    <a href="https://www.python.org/downloads/release/python-3120/">
+        <img src="https://img.shields.io/badge/python-3.12-blue.svg" />
+    </a>
+    <a href="https://www.python.org/downloads/release/python-3130/">
+        <img src="https://img.shields.io/badge/python-3.13-blue.svg" />
+    </a>
+</tr>
 <tr>
   <td>Latest Release</td>
   <td>
@@ -48,7 +85,7 @@
     </a>
     <a href="https://github.com/slacgismo/solar-data-tools/actions/workflows/build.yml">
         <img src="https://github.com/slacgismo/solar-data-tools/actions/workflows/build.yml/badge.svg">
-    </a> 
+    </a>
   </td>
 </tr>
 <tr>
@@ -82,17 +119,17 @@
     </td>
 </tr>
 </table>
-    
+
 
 Solar Data Tools is an open-source Python library for analyzing PV power (and irradiance) time-series data. It
 was developed to enable analysis of _unlabeled_ PV data, i.e. with no model, no meteorological data, and no performance index required,
 by taking a statistical signal processing approach in the algorithms used in the package’s main data processing pipeline.
-Solar Data Tools empowers PV system fleet owners or operators to analyze system performance a hundred times faster even when 
+Solar Data Tools empowers PV system fleet owners or operators to analyze system performance a hundred times faster even when
 they only have access to the most basic data stream—power output of the system.
 
 Solar Data Tools provides methods for data I/O, cleaning, filtering, plotting, and analysis. These methods are largely automated and require little
-to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems. 
-Head over to our Getting Started pages in our [documentation](https://solar-data-tools.readthedocs.io/) for a demo! For an in-depth tutorial on Solar Data Tools, we recommend taking a look at the recent webinar 
+to no input from the user regardless of system type—from utility tracking systems to multi-pitch rooftop systems.
+Head over to our Getting Started pages in our [documentation](https://solar-data-tools.readthedocs.io/) for a demo! For an in-depth tutorial on Solar Data Tools, we recommend taking a look at the recent webinar
 we did with the DOE's Solar Energy Technologies Office (SETO) with our colleagues at NREL, linked below:
 
 <p align="center">
@@ -126,10 +163,10 @@ $ pip install "solar-data-tools[mosek]"
 #### Install with conda
 
 >[!WARNING]
-> `solar-data-tools` is now available on conda-forge! You can specify 
-> the channel using the `-c` flag as shown in the examples below. 
-> The use of the slacgismo channel is **deprecated** and packages 
-> on that channel will **not** be up-to-date with the latest releases. 
+> `solar-data-tools` is now available on conda-forge! You can specify
+> the channel using the `-c` flag as shown in the examples below.
+> The use of the slacgismo channel is **deprecated** and packages
+> on that channel will **not** be up-to-date with the latest releases.
 
 Creating the environment and directly installing the package and its dependencies from the appropriate conda channels:
 
@@ -159,16 +196,16 @@ $ conda install solar-data-tools -c conda-forge
 
 #### CLARABEL
 
-By default, the [CLARABEL](https://clarabel.org/stable/) solver is used to solve the signal decomposition problems. CLARABEL (as well as other solvers) is compatible with [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools. Both are open source and are dependencies of Solar Data Tools. 
+By default, the [CLARABEL](https://clarabel.org/stable/) solver is used to solve the signal decomposition problems. CLARABEL (as well as other solvers) is compatible with [OSD](https://github.com/cvxgrp/signal-decomposition/tree/main), the modeling language used to solve signal decomposition problems in Solar Data Tools. Both are open source and are dependencies of Solar Data Tools.
 
 #### MOSEK
 
 MOSEK is a commercial software package. Since it is more stable and offers faster solve times,
 we provide continuing support for it (with signal decomposition problem formulations using CVXPY). However,
-you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running 
-`pip install "solar-data-tools[mosek]"`. 
-If installing from conda, you will have to manually install MOSEK if you desire to use it as 
-conda does not support optional dependencies like pip. 
+you will still need to obtain a license. If installing with pip, you can install the optional MOSEK dependency by running
+`pip install "solar-data-tools[mosek]"`.
+If installing from conda, you will have to manually install MOSEK if you desire to use it as
+conda does not support optional dependencies like pip.
 
 More information about MOSEK and how to obtain a license is available here:
 
@@ -177,8 +214,8 @@ More information about MOSEK and how to obtain a license is available here:
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
 ## Usage
-Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data 
-Tools uses [CLARABEL](https://clarabel.org/stable/) as the solver all signal decomposition problems. If you would like 
+Users will primarily interact with this software through the `DataHandler` class. By default, Solar Data
+Tools uses [CLARABEL](https://clarabel.org/stable/) as the solver all signal decomposition problems. If you would like
 to specify another solver (such as MOSEK), just pass the keyword argument `solver` to `DataHandler.pipeline` with the solver of choice.
 
 ```python
@@ -217,21 +254,17 @@ We welcome contributions of any form! Please see our [Contribution Guidelines](.
 
 If you use Solar Data Tools in your research, please cite:
 
-**Recommended citations**
+**Recommended citation**
 
-  Bennet E. Meyers, Elpiniki Apostolaki-Iosifidou and Laura Schelhas, "Solar Data Tools: Automatic Solar 
-  Data Processing Pipeline," 2020 47th IEEE Photovoltaic Specialists Conference (PVSC), Calgary, AB, Canada, 2020,
-  pp. 0655-0656, doi: [10.1109/PVSC45281.2020.9300847](https://doi.org/10.1109/PVSC45281.2020.9300847).
-
-  Bennet E. Meyers, Sara A. Miskovich, Duncan Ragsdale, Mitchell Victoriano, Aramis Dufour, 
-  Nimish Telang, Nimish Yadav, Elpiniki Apostolaki-Iosifidou, Claire Berschauer, Chengcheng Ding, 
-  Jonathan Goncalves, Victor-Haoyang Lian, Tristan Lin, Alejandro Londono-Hurtado, Junlin Luo, Xiao Ming, 
-  David Jose Florez Rodriguez, Derin Serbetcioglu, Shixian Sheng, Jose St Louis, Tadatoshi Takahashi, and Haoxi Zhang. (2024). 
-  slacgismo/solar-data-tools. Zenodo. doi: [10.5281/zenodo.5056959](https://zenodo.org/doi/10.5281/zenodo.5056959)
+  Sara A. Miskovich, Bennet E. Meyers, et al., "Solar Data Tools: a Python library for automated analysis of unlabeled PV data," _Journal of Open Source Software_, 10(110), 8478, 2025, doi: [10.21105/joss.08478](https://doi.org/10.21105/joss.08478)
 
 **Citing technical details (_e.g._, SDT algorithms)**
 
-  Bennet E. Meyers, PVInsight (Final Technical Report). United States. [https://doi.org/10.2172/1897181](https://doi.org/10.2172/1897181)
+  Bennet E. Meyers, PVInsight (Final Technical Report), _SLAC Report SLAC-R-1155_, 2021, doi: [10.2172/1897181](https://doi.org/10.2172/1897181)
+
+  Bennet E. Meyers, Elpiniki Apostolaki-Iosifidou and Laura Schelhas, "Solar Data Tools: Automatic Solar
+  Data Processing Pipeline," _2020 47th IEEE Photovoltaic Specialists Conference (PVSC)_, Calgary, AB, Canada, 2020,
+  pp. 0655-0656, doi: [10.1109/PVSC45281.2020.9300847](https://doi.org/10.1109/PVSC45281.2020.9300847).
 
 **Citing a specific version**
 
