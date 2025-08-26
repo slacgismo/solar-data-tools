@@ -1,4 +1,4 @@
-# Solar Data Tools Repository Maintenance Guide
+# Repository Maintenance Guide
 
 
 ## 1. Packaging & Releases
